@@ -1,0 +1,42 @@
+name: Linux verification
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-linux:
+    runs-on: ubuntu-22.04
+    env:
+      # CI verifies compilation only and does not publish this placeholder build.
+      PIXIV_OAUTH_CLIENT_ID: ci-placeholder
+      PIXIV_OAUTH_CLIENT_SECRET: ci-placeholder
+      PIXIV_OAUTH_HASH_SALT: ci-placeholder
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install Tauri Linux prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends \
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
+      - name: Select stable Rust with required components
+        run: |
+          rustup default stable
+          rustup component add clippy rustfmt
+      - name: Verify frontend, Rust core, and Linux desktop build
+        run: bash scripts/check-linux.sh

@@ -1,0 +1,34 @@
+<script lang="ts">
+  import { returnToPreviousLocation } from "$lib/return-navigation-browser";
+
+  let {
+    fallback,
+    label = "返回",
+  }: {
+    fallback: string;
+    label?: string;
+  } = $props();
+</script>
+
+<button class="return-link" type="button" onclick={() => returnToPreviousLocation(fallback)}>
+  <span aria-hidden="true">‹</span>{label}
+</button>
+
+<style>
+  .return-link {
+    display: inline-flex;
+    gap: 5px;
+    align-items: center;
+    padding: 4px 0;
+    color: var(--muted);
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    font: inherit;
+    font-size: 10px;
+    text-align: left;
+  }
+  .return-link:hover { color: var(--pixiv-blue); }
+  .return-link:focus-visible { outline: 2px solid color-mix(in srgb, var(--pixiv-blue) 45%, transparent); outline-offset: 3px; }
+  span { font-size: 15px; line-height: .8; }
+</style>

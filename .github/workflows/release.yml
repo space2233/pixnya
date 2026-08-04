@@ -1,0 +1,263 @@
+name: Draft signed release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version without the v prefix; must equal package.json
+        required: true
+        type: string
+      notes:
+        description: Short release notes included in update manifests
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pixnya-release-${{ inputs.version }}
+  cancel-in-progress: false
+
+env:
+  PIXNYA_RELEASE_VERSION: ${{ inputs.version }}
+  PIXNYA_UPDATER_ENDPOINT: https://github.com/space2233/pixnya/releases/latest/download/latest.json
+  PIXNYA_ANDROID_UPDATE_MANIFEST: https://github.com/space2233/pixnya/releases/latest/download/android-latest.json
+
+jobs:
+  preflight:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Match the requested release to source metadata
+        shell: bash
+        run: |
+          SOURCE_VERSION="$(node -p "require('./package.json').version")"
+          test "$SOURCE_VERSION" = "$PIXNYA_RELEASE_VERSION"
+          test "$(node -p "require('./src-tauri/tauri.conf.json').version")" = "$SOURCE_VERSION"
+          test "$(sed -n 's/^version = "\([^"]*\)"/\1/p' Cargo.toml | head -n 1)" = "$SOURCE_VERSION"
+
+  windows:
+    needs: preflight
+    runs-on: windows-2025
+    env:
+      PIXIV_OAUTH_CLIENT_ID: ${{ secrets.PIXIV_OAUTH_CLIENT_ID }}
+      PIXIV_OAUTH_CLIENT_SECRET: ${{ secrets.PIXIV_OAUTH_CLIENT_SECRET }}
+      PIXIV_OAUTH_HASH_SALT: ${{ secrets.PIXIV_OAUTH_HASH_SALT }}
+      PIXNYA_UPDATER_PUBKEY: ${{ secrets.PIXNYA_UPDATER_PUBKEY }}
+      PIXNYA_ANDROID_UPDATE_PUBKEY: ${{ secrets.PIXNYA_ANDROID_UPDATE_PUBKEY }}
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Require protected build and updater secrets
+        shell: pwsh
+        run: |
+          @(
+            'PIXIV_OAUTH_CLIENT_ID', 'PIXIV_OAUTH_CLIENT_SECRET', 'PIXIV_OAUTH_HASH_SALT',
+            'PIXNYA_UPDATER_PUBKEY', 'PIXNYA_ANDROID_UPDATE_PUBKEY',
+            'TAURI_SIGNING_PRIVATE_KEY', 'TAURI_SIGNING_PRIVATE_KEY_PASSWORD'
+          ) | ForEach-Object {
+            if ([string]::IsNullOrWhiteSpace((Get-Item "Env:$_").Value)) { throw "Missing $_" }
+          }
+      - run: npm ci
+      - name: Build signed NSIS updater artifacts
+        run: npm run tauri -- build --config src-tauri/tauri.release.conf.json --bundles nsis
+      - uses: actions/upload-artifact@v7
+        with:
+          name: windows-x64
+          if-no-files-found: error
+          path: |
+            target/release/bundle/nsis/*.exe
+            target/release/bundle/nsis/*.zip
+            target/release/bundle/nsis/*.sig
+
+  linux:
+    needs: preflight
+    runs-on: ubuntu-22.04
+    env:
+      PIXIV_OAUTH_CLIENT_ID: ${{ secrets.PIXIV_OAUTH_CLIENT_ID }}
+      PIXIV_OAUTH_CLIENT_SECRET: ${{ secrets.PIXIV_OAUTH_CLIENT_SECRET }}
+      PIXIV_OAUTH_HASH_SALT: ${{ secrets.PIXIV_OAUTH_HASH_SALT }}
+      PIXNYA_UPDATER_PUBKEY: ${{ secrets.PIXNYA_UPDATER_PUBKEY }}
+      PIXNYA_ANDROID_UPDATE_PUBKEY: ${{ secrets.PIXNYA_ANDROID_UPDATE_PUBKEY }}
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Tauri Linux prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends \
+            libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev \
+            libssl-dev libayatana-appindicator3-dev librsvg2-dev
+      - name: Require protected build and updater secrets
+        shell: bash
+        run: |
+          for name in PIXIV_OAUTH_CLIENT_ID PIXIV_OAUTH_CLIENT_SECRET PIXIV_OAUTH_HASH_SALT \
+            PIXNYA_UPDATER_PUBKEY PIXNYA_ANDROID_UPDATE_PUBKEY \
+            TAURI_SIGNING_PRIVATE_KEY TAURI_SIGNING_PRIVATE_KEY_PASSWORD; do
+            test -n "${!name}" || { echo "Missing $name" >&2; exit 1; }
+          done
+      - run: npm ci
+      - name: Build signed AppImage updater artifacts
+        run: npm run tauri -- build --config src-tauri/tauri.release.conf.json --bundles appimage
+      - uses: actions/upload-artifact@v7
+        with:
+          name: linux-x64
+          if-no-files-found: error
+          path: |
+            target/release/bundle/appimage/*.AppImage
+            target/release/bundle/appimage/*.tar.gz
+            target/release/bundle/appimage/*.sig
+
+  android:
+    needs: preflight
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - tauriTarget: aarch64
+            rustTarget: aarch64-linux-android
+            abi: arm64-v8a
+    env:
+      PIXIV_OAUTH_CLIENT_ID: ${{ secrets.PIXIV_OAUTH_CLIENT_ID }}
+      PIXIV_OAUTH_CLIENT_SECRET: ${{ secrets.PIXIV_OAUTH_CLIENT_SECRET }}
+      PIXIV_OAUTH_HASH_SALT: ${{ secrets.PIXIV_OAUTH_HASH_SALT }}
+      PIXNYA_UPDATER_PUBKEY: ${{ secrets.PIXNYA_UPDATER_PUBKEY }}
+      PIXNYA_ANDROID_UPDATE_PUBKEY: ${{ secrets.PIXNYA_ANDROID_UPDATE_PUBKEY }}
+      PIXNYA_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.PIXNYA_ANDROID_KEYSTORE_PASSWORD }}
+      PIXNYA_ANDROID_KEY_ALIAS: ${{ secrets.PIXNYA_ANDROID_KEY_ALIAS }}
+      PIXNYA_ANDROID_KEY_PASSWORD: ${{ secrets.PIXNYA_ANDROID_KEY_PASSWORD }}
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.PIXNYA_ANDROID_KEYSTORE_BASE64 }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: android-actions/setup-android@v3
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rustTarget }}
+      - name: Require and restore the Android release keystore
+        shell: bash
+        run: |
+          for name in PIXIV_OAUTH_CLIENT_ID PIXIV_OAUTH_CLIENT_SECRET PIXIV_OAUTH_HASH_SALT \
+            PIXNYA_UPDATER_PUBKEY PIXNYA_ANDROID_UPDATE_PUBKEY ANDROID_KEYSTORE_BASE64 \
+            PIXNYA_ANDROID_KEYSTORE_PASSWORD PIXNYA_ANDROID_KEY_ALIAS PIXNYA_ANDROID_KEY_PASSWORD; do
+            test -n "${!name}" || { echo "Missing $name" >&2; exit 1; }
+          done
+          KEYSTORE_PATH="$RUNNER_TEMP/pixnya-release.jks"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+          echo "PIXNYA_ANDROID_KEYSTORE_PATH=$KEYSTORE_PATH" >> "$GITHUB_ENV"
+      - run: npm ci
+      - name: Install the pinned Android NDK
+        run: sdkmanager "ndk;29.0.14206865"
+      - name: Build the signed split APK
+        run: npm run tauri -- android build --target ${{ matrix.tauriTarget }} --split-per-abi --apk --ci
+      - name: Give the APK a stable release asset name
+        shell: bash
+        run: |
+          APK="$(find src-tauri/gen/android/app/build/outputs/apk -type f -name '*-release.apk' -print -quit)"
+          test -n "$APK"
+          mkdir -p release-artifacts
+          cp "$APK" "release-artifacts/pixnya-${PIXNYA_RELEASE_VERSION}-android-${{ matrix.abi }}.apk"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: android-${{ matrix.abi }}
+          if-no-files-found: error
+          path: release-artifacts/*.apk
+
+  draft-release:
+    needs: [windows, linux, android]
+    runs-on: ubuntu-22.04
+    env:
+      RELEASE_NOTES: ${{ inputs.notes }}
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.PIXNYA_ANDROID_KEYSTORE_BASE64 }}
+      PIXNYA_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.PIXNYA_ANDROID_KEYSTORE_PASSWORD }}
+      PIXNYA_ANDROID_KEY_ALIAS: ${{ secrets.PIXNYA_ANDROID_KEY_ALIAS }}
+      ANDROID_MANIFEST_PRIVATE_KEY_BASE64: ${{ secrets.PIXNYA_ANDROID_MANIFEST_PRIVATE_KEY_BASE64 }}
+      ANDROID_MANIFEST_PRIVATE_KEY_PASSWORD: ${{ secrets.PIXNYA_ANDROID_MANIFEST_PRIVATE_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+      - run: npm ci
+      - name: Create signed update manifests and checksums
+        shell: bash
+        run: |
+          for name in ANDROID_KEYSTORE_BASE64 PIXNYA_ANDROID_KEYSTORE_PASSWORD \
+            PIXNYA_ANDROID_KEY_ALIAS ANDROID_MANIFEST_PRIVATE_KEY_BASE64 \
+            ANDROID_MANIFEST_PRIVATE_KEY_PASSWORD; do
+            test -n "${!name}" || { echo "Missing $name" >&2; exit 1; }
+          done
+          printf '%s\n' "$RELEASE_NOTES" > "$RUNNER_TEMP/release-notes.md"
+          RELEASE_BASE="https://github.com/space2233/pixnya/releases/download/v${PIXNYA_RELEASE_VERSION}/"
+
+          WINDOWS_ARCHIVE="$(find dist -type f -name '*.nsis.zip' -print -quit)"
+          LINUX_ARCHIVE="$(find dist -type f -name '*.AppImage.tar.gz' -print -quit)"
+          test -f "$WINDOWS_ARCHIVE" && test -f "${WINDOWS_ARCHIVE}.sig"
+          test -f "$LINUX_ARCHIVE" && test -f "${LINUX_ARCHIVE}.sig"
+          node scripts/generate-desktop-update-manifest.mjs \
+            --windows-archive "$WINDOWS_ARCHIVE" --windows-signature "${WINDOWS_ARCHIVE}.sig" \
+            --linux-archive "$LINUX_ARCHIVE" --linux-signature "${LINUX_ARCHIVE}.sig" \
+            --base-url "$RELEASE_BASE" --notes-file "$RUNNER_TEMP/release-notes.md" \
+            --output dist/latest.json
+
+          KEYSTORE_PATH="$RUNNER_TEMP/pixnya-release.jks"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+          CERTIFICATE_SHA256="$(keytool -J-Duser.language=en -list -v \
+            -keystore "$KEYSTORE_PATH" -storepass "$PIXNYA_ANDROID_KEYSTORE_PASSWORD" \
+            -alias "$PIXNYA_ANDROID_KEY_ALIAS" | awk -F': ' '/SHA256:/{gsub(":", "", $2); print tolower($2); exit}')"
+          test "${#CERTIFICATE_SHA256}" -eq 64
+          node scripts/generate-android-update-manifest.mjs \
+            --arm64 "dist/pixnya-${PIXNYA_RELEASE_VERSION}-android-arm64-v8a.apk" \
+            --certificate-sha256 "$CERTIFICATE_SHA256" --base-url "$RELEASE_BASE" \
+            --notes-file "$RUNNER_TEMP/release-notes.md" --output dist/android-latest.json
+
+          MANIFEST_KEY_PATH="$RUNNER_TEMP/android-manifest.key"
+          printf '%s' "$ANDROID_MANIFEST_PRIVATE_KEY_BASE64" | base64 --decode > "$MANIFEST_KEY_PATH"
+          TAURI_SIGNING_PRIVATE_KEY_PATH="$MANIFEST_KEY_PATH" \
+            TAURI_SIGNING_PRIVATE_KEY_PASSWORD="$ANDROID_MANIFEST_PRIVATE_KEY_PASSWORD" \
+            npm run tauri -- signer sign dist/android-latest.json
+          base64 --decode dist/android-latest.json.sig > dist/android-latest.json.minisig
+          rm dist/android-latest.json.sig
+          find dist -maxdepth 1 -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > dist/SHA256SUMS.txt
+      - name: Create a draft Release for manual verification
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ inputs.version }}
+          name: PixNya v${{ inputs.version }}
+          body: ${{ inputs.notes }}
+          draft: true
+          fail_on_unmatched_files: true
+          files: dist/*
