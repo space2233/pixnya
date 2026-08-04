@@ -5,14 +5,25 @@ import test from "node:test";
 
 const root = process.cwd();
 const read = (relativePath) => readFile(path.join(root, relativePath), "utf8");
+const readGenerated = async (relativePath) => {
+  try {
+    return await read(relativePath);
+  } catch (error) {
+    if (error?.code === "ENOENT") {
+      return null;
+    }
+    throw error;
+  }
+};
 
 test("all user-visible package versions agree on the 0.28.2 patch release", async () => {
-  const [workspace, packageJson, packageLock, tauri, androidProperties, settings, readme] = await Promise.all([
+  const [workspace, packageJson, packageLock, tauri, androidProperties, androidIgnore, settings, readme] = await Promise.all([
     read("Cargo.toml"),
     read("package.json"),
     read("package-lock.json"),
     read("src-tauri/tauri.conf.json"),
-    read("src-tauri/gen/android/app/tauri.properties"),
+    readGenerated("src-tauri/gen/android/app/tauri.properties"),
+    read("src-tauri/gen/android/app/.gitignore"),
     read("src/routes/settings/+page.svelte"),
     read("README.md"),
   ]);
@@ -20,8 +31,11 @@ test("all user-visible package versions agree on the 0.28.2 patch release", asyn
   assert.equal(JSON.parse(packageJson).version, "0.28.2");
   assert.equal(JSON.parse(packageLock).version, "0.28.2");
   assert.equal(JSON.parse(tauri).version, "0.28.2");
-  assert.match(androidProperties, /tauri\.android\.versionName=0\.28\.2/);
-  assert.match(androidProperties, /tauri\.android\.versionCode=28002/);
+  assert.match(androidIgnore, /^\/tauri\.properties$/m);
+  if (androidProperties !== null) {
+    assert.match(androidProperties, /tauri\.android\.versionName=0\.28\.2/);
+    assert.match(androidProperties, /tauri\.android\.versionCode=28002/);
+  }
   assert.match(settings, /appStatus\?\.version \?\? "0\.28\.2"/);
   assert.match(readme, /当前版本为 `0\.28\.2`/);
 });
