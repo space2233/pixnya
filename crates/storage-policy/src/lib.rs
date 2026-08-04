@@ -324,7 +324,9 @@ fn volume_space(path: &Path) -> Result<VolumeSpace, StorageError> {
     }
 }
 
+// libc exposes these statvfs counters with different widths across Unix targets.
 #[cfg(unix)]
+#[allow(clippy::unnecessary_cast)]
 fn volume_space(path: &Path) -> Result<VolumeSpace, StorageError> {
     use std::ffi::CString;
     use std::mem::MaybeUninit;

@@ -17,6 +17,10 @@ test("storage policy owns cross-platform space checks and atomic bounded setting
   assert.match(manifest, /libc = "0\.2\.189"/);
   assert.match(policy, /GetDiskFreeSpaceExW/);
   assert.match(policy, /libc::statvfs/);
+  assert.match(
+    policy,
+    /#\[cfg\(unix\)\]\s*#\[allow\(clippy::unnecessary_cast\)\]\s*fn volume_space/,
+  );
   assert.match(policy, /STORAGE_RESERVE_BYTES: u64 = 512 \* MIB/);
   assert.match(policy, /ALLOWED_CACHE_LIMIT_BYTES/);
   assert.match(policy, /persist_settings/);
