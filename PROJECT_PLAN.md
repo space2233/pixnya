@@ -624,7 +624,7 @@ pixiv-client/
 ## 15. CI、发布与更新
 
 - 使用 GitHub Actions 构建 Windows、Linux 和 Android。
-- Android CI 分别编译 `arm64-v8a`、`armeabi-v7a`，并构建 `x86_64` 测试产物；正式发布为 ARM64、ARMv7 独立签名 APK。
+- Android 正式发布当前只编译 `arm64-v8a` 签名 APK；ARMv7 手动调试入口保留，但已移入备选计划，`x86_64` 只用于模拟器/CI。
 - 固定 Cargo 与前端 lockfile，使用 Dependabot 或 Renovate 提交更新。
 - 执行格式化、静态检查、单元测试、许可证检查和依赖漏洞扫描。
 - 生成 SBOM、校验和与签名发布清单。
@@ -664,7 +664,7 @@ pixiv-client/
 
 当前发布完成标准只针对自动更新：
 
-- [ ] Windows NSIS、Linux AppImage、Android ARM64/ARMv7 生成可更新的正式签名产物。
+- [ ] Windows NSIS、Linux AppImage、Android ARM64 生成可更新的正式签名产物；ARMv7 暂不进入首个正式版。
 - [ ] 桌面更新包通过 Tauri updater 签名验证；Android 通过清单、哈希、包名、ABI 和 APK 证书验证。
 - [ ] 自动检查、可选自动下载、用户确认安装和手动检查均可用。
 - [ ] 断网、清单损坏、签名错误、下载中断、空间不足、用户取消和重启恢复均经过测试。
@@ -694,9 +694,12 @@ pixiv-client/
 5. 实现 Android ABI APK 下载、验证和系统安装 Adapter。
 6. 完成从旧一版更新到当前版的跨平台回归与发布闸门。
 
+首个正式版的逐项状态、生产密钥、匿名更新源和三平台升级验收统一记录在[首个正式版发布清单](docs/FIRST_STABLE_RELEASE_CHECKLIST.md)。计划版本为 `1.0.0`，但在发布闸门完成前源码继续保持当前版本，不提前制造正式版本产物。
+
 ## 21. 参考资料
 
 - [自动检查更新与自动更新计划](docs/AUTO_UPDATE_PLAN.md)
+- [首个正式版发布清单](docs/FIRST_STABLE_RELEASE_CHECKLIST.md)
 - [备选功能计划](docs/OPTIONAL_FEATURES_PLAN.md)
 - [项目目录空间清理计划](docs/STORAGE_CLEANUP_PLAN.md)
 - [第一次 GitHub 上传清单](docs/FIRST_GITHUB_UPLOAD_CHECKLIST.md)

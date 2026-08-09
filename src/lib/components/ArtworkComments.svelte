@@ -1,6 +1,7 @@
 <script lang="ts">
   import CommentCard from "$lib/components/CommentCard.svelte";
   import CommentComposer from "$lib/components/CommentComposer.svelte";
+  import { m } from "$lib/i18n";
   import {
     recallCommentThread,
     rememberCommentRoot,
@@ -157,8 +158,8 @@
 
 <section class="comments-section" aria-labelledby="comments-title">
   <header>
-    <div><h2 id="comments-title">评论</h2><p>{totalComments} 条评论</p></div>
-    <button type="button" disabled={status === "loading"} onclick={refreshComments}>刷新</button>
+    <div><h2 id="comments-title">{m.comments_title()}</h2><p>{m.comments_count({ count: totalComments })}</p></div>
+    <button type="button" disabled={status === "loading"} onclick={refreshComments}>{m.common_refresh()}</button>
   </header>
 
   <CommentComposer
@@ -168,11 +169,11 @@
   />
 
   {#if status === "loading"}
-    <div class="comment-state"><span class="spinner"></span><p>正在载入评论…</p></div>
+    <div class="comment-state"><span class="spinner"></span><p>{m.comments_loading()}</p></div>
   {:else if status === "error"}
-    <div class="comment-state error" role="alert"><span>!</span><p>{errorMessage}</p><button type="button" onclick={() => loadComments(requestedKey, resourceId)}>重试</button></div>
+    <div class="comment-state error" role="alert"><span>!</span><p>{errorMessage}</p><button type="button" onclick={() => loadComments(requestedKey, resourceId)}>{m.common_retry()}</button></div>
   {:else if comments.length === 0}
-    <p class="empty">还没有评论，来留下第一条吧。</p>
+    <p class="empty">{m.comments_empty()}</p>
   {:else}
     <div class="comment-list">
       {#each comments as comment (comment.id)}
@@ -189,7 +190,7 @@
   {/if}
 
   {#if paginationError}<p class="inline-error center" role="alert">{paginationError}</p>{/if}
-  {#if nextCursor && status === "ready"}<button class="load-more" type="button" disabled={loadingMore} onclick={loadMoreComments}>{loadingMore ? "正在载入…" : "加载更多评论"}</button>{/if}
+  {#if nextCursor && status === "ready"}<button class="load-more" type="button" disabled={loadingMore} onclick={loadMoreComments}>{loadingMore ? m.common_loading() : m.comments_load_more()}</button>{/if}
 </section>
 
 <style>

@@ -1,16 +1,23 @@
 {
   "name": "pixnya",
-  "version": "0.28.2",
+  "version": "0.29.0",
   "description": "PixNya, an unofficial local-first Pixiv client for Windows, Linux and Android",
   "private": true,
   "type": "module",
   "scripts": {
+    "test": "node scripts/run-test-suite.mjs quick",
+    "test:quick": "node scripts/run-test-suite.mjs quick",
+    "test:rust": "node scripts/run-test-suite.mjs rust",
+    "test:full": "node scripts/run-test-suite.mjs full",
+    "i18n:compile": "paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide --strategy custom-pixnya baseLocale --emit-ts-declarations --silent",
     "dev": "vite dev",
     "build": "vite build",
     "build:desktop:debug": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/build-desktop-debug.ps1",
     "build:android:arm64:debug": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/build-android-arm64-debug.ps1",
     "build:android:armv7:debug": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/build-android-armv7-debug.ps1",
     "artifacts:collect": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/collect-artifacts.ps1",
+    "storage:audit": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/audit-target-storage.ps1",
+    "storage:cleanup:preview": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/cleanup-target-reuse-first.ps1",
     "preview": "vite preview",
     "check:avatar": "node scripts/check-mobile-avatar.mjs",
     "check:branding": "node --test scripts/branding-regression.test.mjs",
@@ -52,8 +59,9 @@
     "check:novel-reader-home-tags": "node --test scripts/novel-reader-home-tags-regression.test.mjs",
     "check:offline-refresh-layout": "node --test scripts/offline-refresh-layout-regression.test.mjs",
     "check:updates": "node --test scripts/update-manager-regression.test.mjs",
-    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "check:i18n": "node --test scripts/i18n-regression.test.mjs",
+    "check": "npm run i18n:compile && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "npm run i18n:compile && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "tauri": "tauri"
   },
   "license": "GPL-3.0-only",
@@ -61,13 +69,15 @@
     "@tauri-apps/api": "^2"
   },
   "devDependencies": {
+    "@inlang/paraglide-js": "^2.23.2",
+    "@inlang/plugin-message-format": "^4.4.1",
     "@sveltejs/adapter-static": "^3.0.6",
     "@sveltejs/kit": "^2.9.0",
     "@sveltejs/vite-plugin-svelte": "^5.0.0",
+    "@tauri-apps/cli": "^2",
     "svelte": "^5.0.0",
     "svelte-check": "^4.0.0",
     "typescript": "~5.6.2",
-    "vite": "^6.0.3",
-    "@tauri-apps/cli": "^2"
+    "vite": "^6.0.3"
   }
 }

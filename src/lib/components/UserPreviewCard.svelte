@@ -1,6 +1,7 @@
 <script lang="ts">
   import ArtworkThumbnail from "$lib/components/ArtworkThumbnail.svelte";
   import PixivImage from "$lib/components/PixivImage.svelte";
+  import { m } from "$lib/i18n";
   import { r18DefaultVisible } from "$lib/preferences";
   import type { UserPreview } from "$lib/types";
 
@@ -22,17 +23,17 @@
       <strong>{preview.user.name || preview.user.account}</strong>
       <small>@{preview.user.account}</small>
     </span>
-    <i class:active={preview.user.isFollowed}>{preview.user.isFollowed ? "已关注" : "查看主页"}</i>
+    <i class:active={preview.user.isFollowed}>{preview.user.isFollowed ? m.user_followed() : m.user_view_profile()}</i>
   </a>
 
   {#if preview.illustrations.length > 0}
     <div class="preview-works">
       {#each preview.illustrations as illustration, index (illustration.id)}
         <div class="preview-work" class:concealed={illustration.xRestrict > 0 && !$r18DefaultVisible && !revealRestricted}>
-          <a href={`/artworks/${illustration.id}`} aria-label={`查看作品：${illustration.title || "无题"}`}></a>
+          <a href={`/artworks/${illustration.id}`} aria-label={m.artwork_view({ title: illustration.title || m.common_untitled() })}></a>
           <ArtworkThumbnail
             url={illustration.thumbnailUrl}
-            alt={illustration.xRestrict > 0 && !$r18DefaultVisible && !revealRestricted ? "受限内容缩略图已模糊" : illustration.title || "无题作品"}
+            alt={illustration.xRestrict > 0 && !$r18DefaultVisible && !revealRestricted ? m.restricted_thumbnail_hidden() : illustration.title || m.artwork_untitled()}
             tone={(index % 6) + 1}
           />
           {#if illustration.xRestrict > 0 && !$r18DefaultVisible && !revealRestricted}
@@ -42,7 +43,7 @@
       {/each}
     </div>
   {:else}
-    <p class="no-preview">没有可预览的公开作品</p>
+    <p class="no-preview">{m.user_no_public_preview()}</p>
   {/if}
 </article>
 

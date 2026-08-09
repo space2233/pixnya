@@ -4,6 +4,7 @@
   import CommentCard from "$lib/components/CommentCard.svelte";
   import CommentComposer from "$lib/components/CommentComposer.svelte";
   import ReturnLink from "$lib/components/ReturnLink.svelte";
+  import { m } from "$lib/i18n";
   import { recallCommentRoot, type CommentResourceKind } from "$lib/comment-thread-memory";
   import { recallNavigationView, rememberNavigationView } from "$lib/navigation-view-memory";
   import {
@@ -155,28 +156,28 @@
   }
 </script>
 
-<svelte:head><title>评论回复 · PixNya</title></svelte:head>
+<svelte:head><title>{m.reply_page_title()} · PixNya</title></svelte:head>
 
-<AppShell title="评论回复">
+<AppShell title={m.reply_page_title()}>
   <main class="reply-page">
-    <ReturnLink {fallback} label="返回作品评论" />
+    <ReturnLink {fallback} label={m.reply_back()} />
 
     {#if !$sessionRestoring && !$session.loggedIn}
-      <section class="state-card"><h1>登录后查看回复</h1><p>回复内容通过登录后的 App API 载入。</p><a href="/login?mode=standard">前往登录</a></section>
+      <section class="state-card"><h1>{m.reply_login_title()}</h1><p>{m.reply_login_description()}</p><a href="/login?mode=standard">{m.common_go_to_login()}</a></section>
     {:else if !kindValid || !/^\d+$/.test(resourceId) || !/^\d+$/.test(commentId)}
-      <section class="state-card error"><h1>回复地址无效</h1><p>请返回作品详情后重新打开评论。</p></section>
+      <section class="state-card error"><h1>{m.reply_invalid_title()}</h1><p>{m.reply_invalid_description()}</p></section>
     {:else}
       <section class="thread-card">
-        <header><div><span>评论线程</span><h1>{rootComment?.user?.name ? `回复 @${rootComment.user.name}` : "评论回复"}</h1></div><strong>{replies.length} 条已载入回复</strong></header>
+        <header><div><span>{m.reply_thread()}</span><h1>{rootComment?.user?.name ? m.reply_to_user({ name: rootComment.user.name }) : m.reply_page_title()}</h1></div><strong>{m.reply_loaded_count({ count: replies.length })}</strong></header>
         {#if rootComment}
           <div class="root-comment"><CommentCard comment={rootComment} {resourceKind} {resourceId} /></div>
         {:else}
-          <p class="root-missing">直接打开了回复页；根评论摘要会在从作品详情进入时显示。</p>
+          <p class="root-missing">{m.reply_root_missing()}</p>
         {/if}
         <div class="composer-wrap">
           <CommentComposer
-            placeholder="回复这条评论"
-            submitLabel="发布回复"
+            placeholder={m.reply_placeholder()}
+            submitLabel={m.reply_submit()}
             {submitting}
             errorMessage={submitError}
             autofocus={focusComposer}
@@ -185,11 +186,11 @@
         </div>
 
         {#if status === "loading"}
-          <div class="reply-state"><span class="spinner"></span><p>正在载入回复…</p></div>
+          <div class="reply-state"><span class="spinner"></span><p>{m.reply_loading()}</p></div>
         {:else if status === "error"}
-          <div class="reply-state error" role="alert"><p>{errorMessage}</p><button type="button" onclick={() => loadReplies(requestedKey)}>重试</button></div>
+          <div class="reply-state error" role="alert"><p>{errorMessage}</p><button type="button" onclick={() => loadReplies(requestedKey)}>{m.common_retry()}</button></div>
         {:else if replies.length === 0}
-          <p class="empty">还没有回复。</p>
+          <p class="empty">{m.reply_empty()}</p>
         {:else}
           <div class="reply-list">
             {#each replies as reply (reply.id)}
@@ -198,7 +199,7 @@
           </div>
         {/if}
         {#if paginationError}<p class="inline-error" role="alert">{paginationError}</p>{/if}
-        {#if nextCursor && status === "ready"}<button class="load-more" type="button" disabled={loadingMore} onclick={loadMoreReplies}>{loadingMore ? "正在载入…" : "加载更多回复"}</button>{/if}
+        {#if nextCursor && status === "ready"}<button class="load-more" type="button" disabled={loadingMore} onclick={loadMoreReplies}>{loadingMore ? m.common_loading() : m.reply_load_more()}</button>{/if}
       </section>
     {/if}
   </main>

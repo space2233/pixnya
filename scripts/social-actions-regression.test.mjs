@@ -90,7 +90,7 @@ test("comments support paging, posting, and replies through the shared media pat
   assert.match(content, /<PixivImage/);
   assert.match(card, /<PixivImage/);
   for (const component of [comments, replies, card, content, composer]) assert.doesNotMatch(component, /<img\b/);
-  assert.match(card, /本地举报并屏蔽/);
+  assert.match(card, /m\.comment_report_local\(\)/);
   assert.match(comments, /\/comments\/\$\{resourceKind\}/);
   assert.match(artwork, /<ArtworkComments/);
 });

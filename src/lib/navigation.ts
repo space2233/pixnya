@@ -1,4 +1,5 @@
 import type { IconName } from "$lib/components/Icon.svelte";
+import { m } from "./i18n.ts";
 
 export type NavigationKey =
   | "home"
@@ -26,94 +27,99 @@ export type NavigationItem = {
 
 export type NavigationSection = {
   key: "content" | "discovery";
-  label: string;
+  label: () => string;
   items: readonly NavigationKey[];
 };
 
-const items: Record<NavigationKey, NavigationItem> = {
-  home: { key: "home", label: "首页", compactLabel: "首页", href: "/", icon: "home" },
+type NavigationDefinition = Omit<NavigationItem, "label" | "compactLabel"> & {
+  label: () => string;
+  compactLabel: () => string;
+};
+
+const items: Record<NavigationKey, NavigationDefinition> = {
+  home: { key: "home", label: m.navigation_home, compactLabel: m.navigation_home, href: "/", icon: "home" },
   artworks: {
     key: "artworks",
-    label: "插画",
-    compactLabel: "插画",
+    label: m.navigation_artworks,
+    compactLabel: m.navigation_artworks,
     href: "/artworks",
     icon: "image",
   },
-  manga: { key: "manga", label: "漫画", compactLabel: "漫画", href: "/manga", icon: "book" },
+  manga: { key: "manga", label: m.navigation_manga, compactLabel: m.navigation_manga, href: "/manga", icon: "book" },
   novels: {
     key: "novels",
-    label: "小说",
-    compactLabel: "小说",
+    label: m.navigation_novels,
+    compactLabel: m.navigation_novels,
     href: "/novels",
     icon: "book",
   },
   following: {
     key: "following",
-    label: "关注用户的新作",
-    compactLabel: "新作",
+    label: m.navigation_following,
+    compactLabel: m.navigation_compact_following,
     href: "/following",
     icon: "user",
   },
   discover: {
     key: "discover",
-    label: "发现",
-    compactLabel: "发现",
+    label: m.navigation_discover,
+    compactLabel: m.navigation_discover,
     href: "/discover",
     icon: "compass",
   },
   ranking: {
     key: "ranking",
-    label: "排行榜",
-    compactLabel: "排行",
+    label: m.navigation_ranking,
+    compactLabel: m.navigation_compact_ranking,
     href: "/ranking",
     icon: "ranking",
   },
   bookmarks: {
     key: "bookmarks",
-    label: "收藏",
-    compactLabel: "收藏",
+    label: m.navigation_bookmarks,
+    compactLabel: m.navigation_bookmarks,
     href: "/bookmarks",
     icon: "heart",
   },
   offline: {
     key: "offline",
-    label: "离线资料库",
-    compactLabel: "离线",
+    label: m.navigation_offline,
+    compactLabel: m.navigation_compact_offline,
     href: "/offline",
     icon: "download",
   },
   history: {
     key: "history",
-    label: "浏览历史",
-    compactLabel: "历史",
+    label: m.navigation_history,
+    compactLabel: m.navigation_compact_history,
     href: "/history",
     icon: "history",
   },
   search: {
     key: "search",
-    label: "搜索",
-    compactLabel: "搜索",
+    label: m.navigation_search,
+    compactLabel: m.navigation_search,
     href: "/search",
     icon: "search",
   },
   notifications: {
     key: "notifications",
-    label: "通知",
-    compactLabel: "通知",
+    label: m.navigation_notifications,
+    compactLabel: m.navigation_notifications,
     href: "/notifications",
     icon: "bell",
   },
   profile: {
     key: "profile",
-    label: "个人主页",
-    compactLabel: "我的",
+    label: m.navigation_profile,
+    compactLabel: m.navigation_compact_profile,
     href: "/profile",
     icon: "user",
   },
   settings: {
     key: "settings",
-    label: "设置",
-    compactLabel: "设置",
+    label: m.navigation_settings,
+    compactLabel: m.navigation_settings,
     href: "/settings",
     icon: "settings",
   },
@@ -122,12 +128,12 @@ const items: Record<NavigationKey, NavigationItem> = {
 export const sideNavigationSections: readonly NavigationSection[] = [
   {
     key: "content",
-    label: "浏览作品",
+    label: m.navigation_section_content,
     items: ["home", "artworks", "manga", "novels"],
   },
   {
     key: "discovery",
-    label: "发现与收藏",
+    label: m.navigation_section_discovery,
     items: ["following", "discover", "ranking", "bookmarks", "history", "offline"],
   },
 ];
@@ -139,7 +145,7 @@ export const contentTabKeys: readonly NavigationKey[] = [
   "novels",
 ];
 
-// “新作”与侧栏的“关注用户的新作”是同一个入口，故复用 following。
+// The compact "new works" item and the sidebar's followed-user feed share one route.
 export const bottomNavigationKeys: readonly NavigationKey[] = [
   "home",
   "search",
@@ -153,7 +159,12 @@ const routeAliases: ReadonlyArray<{ prefix: string; key: NavigationKey }> = [
 ];
 
 export function getNavigationItem(key: NavigationKey): NavigationItem {
-  return items[key];
+  const item = items[key];
+  return {
+    ...item,
+    label: item.label(),
+    compactLabel: item.compactLabel(),
+  };
 }
 
 export function navigationKeyForPath(pathname: string): NavigationKey | null {

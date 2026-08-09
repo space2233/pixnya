@@ -13,6 +13,10 @@ $gradleWrapper = Join-Path $androidProject 'gradlew.bat'
 $jniRoot = Join-Path $androidProject 'app\src\main\jniLibs'
 $rustLoader = Join-Path $androidProject 'app\src\main\java\io\github\space2233\pixnya\generated\Rust.kt'
 
+# Keep reusable dependencies but do not accumulate incremental sessions during
+# one-off APK builds.
+$env:CARGO_INCREMENTAL = '0'
+
 function Remove-StaleTauriNativeLibraryLinks {
     param(
         [Parameter(Mandatory)]
@@ -148,6 +152,8 @@ try {
     if ($LASTEXITCODE -ne 0) {
         exit $LASTEXITCODE
     }
+
+    & (Join-Path $PSScriptRoot 'audit-target-storage.ps1') -WarnAboveGiB 80
 }
 finally {
     Pop-Location

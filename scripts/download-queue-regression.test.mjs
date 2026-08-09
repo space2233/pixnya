@@ -65,8 +65,8 @@ test("detail pages enqueue work and offline library controls queue state", async
   assert.match(api, /invoke<boolean>\("remove_download_task"/);
   assert.match(artwork, /enqueueDownload/);
   assert.match(novel, /enqueueDownload/);
-  assert.match(offline, /下载队列/);
+  assert.match(offline, /m\.offline_queue_title\(\)/);
   assert.match(offline, /pixiv-download-queue-changed/);
-  assert.match(offline, /暂停/);
-  assert.match(offline, /继续|重试/);
+  assert.match(offline, /m\.offline_pause\(\)/);
+  assert.match(offline, /m\.offline_continue\(\)|m\.common_retry\(\)/);
 });

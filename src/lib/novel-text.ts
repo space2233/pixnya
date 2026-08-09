@@ -8,7 +8,7 @@ export type NovelBlock =
 
 const resourcePattern = /^[1-9]\d{0,19}$/;
 
-export function parseNovelText(source: string): NovelBlock[] {
+export function parseNovelText(source: string, defaultChapter = "Chapter"): NovelBlock[] {
   const normalized = source.replaceAll("\r\n", "\n").replaceAll("\r", "\n");
   const blocks: NovelBlock[] = [];
   let paragraph: string[] = [];
@@ -33,7 +33,7 @@ export function parseNovelText(source: string): NovelBlock[] {
     const chapter = trimmed.match(/^\[chapter:(.*)]$/);
     if (chapter) {
       flushParagraph();
-      blocks.push({ kind: "chapter", text: chapter[1].trim() || "章节" });
+      blocks.push({ kind: "chapter", text: chapter[1].trim() || defaultChapter });
       continue;
     }
     const artwork = trimmed.match(/^\[pixivimage:(\d+)]$/);

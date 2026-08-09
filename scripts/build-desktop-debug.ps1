@@ -4,6 +4,10 @@ $projectRoot = Split-Path -Parent $PSScriptRoot
 $workspaceRoot = Split-Path -Parent $projectRoot
 $rustRoot = Join-Path $workspaceRoot '.toolchains\rust'
 
+# Delivery builds are one-off artifacts. Reusing deps/build is useful, while
+# accumulating rustc incremental sessions makes target/ grow very quickly.
+$env:CARGO_INCREMENTAL = '0'
+
 if (Test-Path -LiteralPath $rustRoot -PathType Container) {
     $env:CARGO_HOME = Join-Path $rustRoot 'cargo'
     $env:RUSTUP_HOME = Join-Path $rustRoot 'rustup'
@@ -27,6 +31,8 @@ try {
     if ($LASTEXITCODE -ne 0) {
         exit $LASTEXITCODE
     }
+
+    & (Join-Path $PSScriptRoot 'audit-target-storage.ps1') -WarnAboveGiB 80
 }
 finally {
     Pop-Location

@@ -67,7 +67,7 @@ test("frontend exposes collection CRUD, entry organization, and combined filters
   assert.match(page, /collectionFilter === "unfiled"/);
   assert.match(page, /tagFilter !== "all"/);
   assert.match(page, /sortOrder === "size"/);
-  assert.match(page, /最多 16 个/);
+  assert.match(page, /m\.offline_tags_placeholder\(\)/);
   assert.doesNotMatch(page, /localStorage|sessionStorage/);
 });
 

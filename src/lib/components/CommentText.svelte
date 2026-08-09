@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { m } from "$lib/i18n";
   import PixivImage from "$lib/components/PixivImage.svelte";
   import { tokenizeCommentText } from "$lib/comment-emoji";
   import type { PixivComment } from "$lib/types";
@@ -8,7 +9,7 @@
 </script>
 
 {#if comment.stamp?.url}
-  <div class="comment-stamp" aria-label={`评论表情 ${comment.stamp.id}`}>
+      <div class="comment-stamp" aria-label={m.comment_stamp_label({ id: comment.stamp.id })}>
     <PixivImage url={comment.stamp.url} alt="" fit="contain" />
   </div>
 {/if}

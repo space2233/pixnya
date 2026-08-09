@@ -21,6 +21,10 @@ jobs:
         with:
           node-version: 24
           cache: npm
+      - name: Install frontend dependencies
+        run: npm ci
+      - name: Run fast frontend and regression checks
+        run: npm run test:quick
       - name: Install Tauri Linux prerequisites
         run: |
           sudo apt-get update
@@ -38,5 +42,5 @@ jobs:
         run: |
           rustup default stable
           rustup component add clippy rustfmt
-      - name: Verify frontend, Rust core, and Linux desktop build
-        run: bash scripts/check-linux.sh
+      - name: Verify Rust core and Linux desktop build
+        run: bash scripts/check-linux.sh rust-only

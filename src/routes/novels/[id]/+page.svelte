@@ -5,6 +5,7 @@
   import Icon from "$lib/components/Icon.svelte";
   import PixivImage from "$lib/components/PixivImage.svelte";
   import ReturnLink from "$lib/components/ReturnLink.svelte";
+  import { currentAppLocale, m } from "$lib/i18n";
   import { recallNavigationView, rememberNavigationView } from "$lib/navigation-view-memory";
   import {
     describeDataFailure,
@@ -105,8 +106,8 @@
       void recordBrowsingHistory({
         kind: "novel",
         resourceId: nextDetail.novel.id,
-        title: nextDetail.novel.title || "无题",
-        subtitle: nextDetail.novel.author.name || "未知作者",
+        title: nextDetail.novel.title || m.common_untitled(),
+        subtitle: nextDetail.novel.author.name || m.common_unknown_author(),
         thumbnailUrl: nextDetail.novel.coverUrl,
       }).catch(() => undefined);
     } catch (error) {
@@ -117,7 +118,7 @@
   }
 
   function compact(value: number): string {
-    return new Intl.NumberFormat("zh-CN", {
+    return new Intl.NumberFormat(currentAppLocale(), {
       notation: "compact",
       maximumFractionDigits: 1,
     }).format(value);
@@ -134,7 +135,7 @@
         detail.novel.title,
         detail.novel.author.name,
       );
-      downloadMessage = "已加入下载队列，可在离线资料库查看进度";
+      downloadMessage = m.download_added();
     } catch (error) {
       downloadMessage = describeDataFailure(error);
     } finally {
@@ -160,28 +161,28 @@
   }
 </script>
 
-<svelte:head><title>{detail?.novel.title || "小说详情"} · PixNya</title></svelte:head>
+<svelte:head><title>{detail?.novel.title || m.novel_detail()} · PixNya</title></svelte:head>
 
-<AppShell title="小说详情">
+<AppShell title={m.novel_detail()}>
   <main class="detail-page">
-    <ReturnLink fallback="/novels" label="返回来源页" />
+    <ReturnLink fallback="/novels" label={m.novel_return_source()} />
 
     {#if !$sessionRestoring && !$session.loggedIn}
       <section class="state">
         <Icon name="user" size={27} />
-        <div><h1>登录后查看小说</h1><p>详情和正文均从 Pixiv 的账号会话载入。</p></div>
-        <a href="/login?mode=standard">前往登录</a>
+        <div><h1>{m.novel_login_title()}</h1><p>{m.novel_login_description()}</p></div>
+        <a href="/login?mode=standard">{m.common_go_to_login()}</a>
       </section>
     {:else if status === "loading"}
       <section class="state">
         <span class="spinner"></span>
-        <div><h1>正在载入小说详情</h1><p>正文会在点击阅读后单独载入。</p></div>
+        <div><h1>{m.novel_loading_title()}</h1><p>{m.novel_loading_description()}</p></div>
       </section>
     {:else if status === "error"}
       <section class="state error" role="alert">
         <span>!</span>
-        <div><h1>小说详情载入失败</h1><p>{errorMessage}</p></div>
-        <button type="button" onclick={() => loadNovelDetail(requestedKey, novelId)}>重试</button>
+        <div><h1>{m.novel_load_failed()}</h1><p>{errorMessage}</p></div>
+        <button type="button" onclick={() => loadNovelDetail(requestedKey, novelId)}>{m.common_retry()}</button>
       </section>
     {:else if detail}
       <article class="detail-card">
@@ -189,33 +190,33 @@
           <PixivImage url={detail.novel.coverUrl} alt="" cacheKind="preview" />
           {#if restricted && !$r18DefaultVisible && !revealRestricted}
             <button class="reveal-cover" type="button" onclick={() => (revealRestricted = true)}>
-              R-18 · 点击显示封面
+              {m.novel_reveal_cover()}
             </button>
           {/if}
         </div>
 
         <div class="detail-copy">
           <div class="badges">
-            {#if detail.novel.series}<span>系列</span>{/if}
-            {#if detail.isOriginal}<span>原创</span>{/if}
+            {#if detail.novel.series}<span>{m.novel_series_badge()}</span>{/if}
+            {#if detail.isOriginal}<span>{m.novel_original_badge()}</span>{/if}
             {#if detail.novel.aiType === 2}<span>AI</span>{/if}
             {#if restricted}<span class="restricted-badge">R-18</span>{/if}
           </div>
-          <h1>{detail.novel.title || "无题"}</h1>
+          <h1>{detail.novel.title || m.common_untitled()}</h1>
           <a class="author" href={`/users/${detail.novel.author.id}`}>{detail.novel.author.name}</a>
           {#if caption}<p class="caption">{caption}</p>{/if}
 
           {#if detail.novel.series}
             <a class="series-link" href={`/series/novels/${detail.novel.series.id}`}>
-              <small>所属小说系列</small><strong>{detail.novel.series.title}</strong><i>›</i>
+              <small>{m.novel_series_belongs()}</small><strong>{detail.novel.series.title}</strong><i>›</i>
             </a>
           {/if}
 
           <dl>
-            <div><dt>字数</dt><dd>{compact(detail.novel.textLength)}</dd></div>
-            <div><dt>浏览</dt><dd>{compact(detail.novel.totalViews)}</dd></div>
-            <div><dt>收藏</dt><dd>{compact(detail.novel.totalBookmarks)}</dd></div>
-            <div><dt>评论</dt><dd>{compact(detail.novel.totalComments)}</dd></div>
+            <div><dt>{m.novel_word_count()}</dt><dd>{compact(detail.novel.textLength)}</dd></div>
+            <div><dt>{m.common_view_count()}</dt><dd>{compact(detail.novel.totalViews)}</dd></div>
+            <div><dt>{m.common_bookmark_count()}</dt><dd>{compact(detail.novel.totalBookmarks)}</dd></div>
+            <div><dt>{m.common_comment_count()}</dt><dd>{compact(detail.novel.totalComments)}</dd></div>
           </dl>
 
           <div class="tags">
@@ -226,13 +227,13 @@
 
           <div class="detail-actions">
             <a class="read-button" href={`/novels/${detail.novel.id}/read`}>
-              <Icon name="book" size={18} />开始阅读
+              <Icon name="book" size={18} />{m.novel_start_reading()}
             </a>
             <label class="bookmark-scope">
-              <span>收藏范围</span>
-              <select bind:value={bookmarkRestrict} aria-label="小说收藏公开范围">
-                <option value="public">公开收藏</option>
-                <option value="private">非公开收藏</option>
+              <span>{m.common_bookmark_visibility()}</span>
+              <select bind:value={bookmarkRestrict} aria-label={m.novel_bookmark_visibility_label()}>
+                <option value="public">{m.novel_public_bookmark()}</option>
+                <option value="private">{m.novel_private_bookmark()}</option>
               </select>
             </label>
             <button
@@ -242,10 +243,10 @@
               disabled={bookmarkPending}
               onclick={toggleBookmark}
             >
-              <Icon name="heart" size={17} />{bookmarkPending ? "处理中…" : bookmarked ? "已收藏" : "收藏"}
+              <Icon name="heart" size={17} />{bookmarkPending ? m.common_processing() : bookmarked ? m.novel_bookmarked() : m.novel_bookmark()}
             </button>
             <button class="offline-button" type="button" disabled={downloadPending} onclick={saveOffline}>
-              <Icon name="download" size={17} />{downloadPending ? "加入中…" : "离线保存"}
+              <Icon name="download" size={17} />{downloadPending ? m.common_queueing() : m.common_offline_save()}
             </button>
           </div>
           {#if bookmarkError}<p class="action-message error" role="alert">{bookmarkError}</p>{/if}

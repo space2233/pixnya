@@ -1,6 +1,7 @@
 <script lang="ts">
   import PixivImage from "$lib/components/PixivImage.svelte";
   import Icon from "$lib/components/Icon.svelte";
+  import { currentAppLocale, m } from "$lib/i18n";
   import { describeDataFailure, setNovelBookmark } from "$lib/pixiv-api";
   import { plainPixivText } from "$lib/pixiv-text";
   import { r18DefaultVisible } from "$lib/preferences";
@@ -20,7 +21,7 @@
   });
 
   function compact(value: number): string {
-    return new Intl.NumberFormat("zh-CN", { notation: "compact", maximumFractionDigits: 1 }).format(value);
+    return new Intl.NumberFormat(currentAppLocale(), { notation: "compact", maximumFractionDigits: 1 }).format(value);
   }
 
   async function toggleBookmark() {
@@ -42,24 +43,24 @@
 
 <article class="novel-card">
   <div class="cover" class:concealed={restricted && !$r18DefaultVisible && !revealRestricted}>
-    <a class="cover-link" href={`/novels/${novel.id}`} aria-label={`阅读小说：${novel.title || "无题"}`}></a>
+    <a class="cover-link" href={`/novels/${novel.id}`} aria-label={m.novel_read({ title: novel.title || m.common_untitled() })}></a>
     <PixivImage url={novel.coverUrl} alt="" />
-    <span>{novel.pageCount} 页</span>
+    <span>{m.novel_pages({ count: novel.pageCount })}</span>
     {#if restricted && !$r18DefaultVisible && !revealRestricted}
-      <button class="reveal" type="button" onclick={() => (revealRestricted = true)}>R-18 · 点击显示</button>
+      <button class="reveal" type="button" onclick={() => (revealRestricted = true)}>R-18 · {m.restricted_reveal()}</button>
     {/if}
   </div>
   <div class="copy">
     <div class="badges">
-      {#if novel.series}<span>系列</span>{/if}
+      {#if novel.series}<span>{m.novel_series_badge()}</span>{/if}
       {#if novel.aiType === 2}<span>AI</span>{/if}
       {#if novel.xRestrict > 0}<span>R-18</span>{/if}
-      <button type="button" class:active={bookmarked} disabled={bookmarkPending} title={bookmarkError || (bookmarked ? "取消收藏" : "收藏小说")} aria-label={bookmarked ? "取消收藏" : "收藏小说"} onclick={toggleBookmark}><Icon name="heart" size={16} /></button>
+      <button type="button" class:active={bookmarked} disabled={bookmarkPending} title={bookmarkError || (bookmarked ? m.bookmark_remove() : m.novel_bookmark())} aria-label={bookmarked ? m.bookmark_remove() : m.novel_bookmark()} onclick={toggleBookmark}><Icon name="heart" size={16} /></button>
     </div>
-    <h2><a href={`/novels/${novel.id}`}>{novel.title || "无题"}</a></h2>
+    <h2><a href={`/novels/${novel.id}`}>{novel.title || m.common_untitled()}</a></h2>
     {#if caption}<p>{caption}</p>{/if}
     <a class="author" href={`/users/${novel.author.id}`}>{novel.author.name || novel.author.account}</a>
-    <div class="meta"><span>{compact(novel.textLength)} 字</span><span>♥ {compact(novel.totalBookmarks)}</span><span>👁 {compact(novel.totalViews)}</span></div>
+    <div class="meta"><span>{m.novel_characters({ count: compact(novel.textLength) })}</span><span>♥ {compact(novel.totalBookmarks)}</span><span>👁 {compact(novel.totalViews)}</span></div>
     <div class="tags">{#each novel.tags.slice(0, 4) as tag}<span>#{tag}</span>{/each}</div>
   </div>
 </article>

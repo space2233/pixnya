@@ -5,6 +5,7 @@
   import { onDestroy, onMount } from "svelte";
   import AppShell from "$lib/components/AppShell.svelte";
   import ReturnLink from "$lib/components/ReturnLink.svelte";
+  import { m } from "$lib/i18n";
   import {
     readUnsafeConnectionWarningSuppressed,
     writeUnsafeConnectionWarningSuppressed,
@@ -22,42 +23,42 @@
     SessionSnapshot,
   } from "$lib/types";
 
-  const modeLabels: Record<ConnectionMode, string> = {
-    standard: "标准模式",
-    ech: "ECH 直连",
-    compatible: "低安全直连",
+  const modeLabels: Record<ConnectionMode, () => string> = {
+    standard: m.login_mode_standard,
+    ech: m.login_mode_ech,
+    compatible: m.login_mode_compatible,
   };
 
-  const transportLabels: Record<RoutePlan["transport"], string> = {
-    system: "系统网络",
-    ech: "TLS 1.3 + ECH",
-    compatible_direct: "兼容直连",
-    web_view_system: "WebView 系统网络",
-    web_view_proxy: "WebView 本地 CONNECT 代理",
-    web_view_insecure_bridge: "WebView 一次性低安全 TLS 桥",
+  const transportLabels: Record<RoutePlan["transport"], () => string> = {
+    system: m.login_transport_system,
+    ech: () => "TLS 1.3 + ECH",
+    compatible_direct: m.login_transport_compatible,
+    web_view_system: m.login_transport_webview_system,
+    web_view_proxy: m.login_transport_webview_proxy,
+    web_view_insecure_bridge: m.login_transport_insecure_bridge,
   };
 
   function routeNoteTitle(connectionMode: ConnectionMode): string {
-    if (usesAndroidBridge && connectionMode === "ech") return "严格 ECH 预检 + 低安全登录桥";
-    if (usesAndroidBridge) return "固定 Pixiv IP + 低安全登录桥";
-    if (connectionMode === "ech") return "严格 ECH 预检 + 平台 WebView";
-    if (connectionMode === "compatible") return "固定 Pixiv IP + 完整 TLS 验证";
-    return "系统 WebView 网络";
+    if (usesAndroidBridge && connectionMode === "ech") return m.login_route_android_ech_title();
+    if (usesAndroidBridge) return m.login_route_bridge_title();
+    if (connectionMode === "ech") return m.login_route_ech_title();
+    if (connectionMode === "compatible") return m.login_route_compatible_title();
+    return m.login_route_standard_title();
   }
 
   function routeNoteBody(connectionMode: ConnectionMode): string {
     if (usesAndroidBridge) {
       return connectionMode === "ech"
-        ? "Rust 会先确认目标接受 ECH；Android 官方页面随后通过一次性本地 TLS 桥连接固定 Pixiv IP。网页桥关闭上游 SNI 与证书验证，回调后的令牌交换则重新使用强制 ECH 与证书验证。"
-        : "Android 官方页面和回调后的令牌交换都会连接内置 Pixiv IP，并关闭上游 SNI 与证书验证。桥不记录正文，但密码、验证码与令牌都可能被中间人读取或修改。";
+        ? m.login_route_android_ech_body()
+        : m.login_route_bridge_body();
     }
     if (connectionMode === "ech") {
-      return "打开前由 Rust 确认目标接受 ECH；官方页面自身的 TLS 由平台 WebView 管理，界面不会把平台状态冒充为可验证的 ECH Accepted。";
+      return m.login_route_ech_body();
     }
     if (connectionMode === "compatible") {
-      return "登录 WebView 仍以原域名执行 SNI 与证书验证；回调后的令牌交换会连接内置 Pixiv IP，并关闭 SNI 与证书验证。令牌可能被中间人读取或修改。";
+      return m.login_route_compatible_body();
     }
-    return "官方页面使用系统 DNS、系统代理与平台 TLS；应用不注入脚本，也不读取页面输入。";
+    return m.login_route_standard_body();
   }
 
   let mode = $state<ConnectionMode>("standard");
@@ -252,11 +253,11 @@
   }
 
   function completionStatusText(): string {
-    if (completionStage === "callback_verified") return "回调已验证，正在连接令牌服务…";
-    if (completionStage === "transport_ready") return "连接已就绪，正在交换登录令牌…";
-    if (completionStage === "token_received") return "令牌已取得，正在写入安全存储…";
-    if (completionStage === "session_saved") return "登录状态已保存，正在打开个人主页…";
-    return "正在读取官方登录结果…";
+    if (completionStage === "callback_verified") return m.login_completion_callback_verified();
+    if (completionStage === "transport_ready") return m.login_completion_transport_ready();
+    if (completionStage === "token_received") return m.login_completion_token_received();
+    if (completionStage === "session_saved") return m.login_completion_session_saved();
+    return m.login_completion_reading();
   }
 
   async function finishSuccessfulLogin(snapshot: SessionSnapshot) {
@@ -270,85 +271,85 @@
 
   function describeError(error: unknown): string {
     const failure = error as PolicyFailure;
-    const messages: Record<string, string> = {
-      ech_unavailable: "当前平台的登录 WebView 无法满足严格 ECH 要求。",
-      compatible_direct_unavailable: "该登录主机不在低安全直连白名单中。",
-      web_view_proxy_unavailable: "登录 WebView 无法安全复用低安全直连；该路线已停止。",
-      unsafe_acknowledgement_required: "启用低安全模式前必须确认风险。",
-      insecure_transport_forbidden: "OAuth 与 token 交换禁止使用低安全直连。",
-      invalid_host: "登录主机配置无效。",
-      invalid_callback_configuration: "OAuth callback 配置无效。",
-      secure_random_unavailable: "系统安全随机源不可用，已停止登录。",
-      state_unavailable: "登录状态暂时不可用，请重试。",
-      attempt_unavailable: "登录会话已失效，请重新准备。",
-      attempt_not_pending: "登录会话已经结束，请重新进入此页面。",
-      invalid_authorization_url: "官方登录地址校验失败，页面未打开。",
-      proxy_start_failed: "无法启动本机登录代理，请切换连接方式重试。",
-      window_creation_failed: "无法创建独立登录窗口。",
-      mobile_plugin_unavailable: "Android 登录组件不可用，请重新安装应用。",
-      dns_query_failed: "ECH 预检无法取得加密 DNS 响应。",
-      ech_config_unavailable: "ECH 预检没有取得可用配置，登录页未打开。",
-      ech_not_accepted: "服务器未接受 ECH；严格模式没有降级到普通 TLS。",
-      connection_failed: "ECH 预检连接失败，请切换连接方式重试。",
-      http_protocol_error: "ECH 预检收到异常响应，登录页未打开。",
-      oauth_configuration_unavailable: "此构建没有配置 Pixiv OAuth 兼容参数，无法交换登录结果。",
-      invalid_callback: "Pixiv 返回了无效的登录结果，请重新登录。",
-      callback_state_mismatch: "登录回调与当前会话不匹配，已拒绝处理。",
-      authorization_denied: "你取消了 Pixiv 授权。",
-      launch_mismatch: "登录结果不属于当前窗口，已拒绝处理。",
-      token_client_unavailable: "无法创建证书验证连接，请检查系统时间与 TLS 环境。",
-      token_transport_unavailable: "所选连接模式无法建立令牌交换通道，请检查连接诊断后重试。",
-      token_request_failed: "无法通过安全连接交换登录令牌，请稍后重试。",
-      token_rejected: "Pixiv 拒绝了登录令牌交换，请重新登录。",
-      invalid_token_response: "Pixiv 返回的登录数据格式无效。",
-      secure_storage_unavailable: "平台安全存储不可用，令牌未保存。",
-      session_unavailable: "本地会话状态不可用，请重启应用。",
+    const messages: Record<string, () => string> = {
+      ech_unavailable: m.login_error_ech_unavailable,
+      compatible_direct_unavailable: m.login_error_compatible_direct_unavailable,
+      web_view_proxy_unavailable: m.login_error_web_view_proxy_unavailable,
+      unsafe_acknowledgement_required: m.login_error_unsafe_acknowledgement_required,
+      insecure_transport_forbidden: m.login_error_insecure_transport_forbidden,
+      invalid_host: m.login_error_invalid_host,
+      invalid_callback_configuration: m.login_error_invalid_callback_configuration,
+      secure_random_unavailable: m.login_error_secure_random_unavailable,
+      state_unavailable: m.login_error_state_unavailable,
+      attempt_unavailable: m.login_error_attempt_unavailable,
+      attempt_not_pending: m.login_error_attempt_not_pending,
+      invalid_authorization_url: m.login_error_invalid_authorization_url,
+      proxy_start_failed: m.login_error_proxy_start_failed,
+      window_creation_failed: m.login_error_window_creation_failed,
+      mobile_plugin_unavailable: m.login_error_mobile_plugin_unavailable,
+      dns_query_failed: m.login_error_dns_query_failed,
+      ech_config_unavailable: m.login_error_ech_config_unavailable,
+      ech_not_accepted: m.login_error_ech_not_accepted,
+      connection_failed: m.login_error_connection_failed,
+      http_protocol_error: m.login_error_http_protocol_error,
+      oauth_configuration_unavailable: m.login_error_oauth_configuration_unavailable,
+      invalid_callback: m.login_error_invalid_callback,
+      callback_state_mismatch: m.login_error_callback_state_mismatch,
+      authorization_denied: m.login_error_authorization_denied,
+      launch_mismatch: m.login_error_launch_mismatch,
+      token_client_unavailable: m.login_error_token_client_unavailable,
+      token_transport_unavailable: m.login_error_token_transport_unavailable,
+      token_request_failed: m.login_error_token_request_failed,
+      token_rejected: m.login_error_token_rejected,
+      invalid_token_response: m.login_error_invalid_token_response,
+      secure_storage_unavailable: m.login_error_secure_storage_unavailable,
+      session_unavailable: m.login_error_session_unavailable,
     };
 
     if (failure && typeof failure === "object" && failure.kind) {
-      return messages[failure.kind] ?? `登录准备失败：${failure.kind}`;
+      return messages[failure.kind]?.() ?? m.login_error_fallback({ kind: failure.kind });
     }
 
-    return typeof error === "string" ? error : "无法连接 Rust 登录内核。";
+    return typeof error === "string" ? error : m.login_error_core();
   }
 </script>
 
 <svelte:head>
-  <title>官方登录 · PixNya</title>
+  <title>{m.login_head_title()}</title>
 </svelte:head>
 
-<AppShell title="登录">
+<AppShell title={m.login_title()}>
   <div class="login-page">
-    <ReturnLink fallback="/settings/network" label="返回连接与安全" />
+    <ReturnLink fallback="/settings/network" label={m.login_return_security()} />
 
     <header class="login-heading">
       <div class="pixiv-symbol"><span>p</span></div>
       <div>
-        <h1>使用 Pixiv 官方页面登录</h1>
-        <p>本应用没有密码输入框；低安全桥只转发页面流量，不解析或记录请求正文。</p>
+        <h1>{m.login_heading()}</h1>
+        <p>{m.login_heading_description()}</p>
       </div>
     </header>
 
     <section class="login-panel" aria-live="polite">
       <div class="session-summary">
-        <span class="eyebrow">一次性登录会话</span>
-        <h2>{modeLabels[mode]}</h2>
-        <p>每次进入此页都会生成新的 PKCE verifier，并与不可导出的登录窗口绑定。</p>
+        <span class="eyebrow">{m.login_session_eyebrow()}</span>
+        <h2>{modeLabels[mode]()}</h2>
+        <p>{m.login_session_description()}</p>
 
         <ol class="security-steps">
           <li class:ready={preparation !== null}>
             <b>{preparation ? "✓" : "1"}</b>
-            <span><strong>生成 PKCE</strong><small>Rust 内存 · S256 · 256-bit entropy</small></span>
+            <span><strong>{m.login_step_generate_pkce()}</strong><small>{m.login_step_generate_pkce_detail()}</small></span>
           </li>
           <li class:ready={preparation !== null}>
             <b>{preparation ? "✓" : "2"}</b>
-            <span><strong>锁定回调边界</strong><small>私有窗口 + launch ID + scheme/host/path</small></span>
+            <span><strong>{m.login_step_lock_callback()}</strong><small>{m.login_step_lock_callback_detail()}</small></span>
           </li>
           <li class:ready={launchResult !== null}>
             <b>{launchResult ? "✓" : "3"}</b>
             <span>
-              <strong>加载官方登录页</strong>
-              <small>{launchResult ? "独立 WebView 已启动" : "等待你确认打开"}</small>
+              <strong>{m.login_step_load_page()}</strong>
+              <small>{launchResult ? m.login_step_page_started() : m.login_step_page_waiting()}</small>
             </span>
           </li>
         </ol>
@@ -358,74 +359,64 @@
         {#if isPreparing}
           <div class="status-banner loading">
             <span></span>
-            <div><small>正在准备</small><strong>建立安全登录上下文…</strong></div>
+            <div><small>{m.login_preparing()}</small><strong>{m.login_preparing_context()}</strong></div>
           </div>
         {:else if awaitingUnsafeAcknowledgement}
           <div class="status-banner risky">
             <b>!</b>
             <div>
-              <small>需要确认风险</small>
-              <strong>{usesAndroidBridge ? "网页登录将关闭上游 SNI 与证书验证" : "兼容模式包含低安全 API 路线"}</strong>
+              <small>{m.login_risk_required()}</small>
+              <strong>{usesAndroidBridge ? m.login_risk_bridge_summary() : m.login_risk_api_summary()}</strong>
             </div>
           </div>
           <div class="login-risk-prompt">
-            <strong>为什么还需要确认？</strong>
+            <strong>{m.login_risk_why()}</strong>
             {#if usesAndroidBridge}
-              <p>
-                WebView 会校验本次会话的一次性本地证书；桥再连接内置 Pixiv IP，并关闭上游
-                SNI 与服务器证书验证。攻击者可能读取或修改登录流量。桥不解析或记录正文，
-                但数据会以明文经过应用内存。{mode === "ech"
-                  ? "后续令牌交换会重新强制使用经过验证的 Rust ECH。"
-                  : "后续令牌交换也会使用低安全直连，refresh token 与 access token 均可能被窃取。"}
-              </p>
+              <p>{mode === "ech" ? m.login_risk_bridge_ech() : m.login_risk_bridge_compatible()}</p>
             {:else}
-              <p>
-                登录 WebView 仍保持端到端 TLS；回调后的 OAuth 令牌交换、API 与图片请求会使用
-                固定 IP，并关闭 SNI 与证书验证。攻击者可能窃取 refresh token、access token
-                或修改响应。
-              </p>
+              <p>{m.login_risk_desktop_compatible()}</p>
             {/if}
             <label class="suppress-warning-choice">
               <input type="checkbox" bind:checked={suppressFutureWarnings} />
-              <span><b>以后不再提醒</b><small>可在“连接与安全”中恢复警告</small></span>
+              <span><b>{m.login_warning_suppress()}</b><small>{m.login_warning_restore()}</small></span>
             </label>
             <div class="risk-actions">
-              <button type="button" onclick={cancelUnsafeLogin}>返回选择安全模式</button>
+              <button type="button" onclick={cancelUnsafeLogin}>{m.login_back_safe()}</button>
               <button class="danger-button" type="button" onclick={confirmUnsafeLogin}>
-                {suppressFutureWarnings ? "我了解风险，不再提醒" : "我了解风险，继续检查"}
+                {suppressFutureWarnings ? m.login_confirm_forever() : m.login_confirm_once()}
               </button>
             </div>
           </div>
         {:else if isCompleting}
           <div class="status-banner loading">
             <span></span>
-            <div><small>正在完成登录</small><strong>{completionStatusText()}</strong></div>
+            <div><small>{m.login_completing()}</small><strong>{completionStatusText()}</strong></div>
           </div>
         {:else if errorMessage}
           <div class="status-banner failed">
             <b>!</b>
-            <div><small>无法开始登录</small><strong>{errorMessage}</strong></div>
+            <div><small>{m.login_cannot_start()}</small><strong>{errorMessage}</strong></div>
           </div>
-          <button class="secondary-button" type="button" onclick={() => prepare()}>重新检查</button>
+          <button class="secondary-button" type="button" onclick={() => prepare()}>{m.login_recheck()}</button>
         {:else if preparation && !preparation.oauthConfigurationReady}
           <div class="status-banner failed">
             <b>!</b>
             <div>
-              <small>此构建缺少 OAuth 配置</small>
-              <strong>需要在本地构建环境注入兼容参数后才能完成登录</strong>
+              <small>{m.login_oauth_missing()}</small>
+              <strong>{m.login_oauth_missing_detail()}</strong>
             </div>
           </div>
         {:else if preparation}
           <div class="status-banner ready">
             <b>✓</b>
-            <div><small>安全上下文已就绪</small><strong>可以创建独立登录 WebView</strong></div>
+            <div><small>{m.login_context_ready()}</small><strong>{m.login_context_ready_detail()}</strong></div>
           </div>
 
           <dl class="login-details">
-            <div><dt>登录页路线</dt><dd>{transportLabels[preparation.route.transport]}</dd></div>
+            <div><dt>{m.login_route_label()}</dt><dd>{transportLabels[preparation.route.transport]()}</dd></div>
             <div><dt>PKCE</dt><dd>{preparation.pkceMethod}</dd></div>
             <div><dt>Callback</dt><dd>{preparation.callbackTarget}</dd></div>
-            <div><dt>证书域名</dt><dd>{preparation.route.certificateHost}</dd></div>
+            <div><dt>{m.login_certificate_host()}</dt><dd>{preparation.route.certificateHost}</dd></div>
           </dl>
 
           <div class:warning-note={mode === "ech" || mode === "compatible"} class="route-note">
@@ -440,30 +431,25 @@
             onclick={openOfficialLogin}
           >
             {isOpening
-              ? "正在打开…"
+              ? m.login_opening()
               : launchResult
-                ? "重新打开 Pixiv 官方登录页"
-                : "打开 Pixiv 官方登录页"}
+                ? m.login_reopen_official()
+                : m.login_open_official()}
           </button>
 
           {#if launchResult}
-            <p class="launch-result">
-              已使用 {transportLabels[launchResult.route.transport]} 打开；登录完成后会验证私有回调，
-              {mode === "compatible" ? "按已确认的低安全路线" : "通过证书验证连接"}交换令牌，
-              并把 refresh token 写入平台安全存储。
-            </p>
+            <p class="launch-result">{m.login_launch_result({
+              transport: transportLabels[launchResult.route.transport](),
+              tokenRoute: mode === "compatible" ? m.login_token_route_insecure() : m.login_token_route_secure(),
+            })}</p>
           {/if}
         {/if}
       </div>
     </section>
 
     <div class="privacy-note">
-      <strong>登录安全说明</strong>
-      <span>
-        不注入页面脚本 · 低安全桥不记录正文 · {mode === "compatible"
-          ? "令牌交换同样属于低安全直连"
-          : "令牌交换验证证书"} · 不记录完整回调 URL
-      </span>
+      <strong>{m.login_privacy_title()}</strong>
+      <span>{m.login_privacy_bridge({ tokenRoute: mode === "compatible" ? m.login_privacy_token_insecure() : m.login_privacy_token_secure() })}</span>
     </div>
   </div>
 </AppShell>

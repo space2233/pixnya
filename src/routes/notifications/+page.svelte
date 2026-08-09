@@ -1,24 +1,25 @@
 <script lang="ts">
   import AppShell from "$lib/components/AppShell.svelte";
   import Icon from "$lib/components/Icon.svelte";
+  import { m } from "$lib/i18n";
 </script>
 
-<svelte:head><title>通知能力 · PixNya</title></svelte:head>
+<svelte:head><title>{m.notifications_capability_title()} · PixNya</title></svelte:head>
 
-<AppShell title="通知">
+<AppShell title={m.notifications_title()}>
   <main class="capability-page">
     <section>
       <span class="capability-icon"><Icon name="bell" size={31} /></span>
-      <small>明确的不支持项</small>
-      <h1>当前版本不提供 Pixiv 站内通知</h1>
-      <p>Pixiv App API 没有为第三方客户端提供稳定、可验证的完整通知接口。为避免显示虚构数据、漏报消息或依赖网页登录 Cookie，本客户端不会伪造通知列表。</p>
+      <small>{m.notifications_unsupported_label()}</small>
+      <h1>{m.notifications_unsupported_title()}</h1>
+      <p>{m.notifications_unsupported_description()}</p>
       <div class="boundary">
         <Icon name="shield" size={20} />
-        <div><strong>不会用网页会话绕过此限制</strong><span>官方登录 WebView 仅用于授权；Cookie 不会交给普通页面或数据接口。</span></div>
+        <div><strong>{m.notifications_boundary_title()}</strong><span>{m.notifications_boundary_description()}</span></div>
       </div>
       <nav>
-        <a href="/following">查看关注新作</a>
-        <a class="secondary" href="/offline">打开离线资料库</a>
+        <a href="/following">{m.notifications_following()}</a>
+        <a class="secondary" href="/offline">{m.notifications_offline()}</a>
       </nav>
     </section>
   </main>

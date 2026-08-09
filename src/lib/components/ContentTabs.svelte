@@ -5,12 +5,13 @@
     getNavigationItem,
     navigationKeyForPath,
   } from "$lib/navigation";
+  import { m } from "$lib/i18n";
 
   let activeKey = $derived(navigationKeyForPath(page.url.pathname));
 </script>
 
 <div class="tab-rail">
-  <nav aria-label="作品类型">
+  <nav aria-label={m.content_type_navigation()}>
     {#each contentTabKeys as key}
       {@const item = getNavigationItem(key)}
       <a

@@ -69,7 +69,7 @@ test("history page, shared navigation, and settings operate on the same backend 
   assert.match(page, /setBrowsingHistoryEnabled\(!snapshot\.enabled\)/);
   assert.match(page, /removeBrowsingHistoryEntry\(entry\.kind, entry\.resourceId\)/);
   assert.match(page, /clearBrowsingHistory\(\)/);
-  assert.match(page, /最多保留 \{snapshot\?\.limit \?\? 500\} 条/);
+  assert.match(page, /m\.history_description\(\{ limit: snapshot\?\.limit \?\? 500 \}\)/);
   assert.match(navigation, /href: "\/history"/);
   assert.match(settings, /setBrowsingHistoryEnabled\(!browsingHistory\.enabled\)/);
   assert.match(settings, /report\.browsingHistoryEntriesRemoved/);

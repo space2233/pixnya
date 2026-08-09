@@ -7,6 +7,7 @@
   import Icon from "$lib/components/Icon.svelte";
   import PixivImage from "$lib/components/PixivImage.svelte";
   import ReturnLink from "$lib/components/ReturnLink.svelte";
+  import { currentAppLocale, m } from "$lib/i18n";
   import { recallNavigationView, rememberNavigationView } from "$lib/navigation-view-memory";
   import UgoiraPlayer from "$lib/components/UgoiraPlayer.svelte";
   import { resolveArtworkSeriesNavigation, type ArtworkSeriesNavigation } from "$lib/artwork-series-navigation";
@@ -47,7 +48,10 @@
   let caption = $derived(detail ? plainPixivText(detail.caption) : "");
   let viewerPages = $derived((detail?.pages ?? []).map((image) => ({
     pageIndex: image.pageIndex,
-    alt: `${detail?.illustration.title || "无题"} 第 ${image.pageIndex + 1} 页`,
+    alt: m.artwork_page_alt({
+      title: detail?.illustration.title || m.common_untitled(),
+      page: image.pageIndex + 1,
+    }),
     previewUrl: image.displayUrl ?? image.originalUrl,
     originalUrl: image.originalUrl ?? image.displayUrl,
   })));
@@ -143,8 +147,8 @@
       void recordBrowsingHistory({
         kind: "artwork",
         resourceId: nextDetail.illustration.id,
-        title: nextDetail.illustration.title || "无题",
-        subtitle: nextDetail.illustration.author.name || "未知作者",
+        title: nextDetail.illustration.title || m.common_untitled(),
+        subtitle: nextDetail.illustration.author.name || m.common_unknown_author(),
         thumbnailUrl: nextDetail.illustration.thumbnailUrl,
       }).catch(() => undefined);
       related = relatedPage.illustrations.filter((item) => item.id !== id);
@@ -233,7 +237,7 @@
         detail.illustration.title,
         detail.illustration.author.name,
       );
-      downloadMessage = task.state === "completed" ? "已重新加入下载队列" : "已加入下载队列，可在离线资料库查看进度";
+      downloadMessage = task.state === "completed" ? m.download_requeued() : m.download_added();
     } catch (error) {
       downloadMessage = describeDataFailure(error);
     } finally {
@@ -242,50 +246,50 @@
   }
 
   function formatCount(value: number): string {
-    return new Intl.NumberFormat("zh-CN", { notation: "compact", maximumFractionDigits: 1 }).format(value);
+    return new Intl.NumberFormat(currentAppLocale(), { notation: "compact", maximumFractionDigits: 1 }).format(value);
   }
 </script>
 
 <svelte:head>
-  <title>{detail?.illustration.title || "作品详情"} · PixNya</title>
+  <title>{detail?.illustration.title || m.artwork_detail()} · PixNya</title>
 </svelte:head>
 
-<AppShell title="作品详情">
+<AppShell title={m.artwork_detail()}>
   <main class="detail-page">
-    <ReturnLink fallback="/artworks" label="返回来源页" />
+    <ReturnLink fallback="/artworks" label={m.artwork_return_source()} />
 
   {#if !$sessionRestoring && !$session.loggedIn}
       <section class="state-card">
         <Icon name="user" size={28} />
-        <div><h1>登录后查看作品详情</h1><p>作品图片、作者资料与相关推荐通过登录后的 App API 载入。</p></div>
-        <a href="/login?mode=standard">前往登录</a>
+        <div><h1>{m.artwork_login_title()}</h1><p>{m.artwork_login_description()}</p></div>
+        <a href="/login?mode=standard">{m.common_go_to_login()}</a>
       </section>
     {:else if status === "loading"}
       <section class="state-card loading" aria-live="polite">
-        <span class="spinner"></span><div><h1>正在载入作品</h1><p>正在读取多图信息、作者和相关推荐…</p></div>
+        <span class="spinner"></span><div><h1>{m.artwork_loading_title()}</h1><p>{m.artwork_loading_description()}</p></div>
       </section>
     {:else if status === "error"}
       <section class="state-card error" role="alert">
-        <span>!</span><div><h1>作品载入失败</h1><p>{errorMessage}</p></div>
-        <button type="button" onclick={retry}>重试</button>
+        <span>!</span><div><h1>{m.artwork_load_failed()}</h1><p>{errorMessage}</p></div>
+        <button type="button" onclick={retry}>{m.common_retry()}</button>
       </section>
     {:else if detail}
       <div class="detail-layout">
         <section class="image-column" class:concealed={restricted && !$r18DefaultVisible && !revealRestricted}>
           {#if detail.illustration.kind === "ugoira"}
-            <UgoiraPlayer illustrationId={detail.illustration.id} previewUrl={detail.pages[0]?.displayUrl ?? detail.illustration.thumbnailUrl} title={detail.illustration.title || "无题"} />
+            <UgoiraPlayer illustrationId={detail.illustration.id} previewUrl={detail.pages[0]?.displayUrl ?? detail.illustration.thumbnailUrl} title={detail.illustration.title || m.common_untitled()} />
           {:else if detail.pages.length > 0}
             <ArtworkImageViewer
               pages={viewerPages}
-              title={detail.illustration.title || "无题"}
+              title={detail.illustration.title || m.common_untitled()}
               concealed={restricted && !$r18DefaultVisible && !revealRestricted}
             />
           {:else}
-            <div class="unavailable-image">该作品没有可显示的图片</div>
+            <div class="unavailable-image">{m.artwork_no_image()}</div>
           {/if}
           {#if restricted && !$r18DefaultVisible && !revealRestricted}
             <button class="reveal" type="button" onclick={() => (revealRestricted = true)}>
-              {detail.illustration.xRestrict >= 2 ? "R-18G" : "R-18"} · 点击显示作品
+              {m.artwork_reveal({ rating: detail.illustration.xRestrict >= 2 ? "R-18G" : "R-18" })}
             </button>
           {/if}
         </section>
@@ -294,10 +298,10 @@
           <div class="title-block">
             <div class="kind-row">
               <span>{detail.illustration.kind || "illust"}</span>
-              {#if detail.illustration.aiType === 2}<span>AI 生成</span>{/if}
-              {#if detail.series}<a href={`/series/artworks/${detail.series.id}`}>系列 · {detail.series.title}</a>{/if}
+              {#if detail.illustration.aiType === 2}<span>{m.artwork_ai_generated()}</span>{/if}
+              {#if detail.series}<a href={`/series/artworks/${detail.series.id}`}>{m.artwork_series({ title: detail.series.title })}</a>{/if}
             </div>
-            <h1>{detail.illustration.title || "无题"}</h1>
+            <h1>{detail.illustration.title || m.common_untitled()}</h1>
             {#if caption}<p class="caption">{caption}</p>{/if}
           </div>
 
@@ -307,34 +311,34 @@
               <b>{Array.from(detail.illustration.author.name || "P")[0]}</b>
             </span>
             <span><strong>{detail.illustration.author.name}</strong><small>@{detail.illustration.author.account}</small></span>
-            <i>{detail.illustration.author.isFollowed ? "已关注" : "查看作者"}</i>
+            <i>{detail.illustration.author.isFollowed ? m.common_following() : m.artwork_view_author()}</i>
           </a>
 
           <dl class="work-stats">
-            <div><dt>浏览</dt><dd>{formatCount(detail.totalViews)}</dd></div>
-            <div><dt>收藏</dt><dd>{formatCount(detail.totalBookmarks)}</dd></div>
-            <div><dt>评论</dt><dd>{formatCount(detail.totalComments)}</dd></div>
+            <div><dt>{m.common_view_count()}</dt><dd>{formatCount(detail.totalViews)}</dd></div>
+            <div><dt>{m.common_bookmark_count()}</dt><dd>{formatCount(detail.totalBookmarks)}</dd></div>
+            <div><dt>{m.common_comment_count()}</dt><dd>{formatCount(detail.totalComments)}</dd></div>
           </dl>
 
           <div class="work-actions">
             {#if !bookmarked}
-              <label>收藏范围
-                <select bind:value={bookmarkRestrict} aria-label="收藏范围">
-                  <option value="public">公开</option>
-                  <option value="private">非公开</option>
+              <label>{m.common_bookmark_visibility()}
+                <select bind:value={bookmarkRestrict} aria-label={m.common_bookmark_visibility()}>
+                  <option value="public">{m.common_public()}</option>
+                  <option value="private">{m.common_private()}</option>
                 </select>
               </label>
             {/if}
             <button type="button" class:active={bookmarked} disabled={bookmarkPending} onclick={toggleBookmark}>
               <Icon name="heart" size={17} />
-              {bookmarkPending ? "处理中…" : bookmarked ? "取消收藏" : "收藏作品"}
+              {bookmarkPending ? m.common_processing() : bookmarked ? m.artwork_cancel_bookmark() : m.artwork_save_bookmark()}
             </button>
-            <button type="button" disabled={downloadPending} onclick={saveOffline}><Icon name="download" size={16} />{downloadPending ? "加入中…" : "离线保存"}</button>
+            <button type="button" disabled={downloadPending} onclick={saveOffline}><Icon name="download" size={16} />{downloadPending ? m.common_queueing() : m.common_offline_save()}</button>
             {#if bookmarkError}<p role="alert">{bookmarkError}</p>{/if}
             {#if downloadMessage}<p role="status">{downloadMessage}</p>{/if}
           </div>
 
-          <div class="tag-list" aria-label="作品标签">
+          <div class="tag-list" aria-label={m.artwork_tags_label()}>
             {#each detail.tags as tag (tag.name)}
               <a href={`/search?q=${encodeURIComponent(tag.name)}`} onclick={() => recordSearchHistory(tag.name)}>
                 #{tag.name}{tag.translatedName ? ` · ${tag.translatedName}` : ""}
@@ -343,29 +347,29 @@
           </div>
 
           <dl class="metadata">
-            <div><dt>尺寸</dt><dd>{detail.illustration.width} × {detail.illustration.height}</dd></div>
-            <div><dt>页数</dt><dd>{detail.pages.length || detail.illustration.pageCount}</dd></div>
-            {#if detail.createDate}<div><dt>发布时间</dt><dd>{detail.createDate.slice(0, 10)}</dd></div>{/if}
-            {#if detail.tools.length}<div><dt>创作工具</dt><dd>{detail.tools.join("、")}</dd></div>{/if}
+            <div><dt>{m.artwork_dimensions()}</dt><dd>{detail.illustration.width} × {detail.illustration.height}</dd></div>
+            <div><dt>{m.artwork_page_count()}</dt><dd>{detail.pages.length || detail.illustration.pageCount}</dd></div>
+            {#if detail.createDate}<div><dt>{m.artwork_publish_date()}</dt><dd>{detail.createDate.slice(0, 10)}</dd></div>{/if}
+            {#if detail.tools.length}<div><dt>{m.artwork_tools()}</dt><dd>{detail.tools.join(" · ")}</dd></div>{/if}
           </dl>
         </aside>
       </div>
 
       {#if detail.series}
-        <nav class="series-navigation" aria-label="作品系列连续浏览">
+        <nav class="series-navigation" aria-label={m.artwork_series_navigation()}>
           <a class="series-overview" href={`/series/artworks/${detail.series.id}`}>
-            <small>作品系列</small><strong>{detail.series.title}</strong>
-            {#if seriesNavigation}<span>第 {seriesNavigation.position} / {seriesNavigation.total} 部</span>{/if}
+            <small>{m.artwork_series_label()}</small><strong>{detail.series.title}</strong>
+            {#if seriesNavigation}<span>{m.artwork_series_position({ position: seriesNavigation.position, total: seriesNavigation.total })}</span>{/if}
           </a>
           {#if seriesNavigationLoading}
-            <span class="series-resolving">正在定位系列顺序…</span>
+            <span class="series-resolving">{m.artwork_series_locating()}</span>
           {:else}
             {#if seriesNavigation?.previous}
-              <a class="series-sibling previous" href={`/artworks/${seriesNavigation.previous.id}`}><small>‹ 上一部</small><strong>{seriesNavigation.previous.title || "无题"}</strong></a>
-            {:else}<span class="series-sibling disabled"><small>‹ 上一部</small><strong>已到系列开头</strong></span>{/if}
+              <a class="series-sibling previous" href={`/artworks/${seriesNavigation.previous.id}`}><small>{m.artwork_previous()}</small><strong>{seriesNavigation.previous.title || m.common_untitled()}</strong></a>
+            {:else}<span class="series-sibling disabled"><small>{m.artwork_previous()}</small><strong>{m.artwork_series_start()}</strong></span>{/if}
             {#if seriesNavigation?.next}
-              <a class="series-sibling next" href={`/artworks/${seriesNavigation.next.id}`}><small>下一部 ›</small><strong>{seriesNavigation.next.title || "无题"}</strong></a>
-            {:else}<span class="series-sibling disabled next"><small>下一部 ›</small><strong>{seriesNavigation ? "已到系列末尾" : "顺序暂不可用"}</strong></span>{/if}
+              <a class="series-sibling next" href={`/artworks/${seriesNavigation.next.id}`}><small>{m.artwork_next()}</small><strong>{seriesNavigation.next.title || m.common_untitled()}</strong></a>
+            {:else}<span class="series-sibling disabled next"><small>{m.artwork_next()}</small><strong>{seriesNavigation ? m.artwork_series_end() : m.artwork_series_unavailable()}</strong></span>{/if}
           {/if}
         </nav>
       {/if}
@@ -373,7 +377,7 @@
       <ArtworkComments illustrationId={detail.illustration.id} initialCount={detail.totalComments} />
 
       <section class="related-section">
-        <header><div><h2>相关推荐</h2><p>与当前作品主题相近的公开作品</p></div></header>
+        <header><div><h2>{m.artwork_related()}</h2><p>{m.artwork_related_description()}</p></div></header>
         {#if related.length > 0}
           <div class="related-grid">
             {#each related as illustration, index (illustration.id)}
@@ -381,12 +385,12 @@
             {/each}
           </div>
         {:else}
-          <p class="empty">Pixiv 本次没有返回相关推荐。</p>
+          <p class="empty">{m.artwork_related_empty()}</p>
         {/if}
         {#if relatedError}<p class="related-error" role="alert">{relatedError}</p>{/if}
         {#if nextCursor}
           <button class="load-more" type="button" disabled={loadingMore} onclick={loadMoreRelated}>
-            {loadingMore ? "正在载入…" : "加载更多相关推荐"}
+            {loadingMore ? m.common_loading() : m.artwork_related_more()}
           </button>
         {/if}
       </section>

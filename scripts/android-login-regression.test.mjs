@@ -93,8 +93,8 @@ test("login completion reports truthful stages instead of labeling all waits as 
   assert.match(rust, /"token_received"/);
   assert.match(rust, /"session_saved"/);
   assert.match(loginPage, /pixiv-login-progress/);
-  assert.match(loginPage, /回调已验证，正在连接令牌服务/);
-  assert.match(loginPage, /令牌已取得，正在写入安全存储/);
+  assert.match(loginPage, /m\.login_completion_callback_verified\(\)/);
+  assert.match(loginPage, /m\.login_completion_token_received\(\)/);
 });
 
 test("desktop login window closes as soon as the callback is captured", () => {

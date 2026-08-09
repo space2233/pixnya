@@ -2,7 +2,7 @@
 
 > 审计日期：2026-08-04
 > 当前授权范围：只处理 `F:\ACM\pixiv-client\target\`
-> 当前状态：仅完成只读审计和计划，**尚未删除任何文件**
+> 当前状态：已于 2026-08-04 执行“复用优先方案”，并完成清理后复核
 > 容量口径：文件逻辑大小之和，单位为 GiB/MiB
 
 ## 1. 本轮边界
@@ -16,7 +16,7 @@
 
 不执行 `cargo clean`，因为它会清空整个 `target/`，无法满足“需要复用的先保留”。也禁止使用 `git clean -fdx`。
 
-## 2. 当前总量
+## 2. 清理前审计基线
 
 `target/` 当前共 **138.464 GiB、241,707 个文件**：
 
@@ -29,6 +29,22 @@
 | `target/windows-standalone-runtime-*` | 0.08 MiB | 15 | 独立启动回归测试的临时运行目录 | 整体列入清理 |
 | `target/tmp/` | 0 | 0 | Cargo 临时目录 | 空目录，可清理 |
 | `.rustc_info.json`、`CACHEDIR.TAG` | 很小 | 2 | rustc 环境信息和缓存标记 | 保留 |
+
+执行前再次审计时，后续本地检查已使总量增长到 **139.477 GiB、242,698 个文件**。本次实际回收量以这个执行前复核值为准。
+
+## 2.1 实际执行结果
+
+复用优先清理共精确选中 **1,429 个路径、79,837 个文件、66.277 GiB**。执行后同一清理脚本再次预览为 0 个候选，说明计划内残留已经清完。
+
+| 清理后路径 | 占用 | 文件数 | 结果 |
+|---|---:|---:|---|
+| `target/debug/` | 64.519 GiB | 115,340 | 当前 Windows 依赖、构建输出与增量缓存保留 |
+| `target/debug/incremental/` | 32.383 GiB | 86,808 | 仅保留当前 PixNya 和工作区 crate 缓存 |
+| `target/aarch64-linux-android/` | 8.681 GiB | 47,519 | 当前 ARM64 依赖、输出与增量缓存保留 |
+| `target/armv7-linux-androideabi/` | 0 | 0 | 已整体清理 |
+| **`target/` 合计** | **73.200 GiB** | **162,861** | 清理后立即比执行前减少 **66.277 GiB** |
+
+随后使用关闭增量缓存的完整测试层做复用验证，最终为 73.443 GiB、163,373 个文件；新增约 0.243 GiB 的正常 `deps/build` 检查产物，Windows 与 ARM64 的增量缓存仍分别保持 32.383 GiB 和 6.117 GiB，没有反弹。已核对保留的 `target/debug/pixnya.exe`、`pixnya.pdb`、ARM64 `libpixnya_lib.so`，以及 Windows/ARM64 的 `deps/`、`build/` 均仍存在。
 
 ## 3. Windows `target/debug/` 细分
 
@@ -126,25 +142,26 @@ Cargo 指纹中的旧主应用条目不足 2 MiB，也一并列入精确清理�
 
 完整删除可立即回收 138.464 GiB，而且不会丢源码，但下一次 Windows 检查和 ARM64 APK 构建都要从零开始。当前明确要求优先保留可复用内容，因此不列为本轮执行项。
 
-## 8. 执行步骤（待用户确认后再做）
+## 8. 执行记录
 
-- [ ] 确认 Cargo、Tauri、Gradle、Android Studio 和 PixNya 测试程序均已关闭。
-- [ ] 重新统计目标路径，防止构建期间数字和目录结构发生变化。
-- [ ] 生成“将删除的绝对路径 + 大小”清单，不直接从模糊通配符执行删除。
-- [ ] 先执行复用优先方案，不触碰 `target/` 外的任何路径。
-- [ ] 再次统计 `target/`，核对预计回收量和保留目录。
-- [ ] 确认 `target/debug/pixnya.exe` 仍存在并可独立启动。
-- [ ] 运行 `cargo check --workspace`，确认保留的 Windows 依赖可正常复用。
-- [ ] ARM64 库留到下一次真实 APK 构建时验证，避免仅为验证重新制造大量缓存。
+- [x] 确认 Cargo、rustc、Tauri 和 Gradle 构建进程均未运行。
+- [x] 重新统计目标路径，防止构建期间数字和目录结构发生变化。
+- [x] 生成“将删除的绝对路径 + 大小”清单，没有从模糊通配符执行删除。
+- [x] 执行复用优先方案，没有触碰 `target/` 外的任何路径。
+- [x] 再次统计 `target/`，核对实际回收量和保留目录。
+- [x] 确认 `target/debug/pixnya.exe` 和 ARM64 当前库仍存在。
+- [x] 使用 `CARGO_INCREMENTAL=0 cargo check --workspace`，约 5 秒完成，确认保留的 Windows 依赖可正常复用。
+- [x] ARM64 完整 APK 构建留到下一次真实交付时验证，避免仅为验证重新制造大量缓存。
 - [ ] 是否执行平衡空间方案，等待第二次明确确认。
 
 ## 9. 后续防止再次膨胀
 
-1. 发布/验证构建使用 `CARGO_INCREMENTAL=0`，日常开发构建仍可保留增量编译。
-2. ARM32 暂停期间，构建脚本不再生成 `armv7-linux-androideabi`。
-3. 品牌或 crate 重命名后，立即精确清理旧主 crate 的缓存，不让旧名称继续占用几十 GiB。
-4. 增加只读容量审计脚本，分别报告 Windows、ARM64、ARM32、`incremental`、`deps` 和 `build`；删除仍需人工确认。
-5. 当 Windows + ARM64 的 `incremental` 再次超过约 40 GiB 时，提示使用“平衡空间方案”，而不是无条件每次构建后清空。
+1. Windows、Android ARM64、暂停的 ARM32 交付脚本和 Linux CI 已设置 `CARGO_INCREMENTAL=0`；日常 `cargo` 开发命令仍可使用增量编译。
+2. ARM32 暂停期间，不主动调用 `build-android-armv7-debug.ps1`；即使以后手动恢复，该脚本也不会生成增量缓存。
+3. 品牌或 crate 重命名后，运行 `npm run storage:cleanup:preview` 精确检查旧主 crate 残留，确认后再给清理脚本传入 `-Execute`。
+4. 已增加只读 `npm run storage:audit`，分别报告 Windows、ARM64、ARM32、`incremental`、`deps` 和 `build`。
+5. 交付构建结束后会自动执行容量审计；`target/` 达到 80 GiB 时发出警告，但不会自动删除缓存。
+6. `cleanup-target-reuse-first.ps1` 默认仅预览，执行前拒绝活动构建进程，并验证每个候选的绝对路径都位于仓库 `target/` 内。
 
 ## 10. 本轮明确保留
 
@@ -155,4 +172,4 @@ Cargo 指纹中的旧主应用条目不足 2 MiB，也一并列入精确清理�
 - 当前 PixNya 与内部工作区 crate 的增量缓存（复用优先方案下）；
 - `target/` 外的所有目录和文件。
 
-本计划只描述后续清理边界。本轮审计没有执行删除。
+本文件同时保留清理前基线、执行边界与实际结果，便于以后判断缓存是否再次异常膨胀。

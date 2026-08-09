@@ -3243,7 +3243,7 @@ async fn clear_local_data(
     cache_state: tauri::State<'_, MediaCacheState>,
     update_manager: tauri::State<'_, UpdateManagerState>,
 ) -> Result<LocalDataClearReport, ApiCommandError> {
-    if request.confirmation != "清除" {
+    if request.confirmation != "CLEAR_LOCAL_DATA" {
         return Err(ApiCommandError::InvalidInput);
     }
 

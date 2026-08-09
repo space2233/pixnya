@@ -2921,7 +2921,7 @@ dependencies = [
 
 [[package]]
 name = "pixiv-client-api"
-version = "0.28.2"
+version = "0.29.0"
 dependencies = [
  "base64 0.22.1",
  "pixiv-client-auth",
@@ -2933,7 +2933,7 @@ dependencies = [
 
 [[package]]
 name = "pixiv-client-auth"
-version = "0.28.2"
+version = "0.29.0"
 dependencies = [
  "base64 0.22.1",
  "getrandom 0.3.4",
@@ -2950,7 +2950,7 @@ dependencies = [
 
 [[package]]
 name = "pixiv-client-diagnostic-log"
-version = "0.28.2"
+version = "0.29.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -2958,14 +2958,14 @@ dependencies = [
 
 [[package]]
 name = "pixiv-client-domain"
-version = "0.28.2"
+version = "0.29.0"
 dependencies = [
  "serde",
 ]
 
 [[package]]
 name = "pixiv-client-download-queue"
-version = "0.28.2"
+version = "0.29.0"
 dependencies = [
  "rusqlite",
  "serde",
@@ -2973,7 +2973,7 @@ dependencies = [
 
 [[package]]
 name = "pixiv-client-library"
-version = "0.28.2"
+version = "0.29.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -2981,7 +2981,7 @@ dependencies = [
 
 [[package]]
 name = "pixiv-client-local-catalog"
-version = "0.28.2"
+version = "0.29.0"
 dependencies = [
  "rusqlite",
  "serde",
@@ -2989,7 +2989,7 @@ dependencies = [
 
 [[package]]
 name = "pixiv-client-local-history"
-version = "0.28.2"
+version = "0.29.0"
 dependencies = [
  "rusqlite",
  "serde",
@@ -2997,7 +2997,7 @@ dependencies = [
 
 [[package]]
 name = "pixiv-client-media-cache"
-version = "0.28.2"
+version = "0.29.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -3006,7 +3006,7 @@ dependencies = [
 
 [[package]]
 name = "pixiv-client-network"
-version = "0.28.2"
+version = "0.29.0"
 dependencies = [
  "base64 0.22.1",
  "pixiv-client-domain",
@@ -3022,7 +3022,7 @@ dependencies = [
 
 [[package]]
 name = "pixiv-client-storage-policy"
-version = "0.28.2"
+version = "0.29.0"
 dependencies = [
  "libc",
  "serde",
@@ -3032,7 +3032,7 @@ dependencies = [
 
 [[package]]
 name = "pixnya"
-version = "0.28.2"
+version = "0.29.0"
 dependencies = [
  "base64 0.22.1",
  "keyring",

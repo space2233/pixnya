@@ -16,7 +16,7 @@ const readGenerated = async (relativePath) => {
   }
 };
 
-test("all user-visible package versions agree on the 0.28.2 patch release", async () => {
+test("all user-visible package versions agree on the 0.29.0 feature release", async () => {
   const [workspace, packageJson, packageLock, tauri, androidProperties, androidIgnore, settings, readme] = await Promise.all([
     read("Cargo.toml"),
     read("package.json"),
@@ -27,17 +27,17 @@ test("all user-visible package versions agree on the 0.28.2 patch release", asyn
     read("src/routes/settings/+page.svelte"),
     read("README.md"),
   ]);
-  assert.match(workspace, /version = "0\.28\.2"/);
-  assert.equal(JSON.parse(packageJson).version, "0.28.2");
-  assert.equal(JSON.parse(packageLock).version, "0.28.2");
-  assert.equal(JSON.parse(tauri).version, "0.28.2");
+  assert.match(workspace, /version = "0\.29\.0"/);
+  assert.equal(JSON.parse(packageJson).version, "0.29.0");
+  assert.equal(JSON.parse(packageLock).version, "0.29.0");
+  assert.equal(JSON.parse(tauri).version, "0.29.0");
   assert.match(androidIgnore, /^\/tauri\.properties$/m);
   if (androidProperties !== null) {
-    assert.match(androidProperties, /tauri\.android\.versionName=0\.28\.2/);
-    assert.match(androidProperties, /tauri\.android\.versionCode=28002/);
+    assert.match(androidProperties, /tauri\.android\.versionName=0\.29\.0/);
+    assert.match(androidProperties, /tauri\.android\.versionCode=29000/);
   }
-  assert.match(settings, /appStatus\?\.version \?\? "0\.28\.2"/);
-  assert.match(readme, /当前版本为 `0\.28\.2`/);
+  assert.match(settings, /appStatus\?\.version \?\? "0\.29\.0"/);
+  assert.match(readme, /当前版本为 `0\.29\.0`/);
 });
 
 test("Android releases ARM64 while retaining ARMv7 as a deferred manual target", async () => {
@@ -60,14 +60,44 @@ test("Android releases ARM64 while retaining ARMv7 as a deferred manual target",
 });
 
 test("Linux verification compiles the actual Tauri desktop target", async () => {
-  const [workflow, script] = await Promise.all([
+  const [workflow, script, runner] = await Promise.all([
     read(".github/workflows/linux.yml"),
     read("scripts/check-linux.sh"),
+    read("scripts/run-test-suite.mjs"),
   ]);
   assert.match(workflow, /runs-on: ubuntu-22\.04/);
-  assert.match(workflow, /bash scripts\/check-linux\.sh/);
-  assert.match(script, /cargo test --workspace/);
+  assert.match(workflow, /npm run test:quick/);
+  assert.match(workflow, /bash scripts\/check-linux\.sh rust-only/);
+  assert.match(script, /npm run test:rust/);
   assert.match(script, /npx tauri build --debug --no-bundle/);
+  assert.match(runner, /"test", "--workspace"/);
+});
+
+test("formal releases are gated by main-branch full verification and signed artifact checks", async () => {
+  const workflow = await read(".github/workflows/release.yml");
+  assert.match(workflow, /Require the main release source/);
+  assert.match(workflow, /refs\/heads\/main/);
+  assert.match(workflow, /npm run test:full/);
+  assert.match(workflow, /needs: preflight/);
+  assert.match(workflow, /Signer #1 certificate SHA-256 digest/);
+  assert.match(workflow, /check-android-arm64-apk\.ps1/);
+  assert.match(workflow, /package: name='io\.github\.space2233\.pixnya'/);
+  assert.match(workflow, /minisign -Vm "\$WINDOWS_ARCHIVE"/);
+  assert.match(workflow, /minisign -Vm dist\/android-latest\.json/);
+  assert.match(workflow, /target_commitish: \$\{\{ github\.sha \}\}/);
+  assert.match(workflow, /BUILD-PROVENANCE\.txt/);
+});
+
+test("throwaway thumbnail prototypes stay outside the formal application bundle", async () => {
+  const packageJson = JSON.parse(await read("package.json"));
+  assert.equal(packageJson.scripts["prototype:thumbnails"], undefined);
+  for (const relativePath of [
+    "src/routes/prototype/vite-smoke/+page.svelte",
+    "src/routes/prototype/thumbnail-placeholders/+page.svelte",
+    "public/prototype/thumbnail-placeholders.html",
+  ]) {
+    await assert.rejects(read(relativePath), (error) => error?.code === "ENOENT");
+  }
 });
 
 test("unsupported notification and posting surfaces stay explicit and non-interactive", async () => {
@@ -75,8 +105,8 @@ test("unsupported notification and posting surfaces stay explicit and non-intera
     read("src/routes/notifications/+page.svelte"),
     read("src/lib/components/AppShell.svelte"),
   ]);
-  assert.match(notifications, /不提供 Pixiv 站内通知/);
-  assert.match(notifications, /Cookie 不会交给普通页面或数据接口/);
+  assert.match(notifications, /m\.notifications_unsupported_title\(\)/);
+  assert.match(notifications, /m\.notifications_boundary_description\(\)/);
   assert.match(shell, /class="text-action" type="button" disabled/);
-  assert.match(shell, /PixNya 暂不包含投稿功能/);
+  assert.match(shell, /m\.shell_post_unavailable\(\)/);
 });

@@ -3,6 +3,7 @@
   import { onMount } from "svelte";
   import AppShell from "$lib/components/AppShell.svelte";
   import Icon from "$lib/components/Icon.svelte";
+  import { currentAppLocale, m } from "$lib/i18n";
   import { recallNavigationView, rememberNavigationView } from "$lib/navigation-view-memory";
   import {
     describeDataFailure,
@@ -127,7 +128,7 @@
     for (const organization of catalog.entries) {
       for (const tag of organization.tags) tags.add(tag);
     }
-    return [...tags].sort((left, right) => left.localeCompare(right, "zh-CN"));
+    return [...tags].sort((left, right) => left.localeCompare(right, currentAppLocale()));
   });
 
   const filteredEntries = $derived.by(() => {
@@ -151,7 +152,7 @@
     });
     result.sort((left, right) => {
       if (sortOrder === "oldest") return left.storedAtUnixSeconds - right.storedAtUnixSeconds;
-      if (sortOrder === "title") return left.title.localeCompare(right.title, "zh-CN");
+      if (sortOrder === "title") return left.title.localeCompare(right.title, currentAppLocale());
       if (sortOrder === "size") return right.sizeBytes - left.sizeBytes;
       return right.storedAtUnixSeconds - left.storedAtUnixSeconds;
     });
@@ -179,7 +180,7 @@
       else unlisten = listener;
     }).catch(() => {
       if (!disposed) {
-        queueError = "无法监听下载进度；可使用刷新按钮读取最新状态。";
+        queueError = m.offline_queue_listen_failed();
       }
     });
 
@@ -303,7 +304,7 @@
     try {
       const created = await createLocalCollection(newCollectionName);
       newCollectionName = "";
-      showCatalogNotice(`已创建收藏夹“${created.name}”。`);
+      showCatalogNotice(m.offline_collection_created({ name: created.name }));
       await refreshCatalog(false);
     } catch (error) {
       showCatalogNotice(describeDataFailure(error), true);
@@ -328,7 +329,7 @@
       const renamed = await renameLocalCollection(collectionId, renameCollectionName);
       renamingCollectionId = null;
       renameCollectionName = "";
-      showCatalogNotice(`收藏夹已更名为“${renamed.name}”。`);
+      showCatalogNotice(m.offline_collection_renamed({ name: renamed.name }));
       await refreshCatalog(false);
     } catch (error) {
       showCatalogNotice(describeDataFailure(error), true);
@@ -349,7 +350,7 @@
       await deleteLocalCollection(collectionId);
       confirmingCollectionId = null;
       if (collectionFilter === String(collectionId)) collectionFilter = "all";
-      showCatalogNotice("收藏夹已删除；原有标签和离线内容仍保留。 ");
+      showCatalogNotice(m.offline_collection_deleted());
       await refreshCatalog(false);
     } catch (error) {
       showCatalogNotice(describeDataFailure(error), true);
@@ -388,7 +389,7 @@
     try {
       await organizeOfflineEntry(entry.key, collectionId, tags);
       closeOrganizationEditor();
-      showCatalogNotice(`已更新“${entry.title || entry.resourceId}”的本地整理信息。`);
+      showCatalogNotice(m.offline_organization_updated({ title: entry.title || entry.resourceId }));
       await refreshCatalog(false);
     } catch (error) {
       showCatalogNotice(describeDataFailure(error), true);
@@ -417,7 +418,7 @@
     exportNoticeIsError = false;
     try {
       const result = await exportOfflineEntry(entry.key);
-      exportNotice = `已导出 ${result.fileCount} 个文件到 ${result.destination}`;
+      exportNotice = m.offline_export_success({ count: result.fileCount, destination: result.destination });
     } catch (error) {
       exportNotice = describeDataFailure(error);
       exportNoticeIsError = true;
@@ -481,23 +482,27 @@
   }
 
   function kindLabel(kind: DownloadKind): string {
-    return kind === "artwork" ? "插画/漫画" : kind === "novel" ? "小说" : "Ugoira";
+    return kind === "artwork"
+      ? m.offline_kind_artwork()
+      : kind === "novel"
+        ? m.offline_kind_novel()
+        : "Ugoira";
   }
 
-  const stateLabels: Record<DownloadState, string> = {
-    queued: "等待中",
-    running: "下载中",
-    paused: "已暂停",
-    failed: "失败",
-    completed: "已完成",
+  const stateLabels: Record<DownloadState, () => string> = {
+    queued: m.offline_state_queued,
+    running: m.offline_state_running,
+    paused: m.offline_state_paused,
+    failed: m.offline_state_failed,
+    completed: m.offline_state_completed,
   };
 
-  const failureLabels: Record<DownloadFailure, string> = {
-    authentication: "登录状态失效，请重新登录后重试",
-    network: "网络请求失败，请检查连接模式后重试",
-    invalid_response: "Pixiv 返回的数据无法处理",
-    storage: "本机存储写入失败或安全可写空间不足，请在设置中检查存储状态",
-    interrupted: "上次退出时下载被中断，已恢复等待",
+  const failureLabels: Record<DownloadFailure, () => string> = {
+    authentication: m.offline_failure_auth,
+    network: m.offline_failure_network,
+    invalid_response: m.offline_failure_response,
+    storage: m.offline_failure_storage,
+    interrupted: m.offline_failure_interrupted,
   };
 
   function progressPercent(task: DownloadTask): number {
@@ -507,30 +512,30 @@
   }
 </script>
 
-<svelte:head><title>离线资料库 · PixNya</title></svelte:head>
+<svelte:head><title>{m.offline_title()} · PixNya</title></svelte:head>
 
-<AppShell title="离线资料库">
+<AppShell title={m.offline_title()}>
   <main class="offline-page">
     <header class="page-header">
       <div>
-        <h1>离线资料库</h1>
-        <p>下载任务断点保存在本机；已完成内容无需登录或网络即可阅读。</p>
+        <h1>{m.offline_title()}</h1>
+        <p>{m.offline_description()}</p>
       </div>
-      <div class="stats"><strong>{stats.entryCount}</strong><span>项 · {formatBytes(stats.sizeBytes)}</span></div>
+      <div class="stats"><strong>{stats.entryCount}</strong><span>{m.offline_stats({ size: formatBytes(stats.sizeBytes) })}</span></div>
     </header>
 
     <section class="content-section queue-section" aria-labelledby="queue-title">
       <div class="section-heading">
-        <div><span class="heading-icon"><Icon name="download" size={18} /></span><div><h2 id="queue-title">下载队列</h2><p>任务串行执行；退出应用后仍会保留，重新登录后自动继续。</p></div></div>
-        <button class="section-refresh" type="button" disabled={queueStatus === "loading"} onclick={() => refreshQueue(true)}>刷新</button>
+        <div><span class="heading-icon"><Icon name="download" size={18} /></span><div><h2 id="queue-title">{m.offline_queue_title()}</h2><p>{m.offline_queue_description()}</p></div></div>
+        <button class="section-refresh" type="button" disabled={queueStatus === "loading"} onclick={() => refreshQueue(true)}>{m.common_refresh()}</button>
       </div>
 
       {#if queueStatus === "loading"}
-        <div class="compact-state"><span class="spinner"></span><p>正在读取下载队列…</p></div>
+        <div class="compact-state"><span class="spinner"></span><p>{m.offline_queue_loading()}</p></div>
       {:else if queueStatus === "error"}
-        <div class="compact-state error" role="alert"><p>{queueError}</p><button type="button" onclick={() => refreshQueue(true)}>重试</button></div>
+        <div class="compact-state error" role="alert"><p>{queueError}</p><button type="button" onclick={() => refreshQueue(true)}>{m.common_retry()}</button></div>
       {:else if tasks.length === 0}
-        <div class="queue-empty"><p>暂无下载任务</p><span>可在作品或小说详情页点击“离线保存”。</span></div>
+        <div class="queue-empty"><p>{m.offline_queue_empty()}</p><span>{m.offline_queue_empty_hint()}</span></div>
       {:else}
         <div class="task-list">
           {#each tasks as task (task.id)}
@@ -538,28 +543,28 @@
               <span class="task-kind">{kindLabel(task.kind)}</span>
               <div class="task-main">
                 <div class="task-title-line">
-                  <h3>{task.title || `作品 ${task.resourceId}`}</h3>
-                  <span class:failed={task.state === "failed"} class:done={task.state === "completed"} class="state-badge">{stateLabels[task.state]}</span>
+                  <h3>{task.title || m.offline_work_fallback({ id: task.resourceId })}</h3>
+                  <span class:failed={task.state === "failed"} class:done={task.state === "completed"} class="state-badge">{stateLabels[task.state]()}</span>
                 </div>
-                <p>{task.author || "未知作者"}{task.attemptCount > 1 ? ` · 第 ${task.attemptCount} 次尝试` : ""}</p>
+                <p>{task.author || m.offline_unknown_author()}{task.attemptCount > 1 ? ` · ${m.offline_attempt({ count: task.attemptCount })}` : ""}</p>
                 <div class="progress-line">
-                  <div class="progress-track" role="progressbar" aria-label={`${task.title || task.resourceId} 下载进度`} aria-valuemin="0" aria-valuemax="100" aria-valuenow={progressPercent(task)}>
+                  <div class="progress-track" role="progressbar" aria-label={m.offline_download_progress({ title: task.title || task.resourceId })} aria-valuemin="0" aria-valuemax="100" aria-valuenow={progressPercent(task)}>
                     <span style={`width: ${progressPercent(task)}%`}></span>
                   </div>
-                  <small>{task.totalItems > 0 ? `${task.completedItems}/${task.totalItems}` : stateLabels[task.state]} · {formatBytes(task.downloadedBytes)}</small>
+                  <small>{task.totalItems > 0 ? `${task.completedItems}/${task.totalItems}` : stateLabels[task.state]()} · {formatBytes(task.downloadedBytes)}</small>
                 </div>
-                {#if task.failure}<p class="failure-note">{failureLabels[task.failure]}</p>{/if}
+                {#if task.failure}<p class="failure-note">{failureLabels[task.failure]()}</p>{/if}
               </div>
               <div class="task-actions">
                 {#if task.state === "completed"}
-                  <a href={taskHref(task)}>打开</a>
+                  <a href={taskHref(task)}>{m.offline_open()}</a>
                 {:else}
                   <button type="button" disabled={taskActionId !== null} onclick={() => changeTaskState(task)}>
-                    {taskActionId === task.id ? "处理中…" : task.state === "queued" || task.state === "running" ? "暂停" : task.state === "failed" ? "重试" : "继续"}
+                    {taskActionId === task.id ? m.offline_processing() : task.state === "queued" || task.state === "running" ? m.offline_pause() : task.state === "failed" ? m.common_retry() : m.offline_continue()}
                   </button>
                 {/if}
-                <button class:confirm={confirmingTaskId === task.id} type="button" disabled={taskActionId !== null || task.state === "running"} title={task.state === "running" ? "请先暂停任务" : "仅移除队列记录，不删除已下载内容"} onclick={() => removeTask(task)}>
-                  {taskActionId === task.id ? "处理中…" : confirmingTaskId === task.id ? "确认移除" : "移除"}
+                <button class:confirm={confirmingTaskId === task.id} type="button" disabled={taskActionId !== null || task.state === "running"} title={task.state === "running" ? m.offline_pause_first() : m.offline_remove_queue_only()} onclick={() => removeTask(task)}>
+                  {taskActionId === task.id ? m.offline_processing() : confirmingTaskId === task.id ? m.offline_remove_confirm() : m.offline_remove()}
                 </button>
               </div>
             </article>
@@ -571,58 +576,58 @@
 
     <section class="content-section library-section" aria-labelledby="library-title">
       <div class="section-heading">
-        <div><span class="heading-icon library"><Icon name="book" size={18} /></span><div><h2 id="library-title">已下载内容</h2><p>删除队列记录不会删除这里的文件。</p></div></div>
-        <button class="section-refresh" type="button" disabled={libraryStatus === "loading"} onclick={() => refreshLibrary(true)}>刷新</button>
+        <div><span class="heading-icon library"><Icon name="book" size={18} /></span><div><h2 id="library-title">{m.offline_library_title()}</h2><p>{m.offline_library_description()}</p></div></div>
+        <button class="section-refresh" type="button" disabled={libraryStatus === "loading"} onclick={() => refreshLibrary(true)}>{m.common_refresh()}</button>
       </div>
 
       {#if exportDestination && !exportDestination.configured}
-        <p class="export-guidance">需要普通文件夹副本时，请先在<a href="/settings#storage">设置</a>中选择导出目录；应用私有离线内容不受影响。</p>
+        <p class="export-guidance">{m.offline_export_guidance_before()}<a href="/settings#storage">{m.offline_settings_link()}</a>{m.offline_export_guidance_after()}</p>
       {:else if exportDestination?.configured}
-        <p class="export-guidance ready">当前导出目录：{exportDestination.label}{exportDestination.autoExport ? " · 新下载会自动导出" : " · 仅手动导出"}</p>
+        <p class="export-guidance ready">{m.offline_export_current({ label: exportDestination.label ?? "", mode: exportDestination.autoExport ? m.offline_export_auto() : m.offline_export_manual() })}</p>
       {/if}
       {#if exportNotice}<p class="export-notice" class:error={exportNoticeIsError} role="status">{exportNotice}</p>{/if}
       {#if catalogNotice}<p class="catalog-notice" class:error={catalogNoticeIsError} role="status">{catalogNotice}</p>{/if}
 
       {#if entries.length > 0}
-        <div class="catalog-tools" aria-label="离线资料库筛选">
-          <label class="library-search"><span>搜索本地内容</span><input bind:value={libraryQuery} type="search" maxlength="120" placeholder="标题、作者、编号、收藏夹或标签" /></label>
-          <label><span>类型</span><select bind:value={kindFilter}><option value="all">全部类型</option><option value="artwork">插画/漫画</option><option value="novel">小说</option><option value="ugoira">Ugoira</option></select></label>
-          <label><span>收藏夹</span><select bind:value={collectionFilter} disabled={catalogStatus !== "ready"}><option value="all">全部收藏夹</option><option value="unfiled">未分类</option>{#each catalog.collections as collection (collection.id)}<option value={String(collection.id)}>{collection.name}（{collection.entryCount}）</option>{/each}</select></label>
-          <label><span>标签</span><select bind:value={tagFilter} disabled={catalogStatus !== "ready"}><option value="all">全部标签</option>{#each availableTags as tag (tag)}<option value={tag}>{tag}</option>{/each}</select></label>
-          <label><span>排序</span><select bind:value={sortOrder}><option value="newest">最近下载</option><option value="oldest">最早下载</option><option value="title">标题</option><option value="size">占用空间</option></select></label>
-          <button type="button" onclick={resetLibraryFilters}>重置</button>
+        <div class="catalog-tools" aria-label={m.offline_filter_label()}>
+          <label class="library-search"><span>{m.offline_search_local()}</span><input bind:value={libraryQuery} type="search" maxlength="120" placeholder={m.offline_search_placeholder()} /></label>
+          <label><span>{m.offline_filter_type()}</span><select bind:value={kindFilter}><option value="all">{m.offline_all_types()}</option><option value="artwork">{m.offline_kind_artwork()}</option><option value="novel">{m.offline_kind_novel()}</option><option value="ugoira">Ugoira</option></select></label>
+          <label><span>{m.offline_filter_collection()}</span><select bind:value={collectionFilter} disabled={catalogStatus !== "ready"}><option value="all">{m.offline_all_collections()}</option><option value="unfiled">{m.offline_unfiled()}</option>{#each catalog.collections as collection (collection.id)}<option value={String(collection.id)}>{collection.name} ({collection.entryCount})</option>{/each}</select></label>
+          <label><span>{m.offline_filter_tags()}</span><select bind:value={tagFilter} disabled={catalogStatus !== "ready"}><option value="all">{m.offline_all_tags()}</option>{#each availableTags as tag (tag)}<option value={tag}>{tag}</option>{/each}</select></label>
+          <label><span>{m.offline_sort()}</span><select bind:value={sortOrder}><option value="newest">{m.offline_sort_newest()}</option><option value="oldest">{m.offline_sort_oldest()}</option><option value="title">{m.offline_sort_title()}</option><option value="size">{m.offline_sort_size()}</option></select></label>
+          <button type="button" onclick={resetLibraryFilters}>{m.common_reset()}</button>
         </div>
       {/if}
 
       <details class="collection-manager">
-          <summary><span>管理本地收藏夹</span><small>{catalog.collections.length} 个收藏夹 · 整理信息只保存在本机</small></summary>
+          <summary><span>{m.offline_manage_collections()}</span><small>{m.offline_collection_count({ count: catalog.collections.length })}</small></summary>
           <div class="collection-manager-body">
             <form class="new-collection" onsubmit={createCollection}>
-              <label for="new-collection-name">新建收藏夹</label>
-              <input id="new-collection-name" bind:value={newCollectionName} maxlength="128" placeholder="例如：绘画参考" />
-              <button type="submit" disabled={!!catalogAction || catalogStatus !== "ready"}>{catalogAction === "create" ? "创建中…" : "创建"}</button>
+              <label for="new-collection-name">{m.offline_new_collection()}</label>
+              <input id="new-collection-name" bind:value={newCollectionName} maxlength="128" placeholder={m.offline_collection_example()} />
+              <button type="submit" disabled={!!catalogAction || catalogStatus !== "ready"}>{catalogAction === "create" ? m.offline_creating() : m.offline_create()}</button>
             </form>
             {#if catalogStatus === "loading"}
-              <p class="catalog-state">正在读取本地收藏夹…</p>
+              <p class="catalog-state">{m.offline_collections_loading()}</p>
             {:else if catalogStatus === "error"}
-              <p class="catalog-state error" role="alert">{catalogError}<button type="button" onclick={() => refreshCatalog(true)}>重试</button></p>
+              <p class="catalog-state error" role="alert">{catalogError}<button type="button" onclick={() => refreshCatalog(true)}>{m.common_retry()}</button></p>
             {:else if catalog.collections.length === 0}
-              <p class="catalog-state">尚未创建收藏夹；也可以直接为内容添加标签。</p>
+              <p class="catalog-state">{m.offline_collections_empty()}</p>
             {:else}
               <div class="collection-list">
                 {#each catalog.collections as collection (collection.id)}
                   <div class="collection-row">
                     {#if renamingCollectionId === collection.id}
                       <form onsubmit={saveCollectionRename}>
-                        <input bind:value={renameCollectionName} maxlength="128" aria-label={`重命名 ${collection.name}`} />
-                        <button type="submit" disabled={!!catalogAction}>{catalogAction === `rename-${collection.id}` ? "保存中…" : "保存"}</button>
-                        <button type="button" disabled={!!catalogAction} onclick={() => renamingCollectionId = null}>取消</button>
+                        <input bind:value={renameCollectionName} maxlength="128" aria-label={m.offline_rename_collection({ name: collection.name })} />
+                        <button type="submit" disabled={!!catalogAction}>{catalogAction === `rename-${collection.id}` ? m.common_saving() : m.common_save()}</button>
+                        <button type="button" disabled={!!catalogAction} onclick={() => renamingCollectionId = null}>{m.common_cancel()}</button>
                       </form>
                     {:else}
-                      <div><strong>{collection.name}</strong><span>{collection.entryCount} 项内容</span></div>
+                      <div><strong>{collection.name}</strong><span>{m.offline_collection_entries({ count: collection.entryCount })}</span></div>
                       <div class="collection-actions">
-                        <button type="button" disabled={!!catalogAction} onclick={() => beginRenameCollection(collection.id, collection.name)}>重命名</button>
-                        <button class:confirm={confirmingCollectionId === collection.id} type="button" disabled={!!catalogAction} onclick={() => removeCollection(collection.id)}>{catalogAction === `delete-${collection.id}` ? "删除中…" : confirmingCollectionId === collection.id ? "确认删除" : "删除"}</button>
+                        <button type="button" disabled={!!catalogAction} onclick={() => beginRenameCollection(collection.id, collection.name)}>{m.common_rename()}</button>
+                        <button class:confirm={confirmingCollectionId === collection.id} type="button" disabled={!!catalogAction} onclick={() => removeCollection(collection.id)}>{catalogAction === `delete-${collection.id}` ? m.common_deleting() : confirmingCollectionId === collection.id ? m.common_confirm_delete() : m.common_delete()}</button>
                       </div>
                     {/if}
                   </div>
@@ -633,15 +638,15 @@
       </details>
 
       {#if libraryStatus === "loading"}
-        <div class="state"><span class="spinner"></span><p>正在读取本地清单…</p></div>
+        <div class="state"><span class="spinner"></span><p>{m.offline_library_loading()}</p></div>
       {:else if libraryStatus === "error"}
-        <div class="state error" role="alert"><p>{libraryError}</p><button type="button" onclick={() => refreshLibrary(true)}>重试</button></div>
+        <div class="state error" role="alert"><p>{libraryError}</p><button type="button" onclick={() => refreshLibrary(true)}>{m.common_retry()}</button></div>
       {:else if entries.length === 0}
-        <div class="empty"><Icon name="download" size={30} /><h2>还没有离线内容</h2><p>完成的下载会自动出现在这里。</p></div>
+        <div class="empty"><Icon name="download" size={30} /><h2>{m.offline_empty()}</h2><p>{m.offline_empty_hint()}</p></div>
       {:else if filteredEntries.length === 0}
-        <div class="empty filter-empty"><Icon name="search" size={27} /><h2>没有符合条件的内容</h2><p>调整筛选条件，或点击“重置”查看全部 {entries.length} 项。</p><button type="button" onclick={resetLibraryFilters}>重置筛选</button></div>
+        <div class="empty filter-empty"><Icon name="search" size={27} /><h2>{m.offline_filter_empty()}</h2><p>{m.offline_filter_empty_hint({ count: entries.length })}</p><button type="button" onclick={resetLibraryFilters}>{m.offline_reset_filters()}</button></div>
       {:else}
-        <p class="filter-summary">显示 {filteredEntries.length} / {entries.length} 项</p>
+        <p class="filter-summary">{m.offline_filter_summary({ visible: filteredEntries.length, total: entries.length })}</p>
         <div class="entries">
           {#each filteredEntries as entry (entry.key)}
             {@const organization = organizationFor(entry.key)}
@@ -649,8 +654,8 @@
               <a class="entry-main" href={entryHref(entry)}>
                 <span class="kind">{kindLabel(entry.kind)}</span>
                 <div class="entry-copy">
-                  <h2>{entry.title || `作品 ${entry.resourceId}`}</h2>
-                  <p>{entry.author || "未知作者"} · {entry.assetCount} 个文件 · {formatBytes(entry.sizeBytes)}</p>
+                  <h2>{entry.title || m.offline_work_fallback({ id: entry.resourceId })}</h2>
+                  <p>{entry.author || m.offline_unknown_author()} · {m.offline_file_count({ count: entry.assetCount })} · {formatBytes(entry.sizeBytes)}</p>
                   {#if organization?.collectionId != null || organization?.tags.length}
                     <div class="organization-badges">
                       {#if organization.collectionId != null}<span class="collection-badge">{collectionName(organization.collectionId)}</span>{/if}
@@ -658,27 +663,27 @@
                     </div>
                   {/if}
                 </div>
-                <b>打开 ›</b>
+                <b>{m.offline_open()} ›</b>
               </a>
               <div class="entry-actions">
-                <button type="button" disabled={catalogStatus !== "ready" || !!catalogAction || !!exporting || !!removing} onclick={() => organizingKey === entry.key ? closeOrganizationEditor() : openOrganizationEditor(entry)}>{organizingKey === entry.key ? "收起" : "整理"}</button>
+                <button type="button" disabled={catalogStatus !== "ready" || !!catalogAction || !!exporting || !!removing} onclick={() => organizingKey === entry.key ? closeOrganizationEditor() : openOrganizationEditor(entry)}>{organizingKey === entry.key ? m.offline_collapse() : m.offline_organize()}</button>
                 <button type="button" disabled={!exportDestination?.configured || !!exporting || !!removing} onclick={() => exportEntry(entry)}>
-                  {exporting === entry.key ? "导出中…" : "导出"}
+                  {exporting === entry.key ? m.offline_exporting() : m.offline_export()}
                 </button>
-                <button type="button" class:confirm={confirming === entry.key} disabled={!!exporting || removing === entry.key} onclick={() => requestRemoval(entry.key)}>{removing === entry.key ? "删除中…" : confirming === entry.key ? "确认删除" : "删除"}</button>
+                <button type="button" class:confirm={confirming === entry.key} disabled={!!exporting || removing === entry.key} onclick={() => requestRemoval(entry.key)}>{removing === entry.key ? m.common_deleting() : confirming === entry.key ? m.common_confirm_delete() : m.common_delete()}</button>
               </div>
               {#if organizingKey === entry.key}
                 <form class="organize-editor" onsubmit={(event) => saveOrganization(event, entry)}>
                   <div>
-                    <label for={`collection-${entry.key}`}>本地收藏夹</label>
-                    <select id={`collection-${entry.key}`} bind:value={organizationCollectionId}><option value="">不放入收藏夹</option>{#each catalog.collections as collection (collection.id)}<option value={String(collection.id)}>{collection.name}</option>{/each}</select>
+                    <label for={`collection-${entry.key}`}>{m.offline_local_collection()}</label>
+                    <select id={`collection-${entry.key}`} bind:value={organizationCollectionId}><option value="">{m.offline_no_collection()}</option>{#each catalog.collections as collection (collection.id)}<option value={String(collection.id)}>{collection.name}</option>{/each}</select>
                   </div>
                   <div class="tag-editor">
-                    <label for={`tags-${entry.key}`}>本地标签</label>
-                    <input id={`tags-${entry.key}`} bind:value={organizationTags} maxlength="768" placeholder="用逗号分隔，最多 16 个" />
-                    <small>标签仅保存在本机，不会修改 Pixiv 收藏标签。</small>
+                    <label for={`tags-${entry.key}`}>{m.offline_local_tags()}</label>
+                    <input id={`tags-${entry.key}`} bind:value={organizationTags} maxlength="768" placeholder={m.offline_tags_placeholder()} />
+                    <small>{m.offline_tags_hint()}</small>
                   </div>
-                  <div class="organize-actions"><button type="button" disabled={!!catalogAction} onclick={closeOrganizationEditor}>取消</button><button type="submit" disabled={!!catalogAction}>{catalogAction === `organize-${entry.key}` ? "保存中…" : "保存整理"}</button></div>
+                  <div class="organize-actions"><button type="button" disabled={!!catalogAction} onclick={closeOrganizationEditor}>{m.common_cancel()}</button><button type="submit" disabled={!!catalogAction}>{catalogAction === `organize-${entry.key}` ? m.common_saving() : m.offline_save_organization()}</button></div>
                 </form>
               {/if}
             </article>

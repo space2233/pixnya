@@ -4,7 +4,9 @@
 > 日期：2026-08-03
 > 目标平台：Windows x64、Linux x64、Android ARM64（ARMv7 暂停）
 
-已确认：产品名为 **PixNya**；最终应用 ID 为 `io.github.space2233.pixnya`；更新源使用 GitHub Releases；Android 交给系统安装组件，并始终保留用户确认。当前版本为 `0.28.2`。
+首个正式版的逐项发布状态与人工验收记录见[首个正式版发布清单](FIRST_STABLE_RELEASE_CHECKLIST.md)。
+
+已确认：产品名为 **PixNya**；最终应用 ID 为 `io.github.space2233.pixnya`；更新源使用 GitHub Releases；Android 交给系统安装组件，并始终保留用户确认。当前版本为 `0.29.0`。
 
 ## 1. 产品定义
 
@@ -170,6 +172,7 @@ Android 清单至少包含：schema 版本、`versionName`、`versionCode`、发
 - [x] 桌面检查 Adapter 接入 Tauri updater，且只接受编译期写入的 GitHub HTTPS 地址和签名公钥。
 - [x] Android 注册系统安装 Adapter，限制 APK 位于应用私有更新目录，并引导未知来源授权与系统确认。
 - [x] 正式端点使用编译期配置，并建立只创建 Draft Release 的签名发布工作流。
+- [x] Draft Release 在签名构建前强制运行前端/Rust 全量检查，并反查 APK 包名、版本、ABI、证书及桌面/Android 签名公私钥配对。
 - [ ] 生成并离线备份 Tauri updater 私钥、Android Release keystore 与 Android 清单签名密钥。
 - [x] 完成桌面下载/安装以及 Android 清单验证、下载与系统安装链路。
 - [ ] 使用生产签名从旧版本升级到当前版，完成 Windows、Linux、Android ARM64 真机回归。

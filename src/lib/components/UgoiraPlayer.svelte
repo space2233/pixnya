@@ -2,6 +2,7 @@
   import { onDestroy } from "svelte";
   import Icon from "$lib/components/Icon.svelte";
   import PixivImage from "$lib/components/PixivImage.svelte";
+  import { m } from "$lib/i18n";
   import { commandFailureKind, requestInsecureMediaFallback } from "$lib/media";
   import { describeDataFailure, prepareUgoira, readOfflineAsset } from "$lib/pixiv-api";
   import type { PreparedUgoiraFrame } from "$lib/types";
@@ -75,20 +76,20 @@
 
 <div class="ugoira-player">
   {#if status === "ready" && sources[frameIndex]}
-    <img src={sources[frameIndex]} alt={`${title} 动画帧 ${frameIndex + 1}`} draggable="false" />
+    <img src={sources[frameIndex]} alt={m.ugoira_frame_alt({ title, frame: frameIndex + 1 })} draggable="false" />
     <div class="player-bar">
-      <button type="button" onclick={() => (playing = !playing)}>{playing ? "暂停" : "播放"}</button>
+      <button type="button" onclick={() => (playing = !playing)}>{playing ? m.ugoira_pause() : m.ugoira_play()}</button>
       <span>{frameIndex + 1} / {sources.length}</span>
-      <span>已保存到离线资料库</span>
+      <span>{m.ugoira_saved_offline()}</span>
     </div>
   {:else}
-    <PixivImage url={previewUrl} alt={`${title} 动图预览`} fit="contain" cacheKind="preview" />
+    <PixivImage url={previewUrl} alt={m.ugoira_preview_alt({ title })} fit="contain" cacheKind="preview" />
     <div class="load-overlay">
-      {#if status === "preparing"}<span class="spinner"></span><strong>正在下载并解压动图…</strong>
-      {:else if status === "loading"}<span class="spinner"></span><strong>正在载入帧 {loadedCount} / {frames.length}</strong>
-      {:else}<Icon name="image" size={34} /><strong>{status === "error" ? "动图载入失败" : "载入 Ugoira 动图"}</strong>{/if}
+      {#if status === "preparing"}<span class="spinner"></span><strong>{m.ugoira_preparing()}</strong>
+      {:else if status === "loading"}<span class="spinner"></span><strong>{m.ugoira_loading_frame({ loaded: loadedCount, total: frames.length })}</strong>
+      {:else}<Icon name="image" size={34} /><strong>{status === "error" ? m.ugoira_load_failed() : m.ugoira_load()}</strong>{/if}
       {#if errorMessage}<p role="alert">{errorMessage}</p>{/if}
-      {#if status === "idle" || status === "error"}<button type="button" onclick={loadAnimation}>{status === "error" ? "重试" : "下载并播放"}</button>{/if}
+      {#if status === "idle" || status === "error"}<button type="button" onclick={loadAnimation}>{status === "error" ? m.common_retry() : m.ugoira_download_play()}</button>{/if}
     </div>
   {/if}
 </div>

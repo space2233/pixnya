@@ -1,6 +1,7 @@
 <script lang="ts">
   import CommentText from "$lib/components/CommentText.svelte";
   import PixivImage from "$lib/components/PixivImage.svelte";
+  import { currentAppLocale, m } from "$lib/i18n";
   import {
     isCommentMuted,
     LOCAL_REPORT_REASONS,
@@ -32,6 +33,17 @@
   let menuOpen = $state(false);
   let reportOpen = $state(false);
   let selectedReason = $state<LocalReportReason>(LOCAL_REPORT_REASONS[0]);
+  const reasonLabels: Record<LocalReportReason, () => string> = {
+    sexual_or_vulgar: m.comment_reason_sexual,
+    hate_speech: m.comment_reason_hate,
+    terrorism: m.comment_reason_terrorism,
+    dangerous_organization: m.comment_reason_dangerous_org,
+    sensitive_event: m.comment_reason_sensitive_event,
+    bullying_or_harassment: m.comment_reason_bullying,
+    dangerous_goods: m.comment_reason_dangerous_goods,
+    cannabis: m.comment_reason_cannabis,
+    tobacco_or_alcohol: m.comment_reason_tobacco_alcohol,
+  };
 
   $effect(() => {
     muted = isCommentMuted(comment.id);
@@ -64,7 +76,7 @@
     const date = new Date(value);
     return Number.isNaN(date.getTime())
       ? value
-      : date.toLocaleString("zh-CN", { dateStyle: "short", timeStyle: "short" });
+      : date.toLocaleString(currentAppLocale(), { dateStyle: "short", timeStyle: "short" });
   }
 
   function initial(): string {
@@ -74,8 +86,8 @@
 
 {#if muted}
   <article class="muted-card">
-    <div><strong>此评论已在本地屏蔽</strong><p>内容仍保留在 Pixiv，仅在这台设备上隐藏。</p></div>
-    <button type="button" onclick={unmute}>显示评论</button>
+    <div><strong>{m.comment_muted_title()}</strong><p>{m.comment_muted_description()}</p></div>
+    <button type="button" onclick={unmute}>{m.comment_show()}</button>
   </article>
 {:else}
   <article class="comment-card">
@@ -84,20 +96,20 @@
     </a>
     <div class="comment-body">
       <div class="comment-meta">
-        <strong>{comment.user?.name || "已注销用户"}</strong>
+        <strong>{comment.user?.name || m.comment_deleted_user()}</strong>
         <time>{displayDate(comment.date)}</time>
-        <button class="more" type="button" aria-label="评论管理" aria-expanded={menuOpen} onclick={() => (menuOpen = !menuOpen)}>•••</button>
+        <button class="more" type="button" aria-label={m.comment_manage()} aria-expanded={menuOpen} onclick={() => (menuOpen = !menuOpen)}>•••</button>
       </div>
-      {#if comment.parent}<small class="parent-reference">回复 @{comment.parent.userName || "用户"}：{comment.parent.text}</small>{/if}
+      {#if comment.parent}<small class="parent-reference">{m.comment_reply_reference({ user: comment.parent.userName || m.comment_unknown_user(), text: comment.parent.text })}</small>{/if}
       <CommentText {comment} />
       <div class="comment-actions">
-        {#if replyHref}<a href={replyHref} onclick={onopen}>回复</a>{/if}
-        {#if comment.hasReplies && repliesHref}<a href={repliesHref} onclick={onopen}>查看回复</a>{/if}
+        {#if replyHref}<a href={replyHref} onclick={onopen}>{m.comment_reply()}</a>{/if}
+        {#if comment.hasReplies && repliesHref}<a href={repliesHref} onclick={onopen}>{m.comment_view_replies()}</a>{/if}
       </div>
       {#if menuOpen}
         <div class="moderation-menu">
-          <button type="button" onclick={mute}>本地屏蔽</button>
-          <button type="button" onclick={() => { menuOpen = false; reportOpen = true; }}>本地举报并屏蔽</button>
+          <button type="button" onclick={mute}>{m.comment_mute_local()}</button>
+          <button type="button" onclick={() => { menuOpen = false; reportOpen = true; }}>{m.comment_report_local()}</button>
         </div>
       {/if}
     </div>
@@ -107,16 +119,16 @@
 {#if reportOpen}
   <div class="modal-backdrop" role="presentation" onclick={(event) => { if (event.target === event.currentTarget) reportOpen = false; }}>
     <div class="report-dialog" role="dialog" aria-modal="true" aria-labelledby={`report-title-${comment.id}`}>
-      <h2 id={`report-title-${comment.id}`}>本地举报并屏蔽</h2>
-      <p>选择原因后，PixNya 只会把记录保存在本机并隐藏这条评论，不会向 Pixiv 发送举报。</p>
+      <h2 id={`report-title-${comment.id}`}>{m.comment_report_local()}</h2>
+      <p>{m.comment_report_description()}</p>
       <div class="reason-list">
         {#each LOCAL_REPORT_REASONS as reason}
-          <label><input type="radio" name={`report-${comment.id}`} value={reason} bind:group={selectedReason} /> <span>{reason}</span></label>
+          <label><input type="radio" name={`report-${comment.id}`} value={reason} bind:group={selectedReason} /> <span>{reasonLabels[reason]()}</span></label>
         {/each}
       </div>
       <div class="dialog-actions">
-        <button type="button" onclick={() => (reportOpen = false)}>取消</button>
-        <button class="primary" type="button" onclick={submitLocalReport}>记录并屏蔽</button>
+        <button type="button" onclick={() => (reportOpen = false)}>{m.common_cancel()}</button>
+        <button class="primary" type="button" onclick={submitLocalReport}>{m.comment_report_submit()}</button>
       </div>
     </div>
   </div>

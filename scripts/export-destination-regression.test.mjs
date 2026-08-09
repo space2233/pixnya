@@ -67,10 +67,10 @@ test("download worker exports before completion and settings expose manual recov
   assert.match(types, /export interface ExportDestinationStatus/);
   assert.match(api, /invoke<ExportDestinationSelection>\("select_export_destination"\)/);
   assert.match(api, /invoke<OfflineExportResult>\("export_offline_entry"/);
-  assert.match(settings, /下载导出目录/);
-  assert.match(settings, /下载完成后自动导出/);
+  assert.match(settings, /m\.settings_export_directory\(\)/);
+  assert.match(settings, /m\.settings_auto_export\(\)/);
   assert.match(offline, /exportOfflineEntry\(entry\.key\)/);
-  assert.match(offline, /应用私有离线内容不受影响/);
+  assert.match(offline, /m\.offline_export_guidance_after\(\)/);
 });
 
 test("clearing local data revokes export authorization without deleting user exports", async () => {
@@ -83,5 +83,5 @@ test("clearing local data revokes export authorization without deleting user exp
   assert.match(application, /LocalDataClearFailure::ExportSettings/);
   assert.match(exports, /clear_platform_destination\(app\)\.await/);
   assert.match(exports, /manager\.clear_settings\(\)/);
-  assert.match(settings, /已导出的文件不会被删除/);
+  assert.match(settings, /m\.settings_export_removed\(\)/);
 });

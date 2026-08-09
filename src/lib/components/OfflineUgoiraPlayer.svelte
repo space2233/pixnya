@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
+  import { m } from "$lib/i18n";
   import { readOfflineAsset } from "$lib/pixiv-api";
   import type { UgoiraMetadata } from "$lib/types";
 
@@ -38,15 +39,15 @@
       sources = next; frameIndex = 0; playing = true;
     } catch {
       for (const source of next) URL.revokeObjectURL(source);
-      errorMessage = "无法读取本地动图帧，缓存可能不完整。";
+      errorMessage = m.ugoira_offline_error();
     }
     finally { loading = false; }
   }
 </script>
 
 <div class="player">
-  {#if sources[frameIndex]}<img src={sources[frameIndex]} alt={`${title} 动画帧 ${frameIndex + 1}`} />{:else}<div class="empty"><strong>{loading ? `载入帧 ${loaded} / ${metadata.frames.length}` : "离线 Ugoira"}</strong>{#if errorMessage}<p>{errorMessage}</p>{/if}<button type="button" disabled={loading} onclick={load}>{errorMessage ? "重试" : "播放"}</button></div>{/if}
-  {#if sources.length}<div class="controls"><button type="button" onclick={() => playing = !playing}>{playing ? "暂停" : "播放"}</button><span>{frameIndex + 1} / {sources.length}</span></div>{/if}
+  {#if sources[frameIndex]}<img src={sources[frameIndex]} alt={m.ugoira_frame_alt({ title, frame: frameIndex + 1 })} />{:else}<div class="empty"><strong>{loading ? m.ugoira_loading_frame({ loaded, total: metadata.frames.length }) : m.ugoira_offline_title()}</strong>{#if errorMessage}<p>{errorMessage}</p>{/if}<button type="button" disabled={loading} onclick={load}>{errorMessage ? m.common_retry() : m.ugoira_play()}</button></div>{/if}
+  {#if sources.length}<div class="controls"><button type="button" onclick={() => playing = !playing}>{playing ? m.ugoira_pause() : m.ugoira_play()}</button><span>{frameIndex + 1} / {sources.length}</span></div>{/if}
 </div>
 
 <style>

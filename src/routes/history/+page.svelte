@@ -3,6 +3,7 @@
   import AppShell from "$lib/components/AppShell.svelte";
   import Icon from "$lib/components/Icon.svelte";
   import PixivImage from "$lib/components/PixivImage.svelte";
+  import { currentAppLocale, m } from "$lib/i18n";
   import {
     clearBrowsingHistory,
     describeDataFailure,
@@ -22,6 +23,12 @@
   let confirmingClear = $state(false);
   let clearing = $state(false);
   let notice = $state("");
+  const kindOptions: Array<{ id: "all" | HistoryKind; label: () => string }> = [
+    { id: "all", label: m.history_kind_all },
+    { id: "artwork", label: m.history_kind_artwork },
+    { id: "novel", label: m.history_kind_novel },
+    { id: "user", label: m.history_kind_user },
+  ];
 
   const filteredEntries = $derived.by(() => {
     const needle = query.trim().toLocaleLowerCase();
@@ -51,7 +58,7 @@
     notice = "";
     try {
       snapshot = await setBrowsingHistoryEnabled(!snapshot.enabled);
-      notice = snapshot.enabled ? "已开始在本机记录浏览历史。" : "已停止记录；现有历史仍保留，可单独清除。";
+      notice = snapshot.enabled ? m.history_started() : m.history_stopped();
     } catch (error) {
       notice = describeDataFailure(error);
     } finally {
@@ -83,7 +90,7 @@
     try {
       const removed = await clearBrowsingHistory();
       snapshot = { ...snapshot, entries: [] };
-      notice = `已从本机删除 ${removed.entriesRemoved} 条浏览记录。`;
+      notice = m.history_removed({ count: removed.entriesRemoved });
       confirmingClear = false;
     } catch (error) {
       notice = describeDataFailure(error);
@@ -99,11 +106,15 @@
   }
 
   function kindLabel(value: HistoryKind): string {
-    return value === "artwork" ? "作品" : value === "novel" ? "小说" : "作者";
+    return value === "artwork"
+      ? m.history_kind_artwork()
+      : value === "novel"
+        ? m.history_kind_novel()
+        : m.history_kind_user();
   }
 
   function formatViewedAt(value: number): string {
-    return new Intl.DateTimeFormat("zh-CN", {
+    return new Intl.DateTimeFormat(currentAppLocale(), {
       month: "short",
       day: "numeric",
       hour: "2-digit",
@@ -112,40 +123,40 @@
   }
 </script>
 
-<svelte:head><title>浏览历史 · PixNya</title></svelte:head>
+<svelte:head><title>{m.history_title()} · PixNya</title></svelte:head>
 
-<AppShell title="浏览历史">
+<AppShell title={m.history_title()}>
   <main class="history-page">
     <header class="page-heading">
-      <div><span>仅保存在本机</span><h1>浏览历史</h1><p>最近查看的作品、小说和作者，最多保留 {snapshot?.limit ?? 500} 条。</p></div>
+      <div><span>{m.history_local_only()}</span><h1>{m.history_title()}</h1><p>{m.history_description({ limit: snapshot?.limit ?? 500 })}</p></div>
       {#if snapshot}
         <button class:disabled={!snapshot.enabled} type="button" disabled={savingPreference} onclick={toggleHistory}>
-          <Icon name="history" size={18} />{savingPreference ? "保存中…" : snapshot.enabled ? "正在记录" : "已停止记录"}
+          <Icon name="history" size={18} />{savingPreference ? m.history_saving() : snapshot.enabled ? m.history_recording() : m.history_recording_stopped()}
         </button>
       {/if}
     </header>
 
     {#if status === "loading"}
-      <section class="state">正在读取本机浏览历史…</section>
+      <section class="state">{m.history_loading()}</section>
     {:else if status === "error"}
-      <section class="state error" role="alert"><p>{errorMessage}</p><button type="button" onclick={loadHistory}>重试</button></section>
+      <section class="state error" role="alert"><p>{errorMessage}</p><button type="button" onclick={loadHistory}>{m.common_retry()}</button></section>
     {:else if snapshot}
       <section class="history-panel">
         <div class="toolbar">
-          <label><Icon name="search" size={16} /><input bind:value={query} placeholder="搜索标题或作者" aria-label="搜索浏览历史" /></label>
-          <div class="kind-filters" aria-label="历史类型">
-            {#each [["all", "全部"], ["artwork", "作品"], ["novel", "小说"], ["user", "作者"]] as option}
-              <button class:active={kind === option[0]} type="button" onclick={() => (kind = option[0] as "all" | HistoryKind)}>{option[1]}</button>
+          <label><Icon name="search" size={16} /><input bind:value={query} placeholder={m.history_search_placeholder()} aria-label={m.history_search_label()} /></label>
+          <div class="kind-filters" aria-label={m.history_type_label()}>
+            {#each kindOptions as option}
+              <button class:active={kind === option.id} type="button" onclick={() => (kind = option.id)}>{option.label()}</button>
             {/each}
           </div>
           <button class="clear" class:confirm={confirmingClear} type="button" disabled={clearing || snapshot.entries.length === 0} onclick={clearHistory}>
-            {clearing ? "清除中…" : confirmingClear ? "再次点击确认" : "清除全部"}
+            {clearing ? m.history_clearing() : confirmingClear ? m.history_confirm_clear() : m.history_clear_all()}
           </button>
         </div>
 
         {#if notice}<p class="notice" role="status">{notice}</p>{/if}
         {#if !snapshot.enabled}
-          <p class="paused"><Icon name="shield" size={17} />当前不会写入新的浏览记录；现有记录仍只保存在本机。</p>
+          <p class="paused"><Icon name="shield" size={17} />{m.history_paused()}</p>
         {/if}
 
         {#if filteredEntries.length > 0}
@@ -160,14 +171,14 @@
                   <span class="copy"><small>{kindLabel(entry.kind)} · {formatViewedAt(entry.viewedAtUnixSeconds)}</small><strong>{entry.title}</strong><em>{entry.subtitle}</em></span>
                   <i>›</i>
                 </a>
-                <button type="button" aria-label={`从历史中移除 ${entry.title}`} disabled={!!pendingKey} onclick={() => removeEntry(entry)}>
+                <button type="button" aria-label={m.history_remove_entry({ title: entry.title })} disabled={!!pendingKey} onclick={() => removeEntry(entry)}>
                   {pendingKey === `${entry.kind}-${entry.resourceId}` ? "…" : "×"}
                 </button>
               </article>
             {/each}
           </div>
         {:else}
-          <div class="empty"><Icon name="history" size={34} /><h2>{snapshot.entries.length ? "没有符合条件的记录" : "还没有浏览记录"}</h2><p>{snapshot.enabled ? "打开作品、小说或作者详情后会出现在这里。" : "启用记录后，新查看的内容会保存在这里。"}</p></div>
+          <div class="empty"><Icon name="history" size={34} /><h2>{snapshot.entries.length ? m.history_no_matches() : m.history_empty()}</h2><p>{snapshot.enabled ? m.history_empty_enabled() : m.history_empty_disabled()}</p></div>
         {/if}
       </section>
     {/if}

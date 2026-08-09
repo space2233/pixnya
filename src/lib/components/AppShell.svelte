@@ -24,6 +24,7 @@
     retryPixivMedia,
   } from "$lib/media";
   import { initializeSession, session, sessionRestoring } from "$lib/session";
+  import { m } from "$lib/i18n";
   import Icon from "./Icon.svelte";
   import PixivImage from "./PixivImage.svelte";
 
@@ -40,8 +41,15 @@
   let suppressFutureMediaWarnings = $state(false);
   let mediaSessionKey = $state("");
   let activeKey = $derived(navigationKeyForPath(page.url.pathname));
+  let activeItem = $derived(activeKey ? getNavigationItem(activeKey) : null);
+  let mobileTitle = $derived(
+    activeItem &&
+      (page.url.pathname === activeItem.href || page.url.pathname === `${activeItem.href}/`)
+      ? activeItem.label
+      : title,
+  );
   let avatarUrl = $derived($session.loggedIn ? ($session.user?.avatarUrl ?? null) : null);
-  const settingsItem = getNavigationItem("settings");
+  let settingsItem = $derived(getNavigationItem("settings"));
 
   $effect(() => {
     if (activeKey === "search") {
@@ -144,8 +152,8 @@
       }
       mediaRiskOpen = true;
       mediaRiskError = automatic
-        ? "自动启用图片直连失败，已恢复安全提示。请重新确认或切换连接模式。"
-        : "无法为当前登录会话启用图片直连，请切换连接模式后重试。";
+        ? m.media_risk_auto_failed()
+        : m.media_risk_failed();
     } finally {
       mediaRiskSubmitting = false;
     }
@@ -157,9 +165,9 @@
   class:sidebar-hidden={isDesktop && !sidebarVisible}
   data-session-restoring={$sessionRestoring ? "true" : "false"}
 >
-  <aside class="side-panel" class:drawer-open={drawerOpen} aria-label="主导航">
+  <aside class="side-panel" class:drawer-open={drawerOpen} aria-label={m.shell_main_navigation()}>
     <div class="side-brand">
-      <a href="/" aria-label="PixNya 首页" onclick={closeDrawer}>
+      <a href="/" aria-label={m.shell_pixnya_home()} onclick={closeDrawer}>
         <strong>PixNya</strong>
       </a>
       <small>UNOFFICIAL</small>
@@ -168,7 +176,7 @@
     <nav class="side-nav">
       {#each sideNavigationSections as section, sectionIndex}
         {#if sectionIndex > 0}<div class="nav-divider"></div>{/if}
-        <div class="nav-group" aria-label={section.label}>
+        <div class="nav-group" aria-label={section.label()}>
           {#each section.items as key}
             {@const item = getNavigationItem(key)}
             <a
@@ -193,35 +201,35 @@
       >
         <Icon name={settingsItem.icon} size={20} /><span>{settingsItem.label}</span>
       </a>
-      <p>账号密码只在 Pixiv 官方页面输入</p>
+      <p>{m.shell_account_password_notice()}</p>
     </div>
   </aside>
 
   {#if drawerOpen}
-    <button class="drawer-scrim" type="button" aria-label="关闭导航" onclick={closeDrawer}></button>
+    <button class="drawer-scrim" type="button" aria-label={m.shell_close_navigation()} onclick={closeDrawer}></button>
   {/if}
 
   <div class="app-column">
     <header class="app-topbar">
-      <button class="icon-button menu-button" type="button" aria-label="切换导航" onclick={toggleNavigation}>
+      <button class="icon-button menu-button" type="button" aria-label={m.shell_toggle_navigation()} onclick={toggleNavigation}>
         <Icon name="menu" size={24} />
       </button>
 
-      <div class="mobile-title">{title}</div>
+      <div class="mobile-title">{mobileTitle}</div>
 
       <form class="search-box" role="search" onsubmit={submitSearch}>
         <Icon name="search" size={18} />
-        <input bind:value={searchQuery} type="search" placeholder="搜索作品、作者和标签" aria-label="搜索" />
+        <input bind:value={searchQuery} type="search" placeholder={m.shell_search_placeholder()} aria-label={m.navigation_search()} />
       </form>
 
       <div class="top-actions">
-        <button class="text-action" type="button" disabled title="PixNya 暂不包含投稿功能">投稿</button>
+        <button class="text-action" type="button" disabled title={m.shell_post_unavailable()}>{m.shell_post()}</button>
         <a
           class="icon-button"
           class:active={activeKey === "notifications"}
           href={getNavigationItem("notifications").href}
-          aria-label="通知"
-          title="Pixiv App API 未提供可靠的通知接口；查看能力说明"
+          aria-label={m.navigation_notifications()}
+          title={m.shell_notifications_unavailable()}
           aria-current={activeKey === "notifications" ? "page" : undefined}
         >
           <Icon name="bell" size={20} />
@@ -230,7 +238,9 @@
           class="login-avatar"
           class:active={activeKey === "profile"}
           href={getNavigationItem("profile").href}
-          aria-label={$session.loggedIn && $session.user ? `${$session.user.name}的个人主页` : "个人主页"}
+          aria-label={$session.loggedIn && $session.user
+            ? m.shell_user_profile({ name: $session.user.name })
+            : m.navigation_profile()}
           aria-current={activeKey === "profile" ? "page" : undefined}
         >
           {#if avatarUrl}
@@ -250,7 +260,7 @@
     </main>
   </div>
 
-  <nav class="mobile-bottom-nav" aria-label="移动端导航">
+  <nav class="mobile-bottom-nav" aria-label={m.shell_mobile_navigation()}>
     {#each bottomNavigationKeys as key}
       {@const item = getNavigationItem(key)}
       <a
@@ -268,26 +278,26 @@
       <div class="media-risk-dialog" role="alertdialog" aria-modal="true" aria-labelledby="media-risk-title">
         <span class="media-risk-icon"><Icon name="shield" size={24} /></span>
         <div>
-          <small>ECH 图片连接提示</small>
-          <h2 id="media-risk-title">图片服务器无法使用严格 ECH</h2>
-          <p>继续后，仅 Pixiv 图片 CDN 会在当前登录会话中使用固定 IP 和低安全 TLS。API、OAuth 和令牌刷新仍保持严格 ECH；图片请求不会携带登录令牌。</p>
-          <p class="media-risk-warning">该路径可能被中间人观察或篡改图片内容。选择“不再显示”后，重启应用或重新登录也会在需要时自动启用此图片路径。</p>
+          <small>{m.media_risk_eyebrow()}</small>
+          <h2 id="media-risk-title">{m.media_risk_title()}</h2>
+          <p>{m.media_risk_description()}</p>
+          <p class="media-risk-warning">{m.media_risk_warning()}</p>
           {#if mediaRiskError}<p class="media-risk-error" role="alert">{mediaRiskError}</p>{/if}
           <label class="media-risk-suppress">
             <input type="checkbox" bind:checked={suppressFutureMediaWarnings} disabled={mediaRiskSubmitting} />
-            <span><b>以后不再显示</b><small>设置会永久保存在本机，可在“连接与安全”中恢复提示</small></span>
+            <span><b>{m.media_risk_suppress()}</b><small>{m.media_risk_suppress_description()}</small></span>
           </label>
           <div class="media-risk-actions">
             <button type="button" class="secondary" disabled={mediaRiskSubmitting} onclick={() => {
               suppressFutureMediaWarnings = false;
               mediaRiskOpen = false;
-            }}>取消</button>
+            }}>{m.media_risk_cancel()}</button>
             <button type="button" class="primary" disabled={mediaRiskSubmitting} onclick={() => void confirmInsecureMediaFallback()}>
               {mediaRiskSubmitting
-                ? "正在启用…"
+                ? m.media_risk_enabling()
                 : suppressFutureMediaWarnings
-                  ? "了解风险，不再显示"
-                  : "了解风险并加载图片"}
+                  ? m.media_risk_accept_forever()
+                  : m.media_risk_accept_once()}
             </button>
           </div>
         </div>

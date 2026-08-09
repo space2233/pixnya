@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { m } from "$lib/i18n";
 import type {
   CommandFailure,
   IllustrationDetail,
@@ -452,56 +453,56 @@ export function describeDataFailure(error: unknown): string {
   const failure = asFailure(error);
   switch (failure.kind) {
     case "authentication_required":
-      return "登录状态已失效，请重新登录。";
+      return m.data_error_authentication();
     case "invalid_identifier":
-      return "作品或用户编号无效。";
+      return m.data_error_identifier();
     case "invalid_input":
-      return "输入内容无效或超过长度限制。";
+      return m.data_error_input();
     case "invalid_cursor":
-      return "分页地址校验失败，请刷新页面后重试。";
+      return m.data_error_cursor();
     case "transport_unavailable":
     case "request_failed":
-      return "暂时无法连接 Pixiv，请检查当前连接模式后重试。";
+      return m.data_error_transport();
     case "upstream_rejected":
       return failure.httpStatus === 429
-        ? "请求过于频繁，请稍后再试。"
-        : `Pixiv 暂时拒绝了请求（${failure.httpStatus ?? "未知状态"}）。`;
+        ? m.data_error_rate_limit()
+        : m.data_error_upstream({ status: failure.httpStatus ?? m.data_error_unknown_status() });
     case "invalid_response":
-      return "Pixiv 返回的数据结构发生了变化。";
+      return m.data_error_response();
     case "token_refresh_failed":
-      return "登录令牌刷新失败，请检查网络后重试。";
+      return m.data_error_token_refresh();
     case "secure_storage_unavailable":
-      return "无法读取系统安全存储中的登录信息。";
+      return m.data_error_secure_storage();
     case "offline_unavailable":
-      return "无法访问本地离线资料库。";
+      return m.data_error_offline();
     case "offline_not_found":
-      return "本地离线内容不存在或已经移除。";
+      return m.data_error_offline_not_found();
     case "local_catalog_unavailable":
-      return "无法访问本机收藏夹与标签数据库。";
+      return m.data_error_catalog();
     case "local_collection_not_found":
-      return "本地收藏夹不存在或已经删除。";
+      return m.data_error_collection_not_found();
     case "local_collection_conflict":
-      return "已存在同名的本地收藏夹。";
+      return m.data_error_collection_conflict();
     case "browsing_history_unavailable":
-      return "无法访问本机浏览历史数据库。";
+      return m.data_error_history();
     case "diagnostic_log_unavailable":
-      return "无法访问本机脱敏诊断日志。";
+      return m.data_error_diagnostics();
     case "export_unavailable":
-      return "本机导出失败；原始离线内容和诊断记录仍然保留。";
+      return m.data_error_export();
     case "download_queue_unavailable":
-      return "无法访问本机下载队列数据库。";
+      return m.data_error_queue();
     case "download_task_not_found":
-      return "下载任务不存在或已经移除。";
+      return m.data_error_task_not_found();
     case "download_transition_invalid":
-      return "当前下载状态不允许执行此操作，请刷新队列后重试。";
+      return m.data_error_transition();
     case "storage_capacity_exceeded":
-      return "本机剩余空间不足；为避免系统磁盘耗尽，下载已暂停。";
+      return m.data_error_capacity();
     case "storage_unavailable":
-      return "无法读取本机存储空间或存储设置。";
+      return m.data_error_storage();
     case "export_destination_unavailable":
-      return "尚未选择可写的导出目录，或该目录包含不能覆盖的同名用户文件。";
+      return m.data_error_export_destination();
     default:
-      return "内容载入失败，请稍后重试。";
+      return m.data_error_default();
   }
 }
 

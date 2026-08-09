@@ -1,9 +1,10 @@
 <script lang="ts">
   import { returnToPreviousLocation } from "$lib/return-navigation-browser";
+  import { m } from "$lib/i18n";
 
   let {
     fallback,
-    label = "返回",
+    label = m.common_back(),
   }: {
     fallback: string;
     label?: string;

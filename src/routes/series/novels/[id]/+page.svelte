@@ -5,6 +5,7 @@
   import NovelCard from "$lib/components/NovelCard.svelte";
   import PixivImage from "$lib/components/PixivImage.svelte";
   import ReturnLink from "$lib/components/ReturnLink.svelte";
+  import { currentAppLocale, m } from "$lib/i18n";
   import { recallNavigationView, rememberNavigationView } from "$lib/navigation-view-memory";
   import { describeDataFailure, getNovelSeries } from "$lib/pixiv-api";
   import { plainPixivText } from "$lib/pixiv-text";
@@ -125,47 +126,47 @@
   }
 
   function compact(value: number): string {
-    return new Intl.NumberFormat("zh-CN", { notation: "compact", maximumFractionDigits: 1 }).format(value);
+    return new Intl.NumberFormat(currentAppLocale(), { notation: "compact", maximumFractionDigits: 1 }).format(value);
   }
 </script>
 
-<svelte:head><title>{series?.title || "小说系列"} · PixNya</title></svelte:head>
+<svelte:head><title>{series?.title || m.novel_series_label()} · PixNya</title></svelte:head>
 
-<AppShell title="小说系列">
+<AppShell title={m.novel_series_label()}>
   <main class="series-page">
-    <ReturnLink fallback="/novels" label="返回来源页" />
+    <ReturnLink fallback="/novels" label={m.novel_return_source()} />
 
     {#if !$sessionRestoring && !$session.loggedIn}
-      <section class="state-card"><Icon name="user" size={28} /><div><h1>登录后查看小说系列</h1><p>系列目录与阅读顺序通过登录后的 Pixiv App API 载入。</p></div><a href="/login?mode=standard">前往登录</a></section>
+      <section class="state-card"><Icon name="user" size={28} /><div><h1>{m.novel_series_login_title()}</h1><p>{m.novel_series_login_description()}</p></div><a href="/login?mode=standard">{m.common_go_to_login()}</a></section>
     {:else if status === "loading"}
-      <section class="state-card"><span class="spinner"></span><div><h1>正在载入小说系列</h1><p>正在读取系列信息与章节顺序…</p></div></section>
+      <section class="state-card"><span class="spinner"></span><div><h1>{m.novel_series_loading_title()}</h1><p>{m.novel_series_loading_description()}</p></div></section>
     {:else if status === "error"}
-      <section class="state-card error" role="alert"><span>!</span><div><h1>系列载入失败</h1><p>{errorMessage}</p></div><button type="button" onclick={() => loadSeries(requestedKey, seriesId)}>重试</button></section>
+      <section class="state-card error" role="alert"><span>!</span><div><h1>{m.series_load_failed()}</h1><p>{errorMessage}</p></div><button type="button" onclick={() => loadSeries(requestedKey, seriesId)}>{m.common_retry()}</button></section>
     {:else if series}
       <section class="series-hero">
         <div class="series-cover"><PixivImage url={firstNovel?.coverUrl} alt="" /></div>
         <div class="series-copy">
-          <div class="eyebrow">小说系列 · {series.contentCount} 篇</div>
-          <h1>{series.title || "未命名系列"}</h1>
+          <div class="eyebrow">{m.novel_series_summary({ count: series.contentCount })}</div>
+          <h1>{series.title || m.series_unnamed()}</h1>
           {#if caption}<p>{caption}</p>{/if}
           <a class="author" href={`/users/${series.author.id}`}>{series.author.name || series.author.account}</a>
           <div class="series-meta">
-            <span>{compact(series.totalCharacterCount)} 字</span>
-            <span>{series.isConcluded ? "已完结" : "连载中"}</span>
-            {#if series.isOriginal}<span>原创</span>{/if}
-            {#if series.watchlistAdded}<span>已加入追更</span>{/if}
+            <span>{m.novel_series_characters({ count: compact(series.totalCharacterCount) })}</span>
+            <span>{series.isConcluded ? m.series_concluded() : m.series_ongoing()}</span>
+            {#if series.isOriginal}<span>{m.novel_original_badge()}</span>{/if}
+            {#if series.watchlistAdded}<span>{m.series_watchlisted()}</span>{/if}
           </div>
-          {#if firstNovel}<a class="start" href={`/novels/${firstNovel.id}/read`}>从第一篇开始连续阅读</a>{/if}
+          {#if firstNovel}<a class="start" href={`/novels/${firstNovel.id}/read`}>{m.novel_series_start_reading()}</a>{/if}
         </div>
       </section>
 
       <section class="contents">
-        <header><div><h2>系列目录</h2><p>阅读页会显示官方返回的上一篇与下一篇。</p></div><strong>{novels.length} / {series.contentCount}</strong></header>
+        <header><div><h2>{m.series_contents()}</h2><p>{m.novel_series_contents_description()}</p></div><strong>{novels.length} / {series.contentCount}</strong></header>
         {#if novels.length}
           <div class="novel-grid">{#each novels as novel (novel.id)}<NovelCard {novel} />{/each}</div>
-        {:else}<p class="empty">这个系列目前没有可阅读的小说。</p>{/if}
+        {:else}<p class="empty">{m.novel_series_empty()}</p>{/if}
         {#if loadMoreError}<p class="load-error" role="alert">{loadMoreError}</p>{/if}
-        {#if nextCursor}<button class="load-more" type="button" disabled={loadingMore} onclick={loadMore}>{loadingMore ? "正在载入…" : "加载后续小说"}</button>{/if}
+        {#if nextCursor}<button class="load-more" type="button" disabled={loadingMore} onclick={loadMore}>{loadingMore ? m.common_loading() : m.novel_series_load_more()}</button>{/if}
       </section>
     {/if}
   </main>

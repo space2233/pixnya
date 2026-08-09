@@ -50,5 +50,5 @@ test("the selected connection mode follows OAuth exchange and persisted refresh 
   assert.match(rust, /build_client\(&ProbeRequest/);
   assert.match(rust, /save_refresh_token\(app, refresh_token\.as_str\(\), mode\)/);
   assert.match(plugin, /connectionMode/);
-  assert.match(login, /refresh token 与 access token 均可能被窃取/);
+  assert.match(login, /m\.login_risk_bridge_compatible\(\)/);
 });

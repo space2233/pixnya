@@ -39,13 +39,13 @@ test("independent series pages and continuous navigation are wired", async () =>
 
   assert.match(artSeries, /getIllustrationSeries/);
   assert.match(artSeries, /rememberArtworkSeriesPage/);
-  assert.match(artSeries, /从第一部开始连续浏览/);
+  assert.match(artSeries, /m\.artwork_series_start_browsing\(\)/);
   assert.match(novelSeries, /getNovelSeries/);
-  assert.match(novelSeries, /从第一篇开始连续阅读/);
+  assert.match(novelSeries, /m\.novel_series_start_reading\(\)/);
   assert.match(artDetail, /resolveArtworkSeriesNavigation/);
   assert.match(artDetail, /\/series\/artworks\//);
-  assert.match(artDetail, /上一篇|上一部/);
-  assert.match(artDetail, /下一篇|下一部/);
+  assert.match(artDetail, /m\.artwork_previous\(\)/);
+  assert.match(artDetail, /m\.artwork_next\(\)/);
   assert.match(novelDetail, /\/series\/novels\//);
   assert.match(novelDetail, /\/read/);
   assert.match(novelReader, /content\.seriesNavigation\.previous/);

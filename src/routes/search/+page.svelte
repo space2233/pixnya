@@ -8,6 +8,7 @@
   import Icon from "$lib/components/Icon.svelte";
   import NovelCard from "$lib/components/NovelCard.svelte";
   import UserPreviewCard from "$lib/components/UserPreviewCard.svelte";
+  import { m } from "$lib/i18n";
   import { recallNavigationView, rememberNavigationView } from "$lib/navigation-view-memory";
   import {
     describeDataFailure,
@@ -29,8 +30,14 @@
     UserPreview,
   } from "$lib/types";
 
-  const searchTypes = ["作品", "小说", "用户", "标签"] as const;
+  const searchTypes = ["works", "novels", "users", "tags"] as const;
   type SearchType = (typeof searchTypes)[number];
+  const searchTypeLabels: Record<SearchType, () => string> = {
+    works: m.search_type_works,
+    novels: m.search_type_novels,
+    users: m.search_type_users,
+    tags: m.search_type_tags,
+  };
   type SearchSnapshot = {
     query: string;
     activeType: SearchType;
@@ -48,10 +55,19 @@
     requestedKey: string;
     trendingSession: string;
   };
-  const fallbackTags = ["原创", "风景", "角色设计", "漫画", "轻小说", "数字绘画", "壁纸", "本周热门"];
+  const fallbackTags = [
+    m.search_fallback_original,
+    m.search_fallback_landscape,
+    m.search_fallback_character_design,
+    m.search_fallback_manga,
+    m.search_fallback_light_novel,
+    m.search_fallback_digital_art,
+    m.search_fallback_wallpaper,
+    m.search_fallback_weekly_popular,
+  ];
 
   let query = $state("");
-  let activeType = $state<SearchType>("作品");
+  let activeType = $state<SearchType>("works");
   let illustrations = $state<IllustrationSummary[]>([]);
   let novels = $state<NovelSummary[]>([]);
   let users = $state<UserPreview[]>([]);
@@ -93,7 +109,7 @@
       if (!value) return;
       requestSequence += 1;
       query = value.query;
-      activeType = value.activeType;
+      activeType = searchTypes.includes(value.activeType) ? value.activeType : "works";
       illustrations = value.illustrations;
       novels = value.novels;
       users = value.users;
@@ -193,12 +209,12 @@
     users = [];
     nextCursor = null;
     try {
-      if (type === "用户") {
+      if (type === "users") {
         const result = await searchUsers(word);
         if (sequence !== requestSequence || key !== requestedKey) return;
         users = result.users;
         nextCursor = result.nextCursor ?? null;
-      } else if (type === "小说") {
+      } else if (type === "novels") {
         const result = await searchNovels(word, "partial_match_for_tags");
         if (sequence !== requestSequence || key !== requestedKey) return;
         novels = result.novels;
@@ -206,7 +222,7 @@
       } else {
         const result = await searchIllustrations(
           word,
-          type === "标签" ? "exact_match_for_tags" : "partial_match_for_tags",
+          type === "tags" ? "exact_match_for_tags" : "partial_match_for_tags",
         );
         if (sequence !== requestSequence || key !== requestedKey) return;
         illustrations = result.illustrations;
@@ -228,13 +244,13 @@
     loadingMore = true;
     paginationError = "";
     try {
-      if (activeType === "用户") {
+      if (activeType === "users") {
         const result = await searchUsers(submittedQuery, cursor);
         if (sequence !== requestSequence || key !== requestedKey) return;
         const knownIds = new Set(users.map((item) => item.user.id));
         users = [...users, ...result.users.filter((item) => !knownIds.has(item.user.id))];
         nextCursor = result.nextCursor ?? null;
-      } else if (activeType === "小说") {
+      } else if (activeType === "novels") {
         const result = await searchNovels(submittedQuery, "partial_match_for_tags", cursor);
         if (sequence !== requestSequence || key !== requestedKey) return;
         const knownIds = new Set(novels.map((item) => item.id));
@@ -243,7 +259,7 @@
       } else {
         const result = await searchIllustrations(
           submittedQuery,
-          activeType === "标签" ? "exact_match_for_tags" : "partial_match_for_tags",
+          activeType === "tags" ? "exact_match_for_tags" : "partial_match_for_tags",
           cursor,
         );
         if (sequence !== requestSequence || key !== requestedKey) return;
@@ -268,82 +284,85 @@
   }
 </script>
 
-<svelte:head><title>搜索 · PixNya</title></svelte:head>
+<svelte:head><title>{m.search_title()} · PixNya</title></svelte:head>
 
-<AppShell title="搜索">
+<AppShell title={m.search_title()}>
   <main class="search-page">
     <header>
-      <h1>搜索</h1>
-      <p>查找作品、作者和标签。搜索词只会在提交后发送给 Pixiv。</p>
+      <h1>{m.search_title()}</h1>
+      <p>{m.search_description()}</p>
     </header>
 
     <form class="large-search" role="search" onsubmit={submitSearch}>
       <Icon name="search" size={21} />
-      <input bind:value={query} type="search" placeholder="输入作品、作者或标签" aria-label="搜索内容" />
-      <button type="submit">搜索</button>
+      <input bind:value={query} type="search" placeholder={m.search_placeholder()} aria-label={m.search_content_label()} />
+      <button type="submit">{m.search_title()}</button>
     </form>
 
     {#if history.length > 0}
-      <section class="history-card" aria-label="最近搜索">
-        <div class="history-heading"><Icon name="search" size={18} /><span><strong>最近搜索</strong><small>仅保存在本机</small></span><button type="button" onclick={clearHistory}>清除</button></div>
+      <section class="history-card" aria-label={m.search_recent()}>
+        <div class="history-heading"><Icon name="search" size={18} /><span><strong>{m.search_recent()}</strong><small>{m.search_local_only()}</small></span><button type="button" onclick={clearHistory}>{m.search_clear()}</button></div>
         <div class="history-list">{#each history as item}<a href={`/search?q=${encodeURIComponent(item)}`}>{item}</a>{/each}</div>
       </section>
     {/if}
 
-    <nav class="type-tabs" aria-label="搜索类型">
+    <nav class="type-tabs" aria-label={m.search_type_label()}>
       {#each searchTypes as type}
-        <button type="button" class:active={activeType === type} aria-pressed={activeType === type} onclick={() => (activeType = type)}>{type}</button>
+        <button type="button" class:active={activeType === type} aria-pressed={activeType === type} onclick={() => (activeType = type)}>{searchTypeLabels[type]()}</button>
       {/each}
     </nav>
 
     {#if submittedQuery}
       <section class="results" aria-labelledby="results-heading">
         <div class="section-heading">
-          <div><h2 id="results-heading">“{submittedQuery}”的{activeType}结果</h2><p>结果由 Pixiv App API 返回</p></div>
+          <div><h2 id="results-heading">{m.search_results_heading({ query: submittedQuery, type: searchTypeLabels[activeType]() })}</h2><p>{m.search_results_source()}</p></div>
         </div>
 
         {#if !$sessionRestoring && !$session.loggedIn}
-          <div class="state-card"><Icon name="user" size={24} /><p>登录后可以搜索完整作品与作者。</p><a href="/login?mode=standard">前往登录</a></div>
+          <div class="state-card"><Icon name="user" size={24} /><p>{m.search_sign_in_description()}</p><a href="/login?mode=standard">{m.search_go_to_login()}</a></div>
         {:else if resultStatus === "loading"}
-          <div class="state-card"><span class="spinner"></span><p>正在搜索…</p></div>
+          <div class="state-card"><span class="spinner"></span><p>{m.search_searching()}</p></div>
         {:else if resultStatus === "error"}
-          <div class="state-card error" role="alert"><span>!</span><p>{resultError}</p><button type="button" onclick={retryResults}>重试</button></div>
-        {:else if activeType === "用户" && users.length > 0}
+          <div class="state-card error" role="alert"><span>!</span><p>{resultError}</p><button type="button" onclick={retryResults}>{m.common_retry()}</button></div>
+        {:else if activeType === "users" && users.length > 0}
           <div class="user-grid">{#each users as preview (preview.user.id)}<UserPreviewCard {preview} />{/each}</div>
-        {:else if activeType === "小说" && novels.length > 0}
+        {:else if activeType === "novels" && novels.length > 0}
           <div class="novel-grid">{#each novels as novel (novel.id)}<NovelCard {novel} />{/each}</div>
-        {:else if activeType !== "用户" && activeType !== "小说" && illustrations.length > 0}
+        {:else if activeType !== "users" && activeType !== "novels" && illustrations.length > 0}
           <div class="result-grid">{#each illustrations as illustration, index (illustration.id)}<ArtworkCard {illustration} tone={(index % 6) + 1} />{/each}</div>
         {:else if resultStatus === "ready"}
-          <p class="empty">没有找到匹配的{activeType}。</p>
+          <p class="empty">{m.search_empty({ type: searchTypeLabels[activeType]() })}</p>
         {/if}
 
         {#if paginationError}<p class="pagination-error" role="alert">{paginationError}</p>{/if}
         {#if nextCursor && resultStatus === "ready"}
-          <button class="load-more" type="button" disabled={loadingMore} onclick={loadMore}>{loadingMore ? "正在载入…" : "加载更多"}</button>
+          <button class="load-more" type="button" disabled={loadingMore} onclick={loadMore}>{loadingMore ? m.common_loading() : m.common_load_more()}</button>
         {/if}
       </section>
     {:else}
       <section class="suggestions" aria-labelledby="suggestions-heading">
-        <div class="suggestion-title"><span><Icon name="compass" size={19} /></span><div><h2 id="suggestions-heading">热门标签</h2><p>来自 Pixiv 当前趋势</p></div></div>
+        <div class="suggestion-title"><span><Icon name="compass" size={19} /></span><div><h2 id="suggestions-heading">{m.search_trending_title()}</h2><p>{m.search_trending_source()}</p></div></div>
 
         {#if !$sessionRestoring && !$session.loggedIn}
           <div class="tag-grid fallback">
-            {#each fallbackTags as tag, index}<a href={`/search?q=${encodeURIComponent(tag)}`}><span class="tag-art tone-{(index % 5) + 1}"></span><strong>#{tag}</strong><small>登录后更新趋势</small></a>{/each}
+            {#each fallbackTags as tagMessage, index}
+              {@const tag = tagMessage()}
+              <a href={`/search?q=${encodeURIComponent(tag)}`}><span class="tag-art tone-{(index % 5) + 1}"></span><strong>#{tag}</strong><small>{m.search_trending_sign_in()}</small></a>
+            {/each}
           </div>
         {:else if trendingStatus === "loading"}
-          <div class="state-card"><span class="spinner"></span><p>正在载入热门标签…</p></div>
+          <div class="state-card"><span class="spinner"></span><p>{m.search_trending_loading()}</p></div>
         {:else if displayTags.length > 0}
           <div class="tag-grid">
             {#each displayTags as tag, index (tag.name)}
               <a href={`/search?q=${encodeURIComponent(tag.name)}`}>
                 <span class="tag-art"><ArtworkThumbnail url={tag.illustration.thumbnailUrl} alt="" tone={(index % 6) + 1} /></span>
-                <strong>#{tag.name}</strong><small>{tag.translatedName || "查看相关作品"}</small>
+                <strong>#{tag.name}</strong><small>{tag.translatedName || m.search_view_related()}</small>
               </a>
             {/each}
           </div>
         {:else if trendingStatus === "error"}
-          <div class="state-card error"><span>!</span><p>{trendingError}</p><button type="button" onclick={() => loadTrending(trendingSession)}>重试</button></div>
+          <div class="state-card error"><span>!</span><p>{trendingError}</p><button type="button" onclick={() => loadTrending(trendingSession)}>{m.common_retry()}</button></div>
         {/if}
       </section>
     {/if}

@@ -5,18 +5,36 @@ const MAX_MUTED_COMMENTS = 500;
 const MAX_LOCAL_REPORTS = 500;
 
 export const LOCAL_REPORT_REASONS = [
-  "色情或低俗内容",
-  "仇恨言论",
-  "恐怖主义内容",
-  "危险组织或行为",
-  "敏感事件",
-  "欺凌或骚扰",
-  "危险商品",
-  "大麻相关内容",
-  "烟草或酒精相关内容",
+  "sexual_or_vulgar",
+  "hate_speech",
+  "terrorism",
+  "dangerous_organization",
+  "sensitive_event",
+  "bullying_or_harassment",
+  "dangerous_goods",
+  "cannabis",
+  "tobacco_or_alcohol",
 ] as const;
 
 export type LocalReportReason = (typeof LOCAL_REPORT_REASONS)[number];
+
+const LEGACY_REPORT_REASONS: Record<string, LocalReportReason> = {
+  "\u8272\u60c5\u6216\u4f4e\u4fd7\u5185\u5bb9": "sexual_or_vulgar",
+  "\u4ec7\u6068\u8a00\u8bba": "hate_speech",
+  "\u6050\u6016\u4e3b\u4e49\u5185\u5bb9": "terrorism",
+  "\u5371\u9669\u7ec4\u7ec7\u6216\u884c\u4e3a": "dangerous_organization",
+  "\u654f\u611f\u4e8b\u4ef6": "sensitive_event",
+  "\u6b3a\u51cc\u6216\u9a9a\u6270": "bullying_or_harassment",
+  "\u5371\u9669\u5546\u54c1": "dangerous_goods",
+  "\u5927\u9ebb\u76f8\u5173\u5185\u5bb9": "cannabis",
+  "\u70df\u8349\u6216\u9152\u7cbe\u76f8\u5173\u5185\u5bb9": "tobacco_or_alcohol",
+};
+
+function normalizeReportReason(value: unknown): LocalReportReason | null {
+  if (typeof value !== "string") return null;
+  if (LOCAL_REPORT_REASONS.includes(value as LocalReportReason)) return value as LocalReportReason;
+  return LEGACY_REPORT_REASONS[value] ?? null;
+}
 
 export interface MutedCommentRecord {
   commentId: string;
@@ -61,14 +79,18 @@ function sanitizeSnapshot(value: unknown): CommentModerationSnapshot {
     : [];
   const localReports = Array.isArray(candidate.localReports)
     ? candidate.localReports
-      .filter((item): item is LocalCommentReport => Boolean(
-        item
-        && validId(item.commentId)
-        && validId(item.resourceId)
-        && (item.resourceKind === "illustration" || item.resourceKind === "novel")
-        && LOCAL_REPORT_REASONS.includes(item.reason)
-        && Number.isFinite(item.reportedAtUnixSeconds),
-      ))
+      .flatMap((item) => {
+        const reason = normalizeReportReason(item?.reason);
+        if (
+          !item
+          || !validId(item.commentId)
+          || !validId(item.resourceId)
+          || (item.resourceKind !== "illustration" && item.resourceKind !== "novel")
+          || !reason
+          || !Number.isFinite(item.reportedAtUnixSeconds)
+        ) return [];
+        return [{ ...item, reason } as LocalCommentReport];
+      })
       .slice(-MAX_LOCAL_REPORTS)
     : [];
   return { mutedComments, localReports };

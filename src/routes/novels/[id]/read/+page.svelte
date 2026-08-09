@@ -4,6 +4,7 @@
   import AppShell from "$lib/components/AppShell.svelte";
   import Icon from "$lib/components/Icon.svelte";
   import ReturnLink from "$lib/components/ReturnLink.svelte";
+  import { m } from "$lib/i18n";
   import { recallNavigationView, rememberNavigationView } from "$lib/navigation-view-memory";
   import { parseNovelText } from "$lib/novel-text";
   import {
@@ -29,11 +30,11 @@
   let requestedKey = $state("");
   let requestSequence = 0;
   let novelId = $derived(page.params.id ?? "");
-  let blocks = $derived(content ? parseNovelText(content.text) : []);
+  let blocks = $derived(content ? parseNovelText(content.text, m.novel_default_chapter()) : []);
   let restricted = $derived((detail?.novel.xRestrict ?? 0) > 0);
   let activeSeriesId = $derived(content?.seriesId ?? detail?.novel.series?.id ?? null);
   let activeSeriesTitle = $derived(
-    content?.seriesTitle ?? detail?.novel.series?.title ?? "小说系列",
+    content?.seriesTitle ?? detail?.novel.series?.title ?? m.novel_series_label(),
   );
 
   type NovelReaderSnapshot = {
@@ -112,8 +113,8 @@
       void recordBrowsingHistory({
         kind: "novel",
         resourceId: nextDetail.novel.id,
-        title: nextDetail.novel.title || "无题",
-        subtitle: nextDetail.novel.author.name || "未知作者",
+        title: nextDetail.novel.title || m.common_untitled(),
+        subtitle: nextDetail.novel.author.name || m.common_unknown_author(),
         thumbnailUrl: nextDetail.novel.coverUrl ?? nextContent.coverUrl,
       }).catch(() => undefined);
       await tick();
@@ -145,14 +146,14 @@
   }
 </script>
 
-<svelte:head><title>{detail?.novel.title || "小说阅读"} · PixNya</title></svelte:head>
+<svelte:head><title>{detail?.novel.title || m.novel_reader_title()} · PixNya</title></svelte:head>
 
-<AppShell title="阅读">
+<AppShell title={m.novel_reader_shell_title()}>
   <main class="reading-page">
     <header class="reading-header">
-      <ReturnLink fallback={`/novels/${novelId}`} label="返回小说详情" />
+      <ReturnLink fallback={`/novels/${novelId}`} label={m.novel_reader_back()} />
       {#if detail}
-        <div><h1>{detail.novel.title || "无题"}</h1><p>{detail.novel.author.name}</p></div>
+        <div><h1>{detail.novel.title || m.common_untitled()}</h1><p>{detail.novel.author.name}</p></div>
         <strong>{Math.round(progress * 100)}%</strong>
       {/if}
     </header>
@@ -160,34 +161,34 @@
     {#if !$sessionRestoring && !$session.loggedIn}
       <section class="state">
         <Icon name="user" size={27} />
-        <div><h1>登录后阅读正文</h1><p>正文通过 Pixiv 小说阅读端点载入。</p></div>
-        <a href="/login?mode=standard">前往登录</a>
+        <div><h1>{m.novel_reader_login_title()}</h1><p>{m.novel_reader_login_description()}</p></div>
+        <a href="/login?mode=standard">{m.common_go_to_login()}</a>
       </section>
     {:else if status === "loading"}
       <section class="state">
         <span class="spinner"></span>
-        <div><h1>正在准备阅读器</h1><p>正在载入正文和上次阅读位置…</p></div>
+        <div><h1>{m.novel_reader_loading_title()}</h1><p>{m.novel_reader_loading_description()}</p></div>
       </section>
     {:else if status === "error"}
       <section class="state error" role="alert">
         <span>!</span>
-        <div><h1>正文载入失败</h1><p>{errorMessage}</p></div>
-        <button type="button" onclick={() => loadReader(requestedKey, novelId)}>重试</button>
+        <div><h1>{m.novel_reader_load_failed()}</h1><p>{errorMessage}</p></div>
+        <button type="button" onclick={() => loadReader(requestedKey, novelId)}>{m.common_retry()}</button>
       </section>
     {:else if detail && content && restricted && !$r18DefaultVisible && !revealRestricted}
       <section class="state restricted" role="status">
         <span>R18</span>
-        <div><h1>这是受限小说</h1><p>当前设置要求逐次确认后显示正文。</p></div>
-        <button type="button" onclick={() => (revealRestricted = true)}>开始阅读</button>
+        <div><h1>{m.novel_reader_restricted_title()}</h1><p>{m.novel_reader_restricted_description()}</p></div>
+        <button type="button" onclick={() => (revealRestricted = true)}>{m.novel_start_reading()}</button>
       </section>
     {:else if detail && content}
       <section class="reader-shell">
         <div class="reader-controls">
-          <label>字号 <input type="range" min="14" max="28" step="1" bind:value={fontSize} /></label>
-          <label>行距 <input type="range" min="1.4" max="2.4" step="0.1" bind:value={lineHeight} /></label>
-          <label>背景
+          <label>{m.novel_reader_font_size()} <input type="range" min="14" max="28" step="1" bind:value={fontSize} /></label>
+          <label>{m.novel_reader_line_height()} <input type="range" min="1.4" max="2.4" step="0.1" bind:value={lineHeight} /></label>
+          <label>{m.novel_reader_background()}
             <select bind:value={theme}>
-              <option value="paper">纸张</option><option value="white">白色</option><option value="dark">夜间</option>
+              <option value="paper">{m.novel_reader_theme_paper()}</option><option value="white">{m.novel_reader_theme_white()}</option><option value="dark">{m.novel_reader_theme_dark()}</option>
             </select>
           </label>
         </div>
@@ -201,8 +202,8 @@
           {#each blocks as block}
             {#if block.kind === "chapter"}<h2>{block.text}</h2>
             {:else if block.kind === "page_break"}<hr />
-            {:else if block.kind === "artwork_link"}<a class="embed" href={`/artworks/${block.id}`}>查看文中插画 #{block.id}</a>
-            {:else if block.kind === "uploaded_image"}<div class="embed muted">文中上传图片 #{block.id}（当前正文接口未提供可验证的 CDN 地址）</div>
+            {:else if block.kind === "artwork_link"}<a class="embed" href={`/artworks/${block.id}`}>{m.novel_reader_artwork_link({ id: block.id })}</a>
+            {:else if block.kind === "uploaded_image"}<div class="embed muted">{m.novel_reader_uploaded_image({ id: block.id })}</div>
             {:else if block.kind === "external_link"}<div class="embed external">{block.label}<small>{block.url}</small></div>
             {:else}<p>{block.text}</p>{/if}
           {/each}
@@ -210,25 +211,25 @@
       </section>
 
       {#if activeSeriesId}
-        <nav class="series-navigation" aria-label="小说系列连续阅读">
+        <nav class="series-navigation" aria-label={m.novel_series_navigation()}>
           <a class="series-overview" href={`/series/novels/${activeSeriesId}`}>
-            <small>小说系列</small><strong>{activeSeriesTitle}</strong>
+            <small>{m.novel_series_label()}</small><strong>{activeSeriesTitle}</strong>
           </a>
           {#if content.seriesNavigation.previous?.viewable}
             <a class="series-sibling previous" href={`/novels/${content.seriesNavigation.previous.id}/read`}>
-              <small>‹ 上一篇 · 第 {content.seriesNavigation.previous.contentOrder} 篇</small>
-              <strong>{content.seriesNavigation.previous.title || "无题"}</strong>
+              <small>{m.novel_previous_order({ order: content.seriesNavigation.previous.contentOrder })}</small>
+              <strong>{content.seriesNavigation.previous.title || m.common_untitled()}</strong>
             </a>
           {:else}
-            <span class="series-sibling disabled"><small>‹ 上一篇</small><strong>{content.seriesNavigation.previous?.viewableMessage || "已到系列开头"}</strong></span>
+            <span class="series-sibling disabled"><small>{m.novel_previous()}</small><strong>{content.seriesNavigation.previous?.viewableMessage || m.novel_series_start()}</strong></span>
           {/if}
           {#if content.seriesNavigation.next?.viewable}
             <a class="series-sibling next" href={`/novels/${content.seriesNavigation.next.id}/read`}>
-              <small>下一篇 · 第 {content.seriesNavigation.next.contentOrder} 篇 ›</small>
-              <strong>{content.seriesNavigation.next.title || "无题"}</strong>
+              <small>{m.novel_next_order({ order: content.seriesNavigation.next.contentOrder })}</small>
+              <strong>{content.seriesNavigation.next.title || m.common_untitled()}</strong>
             </a>
           {:else}
-            <span class="series-sibling disabled next"><small>下一篇 ›</small><strong>{content.seriesNavigation.next?.viewableMessage || "已到系列末尾"}</strong></span>
+            <span class="series-sibling disabled next"><small>{m.novel_next()}</small><strong>{content.seriesNavigation.next?.viewableMessage || m.novel_series_end()}</strong></span>
           {/if}
         </nav>
       {/if}

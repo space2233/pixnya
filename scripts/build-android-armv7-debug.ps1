@@ -11,6 +11,10 @@ $tauri = Join-Path $projectRoot 'node_modules\.bin\tauri.cmd'
 $androidProject = Join-Path $projectRoot 'src-tauri\gen\android'
 $gradleWrapper = Join-Path $androidProject 'gradlew.bat'
 
+# ARM32 is paused, but keep its manual build path from recreating large
+# incremental caches if it is explicitly used later.
+$env:CARGO_INCREMENTAL = '0'
+
 . (Join-Path $PSScriptRoot 'import-oauth-env.ps1')
 Import-OAuthEnvironment `
     -EnvironmentFile (Join-Path $projectRoot '.env.oauth.local') `
@@ -73,6 +77,8 @@ try {
     if ($LASTEXITCODE -ne 0) {
         exit $LASTEXITCODE
     }
+
+    & (Join-Path $PSScriptRoot 'audit-target-storage.ps1') -WarnAboveGiB 80
 }
 finally {
     Pop-Location

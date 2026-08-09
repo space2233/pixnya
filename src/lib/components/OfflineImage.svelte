@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { m } from "$lib/i18n";
   import { readOfflineAsset } from "$lib/pixiv-api";
 
   let { entryKey, assetNames, alt = "", fit = "contain" }: { entryKey: string; assetNames: string[]; alt?: string; fit?: "cover" | "contain" } = $props();
@@ -32,7 +33,7 @@
   });
 </script>
 
-{#if source}<img src={source} {alt} draggable="false" style:object-fit={fit} />{:else}<span class="placeholder" aria-label={alt}>离线图片</span>{/if}
+  {#if source}<img src={source} {alt} draggable="false" style:object-fit={fit} />{:else}<span class="placeholder" aria-label={alt}>{m.offline_image()}</span>{/if}
 
 <style>
   img { display: block; width: 100%; height: 100%; }

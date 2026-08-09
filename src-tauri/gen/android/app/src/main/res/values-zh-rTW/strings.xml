@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">"PixNya"</string>
+    <string name="main_activity_title">"PixNya"</string>
+    <string name="login_activity_title">Pixiv 官方登入</string>
+    <string name="login_close_description">關閉登入頁</string>
+    <string name="login_error_invalid_url">登入網址驗證失敗，頁面未載入。</string>
+    <string name="login_error_certificate">伺服器憑證驗證失敗，登入已停止。</string>
+    <string name="login_error_page_load">官方登入頁載入失敗，請返回後切換連線模式再試一次。</string>
+    <string name="login_error_proxy_unsupported">目前的 Android System WebView 不支援 Proxy 覆寫，無法啟用登入橋接。</string>
+    <string name="login_error_bridge_unavailable">低安全性登入橋接尚未就緒，頁面未載入。</string>
+    <string name="login_mode_ech">ECH 預檢 · 低安全性登入橋接</string>
+    <string name="login_mode_compatible">相容 · 固定 IP / 低安全性 TLS</string>
+    <string name="login_mode_standard">標準 · 系統網路</string>
+</resources>

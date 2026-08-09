@@ -38,7 +38,7 @@ test("following works and followed authors share one active navigation destinati
   assert.match(tabs, /href="\/following\/users"/);
   assert.match(users, /getFollowedUsers/);
   assert.match(users, /UserPreviewCard/);
-  assert.match(users, /公开关注/);
-  assert.match(users, /非公开关注/);
+  assert.match(users, /m\.following_public\(\)/);
+  assert.match(users, /m\.following_private\(\)/);
   assert.match(profile, /href="\/following\/users"/);
 });

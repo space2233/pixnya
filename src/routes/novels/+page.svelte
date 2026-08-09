@@ -3,12 +3,20 @@
   import ContentTabs from "$lib/components/ContentTabs.svelte";
   import Icon from "$lib/components/Icon.svelte";
   import NovelCard from "$lib/components/NovelCard.svelte";
+  import { m } from "$lib/i18n";
   import { recallNavigationView, rememberNavigationView } from "$lib/navigation-view-memory";
   import { describeDataFailure, getBookmarkedNovels, getFollowedNovels, getRankingNovels, getRecommendedNovels } from "$lib/pixiv-api";
   import { session, sessionRestoring } from "$lib/session";
   import type { BookmarkRestrict, NovelPage, NovelSummary, RankingMode } from "$lib/types";
 
-  const sections = ["推荐", "关注", "排行", "收藏"] as const;
+  const sections = ["recommended", "following", "ranking", "bookmarks"] as const;
+  type NovelSection = (typeof sections)[number];
+  const sectionLabels: Record<NovelSection, () => string> = {
+    recommended: m.novels_section_recommended,
+    following: m.novels_section_following,
+    ranking: m.novels_section_ranking,
+    bookmarks: m.novels_section_bookmarks,
+  };
 
   let novels = $state<NovelSummary[]>([]);
   let nextCursor = $state<string | null>(null);
@@ -16,7 +24,7 @@
   let errorMessage = $state("");
   let loadingMore = $state(false);
   let requestedSession = $state("");
-  let selectedSection = $state<(typeof sections)[number]>("推荐");
+  let selectedSection = $state<NovelSection>("recommended");
   let bookmarkRestrict = $state<BookmarkRestrict>("public");
   let rankingMode = $state<RankingMode>("day");
   let requestSequence = 0;
@@ -27,7 +35,7 @@
     status: "idle" | "loading" | "ready" | "error";
     errorMessage: string;
     requestedSession: string;
-    selectedSection: (typeof sections)[number];
+    selectedSection: NovelSection;
     bookmarkRestrict: BookmarkRestrict;
     rankingMode: RankingMode;
   };
@@ -52,7 +60,7 @@
       status = value.status === "loading" ? "idle" : value.status;
       errorMessage = value.errorMessage;
       requestedSession = value.status === "loading" ? "" : value.requestedSession;
-      selectedSection = value.selectedSection;
+      selectedSection = sections.includes(value.selectedSection) ? value.selectedSection : "recommended";
       bookmarkRestrict = value.bookmarkRestrict;
       rankingMode = value.rankingMode;
       loadingMore = false;
@@ -77,9 +85,9 @@
   });
 
   function requestPage(cursor?: string): Promise<NovelPage> {
-    if (selectedSection === "关注") return getFollowedNovels(cursor);
-    if (selectedSection === "排行") return getRankingNovels(rankingMode, cursor);
-    if (selectedSection === "收藏") return getBookmarkedNovels(bookmarkRestrict, cursor);
+    if (selectedSection === "following") return getFollowedNovels(cursor);
+    if (selectedSection === "ranking") return getRankingNovels(rankingMode, cursor);
+    if (selectedSection === "bookmarks") return getBookmarkedNovels(bookmarkRestrict, cursor);
     return getRecommendedNovels(cursor);
   }
 
@@ -118,27 +126,27 @@
   }
 </script>
 
-<svelte:head><title>小说 · PixNya</title></svelte:head>
+<svelte:head><title>{m.novels_title()} · PixNya</title></svelte:head>
 
-<AppShell title="小说">
+<AppShell title={m.novels_title()}>
   <ContentTabs />
   <main class="novel-page">
-    <header><div><h1>小说</h1><p>阅读推荐、关注作者、排行榜与账号收藏，阅读位置保存在当前设备。</p></div></header>
+    <header><div><h1>{m.novels_title()}</h1><p>{m.novels_description()}</p></div></header>
     <div class="novel-toolbar">
-      <nav aria-label="小说内容类型">{#each sections as section}<button type="button" class:active={selectedSection === section} onclick={() => (selectedSection = section)}>{section}</button>{/each}</nav>
-      {#if selectedSection === "排行"}<select bind:value={rankingMode} aria-label="小说排行周期"><option value="day">今日</option><option value="week">本周</option><option value="month">本月</option></select>{/if}
-      {#if selectedSection === "收藏"}<select bind:value={bookmarkRestrict} aria-label="小说收藏范围"><option value="public">公开收藏</option><option value="private">非公开收藏</option></select>{/if}
+      <nav aria-label={m.novels_content_type()}>{#each sections as section}<button type="button" class:active={selectedSection === section} onclick={() => (selectedSection = section)}>{sectionLabels[section]()}</button>{/each}</nav>
+      {#if selectedSection === "ranking"}<select bind:value={rankingMode} aria-label={m.novels_ranking_period()}><option value="day">{m.novels_today()}</option><option value="week">{m.novels_this_week()}</option><option value="month">{m.novels_this_month()}</option></select>{/if}
+      {#if selectedSection === "bookmarks"}<select bind:value={bookmarkRestrict} aria-label={m.novels_bookmark_scope()}><option value="public">{m.common_public_bookmarks()}</option><option value="private">{m.common_private_bookmarks()}</option></select>{/if}
     </div>
     {#if !$sessionRestoring && !$session.loggedIn}
-      <section class="state"><Icon name="user" size={27} /><div><h2>登录后载入小说</h2><p>列表、正文和封面通过登录后的 App API 获取。</p></div><a href="/login?mode=standard">前往登录</a></section>
+      <section class="state"><Icon name="user" size={27} /><div><h2>{m.novels_sign_in_title()}</h2><p>{m.novels_sign_in_description()}</p></div><a href="/login?mode=standard">{m.search_go_to_login()}</a></section>
     {:else if status === "loading"}
-      <section class="state"><span class="spinner"></span><div><h2>正在载入{selectedSection}小说</h2><p>正在读取标题、封面、字数与系列信息…</p></div></section>
+      <section class="state"><span class="spinner"></span><div><h2>{m.novels_loading_title({ section: sectionLabels[selectedSection]() })}</h2><p>{m.novels_loading_description()}</p></div></section>
     {:else if status === "error"}
-      <section class="state error" role="alert"><span>!</span><div><h2>小说载入失败</h2><p>{errorMessage}</p></div><button type="button" onclick={() => loadNovels(requestedSession)}>重试</button></section>
+      <section class="state error" role="alert"><span>!</span><div><h2>{m.novels_load_failed()}</h2><p>{errorMessage}</p></div><button type="button" onclick={() => loadNovels(requestedSession)}>{m.common_retry()}</button></section>
     {:else if status === "ready"}
-      {#if novels.length}<div class="novel-grid">{#each novels as novel (novel.id)}<NovelCard {novel} />{/each}</div>{:else}<p class="empty">Pixiv 本次没有返回推荐小说。</p>{/if}
+      {#if novels.length}<div class="novel-grid">{#each novels as novel (novel.id)}<NovelCard {novel} />{/each}</div>{:else}<p class="empty">{m.novels_empty()}</p>{/if}
       {#if errorMessage}<p class="paging-error" role="alert">{errorMessage}</p>{/if}
-      {#if nextCursor}<button class="load-more" type="button" disabled={loadingMore} onclick={loadMore}>{loadingMore ? "正在载入…" : "加载更多小说"}</button>{/if}
+      {#if nextCursor}<button class="load-more" type="button" disabled={loadingMore} onclick={loadMore}>{loadingMore ? m.common_loading() : m.novels_load_more()}</button>{/if}
     {/if}
   </main>
 </AppShell>

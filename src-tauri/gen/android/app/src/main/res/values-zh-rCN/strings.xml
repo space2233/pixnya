@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">"PixNya"</string>
+    <string name="main_activity_title">"PixNya"</string>
+    <string name="login_activity_title">Pixiv 官方登录</string>
+    <string name="login_close_description">关闭登录页</string>
+    <string name="login_error_invalid_url">登录地址校验失败，页面未加载。</string>
+    <string name="login_error_certificate">服务器证书验证失败，登录已停止。</string>
+    <string name="login_error_page_load">官方登录页加载失败，请返回后切换连接方式重试。</string>
+    <string name="login_error_proxy_unsupported">当前 Android System WebView 不支持代理覆盖，无法启用登录桥。</string>
+    <string name="login_error_bridge_unavailable">低安全登录桥没有就绪，页面未加载。</string>
+    <string name="login_mode_ech">ECH 预检 · 低安全登录桥</string>
+    <string name="login_mode_compatible">兼容 · 固定 IP / 低安全 TLS</string>
+    <string name="login_mode_standard">标准 · 系统网络</string>
+</resources>

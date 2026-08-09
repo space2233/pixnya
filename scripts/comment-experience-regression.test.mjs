@@ -68,11 +68,11 @@ test("local mute and report persist without storing comment text", () => {
     commentId: "702",
     resourceKind: "illustration",
     resourceId: "99",
-    reason: "欺凌或骚扰",
+    reason: "bullying_or_harassment",
   }, storage, 101);
   const snapshot = readCommentModerationSnapshot(storage);
   assert.equal(snapshot.localReports.length, 1);
-  assert.equal(snapshot.localReports[0].reason, "欺凌或骚扰");
+  assert.equal(snapshot.localReports[0].reason, "bullying_or_harassment");
   assert.equal(isCommentMuted("702", storage), true);
   assert.equal(JSON.stringify(snapshot).includes("评论正文"), false);
 
@@ -104,7 +104,7 @@ test("UI uses an independent reply page, local moderation, and both emoji forms"
   assert.doesNotMatch(comments, /replyCursors|replyErrors|reply-list/);
   assert.match(card, /muteComment/);
   assert.match(card, /recordLocalReport/);
-  assert.match(card, /不会向 Pixiv 发送举报/);
+  assert.match(card, /m\.comment_report_description\(\)/);
   assert.match(content, /comment\.stamp\?\.url/);
   assert.match(content, /tokenizeCommentText/);
   assert.match(composer, /COMMENT_EMOJIS/);

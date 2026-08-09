@@ -33,9 +33,9 @@ test("PixNya exposes one normalized update interface to the settings page", asyn
   assert.match(frontend, /invoke<UpdateSnapshot>\("install_update"/);
   assert.match(types, /export interface UpdateSnapshot/);
   assert.match(settings, /<section id="updates"/);
-  assert.match(settings, /自动检查更新/);
-  assert.match(settings, /自动下载更新/);
-  assert.match(settings, /立即检查/);
+  assert.match(settings, /m\.settings_auto_check\(\)/);
+  assert.match(settings, /m\.settings_auto_download\(\)/);
+  assert.match(settings, /m\.settings_check_now\(\)/);
 });
 
 test("automatic checks are safe defaults, rate limited, and independent from Pixiv transports", async () => {
@@ -65,7 +65,7 @@ test("corrupt update state fails closed and full local-data clearing resets it",
   assert.match(application, /updates::clear_update_state\(&app, update_manager\.inner\(\)\)/);
   assert.match(application, /LocalDataClearFailure::UpdateSettings/);
   assert.match(types, /\| "update_settings"/);
-  assert.match(settings, /update_settings: "更新设置"/);
+  assert.match(settings, /update_settings: m\.settings_failure_updates\(\)/);
   assert.match(settings, /loadUpdateSnapshot\(\)/);
 });
 

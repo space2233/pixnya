@@ -1,6 +1,7 @@
 <script lang="ts">
   import ArtworkThumbnail from "$lib/components/ArtworkThumbnail.svelte";
   import Icon from "$lib/components/Icon.svelte";
+  import { m } from "$lib/i18n";
   import { describeDataFailure, setIllustrationBookmark } from "$lib/pixiv-api";
   import { r18DefaultVisible } from "$lib/preferences";
   import type { IllustrationSummary } from "$lib/types";
@@ -50,11 +51,11 @@
     <a
       class="cover-link"
       href={`/artworks/${illustration.id}`}
-      aria-label={`查看作品：${illustration.title || "无题"}`}
+      aria-label={m.artwork_view({ title: illustration.title || m.common_untitled() })}
     ></a>
     <ArtworkThumbnail
       url={illustration.thumbnailUrl}
-      alt={restricted && !$r18DefaultVisible && !revealRestricted ? "受限内容缩略图已模糊" : illustration.title || "无题作品"}
+      alt={restricted && !$r18DefaultVisible && !revealRestricted ? m.restricted_thumbnail_hidden() : illustration.title || m.artwork_untitled()}
       {tone}
     />
     {#if rank !== undefined}<span class="rank-number">{rank}</span>{/if}
@@ -68,20 +69,20 @@
       class:active={bookmarked}
       class:pending={bookmarkPending}
       disabled={bookmarkPending}
-      aria-label={bookmarked ? "取消收藏" : "收藏作品"}
-      title={bookmarkError || (bookmarked ? "取消收藏" : "收藏作品")}
+      aria-label={bookmarked ? m.bookmark_remove() : m.artwork_bookmark()}
+      title={bookmarkError || (bookmarked ? m.bookmark_remove() : m.artwork_bookmark())}
       onclick={toggleBookmark}
     >
       <Icon name="heart" size={19} />
     </button>
     {#if restricted && !$r18DefaultVisible && !revealRestricted}
       <button type="button" class="reveal" onclick={() => (revealRestricted = true)}>
-        {illustration.xRestrict >= 2 ? "R-18G" : "R-18"} · 点击显示
+        {illustration.xRestrict >= 2 ? "R-18G" : "R-18"} · {m.restricted_reveal()}
       </button>
     {/if}
   </div>
   <h3 title={illustration.title}>
-    <a href={`/artworks/${illustration.id}`}>{illustration.title || "无题"}</a>
+    <a href={`/artworks/${illustration.id}`}>{illustration.title || m.common_untitled()}</a>
   </h3>
   <p title={illustration.author.name}>
     <a href={`/users/${illustration.author.id}`}>{illustration.author.name || illustration.author.account}</a>

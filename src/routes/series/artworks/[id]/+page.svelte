@@ -5,6 +5,7 @@
   import Icon from "$lib/components/Icon.svelte";
   import PixivImage from "$lib/components/PixivImage.svelte";
   import ReturnLink from "$lib/components/ReturnLink.svelte";
+  import { m } from "$lib/i18n";
   import { recallNavigationView, rememberNavigationView } from "$lib/navigation-view-memory";
   import { rememberArtworkSeriesPage } from "$lib/artwork-series-navigation";
   import { describeDataFailure, getIllustrationSeries } from "$lib/pixiv-api";
@@ -122,49 +123,49 @@
   }
 </script>
 
-<svelte:head><title>{series?.title || "作品系列"} · PixNya</title></svelte:head>
+<svelte:head><title>{series?.title || m.artwork_series_label()} · PixNya</title></svelte:head>
 
-<AppShell title="作品系列">
+<AppShell title={m.artwork_series_label()}>
   <main class="series-page">
-    <ReturnLink fallback="/artworks" label="返回来源页" />
+    <ReturnLink fallback="/artworks" label={m.artwork_return_source()} />
 
     {#if !$sessionRestoring && !$session.loggedIn}
       <section class="state-card">
         <Icon name="user" size={28} />
-        <div><h1>登录后查看作品系列</h1><p>系列目录通过登录后的 Pixiv App API 载入。</p></div>
-        <a href="/login?mode=standard">前往登录</a>
+        <div><h1>{m.artwork_series_login_title()}</h1><p>{m.artwork_series_login_description()}</p></div>
+        <a href="/login?mode=standard">{m.common_go_to_login()}</a>
       </section>
     {:else if status === "loading"}
-      <section class="state-card"><span class="spinner"></span><div><h1>正在载入系列</h1><p>正在读取系列信息与连续作品…</p></div></section>
+      <section class="state-card"><span class="spinner"></span><div><h1>{m.artwork_series_loading_title()}</h1><p>{m.artwork_series_loading_description()}</p></div></section>
     {:else if status === "error"}
-      <section class="state-card error" role="alert"><span>!</span><div><h1>系列载入失败</h1><p>{errorMessage}</p></div><button type="button" onclick={() => loadSeries(requestedKey, seriesId)}>重试</button></section>
+      <section class="state-card error" role="alert"><span>!</span><div><h1>{m.series_load_failed()}</h1><p>{errorMessage}</p></div><button type="button" onclick={() => loadSeries(requestedKey, seriesId)}>{m.common_retry()}</button></section>
     {:else if series}
       <section class="series-hero">
         <div class="series-cover"><PixivImage url={series.coverUrl ?? illustrations[0]?.thumbnailUrl} alt="" /></div>
         <div class="series-copy">
-          <div class="eyebrow">作品系列 · {series.workCount} 部</div>
-          <h1>{series.title || "未命名系列"}</h1>
+          <div class="eyebrow">{m.artwork_series_summary({ count: series.workCount })}</div>
+          <h1>{series.title || m.series_unnamed()}</h1>
           {#if caption}<p>{caption}</p>{/if}
           <a class="author" href={`/users/${series.author.id}`}>{series.author.name || series.author.account}</a>
           <div class="series-meta">
-            {#if series.createDate}<span>创建于 {series.createDate.slice(0, 10)}</span>{/if}
-            {#if series.watchlistAdded}<span>已加入追更</span>{/if}
+            {#if series.createDate}<span>{m.artwork_series_created({ date: series.createDate.slice(0, 10) })}</span>{/if}
+            {#if series.watchlistAdded}<span>{m.series_watchlisted()}</span>{/if}
           </div>
-          {#if illustrations[0]}<a class="start" href={`/artworks/${illustrations[0].id}`}>从第一部开始连续浏览</a>{/if}
+          {#if illustrations[0]}<a class="start" href={`/artworks/${illustrations[0].id}`}>{m.artwork_series_start_browsing()}</a>{/if}
         </div>
       </section>
 
       <section class="contents">
-        <header><div><h2>系列目录</h2><p>打开任一作品后，可用上一篇/下一篇连续浏览。</p></div><strong>{illustrations.length} / {series.workCount}</strong></header>
+        <header><div><h2>{m.series_contents()}</h2><p>{m.artwork_series_contents_description()}</p></div><strong>{illustrations.length} / {series.workCount}</strong></header>
         {#if illustrations.length}
           <div class="artwork-grid">
             {#each illustrations as illustration, index (illustration.id)}
               <ArtworkCard {illustration} rank={index + 1} tone={(index % 6) + 1} />
             {/each}
           </div>
-        {:else}<p class="empty">这个系列目前没有可显示的作品。</p>{/if}
+        {:else}<p class="empty">{m.artwork_series_empty()}</p>{/if}
         {#if loadMoreError}<p class="load-error" role="alert">{loadMoreError}</p>{/if}
-        {#if nextCursor}<button class="load-more" type="button" disabled={loadingMore} onclick={loadMore}>{loadingMore ? "正在载入…" : "加载后续作品"}</button>{/if}
+        {#if nextCursor}<button class="load-more" type="button" disabled={loadingMore} onclick={loadMore}>{loadingMore ? m.common_loading() : m.artwork_series_load_more()}</button>{/if}
       </section>
     {/if}
   </main>

@@ -27,6 +27,13 @@ test("Android IPC media bytes are normalized before Blob decoding", () => {
   assert.match(pixivImage, /requestInsecureMediaFallback/);
 });
 
+test("artwork thumbnails use the selected neutral skeleton placeholder", () => {
+  assert.match(artworkThumbnail, /class="skeleton-art"/);
+  assert.match(artworkThumbnail, /m\.thumbnail_unavailable\(\)/);
+  assert.match(artworkThumbnail, /linear-gradient\(135deg, #f1f3f5 52%, #eceff1 52%\)/);
+  assert.doesNotMatch(artworkThumbnail, /class="fallback"[^>]*>p</);
+});
+
 test("ECH media fallback requires a session-scoped acknowledgement", () => {
   assert.match(rustCommands, /UnsafeMediaAcknowledgementRequired/);
   assert.match(rustCommands, /acknowledge_insecure_media_fallback/);

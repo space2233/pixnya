@@ -6,6 +6,7 @@
   import NovelCard from "$lib/components/NovelCard.svelte";
   import PixivImage from "$lib/components/PixivImage.svelte";
   import ReturnLink from "$lib/components/ReturnLink.svelte";
+  import { currentAppLocale, m } from "$lib/i18n";
   import { recallNavigationView, rememberNavigationView } from "$lib/navigation-view-memory";
   import {
     describeDataFailure,
@@ -141,8 +142,8 @@
       void recordBrowsingHistory({
         kind: "user",
         resourceId: nextDetail.user.id,
-        title: nextDetail.user.name || "Pixiv 用户",
-        subtitle: nextDetail.user.account ? `@${nextDetail.user.account}` : "Pixiv 作者",
+        title: nextDetail.user.name || m.user_pixiv_user(),
+        subtitle: nextDetail.user.account ? `@${nextDetail.user.account}` : m.user_pixiv_author(),
         thumbnailUrl: nextDetail.user.avatarUrl,
       }).catch(() => undefined);
       profileStatus = "ready";
@@ -240,30 +241,30 @@
   }
 
   function formatCount(value: number): string {
-    return new Intl.NumberFormat("zh-CN").format(value);
+    return new Intl.NumberFormat(currentAppLocale()).format(value);
   }
 </script>
 
 <svelte:head>
-  <title>{detail?.user.name || "作者详情"} · PixNya</title>
+  <title>{detail?.user.name || m.user_detail()} · PixNya</title>
 </svelte:head>
 
-<AppShell title="作者详情">
+<AppShell title={m.user_detail()}>
   <main class="user-page">
-    <ReturnLink fallback="/" label="返回来源页" />
+    <ReturnLink fallback="/" label={m.user_return_source()} />
 
   {#if !$sessionRestoring && !$session.loggedIn}
       <section class="state-card">
         <Icon name="user" size={28} />
-        <div><h1>登录后查看作者资料</h1><p>作者公开资料、统计和作品列表来自 Pixiv App API。</p></div>
-        <a href="/login?mode=standard">前往登录</a>
+        <div><h1>{m.user_login_title()}</h1><p>{m.user_login_description()}</p></div>
+        <a href="/login?mode=standard">{m.common_go_to_login()}</a>
       </section>
     {:else if profileStatus === "loading"}
-      <section class="state-card"><span class="spinner"></span><div><h1>正在载入作者资料</h1><p>正在同步公开主页与统计信息…</p></div></section>
+      <section class="state-card"><span class="spinner"></span><div><h1>{m.user_loading_title()}</h1><p>{m.user_loading_description()}</p></div></section>
     {:else if profileStatus === "error"}
       <section class="state-card error" role="alert">
-        <span>!</span><div><h1>作者资料载入失败</h1><p>{profileError}</p></div>
-        <button type="button" onclick={retryProfile}>重试</button>
+        <span>!</span><div><h1>{m.user_load_failed()}</h1><p>{profileError}</p></div>
+        <button type="button" onclick={retryProfile}>{m.common_retry()}</button>
       </section>
     {:else if detail}
       <section class="profile-card">
@@ -291,7 +292,7 @@
             </div>
           </div>
           {#if isOwnProfile}
-            <span class="follow-state active">这是你</span>
+            <span class="follow-state active">{m.common_current_user()}</span>
           {:else}
             <button
               type="button"
@@ -299,34 +300,34 @@
               class:active={followed}
               disabled={followPending}
               onclick={toggleFollow}
-            >{followPending ? "处理中…" : followed ? "已关注" : "关注"}</button>
+            >{followPending ? m.common_processing() : followed ? m.common_following() : m.common_follow()}</button>
           {/if}
           {#if followError}<small class="follow-error" role="alert">{followError}</small>{/if}
         </div>
         <dl class="profile-stats">
-          <div><dt>插画</dt><dd>{formatCount(detail.profile.totalIllustrations)}</dd></div>
-          <div><dt>漫画</dt><dd>{formatCount(detail.profile.totalManga)}</dd></div>
-          <div><dt>小说</dt><dd>{formatCount(detail.profile.totalNovels)}</dd></div>
-          <div><dt>关注</dt><dd>{formatCount(detail.profile.totalFollowUsers)}</dd></div>
-          <div><dt>好P友</dt><dd>{formatCount(detail.profile.totalMypixivUsers)}</dd></div>
-          <div><dt>收藏</dt><dd>{formatCount(detail.profile.totalIllustrationBookmarks)}</dd></div>
+          <div><dt>{m.common_illustrations()}</dt><dd>{formatCount(detail.profile.totalIllustrations)}</dd></div>
+          <div><dt>{m.common_manga()}</dt><dd>{formatCount(detail.profile.totalManga)}</dd></div>
+          <div><dt>{m.common_novels()}</dt><dd>{formatCount(detail.profile.totalNovels)}</dd></div>
+          <div><dt>{m.common_follow()}</dt><dd>{formatCount(detail.profile.totalFollowUsers)}</dd></div>
+          <div><dt>{m.user_mypixiv()}</dt><dd>{formatCount(detail.profile.totalMypixivUsers)}</dd></div>
+          <div><dt>{m.common_bookmark_count()}</dt><dd>{formatCount(detail.profile.totalIllustrationBookmarks)}</dd></div>
         </dl>
       </section>
 
       <section class="works-section">
         <header>
-          <div><h2>公开作品</h2><p>按作者公开投稿时间排列</p></div>
-          <nav aria-label="作品类型">
-            <button type="button" class:active={workKind === "illust"} onclick={() => (workKind = "illust")}>插画</button>
-            <button type="button" class:active={workKind === "manga"} onclick={() => (workKind = "manga")}>漫画</button>
-            <button type="button" class:active={workKind === "novel"} onclick={() => (workKind = "novel")}>小说</button>
+          <div><h2>{m.user_public_works()}</h2><p>{m.user_public_works_description()}</p></div>
+          <nav aria-label={m.user_work_type()}>
+            <button type="button" class:active={workKind === "illust"} onclick={() => (workKind = "illust")}>{m.common_illustrations()}</button>
+            <button type="button" class:active={workKind === "manga"} onclick={() => (workKind = "manga")}>{m.common_manga()}</button>
+            <button type="button" class:active={workKind === "novel"} onclick={() => (workKind = "novel")}>{m.common_novels()}</button>
           </nav>
         </header>
 
         {#if worksStatus === "loading"}
-          <div class="works-loading"><span class="spinner"></span><p>正在载入作品…</p></div>
+          <div class="works-loading"><span class="spinner"></span><p>{m.user_works_loading()}</p></div>
         {:else if worksStatus === "error"}
-          <div class="works-error" role="alert"><p>{worksError}</p><button type="button" onclick={retryWorks}>重试</button></div>
+          <div class="works-error" role="alert"><p>{worksError}</p><button type="button" onclick={retryWorks}>{m.common_retry()}</button></div>
         {:else if workKind === "novel" && novels.length > 0}
           <div class="novel-grid">{#each novels as novel (novel.id)}<NovelCard {novel} />{/each}</div>
         {:else if works.length > 0}
@@ -336,13 +337,13 @@
             {/each}
           </div>
         {:else if worksStatus === "ready"}
-          <p class="empty">这位作者还没有公开的{workKind === "illust" ? "插画" : workKind === "manga" ? "漫画" : "小说"}。</p>
+          <p class="empty">{m.user_empty_works({ kind: workKind === "illust" ? m.common_illustrations() : workKind === "manga" ? m.common_manga() : m.common_novels() })}</p>
         {/if}
 
         {#if worksError && worksStatus === "ready"}<p class="pagination-error" role="alert">{worksError}</p>{/if}
         {#if nextCursor && worksStatus === "ready"}
           <button class="load-more" type="button" disabled={loadingMore} onclick={loadMore}>
-            {loadingMore ? "正在载入…" : "加载更多作品"}
+            {loadingMore ? m.common_loading() : m.user_load_more_works()}
           </button>
         {/if}
       </section>

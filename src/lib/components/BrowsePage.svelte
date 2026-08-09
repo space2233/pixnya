@@ -4,6 +4,7 @@
   import ContentTabs from "$lib/components/ContentTabs.svelte";
   import FollowingTabs from "$lib/components/FollowingTabs.svelte";
   import Icon from "$lib/components/Icon.svelte";
+  import { m } from "$lib/i18n";
   import { loadHomeTagCache, saveHomeTagCache } from "$lib/home-tag-cache";
   import {
     describeDataFailure,
@@ -47,94 +48,123 @@
   };
 
   type Definition = {
-    title: string;
-    heading: string;
-    subtitle: string;
-    sectionTitle: string;
-    sectionHint: string;
-    filters: readonly string[];
+    title: () => string;
+    heading: () => string;
+    subtitle: () => string;
+    sectionTitle: () => string;
+    sectionHint: () => string;
+    filters: readonly BrowseFilter[];
     tabs: boolean;
     layout: "artwork" | "portrait" | "novel";
   };
 
+  type BrowseFilter =
+    | "recommended"
+    | "following"
+    | "popular"
+    | "series"
+    | "short"
+    | "for_you"
+    | "trending_tags"
+    | "today"
+    | "week"
+    | "month"
+    | "public"
+    | "private";
+
+  const filterLabels: Record<BrowseFilter, () => string> = {
+    recommended: m.filter_recommended,
+    following: m.filter_following,
+    popular: m.filter_popular,
+    series: m.filter_series,
+    short: m.filter_short,
+    for_you: m.filter_for_you,
+    trending_tags: m.filter_trending_tags,
+    today: m.filter_today,
+    week: m.filter_week,
+    month: m.filter_month,
+    public: m.filter_public,
+    private: m.filter_private,
+  };
+
   const definitions: Record<BrowseSection, Definition> = {
     home: {
-      title: "首页",
-      heading: "为你推荐",
-      subtitle: "登录后，这里会根据你的关注与收藏持续更新。",
-      sectionTitle: "推荐作品",
-      sectionHint: "来自 Pixiv 的个性化内容",
-      filters: ["推荐", "关注", "热门"],
+      title: m.navigation_home,
+      heading: m.browse_home_heading,
+      subtitle: m.browse_home_subtitle,
+      sectionTitle: m.browse_home_section,
+      sectionHint: m.browse_home_hint,
+      filters: ["recommended", "following", "popular"],
       tabs: true,
       layout: "artwork",
     },
     artworks: {
-      title: "插画",
-      heading: "插画",
-      subtitle: "浏览推荐插画、关注作者的新作与最新投稿。",
-      sectionTitle: "推荐插画",
-      sectionHint: "登录后按你的偏好排序",
-      filters: ["推荐", "关注"],
+      title: m.navigation_artworks,
+      heading: m.navigation_artworks,
+      subtitle: m.browse_artworks_subtitle,
+      sectionTitle: m.browse_artworks_section,
+      sectionHint: m.browse_artworks_hint,
+      filters: ["recommended", "following"],
       tabs: true,
       layout: "artwork",
     },
     manga: {
-      title: "漫画",
-      heading: "漫画",
-      subtitle: "发现单篇漫画、系列作品与关注作者的更新。",
-      sectionTitle: "推荐漫画",
-      sectionHint: "系列阅读进度将在本机保存",
+      title: m.navigation_manga,
+      heading: m.navigation_manga,
+      subtitle: m.browse_manga_subtitle,
+      sectionTitle: m.browse_manga_section,
+      sectionHint: m.browse_manga_hint,
       filters: [],
       tabs: true,
       layout: "portrait",
     },
     novels: {
-      title: "小说",
-      heading: "小说",
-      subtitle: "阅读短篇、系列小说并保留本地阅读位置。",
-      sectionTitle: "推荐小说",
-      sectionHint: "登录后显示正文、字数与系列信息",
-      filters: ["推荐", "系列", "短篇"],
+      title: m.navigation_novels,
+      heading: m.navigation_novels,
+      subtitle: m.browse_novels_subtitle,
+      sectionTitle: m.browse_novels_section,
+      sectionHint: m.browse_novels_hint,
+      filters: ["recommended", "series", "short"],
       tabs: true,
       layout: "novel",
     },
     following: {
-      title: "关注用户的新作",
-      heading: "关注用户的新作",
-      subtitle: "按时间查看所关注作者最近发布的所有内容。",
-      sectionTitle: "最新投稿",
-      sectionHint: "按发布时间由新到旧",
+      title: m.navigation_following,
+      heading: m.navigation_following,
+      subtitle: m.browse_following_subtitle,
+      sectionTitle: m.browse_following_section,
+      sectionHint: m.browse_following_hint,
       filters: [],
       tabs: false,
       layout: "artwork",
     },
     discover: {
-      title: "发现",
-      heading: "发现",
-      subtitle: "通过标签、风格与新作者找到感兴趣的作品。",
-      sectionTitle: "探索作品",
-      sectionHint: "推荐结果会随收藏逐步调整",
-      filters: ["为你推荐", "热门标签"],
+      title: m.navigation_discover,
+      heading: m.navigation_discover,
+      subtitle: m.browse_discover_subtitle,
+      sectionTitle: m.browse_discover_section,
+      sectionHint: m.browse_discover_hint,
+      filters: ["for_you", "trending_tags"],
       tabs: false,
       layout: "artwork",
     },
     ranking: {
-      title: "排行榜",
-      heading: "排行榜",
-      subtitle: "按日期与作品类型查看 Pixiv 排行内容。",
-      sectionTitle: "综合排行",
-      sectionHint: "当前日期的公开排行",
-      filters: ["今日", "本周", "本月"],
+      title: m.navigation_ranking,
+      heading: m.navigation_ranking,
+      subtitle: m.browse_ranking_subtitle,
+      sectionTitle: m.browse_ranking_section,
+      sectionHint: m.browse_ranking_hint,
+      filters: ["today", "week", "month"],
       tabs: false,
       layout: "artwork",
     },
     bookmarks: {
-      title: "收藏",
-      heading: "收藏",
-      subtitle: "集中查看账号中的公开与非公开收藏。",
-      sectionTitle: "已收藏作品",
-      sectionHint: "登录后同步账号收藏",
-      filters: ["公开", "非公开"],
+      title: m.navigation_bookmarks,
+      heading: m.navigation_bookmarks,
+      subtitle: m.browse_bookmarks_subtitle,
+      sectionTitle: m.browse_bookmarks_section,
+      sectionHint: m.browse_bookmarks_hint,
+      filters: ["public", "private"],
       tabs: false,
       layout: "artwork",
     },
@@ -142,7 +172,7 @@
 
   let { section }: { section: BrowseSection } = $props();
   let definition = $derived(definitions[section]);
-  let selectedFilter = $state<string>("");
+  let selectedFilter = $state<BrowseFilter | "">("");
   let illustrations = $state<IllustrationSummary[]>([]);
   let trendingTags = $state<TrendingTag[]>([]);
   let cachedTagNames = $state<string[]>(loadHomeTagCache());
@@ -171,7 +201,7 @@
   );
 
   $effect.pre(() => {
-    if (!definition.filters.includes(selectedFilter)) {
+    if (!selectedFilter || !definition.filters.includes(selectedFilter)) {
       selectedFilter = definition.filters[0] ?? "";
     }
   });
@@ -212,21 +242,21 @@
 
   async function requestContentPage(cursor?: string): Promise<IllustrationPage> {
     if (section === "home" || section === "artworks") {
-      if (selectedFilter === "关注") return getFollowedIllustrations(cursor);
-      if (selectedFilter === "热门") return getRankingIllustrations("day", cursor);
+      if (selectedFilter === "following") return getFollowedIllustrations(cursor);
+      if (selectedFilter === "popular") return getRankingIllustrations("day", cursor);
       return getRecommendedIllustrations(cursor);
     }
     if (section === "manga") return getRecommendedManga(cursor);
     if (section === "following") return getFollowedIllustrations(cursor);
     if (section === "ranking") {
-      const mode: RankingMode = selectedFilter === "本周" ? "week" : selectedFilter === "本月" ? "month" : "day";
+      const mode: RankingMode = selectedFilter === "week" ? "week" : selectedFilter === "month" ? "month" : "day";
       return getRankingIllustrations(mode, cursor);
     }
     if (section === "bookmarks") {
-      const restrict: BookmarkRestrict = selectedFilter === "非公开" ? "private" : "public";
+      const restrict: BookmarkRestrict = selectedFilter === "private" ? "private" : "public";
       return getBookmarkedIllustrations(restrict, cursor);
     }
-    if (section === "discover" && selectedFilter === "热门标签") {
+    if (section === "discover" && selectedFilter === "trending_tags") {
       const tags = await getTrendingTags();
       acceptTrendingTags(tags);
       return { illustrations: tags.map((tag) => tag.illustration), nextCursor: null };
@@ -315,7 +345,9 @@
   export function restoreSnapshot(snapshot: BrowsePageSnapshot): void {
     requestSequence += 1;
     trendingSequence += 1;
-    selectedFilter = snapshot.selectedFilter;
+    selectedFilter = definition.filters.includes(snapshot.selectedFilter as BrowseFilter)
+      ? (snapshot.selectedFilter as BrowseFilter)
+      : "";
     illustrations = snapshot.illustrations;
     trendingTags = snapshot.trendingTags;
     cachedTagNames = snapshot.cachedTagNames;
@@ -330,16 +362,16 @@
 </script>
 
 <svelte:head>
-  <title>{definition.title} · PixNya</title>
+  <title>{definition.title()} · PixNya</title>
 </svelte:head>
 
-<AppShell title={definition.title}>
+<AppShell title={definition.title()}>
   {#if definition.tabs}<ContentTabs />{/if}
 
   <div class="browse-page" class:with-tabs={definition.tabs}>
     {#if section === "following"}<FollowingTabs />{/if}
     {#if (section === "home" || section === "discover") && topicTags.length > 0}
-      <div class="topic-strip" aria-label="推荐标签">
+      <div class="topic-strip" aria-label={m.browse_recommended_tags()}>
         {#each topicTags as topic, index}
           <a href={`/search?q=${encodeURIComponent(topic.slice(1))}`} class:accent={index === 0}>
             {topic}
@@ -355,19 +387,19 @@
     >
       {#if section !== "home" || (!$sessionRestoring && !$session.loggedIn)}
         <div>
-          <h1>{definition.heading}</h1>
-          <p>{definition.subtitle}</p>
+          <h1>{definition.heading()}</h1>
+          <p>{definition.subtitle()}</p>
         </div>
       {/if}
       {#if definition.filters.length > 0}
-        <nav class="filter-tabs" aria-label={`${definition.title}筛选`}>
+        <nav class="filter-tabs" aria-label={m.browse_filter_label({ title: definition.title() })}>
           {#each definition.filters as filter}
             <button
               type="button"
               class:active={selectedFilter === filter}
               aria-pressed={selectedFilter === filter}
               onclick={() => (selectedFilter = filter)}
-            >{filter}</button>
+            >{filterLabels[filter]()}</button>
           {/each}
         </nav>
       {/if}
@@ -377,28 +409,28 @@
       <section class="account-callout">
         <span class="callout-icon"><Icon name="user" size={21} /></span>
         <div>
-          <strong>登录后载入完整内容</strong>
-          <p>登录后可查看作品、关注动态与收藏，并同步账号偏好。</p>
+          <strong>{m.browse_sign_in_title()}</strong>
+          <p>{m.browse_sign_in_description()}</p>
         </div>
         <div class="callout-actions">
-          <a class="secondary-link" href="/settings/network">检查连接</a>
-          <a class="primary-link" href="/login?mode=standard">前往登录</a>
+          <a class="secondary-link" href="/settings/network">{m.browse_check_connection()}</a>
+          <a class="primary-link" href="/login?mode=standard">{m.browse_go_to_login()}</a>
         </div>
       </section>
     {:else if supportsContent && dataStatus === "error"}
       <section class="data-error" role="alert">
-        <div><strong>内容载入失败</strong><p>{dataError}</p></div>
-        <button type="button" onclick={retryContent}>重试</button>
+        <div><strong>{m.browse_load_failed()}</strong><p>{dataError}</p></div>
+        <button type="button" onclick={retryContent}>{m.common_retry()}</button>
       </section>
     {/if}
 
     {#if section === "home"}
       <section class="content-section featured-section" aria-labelledby="featured-title">
         <header class="section-heading">
-          <div><h2 id="featured-title">精选新作</h2><p>关注动态与近期热门</p></div>
-          <a href="/following">查看新作 <span aria-hidden="true">›</span></a>
+          <div><h2 id="featured-title">{m.browse_featured_title()}</h2><p>{m.browse_featured_hint()}</p></div>
+          <a href="/following">{m.browse_view_new()} <span aria-hidden="true">›</span></a>
         </header>
-        <div class="featured-grid" aria-label={showContent ? "精选新作" : "等待载入的精选新作"}>
+        <div class="featured-grid" aria-label={showContent ? m.browse_featured_title() : m.browse_featured_loading()}>
           {#if showContent && featuredIllustrations.length > 0}
             {#each featuredIllustrations as illustration, index (illustration.id)}
               <ArtworkCard {illustration} tone={(index % 6) + 1} />
@@ -419,11 +451,11 @@
     <section class="content-section" aria-labelledby="collection-title">
       <header class="section-heading">
         <div>
-          <h2 id="collection-title">{definition.sectionTitle}</h2>
-          <p>{selectedFilter ? `${selectedFilter} · ` : ""}{definition.sectionHint}</p>
+          <h2 id="collection-title">{definition.sectionTitle()}</h2>
+          <p>{selectedFilter ? `${filterLabels[selectedFilter]()} · ` : ""}{definition.sectionHint()}</p>
         </div>
         {#if section === "bookmarks"}
-          <span class="local-state"><Icon name="shield" size={14} /> 本地状态：{$sessionRestoring ? "正在恢复" : $session.loggedIn ? "已登录" : "未登录"}</span>
+          <span class="local-state"><Icon name="shield" size={14} /> {m.browse_local_state({ state: $sessionRestoring ? m.session_restoring() : $session.loggedIn ? m.session_signed_in() : m.session_signed_out() })}</span>
         {/if}
       </header>
 
@@ -431,7 +463,7 @@
         class="collection-grid"
         class:portrait={definition.layout === "portrait"}
         class:novel={definition.layout === "novel"}
-        aria-label={showContent ? definition.sectionTitle : `等待载入的${definition.sectionTitle}`}
+        aria-label={showContent ? definition.sectionTitle() : m.browse_waiting_for({ title: definition.sectionTitle() })}
       >
         {#if showContent && collectionIllustrations.length > 0}
           {#each collectionIllustrations as illustration, index (illustration.id)}
@@ -442,9 +474,9 @@
             />
           {/each}
         {:else if showContent}
-          <p class="empty-state">Pixiv 本次没有返回符合条件的作品。</p>
+          <p class="empty-state">{m.browse_empty()}</p>
         {:else if !supportsContent}
-          <p class="empty-state">请从顶部“小说”标签进入完整小说阅读页。</p>
+          <p class="empty-state">{m.browse_open_novels()}</p>
         {:else}
           {#each Array(definition.layout === "novel" ? 6 : 8) as _, index}
             <article class="work-card loading-card">
@@ -457,7 +489,7 @@
                 <div class="skeleton-line author-line"></div>
                 {#if definition.layout === "novel"}
                   <div class="skeleton-line excerpt-line"></div>
-                  <small>登录后显示字数与系列信息</small>
+                  <small>{m.browse_novel_metadata()}</small>
                 {/if}
               </div>
             </article>
@@ -468,13 +500,13 @@
         <div class="load-more">
           {#if paginationError}<p role="alert">{paginationError}</p>{/if}
           <button type="button" disabled={loadingMore} onclick={loadMoreContent}>
-            {loadingMore ? "正在载入…" : "加载更多"}
+            {loadingMore ? m.common_loading() : m.common_load_more()}
           </button>
         </div>
       {/if}
     </section>
 
-    <p class="page-footnote">PixNya · 账号令牌仅由 Rust 后端持有</p>
+    <p class="page-footnote">{m.browse_token_notice()}</p>
   </div>
 </AppShell>
 

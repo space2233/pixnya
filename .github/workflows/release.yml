@@ -27,18 +27,48 @@ env:
 jobs:
   preflight:
     runs-on: ubuntu-22.04
+    env:
+      # Full verification compiles the app without publishing these placeholders.
+      PIXIV_OAUTH_CLIENT_ID: release-preflight-placeholder
+      PIXIV_OAUTH_CLIENT_SECRET: release-preflight-placeholder
+      PIXIV_OAUTH_HASH_SALT: release-preflight-placeholder
+      RELEASE_NOTES: ${{ inputs.notes }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v6
         with:
           node-version: 24
-      - name: Match the requested release to source metadata
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - name: Require the main release source and matching metadata
         shell: bash
         run: |
+          test "$GITHUB_REF" = "refs/heads/main" || {
+            echo "Stable releases must be dispatched from refs/heads/main, got $GITHUB_REF" >&2
+            exit 1
+          }
           SOURCE_VERSION="$(node -p "require('./package.json').version")"
+          [[ "$SOURCE_VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+          test -n "$(printf '%s' "$RELEASE_NOTES" | tr -d '[:space:]')"
+          test "$(node -p "require('./package-lock.json').version")" = "$SOURCE_VERSION"
           test "$SOURCE_VERSION" = "$PIXNYA_RELEASE_VERSION"
           test "$(node -p "require('./src-tauri/tauri.conf.json').version")" = "$SOURCE_VERSION"
           test "$(sed -n 's/^version = "\([^"]*\)"/\1/p' Cargo.toml | head -n 1)" = "$SOURCE_VERSION"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+      - name: Install frontend dependencies
+        run: npm ci
+      - name: Install Tauri Linux prerequisites for workspace verification
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends \
+            libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev \
+            libssl-dev libayatana-appindicator3-dev librsvg2-dev
+      - name: Run the full frontend and Rust release gate
+        run: npm run test:full
 
   windows:
     needs: preflight
@@ -177,8 +207,38 @@ jobs:
       - name: Give the APK a stable release asset name
         shell: bash
         run: |
-          APK="$(find src-tauri/gen/android/app/build/outputs/apk -type f -name '*-release.apk' -print -quit)"
-          test -n "$APK"
+          mapfile -t APKS < <(find src-tauri/gen/android/app/build/outputs/apk \
+            -type f -name '*-release.apk' -print | sort)
+          test "${#APKS[@]}" -eq 1 || {
+            printf 'Expected exactly one release APK, found %s\n' "${#APKS[@]}" >&2
+            exit 1
+          }
+          APK="${APKS[0]}"
+          pwsh -NoProfile -File scripts/check-android-arm64-apk.ps1 -ApkPath "$APK"
+          AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt -print | sort -V | tail -n 1)"
+          test -x "$AAPT"
+          APK_BADGING="$("$AAPT" dump badging "$APK")"
+          EXPECTED_VERSION_CODE="$(node -e '
+            const [major, minor, patch] = process.argv[1].split(".").map(Number);
+            process.stdout.write(String(major * 1000000 + minor * 1000 + patch));
+          ' "$PIXNYA_RELEASE_VERSION")"
+          grep -F "package: name='io.github.space2233.pixnya'" <<< "$APK_BADGING"
+          grep -F "versionCode='$EXPECTED_VERSION_CODE'" <<< "$APK_BADGING"
+          grep -F "versionName='$PIXNYA_RELEASE_VERSION'" <<< "$APK_BADGING"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner -print | sort -V | tail -n 1)"
+          test -x "$APKSIGNER"
+          EXPECTED_CERTIFICATE_SHA256="$(keytool -J-Duser.language=en -list -v \
+            -keystore "$PIXNYA_ANDROID_KEYSTORE_PATH" \
+            -storepass "$PIXNYA_ANDROID_KEYSTORE_PASSWORD" \
+            -alias "$PIXNYA_ANDROID_KEY_ALIAS" | \
+            awk -F': ' '/SHA256:/{gsub(":", "", $2); print tolower($2); exit}')"
+          APK_CERTIFICATE_SHA256="$("$APKSIGNER" verify --print-certs "$APK" | \
+            awk -F': ' '/Signer #1 certificate SHA-256 digest:/{print tolower($2); exit}')"
+          test "${#EXPECTED_CERTIFICATE_SHA256}" -eq 64
+          test "$APK_CERTIFICATE_SHA256" = "$EXPECTED_CERTIFICATE_SHA256" || {
+            echo "The APK signer does not match the protected release keystore" >&2
+            exit 1
+          }
           mkdir -p release-artifacts
           cp "$APK" "release-artifacts/pixnya-${PIXNYA_RELEASE_VERSION}-android-${{ matrix.abi }}.apk"
       - uses: actions/upload-artifact@v7
@@ -195,6 +255,8 @@ jobs:
       ANDROID_KEYSTORE_BASE64: ${{ secrets.PIXNYA_ANDROID_KEYSTORE_BASE64 }}
       PIXNYA_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.PIXNYA_ANDROID_KEYSTORE_PASSWORD }}
       PIXNYA_ANDROID_KEY_ALIAS: ${{ secrets.PIXNYA_ANDROID_KEY_ALIAS }}
+      PIXNYA_UPDATER_PUBKEY: ${{ secrets.PIXNYA_UPDATER_PUBKEY }}
+      PIXNYA_ANDROID_UPDATE_PUBKEY: ${{ secrets.PIXNYA_ANDROID_UPDATE_PUBKEY }}
       ANDROID_MANIFEST_PRIVATE_KEY_BASE64: ${{ secrets.PIXNYA_ANDROID_MANIFEST_PRIVATE_KEY_BASE64 }}
       ANDROID_MANIFEST_PRIVATE_KEY_PASSWORD: ${{ secrets.PIXNYA_ANDROID_MANIFEST_PRIVATE_KEY_PASSWORD }}
     steps:
@@ -207,6 +269,10 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
+      - name: Install signature verification tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends minisign
       - uses: actions/download-artifact@v8
         with:
           path: dist
@@ -216,17 +282,28 @@ jobs:
         shell: bash
         run: |
           for name in ANDROID_KEYSTORE_BASE64 PIXNYA_ANDROID_KEYSTORE_PASSWORD \
-            PIXNYA_ANDROID_KEY_ALIAS ANDROID_MANIFEST_PRIVATE_KEY_BASE64 \
+            PIXNYA_ANDROID_KEY_ALIAS PIXNYA_UPDATER_PUBKEY PIXNYA_ANDROID_UPDATE_PUBKEY \
+            ANDROID_MANIFEST_PRIVATE_KEY_BASE64 \
             ANDROID_MANIFEST_PRIVATE_KEY_PASSWORD; do
             test -n "${!name}" || { echo "Missing $name" >&2; exit 1; }
           done
           printf '%s\n' "$RELEASE_NOTES" > "$RUNNER_TEMP/release-notes.md"
           RELEASE_BASE="https://github.com/space2233/pixnya/releases/download/v${PIXNYA_RELEASE_VERSION}/"
 
-          WINDOWS_ARCHIVE="$(find dist -type f -name '*.nsis.zip' -print -quit)"
-          LINUX_ARCHIVE="$(find dist -type f -name '*.AppImage.tar.gz' -print -quit)"
+          mapfile -t WINDOWS_ARCHIVES < <(find dist -type f -name '*.nsis.zip' -print | sort)
+          mapfile -t LINUX_ARCHIVES < <(find dist -type f -name '*.AppImage.tar.gz' -print | sort)
+          test "${#WINDOWS_ARCHIVES[@]}" -eq 1
+          test "${#LINUX_ARCHIVES[@]}" -eq 1
+          WINDOWS_ARCHIVE="${WINDOWS_ARCHIVES[0]}"
+          LINUX_ARCHIVE="${LINUX_ARCHIVES[0]}"
           test -f "$WINDOWS_ARCHIVE" && test -f "${WINDOWS_ARCHIVE}.sig"
           test -f "$LINUX_ARCHIVE" && test -f "${LINUX_ARCHIVE}.sig"
+          DESKTOP_PUBLIC_KEY="$RUNNER_TEMP/desktop-updater.pub"
+          printf '%s' "$PIXNYA_UPDATER_PUBKEY" | base64 --decode > "$DESKTOP_PUBLIC_KEY"
+          base64 --decode "${WINDOWS_ARCHIVE}.sig" > "$RUNNER_TEMP/windows-updater.minisig"
+          base64 --decode "${LINUX_ARCHIVE}.sig" > "$RUNNER_TEMP/linux-updater.minisig"
+          minisign -Vm "$WINDOWS_ARCHIVE" -x "$RUNNER_TEMP/windows-updater.minisig" -p "$DESKTOP_PUBLIC_KEY"
+          minisign -Vm "$LINUX_ARCHIVE" -x "$RUNNER_TEMP/linux-updater.minisig" -p "$DESKTOP_PUBLIC_KEY"
           node scripts/generate-desktop-update-manifest.mjs \
             --windows-archive "$WINDOWS_ARCHIVE" --windows-signature "${WINDOWS_ARCHIVE}.sig" \
             --linux-archive "$LINUX_ARCHIVE" --linux-signature "${LINUX_ARCHIVE}.sig" \
@@ -251,11 +328,23 @@ jobs:
             npm run tauri -- signer sign dist/android-latest.json
           base64 --decode dist/android-latest.json.sig > dist/android-latest.json.minisig
           rm dist/android-latest.json.sig
+          ANDROID_PUBLIC_KEY="$RUNNER_TEMP/android-update-manifest.pub"
+          printf '%s' "$PIXNYA_ANDROID_UPDATE_PUBKEY" | base64 --decode > "$ANDROID_PUBLIC_KEY"
+          minisign -Vm dist/android-latest.json -x dist/android-latest.json.minisig -p "$ANDROID_PUBLIC_KEY"
+          cat > dist/BUILD-PROVENANCE.txt <<EOF
+          project=PixNya
+          version=${PIXNYA_RELEASE_VERSION}
+          source_repository=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}
+          source_commit=${GITHUB_SHA}
+          source_ref=${GITHUB_REF}
+          workflow_run=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
+          EOF
           find dist -maxdepth 1 -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > dist/SHA256SUMS.txt
       - name: Create a draft Release for manual verification
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ inputs.version }}
+          target_commitish: ${{ github.sha }}
           name: PixNya v${{ inputs.version }}
           body: ${{ inputs.notes }}
           draft: true

@@ -3,6 +3,7 @@
   import FollowingTabs from "$lib/components/FollowingTabs.svelte";
   import Icon from "$lib/components/Icon.svelte";
   import UserPreviewCard from "$lib/components/UserPreviewCard.svelte";
+  import { m } from "$lib/i18n";
   import { recallNavigationView, rememberNavigationView } from "$lib/navigation-view-memory";
   import { describeDataFailure, getFollowedUsers } from "$lib/pixiv-api";
   import { session, sessionRestoring } from "$lib/session";
@@ -115,33 +116,33 @@
   }
 </script>
 
-<svelte:head><title>关注作者 · PixNya</title></svelte:head>
+<svelte:head><title>{m.following_users_title()} · PixNya</title></svelte:head>
 
-<AppShell title="关注作者">
+<AppShell title={m.following_users_title()}>
   <main class="following-users-page">
     <FollowingTabs />
     <header class="page-heading">
-      <div><span>FOLLOWING</span><h1>关注作者</h1><p>查看当前账号公开或非公开关注的作者与最近作品。</p></div>
-      <nav aria-label="关注范围">
-        <button type="button" class:active={restrict === "public"} aria-pressed={restrict === "public"} onclick={() => (restrict = "public")}>公开关注</button>
-        <button type="button" class:active={restrict === "private"} aria-pressed={restrict === "private"} onclick={() => (restrict = "private")}>非公开关注</button>
+      <div><span>FOLLOWING</span><h1>{m.following_users_title()}</h1><p>{m.following_users_description()}</p></div>
+      <nav aria-label={m.following_scope()}>
+        <button type="button" class:active={restrict === "public"} aria-pressed={restrict === "public"} onclick={() => (restrict = "public")}>{m.following_public()}</button>
+        <button type="button" class:active={restrict === "private"} aria-pressed={restrict === "private"} onclick={() => (restrict = "private")}>{m.following_private()}</button>
       </nav>
     </header>
 
     {#if $sessionRestoring}
-      <section class="state-card"><span class="spinner"></span><div><h2>正在恢复登录状态</h2><p>完成后会自动载入关注作者。</p></div></section>
+      <section class="state-card"><span class="spinner"></span><div><h2>{m.following_restoring()}</h2><p>{m.following_restoring_description()}</p></div></section>
     {:else if !$session.loggedIn}
       <section class="state-card">
         <Icon name="user" size={25} />
-        <div><h2>登录后查看关注作者</h2><p>作者列表只使用当前 Rust 会话中的账号 ID 请求。</p></div>
-        <a href="/login?mode=standard">前往登录</a>
+        <div><h2>{m.following_sign_in_title()}</h2><p>{m.following_sign_in_description()}</p></div>
+        <a href="/login?mode=standard">{m.search_go_to_login()}</a>
       </section>
     {:else if status === "loading"}
-      <section class="state-card"><span class="spinner"></span><div><h2>正在载入关注作者</h2><p>正在读取作者资料与最近作品…</p></div></section>
+      <section class="state-card"><span class="spinner"></span><div><h2>{m.following_loading()}</h2><p>{m.following_loading_description()}</p></div></section>
     {:else if status === "error"}
       <section class="state-card error" role="alert">
-        <span>!</span><div><h2>关注作者载入失败</h2><p>{errorMessage}</p></div>
-        <button type="button" onclick={() => loadUsers(requestedKey)}>重试</button>
+        <span>!</span><div><h2>{m.following_load_failed()}</h2><p>{errorMessage}</p></div>
+        <button type="button" onclick={() => loadUsers(requestedKey)}>{m.common_retry()}</button>
       </section>
     {:else if users.length > 0}
       <section class="user-grid" aria-live="polite">
@@ -149,10 +150,10 @@
       </section>
       {#if paginationError}<p class="pagination-error" role="alert">{paginationError}</p>{/if}
       {#if nextCursor}
-        <button class="load-more" type="button" disabled={loadingMore} onclick={loadMore}>{loadingMore ? "正在载入…" : "载入更多作者"}</button>
+        <button class="load-more" type="button" disabled={loadingMore} onclick={loadMore}>{loadingMore ? m.common_loading() : m.following_load_more()}</button>
       {/if}
     {:else if status === "ready"}
-      <section class="empty-state"><Icon name="user" size={29} /><h2>{restrict === "private" ? "没有非公开关注" : "还没有公开关注的作者"}</h2><p>切换上方范围可查看另一组关注。</p></section>
+      <section class="empty-state"><Icon name="user" size={29} /><h2>{restrict === "private" ? m.following_empty_private() : m.following_empty_public()}</h2><p>{m.following_empty_hint()}</p></section>
     {/if}
   </main>
 </AppShell>

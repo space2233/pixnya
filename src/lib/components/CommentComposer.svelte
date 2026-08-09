@@ -2,10 +2,11 @@
   import { tick } from "svelte";
   import { COMMENT_EMOJIS, insertCommentEmoji, type CommentEmojiToken } from "$lib/comment-emoji";
   import PixivImage from "$lib/components/PixivImage.svelte";
+  import { m } from "$lib/i18n";
 
   let {
-    placeholder = "写下评论",
-    submitLabel = "发布",
+    placeholder = m.comment_write_placeholder(),
+    submitLabel = m.comment_publish(),
     submitting = false,
     errorMessage = "",
     autofocus = false,
@@ -59,7 +60,7 @@
     maxlength="140"
     rows="3"
     {placeholder}
-    aria-label="评论内容"
+    aria-label={m.comment_content_label()}
   ></textarea>
   <div class="composer-foot">
     <button
@@ -68,12 +69,12 @@
       type="button"
       aria-expanded={pickerOpen}
       onclick={() => (pickerOpen = !pickerOpen)}
-    >表情</button>
+    >{m.comment_emoji()}</button>
     <span>{Array.from(text).length} / 140</span>
-    <button class="submit" type="submit" disabled={submitting || !text.trim()}>{submitting ? "正在发布…" : submitLabel}</button>
+    <button class="submit" type="submit" disabled={submitting || !text.trim()}>{submitting ? m.comment_publishing() : submitLabel}</button>
   </div>
   {#if pickerOpen}
-    <div class="emoji-picker" aria-label="评论表情">
+    <div class="emoji-picker" aria-label={m.comment_emoji_label()}>
       {#each COMMENT_EMOJIS as emoji (emoji.token)}
         <button type="button" title={emoji.token} aria-label={emoji.token} onclick={() => insertEmoji(emoji.token)}>
           <PixivImage url={emoji.url} alt="" fit="contain" />

@@ -3,6 +3,13 @@
   import { onMount } from "svelte";
   import AppShell from "$lib/components/AppShell.svelte";
   import Icon from "$lib/components/Icon.svelte";
+  import {
+    currentAppLocale,
+    m,
+    readLanguagePreference,
+    setLanguagePreference,
+    type LanguagePreference,
+  } from "$lib/i18n";
   import { clearFrontendLocalData } from "$lib/local-data";
   import {
     clearLocalData,
@@ -56,26 +63,28 @@
   } from "$lib/types";
 
   const connectionLabels: Record<PreferredConnectionMode, string> = {
-    standard: "标准模式",
-    ech: "ECH 直连",
+    standard: m.settings_connection_standard(),
+    ech: m.settings_connection_ech(),
   };
 
   const localDataFailureLabels: Record<LocalDataClearFailure, string> = {
-    secure_storage: "安全存储",
-    session: "当前会话",
-    login_state: "登录临时状态",
-    transport_state: "网络临时状态",
-    offline_library: "离线资料库",
-    media_cache: "媒体缓存",
-    login_web_view: "登录 WebView 数据",
-    diagnostic_log: "脱敏诊断日志",
-    download_queue: "下载队列",
-    storage_settings: "存储设置",
-    export_settings: "导出目录设置",
-    update_settings: "更新设置",
-    local_catalog: "本地收藏夹与标签",
-    browsing_history: "浏览历史",
+    secure_storage: m.settings_failure_secure_storage(),
+    session: m.settings_failure_session(),
+    login_state: m.settings_failure_login_state(),
+    transport_state: m.settings_failure_transport_state(),
+    offline_library: m.settings_failure_offline_library(),
+    media_cache: m.settings_failure_media_cache(),
+    login_web_view: m.settings_failure_login_webview(),
+    diagnostic_log: m.settings_failure_diagnostic_log(),
+    download_queue: m.settings_failure_download_queue(),
+    storage_settings: m.settings_failure_storage(),
+    export_settings: m.settings_failure_export(),
+    update_settings: m.settings_failure_updates(),
+    local_catalog: m.settings_failure_catalog(),
+    browsing_history: m.settings_failure_history(),
   };
+
+  const LOCAL_DATA_CLEAR_PROTOCOL = "CLEAR_LOCAL_DATA";
 
   const cacheLimitOptions = [
     { bytes: 128 * 1024 ** 2, label: "128 MiB" },
@@ -86,6 +95,7 @@
 
   let appStatus = $state<AppStatus | null>(null);
   let preferredConnectionMode = $state<PreferredConnectionMode>("standard");
+  let languagePreference = $state<LanguagePreference>("system");
   let desktopSidebarExpanded = $state(true);
   let reducedMotion = $state(false);
   let offlineStats = $state<OfflineStats | null>(null);
@@ -127,6 +137,7 @@
 
   onMount(() => {
     preferredConnectionMode = readPreferredConnectionMode();
+    languagePreference = readLanguagePreference();
     desktopSidebarExpanded = readDesktopSidebarExpanded();
     reducedMotion = readReducedMotion();
     void loadStatus();
@@ -206,10 +217,10 @@
       const selection = await selectExportDestination();
       exportDestination = selection.status;
       if (!selection.cancelled) {
-        exportDestinationNotice = "导出目录已授权；后续下载可自动写入该目录，应用私有离线副本仍会保留。";
+        exportDestinationNotice = m.settings_export_authorized();
       }
     } catch {
-      exportDestinationNotice = "无法获得导出目录的持续写入权限；原有设置没有改变。";
+      exportDestinationNotice = m.settings_export_authorize_failed();
       exportDestinationNoticeIsError = true;
       await loadExportDestination();
     } finally {
@@ -223,9 +234,9 @@
     exportDestinationNoticeIsError = false;
     try {
       exportDestination = await clearExportDestination();
-      exportDestinationNotice = "已撤销导出目录设置；已导出的文件不会被删除。";
+      exportDestinationNotice = m.settings_export_removed();
     } catch {
-      exportDestinationNotice = "导出目录设置未能清除。";
+      exportDestinationNotice = m.settings_export_remove_failed();
       exportDestinationNoticeIsError = true;
     } finally {
       isSelectingExportDestination = false;
@@ -240,10 +251,10 @@
     try {
       exportDestination = await setAutoExportDownloads(!exportDestination.autoExport);
       exportDestinationNotice = exportDestination.autoExport
-        ? "下载完成后自动导出已开启。"
-        : "自动导出已关闭；仍可在离线资料库中手动导出。";
+        ? m.settings_auto_export_on()
+        : m.settings_auto_export_off();
     } catch {
-      exportDestinationNotice = "自动导出设置保存失败。";
+      exportDestinationNotice = m.settings_auto_export_failed();
       exportDestinationNoticeIsError = true;
       await loadExportDestination();
     } finally {
@@ -260,14 +271,19 @@
     try {
       storageStatus = await setMediaCacheLimit(cacheLimitBytes);
       await loadMediaCacheStats();
-      storageNotice = `缓存上限已调整为 ${formatBytes(cacheLimitBytes)}；超出部分已按最近最少使用顺序清理。`;
+      storageNotice = m.settings_cache_limit_saved({ size: formatBytes(cacheLimitBytes) });
     } catch {
-      storageNotice = "缓存上限保存失败，原有离线内容没有改变。";
+      storageNotice = m.settings_cache_limit_failed();
       storageNoticeIsError = true;
       await Promise.all([loadStorageStatus(), loadMediaCacheStats()]);
     } finally {
       isSavingCacheLimit = false;
     }
+  }
+
+  function updateLanguage(event: Event) {
+    const preference = (event.currentTarget as HTMLSelectElement).value as LanguagePreference;
+    setLanguagePreference(preference);
   }
 
   async function loadDiagnosticLogSummary() {
@@ -301,9 +317,9 @@
     updateNoticeIsError = false;
     try {
       updateSnapshot = await saveUpdatePreferences(preferences);
-      updateNotice = "更新设置已保存在本机。";
+      updateNotice = m.settings_update_preferences_saved();
     } catch {
-      updateNotice = "更新设置保存失败，原有设置没有改变。";
+      updateNotice = m.settings_update_preferences_failed();
       updateNoticeIsError = true;
       await loadUpdateSnapshot();
     } finally {
@@ -348,23 +364,23 @@
       updateSnapshot = await checkForUpdates("manual");
       switch (updateSnapshot.phase) {
         case "available":
-          updateNotice = `发现 PixNya ${updateSnapshot.available?.version ?? "新版本"}。`;
+          updateNotice = m.settings_update_found_notice({ version: updateSnapshot.available?.version ?? m.common_new_version() });
           break;
         case "up_to_date":
-          updateNotice = "当前已经是最新稳定版。";
+          updateNotice = m.settings_update_latest_notice();
           break;
         case "not_configured":
-          updateNotice = "GitHub Releases 发布地址和签名公钥尚未写入正式构建。";
+          updateNotice = m.settings_update_not_configured_notice();
           break;
         case "failed":
           updateNotice = describeUpdateFailure(updateSnapshot);
           updateNoticeIsError = true;
           break;
         default:
-          updateNotice = "更新检查已完成。";
+          updateNotice = m.settings_update_check_complete();
       }
     } catch {
-      updateNotice = "更新检查未能启动；应用的其他功能不受影响。";
+      updateNotice = m.settings_update_check_failed();
       updateNoticeIsError = true;
     } finally {
       isCheckingUpdates = false;
@@ -374,18 +390,18 @@
   async function downloadApplicationUpdate() {
     if (!updateSnapshot || isApplyingUpdate) return;
     isApplyingUpdate = true;
-    updateNotice = "正在下载并验证更新包…";
+    updateNotice = m.settings_update_downloading_notice();
     updateNoticeIsError = false;
     try {
       updateSnapshot = await downloadUpdate();
       if (updateSnapshot.phase === "ready_to_install") {
-        updateNotice = "更新包已下载并通过签名、版本与平台校验，可以安装。";
+        updateNotice = m.settings_update_ready_notice();
       } else if (updateSnapshot.phase === "failed") {
         updateNotice = describeUpdateFailure(updateSnapshot);
         updateNoticeIsError = true;
       }
     } catch {
-      updateNotice = "更新包下载未能启动；已下载的不完整数据不会用于安装。";
+      updateNotice = m.settings_update_download_failed();
       updateNoticeIsError = true;
       await loadUpdateSnapshot();
     } finally {
@@ -397,21 +413,21 @@
     if (!updateSnapshot || isApplyingUpdate) return;
     isApplyingUpdate = true;
     updateNotice = updateSnapshot.installer === "android_system"
-      ? "正在打开 Android 系统安装流程…"
-      : "正在启动签名安装程序…";
+      ? m.settings_update_opening_android()
+      : m.settings_update_opening_signed();
     updateNoticeIsError = false;
     try {
       updateSnapshot = await installUpdate();
       if (updateSnapshot.phase === "awaiting_system_action") {
         updateNotice = updateSnapshot.readyToInstall
-          ? "请在系统设置中允许 PixNya 安装应用，返回后点击“继续安装”。"
-          : "系统安装界面已打开；请在那里确认更新。";
+          ? m.settings_update_allow_install()
+          : m.settings_update_system_opened();
       } else if (updateSnapshot.phase === "failed") {
         updateNotice = describeUpdateFailure(updateSnapshot);
         updateNoticeIsError = true;
       }
     } catch {
-      updateNotice = "无法启动安全安装流程；现有应用与数据没有改变。";
+      updateNotice = m.settings_update_install_failed();
       updateNoticeIsError = true;
       await loadUpdateSnapshot();
     } finally {
@@ -420,13 +436,13 @@
   }
 
   async function cancelApplicationUpdate() {
-    updateNotice = "正在取消更新下载…";
+    updateNotice = m.settings_update_cancelling();
     updateNoticeIsError = false;
     try {
       updateSnapshot = await cancelUpdate();
-      updateNotice = "更新下载已取消；不完整文件已丢弃。";
+      updateNotice = m.settings_update_cancelled_notice();
     } catch {
-      updateNotice = "取消请求未能提交，下载完成前请勿安装。";
+      updateNotice = m.settings_update_cancel_failed();
       updateNoticeIsError = true;
     }
   }
@@ -434,49 +450,49 @@
   function describeUpdateFailure(snapshot: UpdateSnapshot): string {
     switch (snapshot.failure) {
       case "busy":
-        return "已有更新检查正在进行。";
+        return m.settings_update_failure_busy();
       case "invalid_source_configuration":
-        return "更新源配置无效；PixNya 拒绝连接不受信任的发布地址。";
+        return m.settings_update_failure_source();
       case "network_or_manifest":
-        return "无法读取或验证 GitHub Releases 更新清单。";
+        return m.settings_update_failure_manifest();
       case "platform_unavailable":
-        return "当前平台无法启动安全更新组件。";
+        return m.settings_update_failure_platform();
       case "update_unavailable":
-        return "可用更新已经变化，请重新检查。";
+        return m.settings_update_failure_changed();
       case "download_verification":
-        return "更新包未通过签名、哈希、版本或平台校验，已拒绝安装。";
+        return m.settings_update_failure_verification();
       case "installation_unavailable":
-        return "系统安装组件不可用；更新包仍保留，可稍后重试。";
+        return m.settings_update_failure_installation();
       case "cancelled":
-        return "更新下载已取消。";
+        return m.settings_update_failure_cancelled();
       default:
-        return "无法读取本机更新状态。";
+        return m.settings_update_failure_unknown();
     }
   }
 
   function describeUpdatePhase(snapshot: UpdateSnapshot | null): string {
-    if (!snapshot) return "正在读取更新状态";
+    if (!snapshot) return m.settings_update_phase_reading();
     switch (snapshot.phase) {
       case "checking":
-        return "正在检查更新";
+        return m.settings_update_phase_checking();
       case "available":
-        return `发现 PixNya ${snapshot.available?.version ?? "新版本"}`;
+        return m.settings_update_phase_found({ version: snapshot.available?.version ?? m.common_new_version() });
       case "downloading":
-        return "正在下载并验证更新";
+        return m.settings_update_phase_downloading();
       case "ready_to_install":
-        return "更新包已验证，可以安装";
+        return m.settings_update_phase_ready();
       case "installing":
-        return "正在启动安装流程";
+        return m.settings_update_phase_installing();
       case "awaiting_system_action":
-        return snapshot.readyToInstall ? "等待系统授权" : "等待系统安装确认";
+        return snapshot.readyToInstall ? m.settings_update_phase_authorization() : m.settings_update_phase_confirmation();
       case "up_to_date":
-        return "当前已经是最新稳定版";
+        return m.settings_update_phase_latest();
       case "not_configured":
-        return "发布源等待配置";
+        return m.settings_update_phase_unconfigured();
       case "failed":
-        return "上次更新操作失败";
+        return m.settings_update_phase_failed();
       default:
-        return "PixNya 稳定更新通道";
+        return m.settings_update_phase_channel();
     }
   }
 
@@ -484,12 +500,12 @@
     const total = snapshot.totalBytes ?? snapshot.available?.sizeBytes ?? null;
     return total
       ? `${formatBytes(snapshot.downloadedBytes)} / ${formatBytes(total)}`
-      : `${formatBytes(snapshot.downloadedBytes)} 已下载`;
+      : m.settings_update_downloaded({ size: formatBytes(snapshot.downloadedBytes) });
   }
 
   function formatUpdateCheckTime(value?: number | null): string {
-    if (!value) return "从未检查";
-    return new Date(value * 1000).toLocaleString();
+    if (!value) return m.settings_update_never_checked();
+    return new Date(value * 1000).toLocaleString(currentAppLocale());
   }
 
   async function toggleBrowsingHistory() {
@@ -500,10 +516,10 @@
     try {
       browsingHistory = await setBrowsingHistoryEnabled(!browsingHistory.enabled);
       browsingHistoryNotice = browsingHistory.enabled
-        ? "已开始在本机记录浏览历史。"
-        : "已停止记录；现有历史仍保留，可在浏览历史页单独清除。";
+        ? m.settings_history_enabled_notice()
+        : m.settings_history_disabled_notice();
     } catch {
-      browsingHistoryNotice = "浏览历史设置保存失败，原有设置没有改变。";
+      browsingHistoryNotice = m.settings_history_save_failed();
       browsingHistoryNoticeIsError = true;
       await loadBrowsingHistory();
     } finally {
@@ -517,10 +533,10 @@
     diagnosticLogNoticeIsError = false;
     try {
       const result = await exportDiagnosticLogs();
-      diagnosticLogNotice = `已将 ${result.entryCount} 条脱敏记录导出到 ${result.destination}`;
+      diagnosticLogNotice = m.settings_log_exported({ count: result.entryCount, destination: result.destination });
       await loadDiagnosticLogSummary();
     } catch {
-      diagnosticLogNotice = "日志导出失败；没有上传或发送任何本机数据。";
+      diagnosticLogNotice = m.settings_log_export_failed();
       diagnosticLogNoticeIsError = true;
     } finally {
       isExportingDiagnosticLog = false;
@@ -533,11 +549,11 @@
     diagnosticLogNoticeIsError = false;
     try {
       const removed = await clearDiagnosticLogs();
-      diagnosticLogNotice = `已清除 ${removed.entryCount} 条本机脱敏诊断记录。`;
+      diagnosticLogNotice = m.settings_log_cleared({ count: removed.entryCount });
       showClearDiagnosticLogDialog = false;
       await loadDiagnosticLogSummary();
     } catch {
-      diagnosticLogNotice = "脱敏诊断日志清除失败。";
+      diagnosticLogNotice = m.settings_log_clear_failed();
       diagnosticLogNoticeIsError = true;
     } finally {
       isClearingDiagnosticLog = false;
@@ -549,11 +565,11 @@
     cacheNotice = null;
     try {
       const removed = await clearMediaCache();
-      cacheNotice = `已清理 ${removed.entryCount} 项、${formatBytes(removed.sizeBytes)} 在线媒体缓存。`;
+      cacheNotice = m.settings_cache_cleared({ count: removed.entryCount, size: formatBytes(removed.sizeBytes) });
       showClearCacheDialog = false;
       await Promise.all([loadMediaCacheStats(), loadStorageStatus()]);
     } catch {
-      cacheNotice = "缓存清理失败；离线资料与登录状态没有改变。";
+      cacheNotice = m.settings_cache_clear_failed();
     } finally {
       isClearingCache = false;
     }
@@ -565,12 +581,12 @@
   }
 
   async function confirmClearAllLocalData() {
-    if (localDataConfirmation !== "清除") return;
+    if (localDataConfirmation !== m.settings_clear_confirmation_word()) return;
     isClearingLocalData = true;
     localDataNotice = null;
     localDataNoticeIsError = false;
     try {
-      const report = await clearLocalData(localDataConfirmation);
+      const report = await clearLocalData(LOCAL_DATA_CLEAR_PROTOCOL);
       const frontend = clearFrontendLocalData();
       applySessionSnapshot({ loggedIn: false });
       preferredConnectionMode = "standard";
@@ -589,16 +605,25 @@
         loadUpdateSnapshot(),
       ]);
 
-      const removed = `${report.downloadTasksRemoved} 个下载任务、${report.offlineEntriesRemoved} 项离线内容、${report.localCollectionsRemoved} 个本地收藏夹、${report.localTagsRemoved} 个本地标签、${report.browsingHistoryEntriesRemoved} 条浏览历史、${report.cacheEntriesRemoved} 项缓存、${report.diagnosticLogEntriesRemoved} 条诊断日志和 ${frontend.localKeysRemoved + frontend.sessionKeysRemoved} 项页面数据`;
+      const removed = m.settings_local_data_removed_summary({
+        tasks: report.downloadTasksRemoved,
+        offline: report.offlineEntriesRemoved,
+        collections: report.localCollectionsRemoved,
+        tags: report.localTagsRemoved,
+        history: report.browsingHistoryEntriesRemoved,
+        cache: report.cacheEntriesRemoved,
+        logs: report.diagnosticLogEntriesRemoved,
+        frontend: frontend.localKeysRemoved + frontend.sessionKeysRemoved,
+      });
       if (report.complete) {
-        localDataNotice = `本机数据已清除：${removed}。应用已恢复默认设置。`;
+        localDataNotice = m.settings_local_data_cleared({ summary: removed });
       } else {
-        const failures = report.failedSteps.map((step) => localDataFailureLabels[step]).join("、");
-        localDataNotice = `已清除可处理的数据，但以下项目失败：${failures}。请重启应用后再次执行。`;
+        const failures = report.failedSteps.map((step) => localDataFailureLabels[step]).join(", ");
+        localDataNotice = m.settings_local_data_partial({ failures });
         localDataNoticeIsError = true;
       }
     } catch {
-      localDataNotice = "清除操作未能启动，本机数据没有被报告为已全部清除。";
+      localDataNotice = m.settings_local_data_failed();
       localDataNoticeIsError = true;
     } finally {
       isClearingLocalData = false;
@@ -628,47 +653,47 @@
 </script>
 
 <svelte:head>
-  <title>设置 · PixNya</title>
+  <title>{m.settings_title()} · PixNya</title>
 </svelte:head>
 
-<AppShell title="设置">
+<AppShell title={m.settings_title()}>
   <div class="settings-page">
     <header class="settings-heading">
       <div>
         <span>PIXNYA</span>
-        <h1>设置</h1>
-        <p>集中管理账号、连接、界面、存储和隐私选项。</p>
+        <h1>{m.settings_title()}</h1>
+        <p>{m.settings_description()}</p>
       </div>
       <div class="runtime-state" class:online={appStatus !== null}>
         <i></i>
-        <span>{appStatus ? `${appStatus.platform} · ${appStatus.architecture}` : "核心状态不可用"}</span>
+        <span>{appStatus ? `${appStatus.platform} · ${appStatus.architecture}` : m.settings_core_unavailable()}</span>
       </div>
     </header>
 
     <div class="settings-layout">
-      <nav class="settings-index" aria-label="设置分类">
-        <a href="#account"><Icon name="user" size={18} />账号与登录</a>
-        <a href="#connection"><Icon name="shield" size={18} />连接与安全</a>
-        <a href="#interface"><Icon name="settings" size={18} />界面</a>
-        <a href="#storage"><Icon name="image" size={18} />内容与存储</a>
-        <a href="#updates"><Icon name="download" size={18} />应用更新</a>
-        <a href="#privacy"><Icon name="shield" size={18} />隐私</a>
+      <nav class="settings-index" aria-label={m.settings_categories()}>
+        <a href="#account"><Icon name="user" size={18} />{m.settings_account()}</a>
+        <a href="#connection"><Icon name="shield" size={18} />{m.settings_connection()}</a>
+        <a href="#interface"><Icon name="settings" size={18} />{m.settings_interface()}</a>
+        <a href="#storage"><Icon name="image" size={18} />{m.settings_storage()}</a>
+        <a href="#updates"><Icon name="download" size={18} />{m.settings_updates()}</a>
+        <a href="#privacy"><Icon name="shield" size={18} />{m.settings_privacy()}</a>
       </nav>
 
       <div class="settings-sections">
         <section id="account" class="settings-section">
           <header>
             <span><Icon name="user" size={20} /></span>
-            <div><h2>账号与登录</h2><p>账号资料只会在登录完成后显示。</p></div>
+            <div><h2>{m.settings_account()}</h2><p>{m.settings_account_description()}</p></div>
           </header>
           <div class="setting-list">
             <a class="setting-row" href="/profile">
-              <div><strong>Pixiv 账号</strong><small>查看登录状态、资料和账号内容</small></div>
-              <span class="row-value muted">{$session.loggedIn ? ($session.user?.name ?? "已登录") : "未登录"}</span><i>›</i>
+              <div><strong>{m.settings_pixiv_account()}</strong><small>{m.settings_pixiv_account_description()}</small></div>
+              <span class="row-value muted">{$session.loggedIn ? ($session.user?.name ?? m.settings_logged_in()) : m.settings_logged_out()}</span><i>›</i>
             </a>
             <a class="setting-row" href={`/login?mode=${preferredConnectionMode}`}>
-              <div><strong>官方网页登录</strong><small>Android 非标准模式会先检查浏览器传输能力</small></div>
-              <span class="row-value">使用{connectionLabels[preferredConnectionMode]}</span><i>›</i>
+              <div><strong>{m.settings_web_login()}</strong><small>{m.settings_web_login_description()}</small></div>
+              <span class="row-value">{m.settings_use_connection({ mode: connectionLabels[preferredConnectionMode] })}</span><i>›</i>
             </a>
           </div>
         </section>
@@ -676,20 +701,20 @@
         <section id="connection" class="settings-section">
           <header>
             <span class="safe"><Icon name="shield" size={20} /></span>
-            <div><h2>连接与安全</h2><p>连接模式、实时诊断以及登录网络边界。</p></div>
+            <div><h2>{m.settings_connection()}</h2><p>{m.settings_connection_description()}</p></div>
           </header>
           <div class="setting-list">
             <a class="setting-row" href="/settings/network">
-              <div><strong>默认连接方式</strong><small>标准、严格 ECH 与临时低安全直连</small></div>
+              <div><strong>{m.settings_default_connection()}</strong><small>{m.settings_default_connection_description()}</small></div>
               <span class="row-value accent">{connectionLabels[preferredConnectionMode]}</span><i>›</i>
             </a>
             <div class="setting-row static-row">
-              <div><strong>登录 TLS</strong><small>官方网页登录、授权码和 token 交换不会忽略证书错误</small></div>
-              <span class="policy-badge">始终验证</span>
+              <div><strong>{m.settings_login_tls()}</strong><small>{m.settings_login_tls_description()}</small></div>
+              <span class="policy-badge">{m.settings_always_verify()}</span>
             </div>
             <div class="setting-row static-row">
-              <div><strong>低安全直连</strong><small>只能逐次确认，不能保存为默认连接，也不会自动回退</small></div>
-              <span class="policy-badge warning">临时启用</span>
+              <div><strong>{m.settings_low_security()}</strong><small>{m.settings_low_security_description()}</small></div>
+              <span class="policy-badge warning">{m.settings_temporary()}</span>
             </div>
           </div>
         </section>
@@ -697,42 +722,58 @@
         <section id="interface" class="settings-section">
           <header>
             <span><Icon name="settings" size={20} /></span>
-            <div><h2>界面</h2><p>这些选项立即生效并保存在本机。</p></div>
+            <div><h2>{m.settings_interface()}</h2><p>{m.settings_interface_description()}</p></div>
           </header>
           <div class="setting-list">
+            <div class="setting-row control-row language-row">
+              <div>
+                <strong>{m.language_settings_title()}</strong>
+                <small>{m.language_settings_description()}</small>
+              </div>
+              <select
+                aria-label={m.language_settings_current()}
+                value={languagePreference}
+                onchange={updateLanguage}
+              >
+                <option value="system">{m.language_system()}</option>
+                <option value="zh-CN">{m.language_simplified_chinese()}</option>
+                <option value="zh-TW">{m.language_traditional_chinese()}</option>
+                <option value="en-US">{m.language_english()}</option>
+              </select>
+            </div>
             <div class="setting-row control-row">
-              <div><strong>默认展开桌面侧栏</strong><small>仍可随时使用左上角菜单按钮切换</small></div>
+              <div><strong>{m.settings_sidebar()}</strong><small>{m.settings_sidebar_description()}</small></div>
               <button
                 class="switch"
                 class:on={desktopSidebarExpanded}
                 type="button"
                 role="switch"
                 aria-checked={desktopSidebarExpanded}
-                aria-label="默认展开桌面侧栏"
+                aria-label={m.settings_sidebar()}
                 onclick={toggleDesktopSidebar}
               ><span></span></button>
             </div>
             <div class="setting-row control-row">
-              <div><strong>简化界面动效</strong><small>减少侧栏、抽屉和控件的过渡动画</small></div>
+              <div><strong>{m.settings_reduced_motion()}</strong><small>{m.settings_reduced_motion_description()}</small></div>
               <button
                 class="switch"
                 class:on={reducedMotion}
                 type="button"
                 role="switch"
                 aria-checked={reducedMotion}
-                aria-label="简化界面动效"
+                aria-label={m.settings_reduced_motion()}
                 onclick={toggleReducedMotion}
               ><span></span></button>
             </div>
             <div class="setting-row control-row">
-              <div><strong>默认显示 R18</strong><small>仅解除本客户端遮罩；内容范围仍跟随 Pixiv 账号设置</small></div>
+              <div><strong>{m.settings_r18()}</strong><small>{m.settings_r18_description()}</small></div>
               <button
                 class="switch"
                 class:on={$r18DefaultVisible}
                 type="button"
                 role="switch"
                 aria-checked={$r18DefaultVisible}
-                aria-label="默认显示 R18"
+                aria-label={m.settings_r18()}
                 onclick={toggleR18DefaultVisible}
               ><span></span></button>
             </div>
@@ -742,7 +783,7 @@
         <section id="storage" class="settings-section">
           <header>
             <span><Icon name="image" size={20} /></span>
-            <div><h2>内容与存储</h2><p>媒体显示原则、离线下载与本机空间。</p></div>
+            <div><h2>{m.settings_storage()}</h2><p>{m.settings_storage_description()}</p></div>
           </header>
           <div class="setting-list">
             <div
@@ -754,50 +795,50 @@
               <div>
                 <strong>
                   {storageStatus?.health === "critical"
-                    ? "存储空间不足，下载写入已受限"
+                    ? m.settings_storage_critical()
                     : storageStatus?.health === "low"
-                      ? "存储空间较低"
+                      ? m.settings_storage_low()
                       : storageStatus
-                        ? "存储空间充足"
-                        : "正在读取存储空间"}
+                        ? m.settings_storage_healthy()
+                        : m.settings_storage_reading()}
                 </strong>
                 <small>
                   {storageStatus
-                    ? `下载还可安全写入 ${formatBytes(storageStatus.writableDownloadBytes)} · 已离线 ${formatBytes(storageStatus.offlineBytes)} · 始终为系统保留 ${formatBytes(storageStatus.reserveBytes)}`
-                    : "正在通过本机存储接口检查应用数据与缓存所在卷"}
+                    ? m.settings_storage_summary({ writable: formatBytes(storageStatus.writableDownloadBytes), offline: formatBytes(storageStatus.offlineBytes), reserve: formatBytes(storageStatus.reserveBytes) })
+                    : m.settings_storage_checking()}
                 </small>
               </div>
-              <span>{storageStatus ? formatBytes(storageStatus.dataAvailableBytes) + " 可用" : "读取中"}</span>
+              <span>{storageStatus ? m.settings_storage_available({ size: formatBytes(storageStatus.dataAvailableBytes) }) : m.settings_reading()}</span>
             </div>
             <div class="setting-row static-row">
-              <div><strong>内容显示范围</strong><small>不绕过 Pixiv 账号的年龄与浏览设置</small></div>
-              <span class="row-value">跟随 Pixiv</span>
+              <div><strong>{m.settings_content_scope()}</strong><small>{m.settings_content_scope_description()}</small></div>
+              <span class="row-value">{m.settings_follow_pixiv()}</span>
             </div>
             <div class="setting-row static-row">
-              <div><strong>在线媒体</strong><small>图片经 Rust 网络层按需读取，不向页面暴露登录令牌</small></div>
-              <span class="policy-badge">受控加载</span>
+              <div><strong>{m.settings_online_media()}</strong><small>{m.settings_online_media_description()}</small></div>
+              <span class="policy-badge">{m.settings_controlled_loading()}</span>
             </div>
             <div class="setting-row cache-row">
               <div>
-                <strong>在线媒体缓存</strong>
+                <strong>{m.settings_media_cache()}</strong>
                 <small>
                   {mediaCacheStats
-                    ? `已验证 ${formatBytes(mediaCacheStats.verifiedBytes)} · 低安全 ${formatBytes(mediaCacheStats.insecureBytes)} · 上限 ${formatBytes(mediaCacheStats.maxBytes)}`
-                    : "正在读取缓存占用"}
+                    ? m.settings_media_cache_summary({ verified: formatBytes(mediaCacheStats.verifiedBytes), insecure: formatBytes(mediaCacheStats.insecureBytes), limit: formatBytes(mediaCacheStats.maxBytes) })
+                    : m.settings_media_cache_reading()}
                 </small>
               </div>
               <div class="cache-control">
-                <span>{mediaCacheStats ? `${mediaCacheStats.entryCount} 项 · ${formatBytes(mediaCacheStats.sizeBytes)}` : "读取中"}</span>
-                <button type="button" disabled={!mediaCacheStats || isClearingCache} onclick={() => (showClearCacheDialog = true)}>清理缓存</button>
+                <span>{mediaCacheStats ? m.settings_item_size({ count: mediaCacheStats.entryCount, size: formatBytes(mediaCacheStats.sizeBytes) }) : m.settings_reading()}</span>
+                <button type="button" disabled={!mediaCacheStats || isClearingCache} onclick={() => (showClearCacheDialog = true)}>{m.settings_clear_cache()}</button>
               </div>
             </div>
             <div class="setting-row control-row cache-limit-row">
               <div>
-                <strong>在线媒体缓存上限</strong>
-                <small>修改后立即按最近最少使用顺序收缩；不会删除下载队列或离线资料库</small>
+                <strong>{m.settings_cache_limit()}</strong>
+                <small>{m.settings_cache_limit_description()}</small>
               </div>
               <select
-                aria-label="在线媒体缓存上限"
+                aria-label={m.settings_cache_limit()}
                 disabled={!storageStatus || isSavingCacheLimit}
                 value={storageStatus?.cacheLimitBytes ?? 256 * 1024 ** 2}
                 onchange={updateCacheLimit}
@@ -813,31 +854,31 @@
             {#if cacheNotice}<p class="cache-notice" role="status">{cacheNotice}</p>{/if}
             <div class="setting-row cache-row export-destination-row">
               <div>
-                <strong>下载导出目录</strong>
+                <strong>{m.settings_export_directory()}</strong>
                 <small>
                   {exportDestination?.configured
-                    ? `${exportDestination.kind === "android_document_tree" ? "Android 文档目录" : "系统文件夹"} · ${exportDestination.accessible ? "授权有效" : "权限不可用"}`
+                    ? `${exportDestination.kind === "android_document_tree" ? m.settings_android_document_directory() : m.settings_system_directory()} · ${exportDestination.accessible ? m.settings_authorization_valid() : m.settings_permission_unavailable()}`
                     : exportDestination
-                      ? "尚未选择；下载仍会安全保存在应用私有离线资料库"
-                      : "正在读取目录授权状态"}
+                      ? m.settings_export_unselected()
+                      : m.settings_export_reading()}
                 </small>
               </div>
               <div class="cache-control export-destination-control">
                 <span title={exportDestination?.label ?? ""}>
-                  {exportDestination?.label ?? "应用私有目录"}
+                  {exportDestination?.label ?? m.settings_private_directory()}
                 </span>
                 <button type="button" disabled={isSelectingExportDestination} onclick={chooseExportDestination}>
-                  {isSelectingExportDestination ? "处理中…" : exportDestination?.configured ? "更改" : "选择目录"}
+                  {isSelectingExportDestination ? m.common_processing() : exportDestination?.configured ? m.settings_change() : m.settings_choose_directory()}
                 </button>
                 {#if exportDestination?.configured}
-                  <button class="secondary-action" type="button" disabled={isSelectingExportDestination} onclick={removeExportDestination}>撤销</button>
+                  <button class="secondary-action" type="button" disabled={isSelectingExportDestination} onclick={removeExportDestination}>{m.settings_revoke()}</button>
                 {/if}
               </div>
             </div>
             <div class="setting-row control-row">
               <div>
-                <strong>下载完成后自动导出</strong>
-                <small>先保留可验证的应用私有副本，再原子写入所选目录；关闭后仍可逐项手动导出</small>
+                <strong>{m.settings_auto_export()}</strong>
+                <small>{m.settings_auto_export_description()}</small>
               </div>
               <button
                 class="switch"
@@ -845,7 +886,7 @@
                 type="button"
                 role="switch"
                 aria-checked={exportDestination?.autoExport ?? true}
-                aria-label="下载完成后自动导出"
+                aria-label={m.settings_auto_export()}
                 disabled={!exportDestination || isSavingAutoExport}
                 onclick={toggleAutoExportDownloads}
               ><span></span></button>
@@ -854,11 +895,11 @@
               <p class="local-data-notice" class:error={exportDestinationNoticeIsError} role="status">{exportDestinationNotice}</p>
             {/if}
             <a class="setting-row" href="/offline">
-              <div><strong>下载队列与离线资料库</strong><small>SQLite 队列会在退出后保留；作品、小说与 Ugoira 下载串行写入应用私有目录</small></div>
+              <div><strong>{m.settings_offline_queue()}</strong><small>{m.settings_offline_queue_description()}</small></div>
               <span class="row-value">
                 {offlineStats && downloadQueueStats
-                  ? `${downloadQueueStats.activeCount} 个待处理 · ${offlineStats.entryCount} 项 · ${formatBytes(offlineStats.sizeBytes)}`
-                  : "读取中"}
+                  ? m.settings_offline_queue_summary({ active: downloadQueueStats.activeCount, count: offlineStats.entryCount, size: formatBytes(offlineStats.sizeBytes) })
+                  : m.settings_reading()}
               </span><i>›</i>
             </a>
           </div>
@@ -867,14 +908,14 @@
         <section id="updates" class="settings-section">
           <header>
             <span><Icon name="download" size={20} /></span>
-            <div><h2>应用更新</h2><p>通过 GitHub Releases 获取稳定版，安装前始终由你确认。</p></div>
+            <div><h2>{m.settings_updates()}</h2><p>{m.settings_updates_description()}</p></div>
           </header>
           <div class="setting-list">
             <div class="setting-row update-status-row">
               <div>
                 <strong>{describeUpdatePhase(updateSnapshot)}</strong>
                 <small>
-                  GitHub Releases · {updateSnapshot?.installer === "android_system" ? "Android 系统安装器" : "Tauri 签名安装"}
+                  GitHub Releases · {updateSnapshot?.installer === "android_system" ? m.settings_android_installer() : m.settings_tauri_installer()}
                   · {formatUpdateCheckTime(updateSnapshot?.lastAttemptedAtUnixSeconds ?? updateSnapshot?.lastCheckedAtUnixSeconds)}
                 </small>
               </div>
@@ -883,44 +924,44 @@
                 type="button"
                 disabled={!updateSnapshot || isCheckingUpdates || isApplyingUpdate || updateSnapshot.phase === "downloading" || updateSnapshot.phase === "installing"}
                 onclick={checkForApplicationUpdate}
-              >{isCheckingUpdates ? "检查中…" : "立即检查"}</button>
+              >{isCheckingUpdates ? m.settings_checking() : m.settings_check_now()}</button>
             </div>
             <div class="setting-row control-row">
-              <div><strong>自动检查更新</strong><small>启动后检查一次，成功检查后 24 小时内不再重复</small></div>
+              <div><strong>{m.settings_auto_check()}</strong><small>{m.settings_auto_check_description()}</small></div>
               <button
                 class="switch"
                 class:on={updateSnapshot?.preferences.autoCheck ?? true}
                 type="button"
                 role="switch"
                 aria-checked={updateSnapshot?.preferences.autoCheck ?? true}
-                aria-label="自动检查更新"
+                aria-label={m.settings_auto_check()}
                 disabled={!updateSnapshot || isSavingUpdatePreferences}
                 onclick={toggleAutomaticUpdateCheck}
               ><span></span></button>
             </div>
             <div class="setting-row control-row">
-              <div><strong>自动下载更新</strong><small>默认关闭；只下载通过签名与平台匹配检查的正式产物</small></div>
+              <div><strong>{m.settings_auto_download()}</strong><small>{m.settings_auto_download_description()}</small></div>
               <button
                 class="switch"
                 class:on={updateSnapshot?.preferences.autoDownload ?? false}
                 type="button"
                 role="switch"
                 aria-checked={updateSnapshot?.preferences.autoDownload ?? false}
-                aria-label="自动下载更新"
+                aria-label={m.settings_auto_download()}
                 disabled={!updateSnapshot || !updateSnapshot.sourceConfigured || isSavingUpdatePreferences}
                 onclick={toggleAutomaticUpdateDownload}
               ><span></span></button>
             </div>
             {#if updateSnapshot?.installer === "android_system"}
               <div class="setting-row control-row">
-                <div><strong>仅在非计费网络自动下载</strong><small>不会影响手动检查；安装仍由 Android 系统界面确认</small></div>
+                <div><strong>{m.settings_unmetered()}</strong><small>{m.settings_unmetered_description()}</small></div>
                 <button
                   class="switch"
                   class:on={updateSnapshot.preferences.unmeteredOnly}
                   type="button"
                   role="switch"
                   aria-checked={updateSnapshot.preferences.unmeteredOnly}
-                  aria-label="仅在非计费网络自动下载更新"
+                  aria-label={m.settings_unmetered()}
                   disabled={!updateSnapshot.preferences.autoDownload || isSavingUpdatePreferences}
                   onclick={toggleUnmeteredUpdateDownloads}
                 ><span></span></button>
@@ -935,7 +976,7 @@
                     {updateSnapshot.available.sizeBytes ? ` · ${formatBytes(updateSnapshot.available.sizeBytes)}` : ""}
                   </small>
                 {/if}
-                <p>{updateSnapshot.available.notes || "此版本没有提供发布说明。"}</p>
+                <p>{updateSnapshot.available.notes || m.settings_no_release_notes()}</p>
                 {#if updateSnapshot.phase === "downloading"}
                   <div class="update-progress" role="progressbar" aria-valuemin="0" aria-valuemax={updateSnapshot.totalBytes ?? undefined} aria-valuenow={updateSnapshot.downloadedBytes}>
                     <span style={`width: ${updateSnapshot.totalBytes ? Math.min(100, updateSnapshot.downloadedBytes / updateSnapshot.totalBytes * 100) : 0}%`}></span>
@@ -944,17 +985,17 @@
                 {/if}
                 <div class="update-actions">
                   {#if updateSnapshot.phase === "available" || updateSnapshot.phase === "failed"}
-                    <button type="button" disabled={isApplyingUpdate || !updateSnapshot.sourceConfigured} onclick={downloadApplicationUpdate}>下载并验证</button>
+                    <button type="button" disabled={isApplyingUpdate || !updateSnapshot.sourceConfigured} onclick={downloadApplicationUpdate}>{m.settings_download_verify()}</button>
                   {/if}
                   {#if updateSnapshot.phase === "ready_to_install" || (updateSnapshot.phase === "awaiting_system_action" && updateSnapshot.readyToInstall)}
                     <button class="primary" type="button" disabled={isApplyingUpdate} onclick={installApplicationUpdate}>
-                      {updateSnapshot.phase === "awaiting_system_action" ? "继续安装" : updateSnapshot.installer === "android_system" ? "打开系统安装器" : "安装更新"}
+                      {updateSnapshot.phase === "awaiting_system_action" ? m.settings_continue_install() : updateSnapshot.installer === "android_system" ? m.settings_open_installer() : m.settings_install_update()}
                     </button>
                   {/if}
                   {#if updateSnapshot.phase === "downloading"}
-                    <button type="button" onclick={cancelApplicationUpdate}>取消下载</button>
+                    <button type="button" onclick={cancelApplicationUpdate}>{m.settings_cancel_download()}</button>
                   {:else if updateSnapshot.phase === "ready_to_install"}
-                    <button type="button" disabled={isApplyingUpdate} onclick={cancelApplicationUpdate}>删除更新包</button>
+                    <button type="button" disabled={isApplyingUpdate} onclick={cancelApplicationUpdate}>{m.settings_delete_update()}</button>
                   {/if}
                 </div>
               </div>
@@ -968,21 +1009,21 @@
         <section id="privacy" class="settings-section">
           <header>
             <span class="safe"><Icon name="shield" size={20} /></span>
-            <div><h2>隐私与关于</h2><p>不可被普通设置关闭的安全策略。</p></div>
+            <div><h2>{m.settings_privacy()}</h2><p>{m.settings_privacy_description()}</p></div>
           </header>
           <div class="setting-list">
             <div class="setting-row static-row">
-              <div><strong>遥测与广告标识</strong><small>当前版本不上传使用数据，也不创建广告标识</small></div>
-              <span class="policy-badge">关闭</span>
+              <div><strong>{m.settings_telemetry()}</strong><small>{m.settings_telemetry_description()}</small></div>
+              <span class="policy-badge">{m.settings_off()}</span>
             </div>
             <div class="setting-row control-row">
               <div>
-                <strong>本机浏览历史</strong>
+                <strong>{m.settings_history()}</strong>
                 <small>
                   {browsingHistory
-                    ? `已保存 ${browsingHistory.entries.length}/${browsingHistory.limit} 条；关闭后保留现有记录`
-                    : "正在读取浏览历史设置"}
-                  · <a class="inline-link" href="/history">管理历史</a>
+                    ? m.settings_history_summary({ count: browsingHistory.entries.length, limit: browsingHistory.limit })
+                    : m.settings_history_reading()}
+                  · <a class="inline-link" href="/history">{m.settings_manage_history()}</a>
                 </small>
               </div>
               <button
@@ -990,7 +1031,7 @@
                 class:on={browsingHistory?.enabled ?? false}
                 type="button"
                 role="switch"
-                aria-label="在本机记录浏览历史"
+                aria-label={m.settings_history_aria()}
                 aria-checked={browsingHistory?.enabled ?? false}
                 disabled={!browsingHistory || isSavingBrowsingHistory}
                 onclick={toggleBrowsingHistory}
@@ -1001,39 +1042,39 @@
             {/if}
             <div class="setting-row cache-row diagnostic-log-row">
               <div>
-                <strong>脱敏诊断日志</strong>
+                <strong>{m.settings_diagnostic_log()}</strong>
                 <small>
                   {diagnosticLogSummary
-                    ? `${diagnosticLogSummary.entryCount} 条 · ${formatBytes(diagnosticLogSummary.retainedBytes)} · 保留 ${diagnosticLogSummary.retentionDays} 天 · 上限 ${formatBytes(diagnosticLogSummary.maxBytes)}`
-                    : "正在读取本机日志状态"}
-                  ；不记录令牌、Cookie、URL、账号/作品编号、搜索词或响应正文
+                    ? m.settings_diagnostic_summary({ count: diagnosticLogSummary.entryCount, size: formatBytes(diagnosticLogSummary.retainedBytes), days: diagnosticLogSummary.retentionDays, limit: formatBytes(diagnosticLogSummary.maxBytes) })
+                    : m.settings_diagnostic_reading()}
+                  · {m.settings_diagnostic_exclusions()}
                 </small>
               </div>
               <div class="cache-control diagnostic-log-control">
                 <button type="button" disabled={!diagnosticLogSummary || isExportingDiagnosticLog} onclick={exportLocalDiagnosticLog}>
-                  {isExportingDiagnosticLog ? "导出中…" : "导出日志"}
+                  {isExportingDiagnosticLog ? m.offline_exporting() : m.settings_export_log()}
                 </button>
-                <button type="button" disabled={!diagnosticLogSummary || isClearingDiagnosticLog} onclick={() => (showClearDiagnosticLogDialog = true)}>清除日志</button>
+                <button type="button" disabled={!diagnosticLogSummary || isClearingDiagnosticLog} onclick={() => (showClearDiagnosticLogDialog = true)}>{m.settings_clear_log()}</button>
               </div>
             </div>
             {#if diagnosticLogNotice}
               <p class="local-data-notice" class:error={diagnosticLogNoticeIsError} role="status">{diagnosticLogNotice}</p>
             {/if}
             <div class="setting-row danger-row">
-              <div><strong>清除所有本机数据</strong><small>退出账号，并删除 Cookie、下载队列、离线内容、缓存、浏览与搜索历史、诊断日志、阅读进度、更新配置和界面偏好</small></div>
-              <button type="button" disabled={isClearingLocalData} onclick={openClearLocalDataDialog}>清除数据</button>
+              <div><strong>{m.settings_clear_all()}</strong><small>{m.settings_clear_all_description()}</small></div>
+              <button type="button" disabled={isClearingLocalData} onclick={openClearLocalDataDialog}>{m.settings_clear_data()}</button>
             </div>
             {#if localDataNotice}
               <p class="local-data-notice" class:error={localDataNoticeIsError} role="status">{localDataNotice}</p>
             {/if}
             <div class="setting-row static-row">
-              <div><strong>PixNya 版本</strong><small>非官方、开源侧载应用</small></div>
-              <span class="row-value">PixNya {appStatus?.version ?? "0.28.2"}</span>
+              <div><strong>{m.settings_version()}</strong><small>{m.settings_app_nature()}</small></div>
+              <span class="row-value">PixNya {appStatus?.version ?? "0.29.0"}</span>
             </div>
           </div>
         </section>
 
-        <p class="settings-legal">PixNya 为非官方项目，与 pixiv Inc. 无隶属或授权关系。</p>
+        <p class="settings-legal">{m.settings_legal()}</p>
       </div>
     </div>
   </div>
@@ -1041,17 +1082,17 @@
 
 {#if showClearCacheDialog}
   <div class="cache-dialog-layer">
-    <button class="cache-dialog-scrim" type="button" aria-label="取消清理缓存" onclick={() => (showClearCacheDialog = false)}></button>
+    <button class="cache-dialog-scrim" type="button" aria-label={m.settings_cancel_cache_clear()} onclick={() => (showClearCacheDialog = false)}></button>
     <div role="alertdialog" aria-modal="true" aria-labelledby="cache-dialog-title" class="cache-dialog">
       <span><Icon name="image" size={22} /></span>
       <div>
-        <small>仅清理临时内容</small>
-        <h2 id="cache-dialog-title">清理在线媒体缓存？</h2>
+        <small>{m.settings_cache_dialog_eyebrow()}</small>
+        <h2 id="cache-dialog-title">{m.settings_cache_dialog_title()}</h2>
       </div>
-      <p>将删除缩略图和预览图缓存，包括与低安全链路隔离保存的内容。不会删除离线资料库、下载作品、登录令牌或界面设置。</p>
+      <p>{m.settings_cache_dialog_description()}</p>
       <div class="cache-dialog-actions">
-        <button type="button" disabled={isClearingCache} onclick={() => (showClearCacheDialog = false)}>取消</button>
-        <button class="confirm-clear" type="button" disabled={isClearingCache} onclick={confirmClearMediaCache}>{isClearingCache ? "正在清理…" : "确认清理"}</button>
+        <button type="button" disabled={isClearingCache} onclick={() => (showClearCacheDialog = false)}>{m.common_cancel()}</button>
+        <button class="confirm-clear" type="button" disabled={isClearingCache} onclick={confirmClearMediaCache}>{isClearingCache ? m.settings_clearing_cache() : m.settings_confirm_cache_clear()}</button>
       </div>
     </div>
   </div>
@@ -1059,17 +1100,17 @@
 
 {#if showClearDiagnosticLogDialog}
   <div class="cache-dialog-layer">
-    <button class="cache-dialog-scrim" type="button" aria-label="取消清除诊断日志" disabled={isClearingDiagnosticLog} onclick={() => (showClearDiagnosticLogDialog = false)}></button>
+    <button class="cache-dialog-scrim" type="button" aria-label={m.settings_cancel_log_clear()} disabled={isClearingDiagnosticLog} onclick={() => (showClearDiagnosticLogDialog = false)}></button>
     <div role="alertdialog" aria-modal="true" aria-labelledby="diagnostic-log-dialog-title" class="cache-dialog">
       <span><Icon name="shield" size={22} /></span>
       <div>
-        <small>仅删除本机诊断记录</small>
-        <h2 id="diagnostic-log-dialog-title">清除脱敏诊断日志？</h2>
+        <small>{m.settings_log_dialog_eyebrow()}</small>
+        <h2 id="diagnostic-log-dialog-title">{m.settings_log_dialog_title()}</h2>
       </div>
-      <p>将删除当前保留的 {diagnosticLogSummary?.entryCount ?? 0} 条诊断记录。不会删除登录状态、离线内容、媒体缓存或已经导出的文本文件。</p>
+      <p>{m.settings_log_dialog_description({ count: diagnosticLogSummary?.entryCount ?? 0 })}</p>
       <div class="cache-dialog-actions">
-        <button type="button" disabled={isClearingDiagnosticLog} onclick={() => (showClearDiagnosticLogDialog = false)}>取消</button>
-        <button class="confirm-clear" type="button" disabled={isClearingDiagnosticLog} onclick={confirmClearDiagnosticLog}>{isClearingDiagnosticLog ? "正在清除…" : "确认清除"}</button>
+        <button type="button" disabled={isClearingDiagnosticLog} onclick={() => (showClearDiagnosticLogDialog = false)}>{m.common_cancel()}</button>
+        <button class="confirm-clear" type="button" disabled={isClearingDiagnosticLog} onclick={confirmClearDiagnosticLog}>{isClearingDiagnosticLog ? m.settings_clearing() : m.settings_confirm_clear()}</button>
       </div>
     </div>
   </div>
@@ -1080,38 +1121,40 @@
     <button
       class="cache-dialog-scrim"
       type="button"
-      aria-label="取消清除本机数据"
+      aria-label={m.settings_cancel_local_clear()}
       disabled={isClearingLocalData}
       onclick={() => (showClearLocalDataDialog = false)}
     ></button>
     <div role="alertdialog" aria-modal="true" aria-labelledby="local-data-dialog-title" class="cache-dialog destructive-dialog">
       <span><Icon name="shield" size={22} /></span>
       <div>
-        <small>此操作无法撤销</small>
-        <h2 id="local-data-dialog-title">清除所有本机数据？</h2>
+        <small>{m.settings_irreversible()}</small>
+        <h2 id="local-data-dialog-title">{m.settings_local_dialog_title()}</h2>
       </div>
-      <p>
-        将退出 Pixiv 账号，并永久删除本机安全存储中的令牌、登录 WebView Cookie、
-        {offlineStats?.entryCount ?? 0} 项离线内容、{mediaCacheStats?.entryCount ?? 0} 项媒体缓存、{browsingHistory?.entries.length ?? 0} 条浏览历史、{diagnosticLogSummary?.entryCount ?? 0} 条诊断日志、搜索历史、小说阅读进度及界面设置。
-      </p>
+      <p>{m.settings_local_dialog_description({
+        offline: offlineStats?.entryCount ?? 0,
+        cache: mediaCacheStats?.entryCount ?? 0,
+        history: browsingHistory?.entries.length ?? 0,
+        logs: diagnosticLogSummary?.entryCount ?? 0,
+      })}</p>
       <label class="confirmation-field">
-        <span>请输入“清除”以确认</span>
+        <span>{m.settings_clear_confirmation_prompt({ word: m.settings_clear_confirmation_word() })}</span>
         <input
           bind:value={localDataConfirmation}
           autocomplete="off"
           spellcheck="false"
           disabled={isClearingLocalData}
-          placeholder="清除"
+          placeholder={m.settings_clear_confirmation_word()}
         />
       </label>
       <div class="cache-dialog-actions">
-        <button type="button" disabled={isClearingLocalData} onclick={() => (showClearLocalDataDialog = false)}>取消</button>
+        <button type="button" disabled={isClearingLocalData} onclick={() => (showClearLocalDataDialog = false)}>{m.common_cancel()}</button>
         <button
           class="confirm-clear destructive"
           type="button"
-          disabled={isClearingLocalData || localDataConfirmation !== "清除"}
+          disabled={isClearingLocalData || localDataConfirmation !== m.settings_clear_confirmation_word()}
           onclick={confirmClearAllLocalData}
-        >{isClearingLocalData ? "正在清除…" : "永久清除"}</button>
+        >{isClearingLocalData ? m.settings_clearing() : m.settings_permanent_clear()}</button>
       </div>
     </div>
   </div>
@@ -1368,7 +1411,8 @@
     grid-template-columns: minmax(0, 1fr) auto;
   }
 
-  .cache-limit-row select {
+  .cache-limit-row select,
+  .language-row select {
     min-width: 112px;
     min-height: 34px;
     padding: 0 28px 0 11px;
@@ -1380,12 +1424,14 @@
     font-size: 10px;
   }
 
-  .cache-limit-row select:focus {
+  .cache-limit-row select:focus,
+  .language-row select:focus {
     border-color: var(--pixiv-blue);
     outline: 3px solid rgba(0, 150, 250, 0.1);
   }
 
-  .cache-limit-row select:disabled {
+  .cache-limit-row select:disabled,
+  .language-row select:disabled {
     opacity: 0.55;
   }
 
@@ -1903,7 +1949,8 @@
       width: 100%;
     }
 
-    .cache-limit-row select {
+    .cache-limit-row select,
+    .language-row select {
       width: 100%;
     }
 

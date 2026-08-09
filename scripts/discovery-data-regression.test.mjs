@@ -69,11 +69,11 @@ test("search and browse pages use live APIs and the shared image pipeline", asyn
 
 test("bookmark privacy and ranking filters map to the exact API values", async () => {
   const browse = await source("src/lib/components/BrowsePage.svelte");
-  assert.match(browse, /selectedFilter === "非公开" \? "private" : "public"/);
-  assert.match(browse, /selectedFilter === "本周" \? "week"/);
-  assert.match(browse, /selectedFilter === "本月" \? "month" : "day"/);
-  assert.doesNotMatch(browse, /filters: \["公开", "非公开", "标签"\]/);
-  assert.doesNotMatch(browse, /filters: \["为你推荐", "热门标签", "新作者"\]/);
+  assert.match(browse, /selectedFilter === "private" \? "private" : "public"/);
+  assert.match(browse, /selectedFilter === "week" \? "week"/);
+  assert.match(browse, /selectedFilter === "month" \? "month" : "day"/);
+  assert.doesNotMatch(browse, /filters: \["public", "private", "tags"\]/);
+  assert.doesNotMatch(browse, /filters: \["for_you", "trending_tags", "new_creators"\]/);
 });
 
 test("recent searches sit directly below the page search field", async () => {

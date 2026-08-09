@@ -42,8 +42,8 @@ test("settings and Tauri expose local-only export and confirmed clearing", async
     readFile(androidPackagePath("LoginWebViewPlugin.kt"), "utf8"),
   ]);
 
-  assert.match(settings, /脱敏诊断日志/);
-  assert.match(settings, /不记录令牌、Cookie、URL、账号\/作品编号、搜索词或响应正文/);
+  assert.match(settings, /m\.settings_diagnostic_log\(\)/);
+  assert.match(settings, /m\.settings_diagnostic_exclusions\(\)/);
   assert.match(api, /invoke<DiagnosticLogExportResult>\("export_diagnostic_logs"\)/);
   assert.match(api, /invoke<DiagnosticLogSummary>\("clear_diagnostic_logs", \{ confirmed: true \}\)/);
   assert.match(backend, /\.manage\(DiagnosticLogState::default\(\)\)/);

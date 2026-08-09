@@ -21,7 +21,7 @@ test("logged-out prompts stay hidden until automatic session restoration has fin
   assert.match(session, /export const sessionRestoring\s*=\s*writable(?:<boolean>)?\(true\)/);
   assert.match(session, /sessionRestoring\.set\(false\)/);
   assert.match(browse, /\{#if !\$sessionRestoring && !\$session\.loggedIn\}/);
-  assert.match(profile, /\{#if !\$sessionRestoring\}[\s\S]*?使用 Pixiv 登录[\s\S]*?\{\/if\}/);
+  assert.match(profile, /\{#if !\$sessionRestoring\}[\s\S]*?m\.profile_login_pixiv\(\)[\s\S]*?\{\/if\}/);
   for (const page of authenticatedPages) {
     assert.doesNotMatch(page, /\{#if !\$session\.loggedIn\}/);
     assert.match(page, /\{#if !\$sessionRestoring && !\$session\.loggedIn\}/);

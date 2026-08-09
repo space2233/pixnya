@@ -1,12 +1,13 @@
 <script lang="ts">
   import { page } from "$app/state";
+  import { m } from "$lib/i18n";
 
   let authorsActive = $derived(page.url.pathname.startsWith("/following/users"));
 </script>
 
-<nav class="following-tabs" aria-label="关注内容">
-  <a href="/following" class:active={!authorsActive} aria-current={!authorsActive ? "page" : undefined}>最新作品</a>
-  <a href="/following/users" class:active={authorsActive} aria-current={authorsActive ? "page" : undefined}>关注作者</a>
+<nav class="following-tabs" aria-label={m.following_content_navigation()}>
+  <a href="/following" class:active={!authorsActive} aria-current={!authorsActive ? "page" : undefined}>{m.following_latest_works()}</a>
+  <a href="/following/users" class:active={authorsActive} aria-current={authorsActive ? "page" : undefined}>{m.following_creators()}</a>
 </nav>
 
 <style>

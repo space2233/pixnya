@@ -18,7 +18,7 @@
             android:layout_width="52dp"
             android:layout_height="match_parent"
             android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:contentDescription="关闭登录页"
+            android:contentDescription="@string/login_close_description"
             android:padding="16dp"
             android:src="@android:drawable/ic_menu_close_clear_cancel"
             android:tint="#FFFFFF" />
@@ -27,7 +27,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Pixiv 官方登录"
+            android:text="@string/login_activity_title"
             android:textColor="#FFFFFF"
             android:textSize="18sp"
             android:textStyle="bold" />

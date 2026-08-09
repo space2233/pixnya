@@ -3,6 +3,7 @@
   import AppShell from "$lib/components/AppShell.svelte";
   import Icon from "$lib/components/Icon.svelte";
   import PixivImage from "$lib/components/PixivImage.svelte";
+  import { m } from "$lib/i18n";
   import { describeDataFailure, getOfflineStats, getUserDetail } from "$lib/pixiv-api";
   import { plainPixivText } from "$lib/pixiv-text";
   import { readPreferredConnectionMode } from "$lib/preferences";
@@ -70,7 +71,7 @@
     try {
       await logoutSession();
     } catch {
-      sessionError = "退出登录失败，安全存储中的会话可能尚未删除。";
+      sessionError = m.profile_logout_failed();
     } finally {
       isLoggingOut = false;
     }
@@ -101,9 +102,9 @@
   }
 
   function connectionModeLabel(mode: typeof $session.connectionMode): string {
-    if (mode === "ech") return "ECH 直连";
-    if (mode === "compatible") return "低安全直连";
-    return "标准模式";
+    if (mode === "ech") return m.login_mode_ech();
+    if (mode === "compatible") return m.login_mode_compatible();
+    return m.login_mode_standard();
   }
 
   function describeSessionError(error: unknown): string {
@@ -111,34 +112,34 @@
       error && typeof error === "object" && "kind" in error
         ? String((error as { kind: unknown }).kind)
         : "";
-    const messages: Record<string, string> = {
-      oauth_configuration_unavailable: "此构建缺少 OAuth 兼容参数，无法恢复登录。",
-      token_client_unavailable: "无法创建 OAuth 客户端，请检查系统时间与 TLS 环境。",
-      token_transport_unavailable: "保存的连接模式暂时无法到达 Pixiv OAuth 服务。",
-      token_request_failed: "恢复登录时网络请求失败，请稍后重试。",
-      token_rejected: "Pixiv 已拒绝保存的登录凭据，请重新登录。",
-      invalid_token_response: "Pixiv 返回的会话数据无效，请重新登录。",
-      secure_storage_unavailable: "无法读取平台安全存储，请检查系统凭据服务。",
-      session_unavailable: "本地会话状态不可用，请重启应用。",
+    const messages: Record<string, () => string> = {
+      oauth_configuration_unavailable: m.profile_restore_oauth_unavailable,
+      token_client_unavailable: m.profile_restore_client_unavailable,
+      token_transport_unavailable: m.profile_restore_transport_unavailable,
+      token_request_failed: m.profile_restore_request_failed,
+      token_rejected: m.profile_restore_token_rejected,
+      invalid_token_response: m.profile_restore_invalid_response,
+      secure_storage_unavailable: m.profile_restore_storage_unavailable,
+      session_unavailable: m.profile_restore_session_unavailable,
     };
-    return messages[kind] ?? "无法恢复登录状态，请稍后重试。";
+    return messages[kind]?.() ?? m.profile_restore_failed();
   }
 </script>
 
 <svelte:head>
-  <title>个人主页 · PixNya</title>
+  <title>{m.profile_title()} · PixNya</title>
 </svelte:head>
 
-<AppShell title="个人主页">
+<AppShell title={m.profile_title()}>
   <div class="profile-page">
     <section class="profile-card">
       <div class="profile-banner">
         {#if accountDetail?.profile.backgroundImageUrl}
-          <PixivImage url={accountDetail.profile.backgroundImageUrl} alt="Pixiv 个人背景图" cacheKind="preview" />
+          <PixivImage url={accountDetail.profile.backgroundImageUrl} alt={m.profile_background_alt()} cacheKind="preview" />
         {:else if accountStatus === "ready"}
-          <span class="profile-banner-note"><Icon name="image" size={15} />Pixiv 账户未设置个人背景图</span>
+          <span class="profile-banner-note"><Icon name="image" size={15} />{m.profile_background_none()}</span>
         {:else if $session.loggedIn}
-          <span class="profile-banner-note">正在同步个人背景图…</span>
+          <span class="profile-banner-note">{m.profile_background_syncing()}</span>
         {/if}
       </div>
       <div class="profile-main">
@@ -154,8 +155,8 @@
         </span>
         <div class="profile-copy">
           {#if $sessionRestoring}
-            <h1>正在恢复会话…</h1>
-            <p>refresh token 仅从平台安全存储读取。</p>
+            <h1>{m.profile_restoring()}</h1>
+            <p>{m.profile_secure_refresh_note()}</p>
           {:else if $session.loggedIn && $session.user}
             <h1>{accountDetail?.user.name ?? $session.user.name}</h1>
             <p>
@@ -165,70 +166,70 @@
             </p>
             {#if accountComment}<p class="profile-comment">{accountComment}</p>{/if}
           {:else}
-            <h1>尚未登录</h1>
-            <p>登录后显示头像、昵称、关注状态和公开作品。</p>
+            <h1>{m.profile_not_signed_in()}</h1>
+            <p>{m.profile_signed_out_description()}</p>
           {/if}
         </div>
         {#if !$sessionRestoring}
           {#if $session.loggedIn}
             <button class="login-button logout-button" type="button" disabled={isLoggingOut} onclick={logOut}>
-              {isLoggingOut ? "正在退出…" : "退出登录"}
+              {isLoggingOut ? m.profile_logging_out() : m.profile_logout()}
             </button>
           {:else}
-            <a class="login-button" href={`/login?mode=${preferredConnectionMode}`}>使用 Pixiv 登录</a>
+            <a class="login-button" href={`/login?mode=${preferredConnectionMode}`}>{m.profile_login_pixiv()}</a>
           {/if}
         {/if}
       </div>
 
       {#if sessionError}<p class="session-error">{sessionError}</p>{/if}
-      {#if accountStatus === "loading"}<p class="account-status">正在同步账户统计…</p>{/if}
+      {#if accountStatus === "loading"}<p class="account-status">{m.profile_syncing_stats()}</p>{/if}
       {#if accountStatus === "error"}
         <div class="account-error" role="alert">
-          <span>{accountError}</span><button type="button" onclick={retryAccountDetail}>重试</button>
+          <span>{accountError}</span><button type="button" onclick={retryAccountDetail}>{m.common_retry()}</button>
         </div>
       {/if}
 
       <dl class="profile-stats">
         <div>
-          <dt>作品</dt>
+          <dt>{m.profile_stat_works()}</dt>
           <dd>{accountDetail ? accountDetail.profile.totalIllustrations + accountDetail.profile.totalManga + accountDetail.profile.totalNovels : "—"}</dd>
         </div>
-        <div><a class="stat-link" href="/following/users"><dt>关注</dt><dd>{accountDetail?.profile.totalFollowUsers ?? "—"}</dd></a></div>
-        <div><dt>好P友</dt><dd>{accountDetail?.profile.totalMypixivUsers ?? "—"}</dd></div>
+        <div><a class="stat-link" href="/following/users"><dt>{m.profile_stat_following()}</dt><dd>{accountDetail?.profile.totalFollowUsers ?? "—"}</dd></a></div>
+        <div><dt>{m.profile_stat_friends()}</dt><dd>{accountDetail?.profile.totalMypixivUsers ?? "—"}</dd></div>
       </dl>
     </section>
 
     <div class="profile-columns">
       <section class="quick-section">
-        <header><h2>快捷入口</h2><p>快速访问常用账号内容和应用设置</p></header>
+        <header><h2>{m.profile_quick_links()}</h2><p>{m.profile_quick_links_description()}</p></header>
         <nav>
           {#if $session.loggedIn && $session.user}
-            <a href={`/users/${$session.user.id}`}><span><Icon name="image" size={20} /></span><b>我的公开作品</b><small>查看账户资料、插画与漫画</small><i>›</i></a>
+            <a href={`/users/${$session.user.id}`}><span><Icon name="image" size={20} /></span><b>{m.profile_public_works()}</b><small>{m.profile_public_works_description()}</small><i>›</i></a>
           {/if}
-          <a href="/bookmarks"><span><Icon name="heart" size={20} /></span><b>我的收藏</b><small>公开与非公开收藏</small><i>›</i></a>
-          <a href="/following"><span><Icon name="user" size={20} /></span><b>关注新作</b><small>查看关注作者的最新投稿</small><i>›</i></a>
-          <a href="/settings"><span><Icon name="settings" size={20} /></span><b>应用设置</b><small>连接、界面、存储与隐私</small><i>›</i></a>
+          <a href="/bookmarks"><span><Icon name="heart" size={20} /></span><b>{m.profile_bookmarks()}</b><small>{m.profile_bookmarks_description()}</small><i>›</i></a>
+          <a href="/following"><span><Icon name="user" size={20} /></span><b>{m.profile_following_new()}</b><small>{m.profile_following_new_description()}</small><i>›</i></a>
+          <a href="/settings"><span><Icon name="settings" size={20} /></span><b>{m.profile_settings()}</b><small>{m.profile_settings_description()}</small><i>›</i></a>
         </nav>
       </section>
 
       <aside class="local-card">
         <span><Icon name="shield" size={22} /></span>
-        <div><small>本地隐私</small><h2>凭据不在此页面输入</h2></div>
-        <p>登录只使用 Pixiv 官方页面；本页只展示登录完成后的非敏感账户资料。</p>
+        <div><small>{m.profile_local_privacy()}</small><h2>{m.profile_credentials_title()}</h2></div>
+        <p>{m.profile_credentials_description()}</p>
         <dl>
-          <div><dt>离线空间</dt><dd>{offlineStats ? formatBytes(offlineStats.sizeBytes) : "—"}</dd></div>
-          <div><dt>离线内容</dt><dd>{offlineStats?.entryCount ?? "—"}</dd></div>
+          <div><dt>{m.profile_offline_space()}</dt><dd>{offlineStats ? formatBytes(offlineStats.sizeBytes) : "—"}</dd></div>
+          <div><dt>{m.profile_offline_content()}</dt><dd>{offlineStats?.entryCount ?? "—"}</dd></div>
           <div>
-            <dt>登录状态</dt>
+            <dt>{m.profile_login_status()}</dt>
             <dd>
               {$session.loggedIn
-                ? `已建立 · ${connectionModeLabel($session.connectionMode)}`
-                : "未建立"}
+                ? m.profile_session_ready({ mode: connectionModeLabel($session.connectionMode) })
+                : m.profile_session_missing()}
             </dd>
           </div>
         </dl>
         {#if $session.connectionMode === "compatible"}
-          <p class="session-risk">当前会话刷新令牌时会使用已确认的低安全直连。</p>
+          <p class="session-risk">{m.profile_compatible_refresh_risk()}</p>
         {/if}
       </aside>
     </div>

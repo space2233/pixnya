@@ -3,6 +3,7 @@
   import { onMount } from "svelte";
   import AppShell from "$lib/components/AppShell.svelte";
   import ReturnLink from "$lib/components/ReturnLink.svelte";
+  import { m } from "$lib/i18n";
   import {
     readInsecureMediaWarningSuppressed,
     readPreferredConnectionMode,
@@ -22,48 +23,48 @@
 
   const modeOptions: Array<{
     id: ConnectionMode;
-    title: string;
-    subtitle: string;
-    description: string;
-    tag: string;
+    title: () => string;
+    subtitle: () => string;
+    description: () => string;
+    tag: () => string;
   }> = [
     {
       id: "standard",
-      title: "标准模式",
-      subtitle: "系统网络",
-      description: "使用系统 DNS、代理与标准 TLS，适合可以直接访问 Pixiv 的网络。",
-      tag: "推荐",
+      title: m.login_mode_standard,
+      subtitle: m.login_transport_system,
+      description: m.network_standard_description,
+      tag: m.network_recommended,
     },
     {
       id: "ech",
-      title: "ECH 直连",
-      subtitle: "Encrypted Client Hello",
-      description: "Rust API 要求 TLS 1.3 ECH 成功；Android 网页登录需另行确认一次性低安全桥。",
-      tag: "严格",
+      title: m.login_mode_ech,
+      subtitle: () => "Encrypted Client Hello",
+      description: m.network_ech_description,
+      tag: m.network_strict,
     },
     {
       id: "compatible",
-      title: "低安全直连",
-      subtitle: "固定 IP / 关闭上游校验",
-      description: "API、图片以及经确认的 Android 登录可连接内置 Pixiv IP，并关闭上游 SNI/证书验证。",
-      tag: "高风险",
+      title: m.login_mode_compatible,
+      subtitle: m.network_compatible_subtitle,
+      description: m.network_compatible_description,
+      tag: m.network_high_risk,
     },
   ];
 
-  const transportLabels: Record<RoutePlan["transport"], string> = {
-    system: "系统网络",
-    ech: "TLS 1.3 + ECH",
-    compatible_direct: "兼容直连",
-    web_view_system: "WebView 系统网络",
-    web_view_proxy: "WebView 本地代理",
-    web_view_insecure_bridge: "WebView 低安全 TLS 桥",
+  const transportLabels: Record<RoutePlan["transport"], () => string> = {
+    system: m.login_transport_system,
+    ech: () => "TLS 1.3 + ECH",
+    compatible_direct: m.login_transport_compatible,
+    web_view_system: m.login_transport_webview_system,
+    web_view_proxy: m.login_transport_webview_proxy,
+    web_view_insecure_bridge: m.login_transport_insecure_bridge,
   };
 
-  const echLabels: Record<RoutePlan["echRequirement"], string> = {
-    not_applicable: "不要求",
-    accepted: "必须确认 Accepted",
-    platform_managed: "由平台 WebView 管理",
-    preflight_only: "仅 Rust 预检 Accepted",
+  const echLabels: Record<RoutePlan["echRequirement"], () => string> = {
+    not_applicable: m.network_ech_not_required,
+    accepted: m.network_ech_accepted,
+    platform_managed: m.network_ech_platform,
+    preflight_only: m.network_ech_preflight,
   };
 
   let selectedMode = $state<ConnectionMode>("standard");
@@ -165,26 +166,26 @@
 
   function describeError(error: unknown): string {
     const failure = error as PolicyFailure;
-    const messages: Record<string, string> = {
-      ech_unavailable: "该主机不支持当前 ECH 路线；没有回退到普通 TLS。",
-      compatible_direct_unavailable: "该主机不在低安全直连白名单中。",
-      web_view_proxy_unavailable: "当前平台尚未启用登录 WebView 代理。",
-      web_view_transport_unavailable: "Rust 探测器不能代替平台 WebView 连接。",
-      invalid_host: "请求主机无效，连接已被拒绝。",
-      unsafe_acknowledgement_required: "启用低安全直连前必须确认风险。",
-      insecure_transport_forbidden: "OAuth 与 token 交换禁止使用低安全直连。",
-      dns_query_failed: "无法通过加密 DNS 获取 ECH 配置。",
-      ech_config_unavailable: "DNS 响应中没有可用的 ECH 配置。",
-      ech_not_accepted: "服务器没有接受 ECH；已按严格策略停止连接。",
-      connection_failed: "目标连接失败，请检查当前网络或切换模式。",
-      http_protocol_error: "TLS 已连接，但服务器没有返回有效 HTTP 响应。",
+    const messages: Record<string, () => string> = {
+      ech_unavailable: m.login_error_ech_unavailable,
+      compatible_direct_unavailable: m.login_error_compatible_direct_unavailable,
+      web_view_proxy_unavailable: m.login_error_web_view_proxy_unavailable,
+      web_view_transport_unavailable: m.network_error_webview_transport,
+      invalid_host: m.login_error_invalid_host,
+      unsafe_acknowledgement_required: m.login_error_unsafe_acknowledgement_required,
+      insecure_transport_forbidden: m.login_error_insecure_transport_forbidden,
+      dns_query_failed: m.login_error_dns_query_failed,
+      ech_config_unavailable: m.login_error_ech_config_unavailable,
+      ech_not_accepted: m.login_error_ech_not_accepted,
+      connection_failed: m.login_error_connection_failed,
+      http_protocol_error: m.login_error_http_protocol_error,
     };
 
     if (failure && typeof failure === "object" && failure.kind) {
-      return messages[failure.kind] ?? `连接策略拒绝了请求：${failure.kind}`;
+      return messages[failure.kind]?.() ?? m.network_error_policy_fallback({ kind: failure.kind });
     }
 
-    return typeof error === "string" ? error : "无法连接 Rust 核心。";
+    return typeof error === "string" ? error : m.network_error_core();
   }
 
   function continueToLogin() {
@@ -230,43 +231,45 @@
   }
 
   const diagnosticTargetLabels = {
-    api: "API",
-    media: "图片",
-    login: "登录页",
+    api: () => "API",
+    media: m.network_target_media,
+    login: m.network_target_login,
   } as const;
 
   const diagnosticStatusLabels = {
-    reachable: "可连接",
-    unreachable: "不可连接",
-    platform_route_ready: "平台路线已就绪",
+    reachable: m.network_status_reachable,
+    unreachable: m.network_status_unreachable,
+    platform_route_ready: m.network_status_platform_ready,
   } as const;
 </script>
 
 <svelte:head>
-  <title>连接与安全 · PixNya</title>
+  <title>{m.network_title()} · PixNya</title>
 </svelte:head>
 
-<AppShell title="连接与安全">
+<AppShell title={m.network_title()}>
   <div class="page-wrap">
-    <ReturnLink fallback="/settings" label="返回设置" />
+    <ReturnLink fallback="/settings" label={m.network_return_settings()} />
     <header class="page-heading">
       <div>
-        <h1>连接与安全</h1>
-        <p>为 Rust 网络层选择连接路线，并在登录前进行实时检查。</p>
+        <h1>{m.network_title()}</h1>
+        <p>{m.network_description()}</p>
       </div>
       <div class="core-state" class:online={appStatus !== null}>
         <span></span>
-        {appStatus ? `核心 ${appStatus.version}` : "正在连接核心"}
+        {appStatus
+          ? m.network_core_version({ version: appStatus.version })
+          : m.network_core_connecting()}
       </div>
     </header>
 
     <section class="setup-card" aria-labelledby="connection-heading">
       <div class="card-heading">
         <div>
-          <span>网络与安全</span>
-          <h2 id="connection-heading">连接方式</h2>
+          <span>{m.network_card_eyebrow()}</span>
+          <h2 id="connection-heading">{m.network_connection_method()}</h2>
         </div>
-        <small>实时检查</small>
+        <small>{m.network_realtime_check()}</small>
       </div>
 
       <div class="mode-grid">
@@ -281,11 +284,11 @@
           >
             <span class="mode-radio" aria-hidden="true"></span>
             <span class="mode-copy">
-              <strong>{option.title}</strong>
-              <small>{option.subtitle}</small>
-              <span>{option.description}</span>
+              <strong>{option.title()}</strong>
+              <small>{option.subtitle()}</small>
+              <span>{option.description()}</span>
             </span>
-            <span class="mode-tag">{option.tag}</span>
+            <span class="mode-tag">{option.tag()}</span>
           </button>
         {/each}
       </div>
@@ -294,40 +297,40 @@
         <div class="result-heading">
           <span class="result-dot" class:checking={isChecking}></span>
           <div>
-            <small>连接检查</small>
-            <strong>{isChecking ? "正在检查…" : "当前结果"}</strong>
+            <small>{m.network_connection_check()}</small>
+            <strong>{isChecking ? m.network_checking() : m.network_current_result()}</strong>
           </div>
         </div>
 
         {#if routePlan && probeReport}
           <dl>
             <div>
-              <dt>传输路线</dt>
-              <dd>{transportLabels[routePlan.transport]} · HTTP {probeReport.httpStatus}</dd>
+              <dt>{m.network_transport_route()}</dt>
+              <dd>{transportLabels[routePlan.transport]()} · HTTP {probeReport.httpStatus}</dd>
             </div>
             <div>
-              <dt>连接地址</dt>
-              <dd>{probeReport.connectedIp ?? "由系统选择"} · {probeReport.latencyMs} ms</dd>
+              <dt>{m.network_connection_address()}</dt>
+              <dd>{probeReport.connectedIp ?? m.network_system_selected()} · {probeReport.latencyMs} ms</dd>
             </div>
             <div>
               <dt>TLS / ECH</dt>
-              <dd>{probeReport.tlsSummary} · {echLabels[routePlan.echRequirement]}</dd>
+              <dd>{probeReport.tlsSummary} · {echLabels[routePlan.echRequirement]()}</dd>
             </div>
           </dl>
         {:else if policyError}
           <div class="result-error"><b>!</b><span>{policyError}</span></div>
         {:else}
-          <p class="result-placeholder">等待安全策略返回结果…</p>
+          <p class="result-placeholder">{m.network_waiting_policy()}</p>
         {/if}
       </div>
 
       {#if selectedMode === "compatible" && unsafeAcknowledged}
         <div class="unsafe-mode-note" role="status">
-          <b>低安全直连已在本次页面会话中启用</b>
+          <b>{m.network_unsafe_enabled()}</b>
           <span>
             {unsafeWarningSuppressed
-              ? "API/图片及 Android 登录桥仍为低安全路线；重复警告已按你的选择关闭。"
-              : "API/图片使用低安全路线；Android 官方网页登录会在再次确认后使用一次性低安全桥。"}
+              ? m.network_unsafe_suppressed()
+              : m.network_unsafe_session()}
           </span>
         </div>
       {/if}
@@ -335,20 +338,20 @@
       {#if unsafeWarningSuppressed}
         <div class="suppressed-warning-note" role="status">
           <div>
-            <b>低安全连接警告已关闭</b>
-            <span>选择低安全直连或 Android 低安全登录桥时将直接继续，但安全风险没有降低。</span>
+            <b>{m.network_warning_disabled()}</b>
+            <span>{m.network_warning_disabled_detail()}</span>
           </div>
-          <button type="button" onclick={restoreUnsafeWarnings}>恢复低安全连接警告</button>
+          <button type="button" onclick={restoreUnsafeWarnings}>{m.network_restore_warning()}</button>
         </div>
       {/if}
 
       {#if insecureMediaWarningSuppressed}
         <div class="suppressed-warning-note" role="status">
           <div>
-            <b>ECH 图片连接提示已关闭</b>
-            <span>新登录或应用重启后会按你的选择自动启用低安全图片路径；API、OAuth 和令牌刷新不受影响。</span>
+            <b>{m.network_media_warning_disabled()}</b>
+            <span>{m.network_media_warning_detail()}</span>
           </div>
-          <button type="button" onclick={restoreInsecureMediaWarnings}>恢复 ECH 图片连接提示</button>
+          <button type="button" onclick={restoreInsecureMediaWarnings}>{m.network_restore_media_warning()}</button>
         </div>
       {/if}
 
@@ -357,12 +360,12 @@
           <strong>{appStatus?.platform ?? "desktop"} · {appStatus?.architecture ?? "unknown"}</strong>
           <span>
             {selectedMode === "compatible"
-              ? "当前模式不验证服务器证书，请仅临时使用"
+              ? m.network_runtime_compatible()
               : selectedMode === "ech"
                 ? unsafeWarningSuppressed
-                  ? "Rust API 验证 ECH；Android 低安全登录桥不再重复提醒"
-                  : "Rust API 验证 ECH；Android 登录需单独确认低安全桥"
-                : "标准模式使用系统 TLS 与证书验证"}
+                  ? m.network_runtime_ech_suppressed()
+                  : m.network_runtime_ech()
+                : m.network_runtime_standard()}
           </span>
         </div>
         <div class="action-buttons">
@@ -372,7 +375,7 @@
             disabled={!appStatus || isChecking || isDiagnosing}
             onclick={runDiagnostics}
           >
-            {isDiagnosing ? "正在检查三条路线…" : "运行完整诊断"}
+            {isDiagnosing ? m.network_diagnosing() : m.network_run_diagnostics()}
           </button>
           <button
             class="primary-button"
@@ -380,7 +383,7 @@
             disabled={!appStatus || isChecking || isDiagnosing}
             onclick={continueToLogin}
           >
-            前往官方登录
+            {m.network_go_login()}
             <span aria-hidden="true">›</span>
           </button>
         </div>
@@ -391,15 +394,15 @@
       <section class="diagnostic-card" aria-labelledby="diagnostic-heading">
         <header>
           <div>
-            <span>脱敏诊断</span>
-            <h2 id="diagnostic-heading">API、图片与登录路线</h2>
+            <span>{m.network_diagnostic_eyebrow()}</span>
+            <h2 id="diagnostic-heading">{m.network_diagnostic_title()}</h2>
           </div>
           <button type="button" onclick={copyDiagnosticReport}>
             {copyState === "copied"
-              ? "已复制"
+              ? m.common_copied()
               : copyState === "failed"
-                ? "请手动复制"
-                : "复制报告"}
+                ? m.common_copy_manually()
+                : m.common_copy_report()}
           </button>
         </header>
 
@@ -408,26 +411,26 @@
             <article class:failed={check.status === "unreachable"}>
               <div class="diagnostic-status-dot"></div>
               <div>
-                <small>{diagnosticTargetLabels[check.target]} · {check.host}</small>
-                <strong>{diagnosticStatusLabels[check.status]}</strong>
+                <small>{diagnosticTargetLabels[check.target]()} · {check.host}</small>
+                <strong>{diagnosticStatusLabels[check.status]()}</strong>
                 <span>
                   {check.route
-                    ? transportLabels[check.route.transport]
+                    ? transportLabels[check.route.transport]()
                     : check.failure
                       ? describeError({ kind: check.failure })
-                      : "等待平台运行时"}
+                      : m.network_waiting_runtime()}
                 </span>
                 {#if check.httpStatus}
                   <em>HTTP {check.httpStatus} · {check.latencyMs ?? 0} ms</em>
                 {:else if check.candidateAddressCount}
-                  <em>{check.candidateAddressCount} 个候选地址</em>
+                  <em>{m.network_candidate_addresses({ count: check.candidateAddressCount })}</em>
                 {/if}
               </div>
             </article>
           {/each}
         </div>
 
-        <label for="diagnostic-report-text">可复制的脱敏文本</label>
+        <label for="diagnostic-report-text">{m.network_redacted_text()}</label>
         <textarea
           id="diagnostic-report-text"
           bind:this={reportTextArea}
@@ -436,11 +439,11 @@
           rows="13"
           spellcheck="false"
         ></textarea>
-        <p>报告不会写入访问令牌、Cookie、完整 OAuth URL、搜索词或浏览内容。</p>
+        <p>{m.network_report_privacy()}</p>
       </section>
     {/if}
 
-    <p class="legal-note">PixNya 为非官方项目，与 pixiv Inc. 无隶属或授权关系。</p>
+    <p class="legal-note">{m.pixnya_unofficial_notice()}</p>
   </div>
 </AppShell>
 
@@ -449,7 +452,7 @@
     <button
       class="risk-dialog-scrim"
       type="button"
-      aria-label="取消启用低安全直连"
+      aria-label={m.network_cancel_unsafe()}
       onclick={cancelUnsafeMode}
     ></button>
     <div
@@ -461,29 +464,26 @@
     >
       <span class="risk-badge">!</span>
       <div>
-        <small>高风险连接方式</small>
-        <h2 id="risk-dialog-title">确认启用低安全直连？</h2>
+        <small>{m.network_risk_eyebrow()}</small>
+        <h2 id="risk-dialog-title">{m.network_risk_title()}</h2>
       </div>
-      <p id="risk-dialog-description">
-        此模式会连接内置 Pixiv IP，并关闭 TLS SNI 和服务器证书验证。攻击者可能伪装成
-        Pixiv，读取或修改经过 API/图片及 Android 登录桥的数据。
-      </p>
+      <p id="risk-dialog-description">{m.network_risk_description()}</p>
       <ul>
-        <li>不会作为默认模式，也不会在失败时自动启用。</li>
-        <li>Android 网页登录使用一次性证书指纹锁定的本地桥；桥的上游连接不验证服务器。</li>
-        <li>桥不解析或记录请求正文，但登录数据会以明文经过应用内存。</li>
-        <li>授权码和 token 交换不会沿用低安全桥。</li>
-        <li>未来带 access token 的 API 请求仍可能被中间人读取。</li>
-        <li>默认确认仅对当前页面会话有效；勾选下方选项后可停止重复提醒。</li>
+        <li>{m.network_risk_item_default()}</li>
+        <li>{m.network_risk_item_android()}</li>
+        <li>{m.network_risk_item_memory()}</li>
+        <li>{m.network_risk_item_token()}</li>
+        <li>{m.network_risk_item_api()}</li>
+        <li>{m.network_risk_item_session()}</li>
       </ul>
       <label class="suppress-warning-choice">
         <input type="checkbox" bind:checked={suppressFutureWarnings} />
-        <span><b>以后不再提醒</b><small>可随时在“连接与安全”中恢复警告</small></span>
+        <span><b>{m.login_warning_suppress()}</b><small>{m.login_warning_restore()}</small></span>
       </label>
       <div class="risk-dialog-actions">
-        <button type="button" onclick={cancelUnsafeMode}>取消</button>
+        <button type="button" onclick={cancelUnsafeMode}>{m.common_cancel()}</button>
         <button class="danger-confirm" type="button" onclick={confirmUnsafeMode}>
-          {suppressFutureWarnings ? "我了解风险，不再提醒" : "我了解风险，仅本次启用"}
+          {suppressFutureWarnings ? m.login_confirm_forever() : m.network_confirm_session()}
         </button>
       </div>
     </div>

@@ -2,6 +2,7 @@
   import { afterNavigate } from "$app/navigation";
   import { onMount } from "svelte";
   import "../app.css";
+  import { initializeI18n } from "$lib/i18n";
   import { applyReducedMotionPreference } from "$lib/preferences";
   import {
     captureReturnNavigation,
@@ -22,6 +23,7 @@
   });
 
   onMount(() => {
+    initializeI18n();
     applyReducedMotionPreference();
     document.addEventListener("click", captureReturnNavigation, true);
     restorePendingReturnPosition();

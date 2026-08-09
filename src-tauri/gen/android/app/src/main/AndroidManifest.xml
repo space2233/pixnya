@@ -28,7 +28,7 @@
 
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode"
-            android:label="Pixiv 官方登录"
+            android:label="@string/login_activity_title"
             android:name=".LoginActivity"
             android:exported="false" />
 

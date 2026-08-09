@@ -11,6 +11,7 @@
   } from "$lib/image-viewer";
   import OfflineImage from "$lib/components/OfflineImage.svelte";
   import PixivImage from "$lib/components/PixivImage.svelte";
+  import { m } from "$lib/i18n";
 
   export interface ArtworkViewerPage {
     pageIndex: number;
@@ -211,13 +212,13 @@
 <div class="artwork-gallery-preview" class:concealed aria-hidden={concealed}>
   {#each pages as image, index (image.pageIndex)}
     <figure>
-      <button type="button" aria-label={`查看${image.alt}原图`} onclick={() => openViewer(index)} disabled={concealed}>
+      <button type="button" aria-label={m.viewer_open_original_label({ alt: image.alt })} onclick={() => openViewer(index)} disabled={concealed}>
         {#if image.entryKey && image.assetNames}
           <OfflineImage entryKey={image.entryKey} assetNames={image.assetNames} alt={image.alt} />
         {:else}
           <PixivImage url={image.previewUrl ?? image.originalUrl} alt={image.alt} fit="contain" cacheKind="preview" />
         {/if}
-        <span class="open-hint">查看原图</span>
+        <span class="open-hint">{m.viewer_open_original()}</span>
         {#if pages.length > 1}<span class="page-count">{index + 1} / {pages.length}</span>{/if}
       </button>
     </figure>
@@ -229,24 +230,24 @@
     class="viewer"
     role="dialog"
     aria-modal="true"
-    aria-label={`${title} 图片查看器`}
+    aria-label={m.viewer_dialog_label({ title })}
     tabindex="-1"
     bind:this={dialog}
     onkeydown={handleKeydown}
   >
     <header>
       <div>
-        <strong>{title || "无题"}</strong>
+        <strong>{title || m.common_untitled()}</strong>
         <span aria-live="polite">{currentIndex + 1} / {pages.length} · {zoomPercent}%</span>
       </div>
-      <button type="button" aria-label="关闭图片查看器" onclick={closeViewer}>×</button>
+      <button type="button" aria-label={m.viewer_close()} onclick={closeViewer}>×</button>
     </header>
 
     <div
       class="viewport"
       class:zoomed={transform.scale > 1}
       role="group"
-      aria-label="可缩放图片区域"
+      aria-label={m.viewer_zoomable_region()}
       bind:this={viewport}
       onwheel={handleWheel}
       onpointerdown={beginGesture}
@@ -270,14 +271,14 @@
     </div>
 
     {#if pages.length > 1}
-      <button class="page-nav previous" type="button" aria-label="上一页" disabled={currentIndex === 0} onclick={() => changePage(-1)}>‹</button>
-      <button class="page-nav next" type="button" aria-label="下一页" disabled={currentIndex === pages.length - 1} onclick={() => changePage(1)}>›</button>
+      <button class="page-nav previous" type="button" aria-label={m.viewer_previous()} disabled={currentIndex === 0} onclick={() => changePage(-1)}>‹</button>
+      <button class="page-nav next" type="button" aria-label={m.viewer_next()} disabled={currentIndex === pages.length - 1} onclick={() => changePage(1)}>›</button>
     {/if}
 
-    <footer aria-label="缩放控制">
-      <button type="button" aria-label="缩小" disabled={transform.scale <= 1} onclick={() => setZoom(transform.scale / 1.25)}>−</button>
-      <button class="zoom-value" type="button" aria-label="重置缩放" onclick={() => (transform = { ...RESET_VIEWER_TRANSFORM })}>{zoomPercent}%</button>
-      <button type="button" aria-label="放大" disabled={transform.scale >= 6} onclick={() => setZoom(transform.scale * 1.25)}>＋</button>
+    <footer aria-label={m.viewer_zoom_controls()}>
+      <button type="button" aria-label={m.viewer_zoom_out()} disabled={transform.scale <= 1} onclick={() => setZoom(transform.scale / 1.25)}>−</button>
+      <button class="zoom-value" type="button" aria-label={m.viewer_reset_zoom()} onclick={() => (transform = { ...RESET_VIEWER_TRANSFORM })}>{zoomPercent}%</button>
+      <button type="button" aria-label={m.viewer_zoom_in()} disabled={transform.scale >= 6} onclick={() => setZoom(transform.scale * 1.25)}>＋</button>
     </footer>
   </div>
 {/if}

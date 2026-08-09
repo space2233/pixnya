@@ -52,9 +52,9 @@ test("settings exposes storage health, safe headroom, and supported cache limits
   assert.match(types, /export type StorageHealth = "healthy" \| "low" \| "critical"/);
   assert.match(api, /invoke<StorageStatus>\("get_storage_status"\)/);
   assert.match(api, /invoke<StorageStatus>\("set_media_cache_limit"/);
-  assert.match(settings, /存储空间不足，下载写入已受限/);
+  assert.match(settings, /m\.settings_storage_critical\(\)/);
   assert.match(settings, /storageStatus\.writableDownloadBytes/);
-  assert.match(settings, /在线媒体缓存上限/);
+  assert.match(settings, /m\.settings_cache_limit\(\)/);
   for (const label of ["128 MiB", "256 MiB", "512 MiB", "1 GiB"]) {
     assert.match(settings, new RegExp(label));
   }

@@ -83,7 +83,7 @@ class LoginActivity : AppCompatActivity() {
     )
 
     if (!isExpectedLoginUrl(url)) {
-      showError("登录地址校验失败，页面未加载。")
+      showError(getString(R.string.login_error_invalid_url))
       return
     }
 
@@ -133,7 +133,7 @@ class LoginActivity : AppCompatActivity() {
           handler.proceed()
         } else {
           handler.cancel()
-          showError("服务器证书验证失败，登录已停止。")
+          showError(getString(R.string.login_error_certificate))
         }
       }
 
@@ -143,7 +143,7 @@ class LoginActivity : AppCompatActivity() {
         error: WebResourceError,
       ) {
         if (request.isForMainFrame) {
-          showError("官方登录页加载失败，请返回后切换连接方式重试。")
+          showError(getString(R.string.login_error_page_load))
         }
       }
     }
@@ -155,7 +155,7 @@ class LoginActivity : AppCompatActivity() {
     val proxySupported = WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE)
     if (!proxySupported) {
       if (isBridgeMode()) {
-        showError("当前 Android System WebView 不支持代理覆盖，无法启用登录桥。")
+        showError(getString(R.string.login_error_proxy_unsupported))
       } else {
         loadOfficialPage(url)
       }
@@ -166,7 +166,7 @@ class LoginActivity : AppCompatActivity() {
     if (mode == MODE_ECH || mode == MODE_COMPATIBLE) {
       val port = intent.getIntExtra(EXTRA_PROXY_PORT, 0)
       if (port !in 1..65535) {
-        showError("低安全登录桥没有就绪，页面未加载。")
+        showError(getString(R.string.login_error_bridge_unavailable))
         return
       }
       val config = ProxyConfig.Builder()
@@ -222,9 +222,9 @@ class LoginActivity : AppCompatActivity() {
   }
 
   private fun modeLabel(mode: String): String = when (mode) {
-    MODE_ECH -> "ECH 预检 · 低安全登录桥"
-    MODE_COMPATIBLE -> "兼容 · 固定 IP / 低安全 TLS"
-    else -> "标准 · 系统网络"
+    MODE_ECH -> getString(R.string.login_mode_ech)
+    MODE_COMPATIBLE -> getString(R.string.login_mode_compatible)
+    else -> getString(R.string.login_mode_standard)
   }
 
   private fun isBridgeMode(): Boolean = mode == MODE_ECH || mode == MODE_COMPATIBLE

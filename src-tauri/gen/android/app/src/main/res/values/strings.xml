@@ -1,4 +1,14 @@
 <resources>
     <string name="app_name">"PixNya"</string>
     <string name="main_activity_title">"PixNya"</string>
+    <string name="login_activity_title">Pixiv official sign-in</string>
+    <string name="login_close_description">Close sign-in page</string>
+    <string name="login_error_invalid_url">The sign-in address failed validation. The page was not loaded.</string>
+    <string name="login_error_certificate">Server certificate validation failed. Sign-in was stopped.</string>
+    <string name="login_error_page_load">The official sign-in page could not be loaded. Go back, switch connection mode, and try again.</string>
+    <string name="login_error_proxy_unsupported">This Android System WebView does not support proxy override, so the sign-in bridge cannot be enabled.</string>
+    <string name="login_error_bridge_unavailable">The lower-security sign-in bridge is not ready. The page was not loaded.</string>
+    <string name="login_mode_ech">ECH preflight · lower-security sign-in bridge</string>
+    <string name="login_mode_compatible">Compatible · fixed IP / lower-security TLS</string>
+    <string name="login_mode_standard">Standard · system network</string>
 </resources>
