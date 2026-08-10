@@ -122,8 +122,14 @@ test("formal releases are gated by main-branch full verification and signed arti
   assert.match(androidBridgeGenerator, /implementation\(project\(":tauri-android"\)\)/);
   assert.match(androidIgnore, /^\/tauri\.settings\.gradle$/m);
   assert.match(androidAppIgnore, /^\/tauri\.build\.gradle\.kts$/m);
-  assert.match(workflow, /\.\/gradlew --no-daemon :app:resolveLockedDependencies buildEnvironment/);
-  assert.match(workflow, /\.\/gradlew --no-daemon --offline :app:resolveLockedDependencies buildEnvironment/);
+  assert.match(
+    workflow,
+    /\.\/gradlew --no-daemon :app:resolveLockedDependencies :tauri-android:extractReleaseAnnotations buildEnvironment/,
+  );
+  assert.match(
+    workflow,
+    /\.\/gradlew --no-daemon --offline :app:resolveLockedDependencies :tauri-android:extractReleaseAnnotations buildEnvironment/,
+  );
   assert.doesNotMatch(workflow, /:app:dependencies buildEnvironment/);
   assert.match(androidAppBuild, /tasks\.register\("resolveLockedDependencies"\)/);
   assert.match(androidAppBuild, /file\("gradle\.lockfile"\)/);
@@ -156,10 +162,10 @@ test("formal releases are gated by main-branch full verification and signed arti
     "node scripts/generate-tauri-android-gradle-bridge.mjs",
   );
   const onlineGradleResolution = workflow.indexOf(
-    "./gradlew --no-daemon :app:resolveLockedDependencies buildEnvironment",
+    "./gradlew --no-daemon :app:resolveLockedDependencies :tauri-android:extractReleaseAnnotations buildEnvironment",
   );
   const offlineGradleResolution = workflow.indexOf(
-    "./gradlew --no-daemon --offline :app:resolveLockedDependencies buildEnvironment",
+    "./gradlew --no-daemon --offline :app:resolveLockedDependencies :tauri-android:extractReleaseAnnotations buildEnvironment",
   );
   const pomEvidenceHydration = workflow.indexOf("hydrate-gradle-pom-evidence.mjs");
   const pomEvidenceCheck = workflow.indexOf("complete-gradle-pom-verification.mjs --check");

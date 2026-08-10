@@ -111,6 +111,43 @@ test("verification metadata pins the Linux AAPT2 binary required by Android CI",
   );
 });
 
+test("verification metadata covers Tauri's release annotation extraction graph", async () => {
+  const metadata = await readFile(
+    path.join(root, "src-tauri", "gen", "android", "gradle", "verification-metadata.xml"),
+    "utf8",
+  );
+  for (const [coordinate, artifact, sha256] of [
+    [
+      "com.android.tools.lint:lint-gradle:31.11.0",
+      "lint-gradle-31.11.0.jar",
+      "a42b6a41c436d90ca31a13d67afba1157b157efc892a7496f67432bf8a831cbd",
+    ],
+    [
+      "com.android.tools.external.com-intellij:kotlin-compiler:31.11.0",
+      "kotlin-compiler-31.11.0.jar",
+      "b24d171f6ccaeaba526d7de6d9f94149ee12bad9a48098c558d1f47dfd3e0bb5",
+    ],
+    [
+      "org.codehaus.groovy:groovy:3.0.22",
+      "groovy-3.0.22.jar",
+      "c92c92c4b9b183f9981ba7399f36592e5e3ad6f4cdac7101b5a22cc17998d13f",
+    ],
+  ]) {
+    const [group, name, version] = coordinate.split(":");
+    const component = metadata.match(
+      new RegExp(
+        `<component group="${group.replaceAll(".", "\\.")}" name="${name}" version="${version}">([\\s\\S]*?)<\\/component>`,
+      ),
+    )?.[1];
+    assert.ok(component, `verification metadata must include ${coordinate}`);
+    assert.match(
+      component,
+      new RegExp(`<artifact name="${artifact.replaceAll(".", "\\.")}">\\s*<sha256 value="${sha256}"`),
+      `${artifact} must retain its reviewed SHA-256`,
+    );
+  }
+});
+
 test("checked-in Android Gradle configuration is machine neutral", async () => {
   const androidRoot = path.join(root, "src-tauri", "gen", "android");
   const androidIgnore = await readFile(path.join(androidRoot, ".gitignore"), "utf8");

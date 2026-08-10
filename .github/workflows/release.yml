@@ -145,14 +145,14 @@ jobs:
         run: |
           chmod +x src-tauri/gen/android/gradlew
           pushd src-tauri/gen/android
-          ./gradlew --no-daemon :app:resolveLockedDependencies buildEnvironment
+          ./gradlew --no-daemon :app:resolveLockedDependencies :tauri-android:extractReleaseAnnotations buildEnvironment
           popd
           POM_EVIDENCE_HOME="$RUNNER_TEMP/pixnya-gradle-pom-evidence"
           node scripts/hydrate-gradle-pom-evidence.mjs \
             --gradle-user-home "$POM_EVIDENCE_HOME" \
             --manifest "$RUNNER_TEMP/gradle-pom-evidence.json"
           pushd src-tauri/gen/android
-          ./gradlew --no-daemon --offline :app:resolveLockedDependencies buildEnvironment
+          ./gradlew --no-daemon --offline :app:resolveLockedDependencies :tauri-android:extractReleaseAnnotations buildEnvironment
           popd
           node scripts/complete-gradle-pom-verification.mjs --check --gradle-user-home "$POM_EVIDENCE_HOME"
           node scripts/generate-gradle-license-review.mjs \
