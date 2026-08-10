@@ -75,9 +75,10 @@ test("Linux verification compiles the actual Tauri desktop target", async () => 
 });
 
 test("formal releases are gated by main-branch full verification and signed artifact checks", async () => {
-  const [workflow, androidBridgeGenerator, androidIgnore, androidAppIgnore, androidAppBuild] = await Promise.all([
+  const [workflow, androidBridgeGenerator, pomHydrator, androidIgnore, androidAppIgnore, androidAppBuild] = await Promise.all([
     read(".github/workflows/release.yml"),
     read("scripts/generate-tauri-android-gradle-bridge.mjs"),
+    read("scripts/hydrate-gradle-pom-evidence.mjs"),
     read("src-tauri/gen/android/.gitignore"),
     read("src-tauri/gen/android/app/.gitignore"),
     read("src-tauri/gen/android/app/build.gradle.kts"),
@@ -136,9 +137,18 @@ test("formal releases are gated by main-branch full verification and signed arti
   assert.match(androidAppBuild, /variant-ambiguous between debug and release/);
   assert.match(androidAppBuild, /com\.fasterxml\.jackson\.core:jackson-databind:2\.22\.1/);
   assert.match(androidAppBuild, /project :tauri-android/);
-  assert.match(workflow, /complete-gradle-pom-verification\.mjs --check/);
+  assert.match(workflow, /POM_EVIDENCE_HOME="\$RUNNER_TEMP\/pixnya-gradle-pom-evidence"/);
+  assert.match(workflow, /hydrate-gradle-pom-evidence\.mjs/);
+  assert.match(
+    workflow,
+    /complete-gradle-pom-verification\.mjs --check --gradle-user-home "\$POM_EVIDENCE_HOME"/,
+  );
   assert.match(workflow, /generate-gradle-license-review\.mjs/);
+  assert.match(workflow, /--gradle-user-home "\$POM_EVIDENCE_HOME"/);
   assert.match(workflow, /--output "\$RUNNER_TEMP\/gradle-license-review\.json"/);
+  assert.match(pomHydrator, /reviewedMavenPomRepositories/);
+  assert.match(pomHydrator, /discoverGradlePomVerificationEntries/);
+  assert.match(pomHydrator, /hydration\.poms/);
   assert.match(workflow, /chmod \+x src-tauri\/gen\/android\/gradlew/);
   const androidSetup = workflow.indexOf("android-actions/setup-android@");
   const androidBridgeGeneration = workflow.indexOf(
@@ -150,6 +160,7 @@ test("formal releases are gated by main-branch full verification and signed arti
   const offlineGradleResolution = workflow.indexOf(
     "./gradlew --no-daemon --offline :app:resolveLockedDependencies buildEnvironment",
   );
+  const pomEvidenceHydration = workflow.indexOf("hydrate-gradle-pom-evidence.mjs");
   const pomEvidenceCheck = workflow.indexOf("complete-gradle-pom-verification.mjs --check");
   const supplyCheck = workflow.indexOf("generate-supply-chain-artifacts.mjs --check");
   assert.ok(androidSetup < onlineGradleResolution, "the clean runner must configure Android before resolving Gradle");
@@ -157,7 +168,10 @@ test("formal releases are gated by main-branch full verification and signed arti
     androidSetup < androidBridgeGeneration && androidBridgeGeneration < onlineGradleResolution,
     "the clean runner must generate and validate Tauri's ignored Android Gradle bridge before Gradle starts",
   );
-  assert.ok(onlineGradleResolution < offlineGradleResolution, "the locked graph must be hydrated before the offline proof");
+  assert.ok(
+    onlineGradleResolution < pomEvidenceHydration && pomEvidenceHydration < offlineGradleResolution,
+    "the online phase must hydrate every verified Maven POM before the offline proof",
+  );
   assert.ok(offlineGradleResolution < pomEvidenceCheck, "offline Gradle resolution must precede POM evidence checks");
   assert.ok(pomEvidenceCheck < supplyCheck, "verified Maven POM evidence must precede the combined SBOM");
   assert.ok(

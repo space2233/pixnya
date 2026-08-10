@@ -26,7 +26,10 @@ import {
 } from "./generate-supply-chain-artifacts.mjs";
 import {
   buildGradleLicenseReview,
+  fetchPomFromReviewedRepositories,
   gradlePackagesFromReview,
+  hydrateGradlePomEvidence,
+  reviewedMavenPomRepositories,
   validateGradleLicenseReview,
 } from "./gradle-license-evidence.mjs";
 import {
@@ -230,6 +233,260 @@ test("Gradle license evidence resolves inherited POM declarations and stays tied
   } finally {
     await rm(temporaryRoot, { recursive: true, force: true });
   }
+});
+
+test("clean runners hydrate every reviewed Maven POM through tracked SHA-256 evidence", async () => {
+  const temporaryRoot = await mkdtemp(join(tmpdir(), "pixnya-gradle-pom-hydration-"));
+  try {
+    const childCoordinate = "example.child:runtime:1.0.0";
+    const parentCoordinate = "example.parent:parent:2.0.0";
+    const childPom = Buffer.from(
+      `<project><parent><groupId>example.parent</groupId><artifactId>parent</artifactId><version>2.0.0</version></parent><url>https://example.invalid/runtime</url></project>`,
+    );
+    const parentPom = Buffer.from(
+      `<project><licenses><license><name>The Apache License, Version 2.0</name><url>http://www.apache.org/licenses/LICENSE-2.0.txt</url></license></licenses></project>`,
+    );
+    const digest = (content) => createHash("sha256").update(content).digest("hex");
+    const verifiedArtifacts = new Map([
+      [
+        childCoordinate,
+        [{ name: "runtime-1.0.0.pom", sha256: [digest(childPom)] }],
+      ],
+      [
+        parentCoordinate,
+        [{ name: "parent-2.0.0.pom", sha256: [digest(parentPom)] }],
+      ],
+    ]);
+    const inventory = {
+      schemaVersion: 1,
+      fingerprint: `sha256:${"a".repeat(64)}`,
+      components: [{ coordinate: childCoordinate }],
+    };
+
+    await assert.rejects(
+      hydrateGradlePomEvidence(inventory, {
+        gradleUserHome: temporaryRoot,
+        verifiedArtifacts,
+        fetchPom: async () => Buffer.from("tampered Maven metadata"),
+      }),
+      /does not match tracked Gradle SHA-256 verification metadata/i,
+    );
+
+    const fetched = [];
+    const poms = new Map([
+      [childCoordinate, childPom],
+      [parentCoordinate, parentPom],
+    ]);
+    const first = await hydrateGradlePomEvidence(inventory, {
+      gradleUserHome: temporaryRoot,
+      verifiedArtifacts,
+      fetchPom: async ({ coordinate }) => {
+        fetched.push(coordinate);
+        return poms.get(coordinate);
+      },
+    });
+    assert.deepEqual(first, {
+      componentCount: 1,
+      pomCount: 2,
+      downloadedCount: 2,
+      cachedCount: 0,
+      poms: [
+        {
+          coordinate: childCoordinate,
+          pomName: "runtime-1.0.0.pom",
+          sha256: digest(childPom),
+        },
+        {
+          coordinate: parentCoordinate,
+          pomName: "parent-2.0.0.pom",
+          sha256: digest(parentPom),
+        },
+      ],
+    });
+    assert.deepEqual(fetched.sort(), [childCoordinate, parentCoordinate].sort());
+    const review = buildGradleLicenseReview(inventory, {
+      gradleUserHome: temporaryRoot,
+      verifiedArtifacts,
+    });
+    assert.equal(review.components[0].licenseEvidence.sourceCoordinate, parentCoordinate);
+
+    const second = await hydrateGradlePomEvidence(inventory, {
+      gradleUserHome: temporaryRoot,
+      verifiedArtifacts,
+      fetchPom: async () => {
+        throw new Error("a verified cache hit must not access the network");
+      },
+    });
+    assert.deepEqual(second, {
+      componentCount: 1,
+      pomCount: 2,
+      downloadedCount: 0,
+      cachedCount: 2,
+      poms: [
+        {
+          coordinate: childCoordinate,
+          pomName: "runtime-1.0.0.pom",
+          sha256: digest(childPom),
+        },
+        {
+          coordinate: parentCoordinate,
+          pomName: "parent-2.0.0.pom",
+          sha256: digest(parentPom),
+        },
+      ],
+    });
+  } finally {
+    await rm(temporaryRoot, { recursive: true, force: true });
+  }
+});
+
+test("Maven POM hydration reports the complete failed coordinate set", async () => {
+  const temporaryRoot = await mkdtemp(join(tmpdir(), "pixnya-gradle-pom-errors-"));
+  try {
+    const coordinates = ["example:one:1.0.0", "example:two:2.0.0"];
+    const verifiedArtifacts = new Map(
+      coordinates.map((coordinate) => {
+        const [, name, version] = coordinate.split(":");
+        return [
+          coordinate,
+          [{ name: `${name}-${version}.pom`, sha256: ["a".repeat(64)] }],
+        ];
+      }),
+    );
+    let failure;
+    try {
+      await hydrateGradlePomEvidence(
+        {
+          schemaVersion: 1,
+          components: coordinates.map((coordinate) => ({ coordinate })),
+        },
+        {
+          gradleUserHome: temporaryRoot,
+          verifiedArtifacts,
+          fetchPom: async ({ coordinate }) => Buffer.from(`untrusted ${coordinate}`),
+        },
+      );
+    } catch (error) {
+      failure = error;
+    }
+    assert.ok(failure, "hydration must fail when no response matches the tracked hashes");
+    assert.match(failure.message, /example:one:1\.0\.0/);
+    assert.match(failure.message, /example:two:2\.0\.0/);
+  } finally {
+    await rm(temporaryRoot, { recursive: true, force: true });
+  }
+});
+
+test("Maven POM hydration fails closed on unsafe inputs and ambiguous trust anchors", async () => {
+  const validPom = Buffer.from(
+    `<project><licenses><license><name>The Apache License, Version 2.0</name><url>http://www.apache.org/licenses/LICENSE-2.0.txt</url></license></licenses></project>`,
+  );
+  const digest = createHash("sha256").update(validPom).digest("hex");
+  const inventory = {
+    schemaVersion: 1,
+    components: [{ coordinate: "example:runtime:1.0.0" }],
+  };
+
+  await assert.rejects(
+    hydrateGradlePomEvidence(inventory, {
+      verifiedArtifacts: new Map([
+        ["example:runtime:1.0.0", [{ name: "runtime-1.0.0.pom", sha256: [digest] }]],
+      ]),
+      fetchPom: async () => validPom,
+    }),
+    /explicit.*isolated.*Gradle user home/i,
+  );
+  await assert.rejects(
+    hydrateGradlePomEvidence(
+      { schemaVersion: 1, components: [{ coordinate: "example..unsafe:runtime:1.0.0" }] },
+      {
+        gradleUserHome: join(tmpdir(), "pixnya-unsafe-coordinate-must-not-be-created"),
+        verifiedArtifacts: new Map(),
+        fetchPom: async () => validPom,
+      },
+    ),
+    /Unsupported Maven coordinate/i,
+  );
+  await assert.rejects(
+    hydrateGradlePomEvidence(inventory, {
+      gradleUserHome: join(tmpdir(), "pixnya-ambiguous-pom-digest-must-not-be-created"),
+      verifiedArtifacts: new Map([
+        [
+          "example:runtime:1.0.0",
+          [{ name: "runtime-1.0.0.pom", sha256: [digest, "a".repeat(64)] }],
+        ],
+      ]),
+      fetchPom: async () => validPom,
+    }),
+    /exactly one tracked.*SHA-256/i,
+  );
+});
+
+test("reviewed Maven downloads enforce repository fallback and bounded response bodies", async () => {
+  const coordinate = "org.example:runtime:1.0.0";
+  const pom = Buffer.from("<project />");
+  const digest = createHash("sha256").update(pom).digest("hex");
+  const requests = [];
+  const downloaded = await fetchPomFromReviewedRepositories(
+    {
+      coordinate,
+      expectedSha256: [digest],
+      relativePath: "https://attacker.invalid/ignored.pom",
+    },
+    {
+      fetchImpl: async (url, options) => {
+        requests.push({ url: String(url), options });
+        if (requests.length === 1) return new Response(null, { status: 404 });
+        return new Response(pom, { status: 200 });
+      },
+    },
+  );
+  assert.deepEqual(downloaded, pom);
+  assert.equal(requests.length, 2);
+  assert.ok(requests.every(({ options }) => options.redirect === "error"));
+  assert.ok(requests.every(({ url }) => !url.includes("attacker.invalid")));
+  assert.ok(
+    requests.every(({ url }) =>
+      url.endsWith("/org/example/runtime/1.0.0/runtime-1.0.0.pom"),
+    ),
+  );
+  assert.deepEqual(
+    requests.map(({ url }) => new URL(url).origin),
+    [...reviewedMavenPomRepositories].reverse().map((url) => new URL(url).origin),
+  );
+
+  let cancelled = false;
+  const oversizedBody = {
+    getReader() {
+      let chunks = 0;
+      return {
+        async read() {
+          chunks += 1;
+          return chunks <= 5
+            ? { done: false, value: new Uint8Array(1024 * 1024) }
+            : { done: true };
+        },
+        async cancel() {
+          cancelled = true;
+        },
+      };
+    },
+  };
+  await assert.rejects(
+    fetchPomFromReviewedRepositories(
+      { coordinate, expectedSha256: [digest] },
+      {
+        fetchImpl: async () => ({
+          status: 200,
+          ok: true,
+          headers: new Headers(),
+          body: oversizedBody,
+        }),
+      },
+    ),
+    /4[,.]?194[,.]?304-byte safety limit/i,
+  );
+  assert.equal(cancelled, true);
 });
 
 test("Gradle license review fails closed on an unknown Maven declaration", async () => {
