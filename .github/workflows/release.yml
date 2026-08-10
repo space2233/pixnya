@@ -275,6 +275,7 @@ jobs:
           }
       - run: npm ci
       - name: Build signed NSIS updater artifacts
+        shell: pwsh
         env:
           PIXIV_OAUTH_CLIENT_ID: ${{ secrets.PIXIV_OAUTH_CLIENT_ID }}
           PIXIV_OAUTH_CLIENT_SECRET: ${{ secrets.PIXIV_OAUTH_CLIENT_SECRET }}
@@ -283,7 +284,11 @@ jobs:
           PIXNYA_ANDROID_UPDATE_PUBKEY: ${{ secrets.PIXNYA_ANDROID_UPDATE_PUBKEY }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        run: npm run tauri -- build --config src-tauri/tauri.release.conf.json --bundles nsis
+        run: |
+          $releaseConfig = Join-Path $env:RUNNER_TEMP 'tauri-release.conf.json'
+          node scripts/prepare-tauri-release-config.mjs --output $releaseConfig
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm run tauri -- build --config $releaseConfig --bundles nsis
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: windows-x64
@@ -341,7 +346,10 @@ jobs:
           PIXNYA_ANDROID_UPDATE_PUBKEY: ${{ secrets.PIXNYA_ANDROID_UPDATE_PUBKEY }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        run: npm run tauri -- build --config src-tauri/tauri.release.conf.json --bundles appimage
+        run: |
+          release_config="$RUNNER_TEMP/tauri-release.conf.json"
+          node scripts/prepare-tauri-release-config.mjs --output "$release_config"
+          npm run tauri -- build --config "$release_config" --bundles appimage
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: linux-x64

@@ -94,6 +94,23 @@ test("verification metadata pins the Jackson parent POM required by the Tauri An
   );
 });
 
+test("verification metadata pins the Linux AAPT2 binary required by Android CI", async () => {
+  const metadata = await readFile(
+    path.join(root, "src-tauri", "gen", "android", "gradle", "verification-metadata.xml"),
+    "utf8",
+  );
+  const aapt2 = metadata.match(
+    /<component group="com\.android\.tools\.build" name="aapt2" version="8\.11\.0-12782657">([\s\S]*?)<\/component>/,
+  )?.[1];
+
+  assert.ok(aapt2, "verification metadata must include com.android.tools.build:aapt2:8.11.0-12782657");
+  assert.match(
+    aapt2,
+    /<artifact name="aapt2-8\.11\.0-12782657-linux\.jar">\s*<sha256 value="b2b0e079e5e0790a11cea3e2fb366533cd977a5ca67d065052fbf929fd5d1dbc"/,
+    "the Linux Android runner AAPT2 binary must match Google's published artifact SHA-256",
+  );
+});
+
 test("checked-in Android Gradle configuration is machine neutral", async () => {
   const androidRoot = path.join(root, "src-tauri", "gen", "android");
   const androidIgnore = await readFile(path.join(androidRoot, ".gitignore"), "utf8");
