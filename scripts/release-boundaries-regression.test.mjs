@@ -93,6 +93,11 @@ test("formal releases are gated by main-branch full verification and signed arti
   assert.doesNotMatch(workflow, /uses: [^\n]+@(v\d+|stable)\s*$/m);
   assert.match(workflow, /toolchain: 1\.97\.1/);
   assert.match(workflow, /generate-supply-chain-artifacts\.mjs --check/);
+  assert.match(workflow, /keytool -J-Duser\.language=en -exportcert/);
+  assert.match(workflow, /"\$APKSIGNER" verify --verbose --print-certs-pem "\$APK"/);
+  assert.match(workflow, /base64 --decode > "\$APK_CERTIFICATE"/);
+  assert.match(workflow, /cmp --silent "\$APK_CERTIFICATE" "\$EXPECTED_CERTIFICATE"/);
+  assert.doesNotMatch(workflow, /APK_CERTIFICATE_SHA256/);
   assert.match(workflow, /cargo fetch --locked/);
   const preflightRustSetup = workflow.indexOf(
     "uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c",
@@ -224,7 +229,6 @@ test("formal releases are gated by main-branch full verification and signed arti
     3,
     "all platform builds must wait for the in-preflight Android runtime scan and Rust advisory gate",
   );
-  assert.match(workflow, /Signer #1 certificate SHA-256 digest/);
   assert.match(workflow, /check-android-arm64-apk\.ps1/);
   assert.match(workflow, /package: name='io\.github\.space2233\.pixnya'/);
   assert.match(workflow, /minisign -Vm "\$WINDOWS_ARCHIVE"/);
@@ -377,7 +381,6 @@ test("stable publication revalidates the signed Draft instead of trusting the bu
   assert.match(workflow, /minisign -Vm candidate\/android-latest\.json/);
   assert.match(workflow, /sdkmanager "build-tools;36\.0\.0"/);
   assert.match(workflow, /"\$APKSIGNER" verify --verbose --print-certs/);
-  assert.match(workflow, /Signer #1 certificate SHA-256 digest/);
   assert.match(workflow, /APK certificate does not match the signed Android update manifest/);
   assert.match(workflow, /The Draft changed while it was being verified/);
   assert.match(workflow, /--method PATCH/);

@@ -453,18 +453,24 @@ jobs:
           grep -F "versionName='$PIXNYA_RELEASE_VERSION'" <<< "$APK_BADGING"
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner -print | sort -V | tail -n 1)"
           test -x "$APKSIGNER"
-          EXPECTED_CERTIFICATE_SHA256="$(keytool -J-Duser.language=en -list -v \
+          EXPECTED_CERTIFICATE="$RUNNER_TEMP/pixnya-expected-release-certificate.der"
+          APK_CERTIFICATE="$RUNNER_TEMP/pixnya-apk-release-certificate.der"
+          keytool -J-Duser.language=en -exportcert \
             -keystore "$PIXNYA_ANDROID_KEYSTORE_PATH" \
             -storepass "$PIXNYA_ANDROID_KEYSTORE_PASSWORD" \
-            -alias "$PIXNYA_ANDROID_KEY_ALIAS" | \
-            awk -F': ' '/SHA256:/{gsub(":", "", $2); print tolower($2); exit}')"
-          APK_CERTIFICATE_SHA256="$("$APKSIGNER" verify --print-certs "$APK" | \
-            awk -F': ' '/Signer #1 certificate SHA-256 digest:/{print tolower($2); exit}')"
-          test "${#EXPECTED_CERTIFICATE_SHA256}" -eq 64
-          test "$APK_CERTIFICATE_SHA256" = "$EXPECTED_CERTIFICATE_SHA256" || {
+            -alias "$PIXNYA_ANDROID_KEY_ALIAS" \
+            -file "$EXPECTED_CERTIFICATE"
+          "$APKSIGNER" verify --verbose --print-certs-pem "$APK" | \
+            awk '/-----BEGIN CERTIFICATE-----/{capture=1; next} /-----END CERTIFICATE-----/{exit} capture{print}' | \
+            base64 --decode > "$APK_CERTIFICATE"
+          test -s "$EXPECTED_CERTIFICATE"
+          test -s "$APK_CERTIFICATE"
+          cmp --silent "$APK_CERTIFICATE" "$EXPECTED_CERTIFICATE" || {
             echo "The APK signer does not match the protected release keystore" >&2
+            sha256sum "$EXPECTED_CERTIFICATE" "$APK_CERTIFICATE" >&2
             exit 1
           }
+          rm -f -- "$EXPECTED_CERTIFICATE" "$APK_CERTIFICATE"
           mkdir -p release-artifacts
           cp "$APK" "release-artifacts/pixnya-${PIXNYA_RELEASE_VERSION}-android-${{ matrix.abi }}.apk"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
