@@ -89,6 +89,7 @@ test("formal releases are gated by main-branch full verification and signed arti
   assert.match(workflow, /npm audit --omit=dev --audit-level=low/);
   assert.match(workflow, /npm audit --audit-level=high/);
   assert.match(workflow, /EmbarkStudios\/cargo-deny-action@[0-9a-f]{40} # v2/);
+  assert.match(workflow, /arguments: --all-features --locked/);
   assert.doesNotMatch(workflow, /uses: [^\n]+@(v\d+|stable)\s*$/m);
   assert.match(workflow, /toolchain: 1\.97\.1/);
   assert.match(workflow, /generate-supply-chain-artifacts\.mjs --check/);

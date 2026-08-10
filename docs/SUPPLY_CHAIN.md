@@ -81,6 +81,14 @@ AGP、Kotlin Gradle plugin、UTP、buildscript 和 buildSrc 等构建工具仍�
 
 每次候选 Release 都会重新扫描三套 Gradle 锁，并把未经裁剪的 `pixnya-<version>-android-build-tools-osv.json` 作为附件归档；独立的每周工作流也运行同一基线检查并保留原始报告。到期条目只能通过升级/移除依赖或经过新的人工风险审查后显式更新，不能自动续期。
 
+## Rust 停止维护公告边界
+
+Release 的 `cargo-deny` 门以 `unmaintained = "all"` 和 `unsound = "all"` 检查完整传递图，继续阻断全部 RustSec 漏洞、新增的未定义行为公告、新增的停止维护公告和未审阅例外。`deny.toml` 只临时接受当前 Tauri 2.11.5 上游依赖图中的 17 条公告：11 条是 Linux GTK3/宏停止维护公告，5 条是 `tauri-utils 2.9.3 -> urlpattern 0.3 -> rust-unic 0.9` 停止维护公告，另 1 条是 `glib 0.18.5` 的 `VariantStrIter` 未定义行为公告。
+
+`RUSTSEC-2024-0429` 的官方修复要求 `glib >=0.20`，与 Tauri 2 的 GTK3 0.18 图不兼容。对当前锁定依赖进行人工调用点复核后，PixNya 与已检查的 Tauri 消费路径没有使用 `VariantStrIter`/`array_iter_str`；因此私人候选版把它作为短期风险例外，而不是关闭 `unsound` 检查。上游修复记录为 [gtk-rs-core#1343](https://github.com/gtk-rs/gtk-rs-core/pull/1343)。
+
+Linux GTK3 路径要等待 [Tauri 上游尚无发布日期的 GTK4 迁移](https://github.com/tauri-apps/tauri/issues/11942)；`rust-unic` 路径已在 Tauri 未发布开发分支中改用 `urlpattern 0.6`，其已合入迁移记录见 [tauri#15660](https://github.com/tauri-apps/tauri/pull/15660)。所有例外在 2026-09-09 到期，且 `unused-ignored-advisory = "deny"`：上游升级移除任一公告、出现新公告或到期未复核都会让测试或 `cargo-deny` 失败。不得把该清单改成 `unmaintained = "none"`、`workspace` 或无编号的全局忽略。
+
 ## 正式发布要求
 
 每个 Draft Release 至少应包含：
