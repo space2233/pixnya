@@ -17,15 +17,17 @@ test("the application shell uses PixNya as its product brand", async () => {
 });
 
 test("diagnostic exports and licensing use the PixNya product name", async () => {
-  const [diagnosticLog, networkDiagnostics, license] = await Promise.all([
+  const [diagnosticLog, networkDiagnostics, license, thirdPartyNotices] = await Promise.all([
     read("crates/diagnostic-log/src/lib.rs"),
     read("crates/network/src/diagnostics.rs"),
     read("LICENSE"),
+    read("THIRD_PARTY_NOTICES.md"),
   ]);
-  const publicationText = `${diagnosticLog}\n${networkDiagnostics}\n${license}`;
+  const publicationText = `${diagnosticLog}\n${networkDiagnostics}\n${license}\n${thirdPartyNotices}`;
 
   assert.match(publicationText, /PixNya diagnostics \(redacted\)/);
-  assert.match(publicationText, /PixNya 连接诊断报告/);
-  assert.match(license, /Copyright \(C\) 2026 PixNya contributors/);
+  assert.doesNotMatch(networkDiagnostics, /pub text: String|连接诊断报告/);
+  assert.match(license, /GNU GENERAL PUBLIC LICENSE/);
+  assert.match(thirdPartyNotices, /Copyright \(C\) 2026 PixNya contributors/);
   assert.doesNotMatch(publicationText, /Pixiv Client/i);
 });

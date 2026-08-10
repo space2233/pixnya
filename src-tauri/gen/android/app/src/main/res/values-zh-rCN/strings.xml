@@ -11,4 +11,5 @@
     <string name="login_mode_ech">ECH 预检 · 低安全登录桥</string>
     <string name="login_mode_compatible">兼容 · 固定 IP / 低安全 TLS</string>
     <string name="login_mode_standard">标准 · 系统网络</string>
+    <string name="export_authorized_directory">已授权目录</string>
 </resources>

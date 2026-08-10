@@ -46,8 +46,8 @@ test("automatic checks are safe defaults, rate limited, and independent from Pix
   assert.match(backend, /const AUTOMATIC_CHECK_INTERVAL_SECONDS: u64 = 24 \* 60 \* 60/);
   assert.match(backend, /last_attempted_at_unix_seconds/);
   assert.match(backend, /stored\.last_attempted_at_unix_seconds = Some\(attempted_at\)[\s\S]*?persist_state\(app, &stored\)[\s\S]*?platform_check/);
-  assert.match(backend, /url\.scheme\(\) == "https"/);
-  assert.match(backend, /url\.host_str\(\) == Some\("github\.com"\)/);
+  assert.match(backend, /url\.scheme\(\) != "https"/);
+  assert.match(backend, /url\.host_str\(\) != Some\("github\.com"\)/);
   assert.doesNotMatch(backend, /ConnectionMode|NetworkGateway|compatible_direct|Ech/);
 });
 
@@ -70,11 +70,12 @@ test("corrupt update state fails closed and full local-data clearing resets it",
 });
 
 test("desktop updates use Tauri signatures and Android delegates verified APKs to the system", async () => {
-  const [cargo, backend, desktopAdapter, androidAdapter, manifest, providerPaths, androidPlugin] = await Promise.all([
+  const [cargo, backend, desktopAdapter, androidAdapter, updateHttp, manifest, providerPaths, androidPlugin] = await Promise.all([
     read("src-tauri/Cargo.toml"),
     read("src-tauri/src/updates.rs"),
     read("src-tauri/src/desktop_update.rs"),
     read("src-tauri/src/android_update.rs"),
+    read("src-tauri/src/update_http.rs"),
     read("src-tauri/gen/android/app/src/main/AndroidManifest.xml"),
     read("src-tauri/gen/android/app/src/main/res/xml/file_paths.xml"),
     read("src-tauri/gen/android/app/src/main/java/io/github/space2233/pixnya/UpdateInstallerPlugin.kt"),
@@ -83,9 +84,18 @@ test("desktop updates use Tauri signatures and Android delegates verified APKs t
   assert.match(cargo, /\[target\.'cfg\(not\(target_os = "android"\)\)'\.dependencies\][\s\S]*tauri-plugin-updater = "2"/);
   assert.match(desktopAdapter, /tauri_plugin_updater::\{Update, UpdaterExt\}/);
   assert.match(backend, /PIXNYA_UPDATER_PUBKEY/);
+  assert.match(backend, /PIXNYA_UPDATE_REPOSITORY/);
+  assert.match(backend, /DEFAULT_UPDATE_REPOSITORY: &str = "space2233\/pixnya"/);
   assert.match(desktopAdapter, /verify_tauri_signature/);
   assert.match(desktopAdapter, /cancelled\.load\(Ordering::Acquire\)/);
-  assert.match(desktopAdapter, /space2233\/pixnya\/releases/);
+  assert.match(desktopAdapter, /\.configure_client\(/);
+  assert.match(desktopAdapter, /update_redirect_policy\(&repository\)/);
+  assert.match(androidAdapter, /update_redirect_policy\(repository\)/);
+  assert.match(updateHttp, /pub\(crate\) fn update_redirect_policy/);
+  assert.match(updateHttp, /release-assets\.githubusercontent\.com/);
+  assert.doesNotMatch(desktopAdapter, /fn validate_redirect/);
+  assert.doesNotMatch(androidAdapter, /fn validate_redirect/);
+  assert.match(desktopAdapter, /is_github_release_url\(&update\.download_url, repository\)/);
   assert.match(androidAdapter, /verify_manifest_signature/);
   assert.match(androidAdapter, /download_candidate/);
   assert.match(androidAdapter, /verify_apk_abi/);
@@ -122,11 +132,12 @@ test("the selected PixNya identity is consistent across product metadata", async
 });
 
 test("release builds fail closed unless updater and Android signing are configured", async () => {
-  const [releaseConfig, androidGradle, androidManifestGenerator, desktopManifestGenerator, workflow, environmentExample] = await Promise.all([
+  const [releaseConfig, androidGradle, androidManifestGenerator, desktopManifestGenerator, releaseUrlPolicy, workflow, environmentExample] = await Promise.all([
     read("src-tauri/tauri.release.conf.json"),
     read("src-tauri/gen/android/app/build.gradle.kts"),
     read("scripts/generate-android-update-manifest.mjs"),
     read("scripts/generate-desktop-update-manifest.mjs"),
+    read("scripts/release-url-policy.mjs"),
     read(".github/workflows/release.yml"),
     read(".env.example"),
   ]);
@@ -140,9 +151,13 @@ test("release builds fail closed unless updater and Android signing are configur
   assert.match(androidManifestGenerator, /schemaVersion:\s*1/);
   assert.match(androidManifestGenerator, /io\.github\.space2233\.pixnya/);
   assert.match(androidManifestGenerator, /createHash\("sha256"\)/);
+  assert.match(androidManifestGenerator, /from "\.\/release-url-policy\.mjs"/);
   assert.match(desktopManifestGenerator, /"windows-x86_64"/);
   assert.match(desktopManifestGenerator, /"linux-x86_64"/);
   assert.match(desktopManifestGenerator, /Base64-encoded Tauri updater signature/);
+  assert.match(desktopManifestGenerator, /from "\.\/release-url-policy\.mjs"/);
+  assert.match(releaseUrlPolicy, /argumentsMap\.get\("repository"\)/);
+  assert.match(releaseUrlPolicy, /baseUrl\.hostname !== "github\.com"/);
   assert.match(workflow, /base64 --decode dist\/android-latest\.json\.sig/);
   assert.match(workflow, /workflow_dispatch:/);
   assert.match(workflow, /draft:\s*true/);

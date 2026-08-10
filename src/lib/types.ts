@@ -90,8 +90,6 @@ export interface ConnectionProbe {
   candidateAddressCount?: number;
   httpStatus: number;
   latencyMs: number;
-  dnsSource: string;
-  tlsSummary: string;
   echStatus: "not_applicable" | "accepted";
 }
 
@@ -119,7 +117,6 @@ export interface ConnectionDiagnosticReport {
   capabilities: PlatformCapabilities;
   webviewProxyActive: boolean;
   checks: DiagnosticCheck[];
-  text: string;
 }
 
 export interface PolicyFailure {

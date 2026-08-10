@@ -37,6 +37,7 @@ const SETTINGS_STAGING_FILE: &str = "state.next.json";
 const SETTINGS_BACKUP_FILE: &str = "state.previous.json";
 const UPDATE_STATE_SCHEMA_VERSION: u32 = 1;
 const AUTOMATIC_CHECK_INTERVAL_SECONDS: u64 = 24 * 60 * 60;
+pub(crate) const DEFAULT_UPDATE_REPOSITORY: &str = "space2233/pixnya";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -249,6 +250,7 @@ struct AndroidInstallPayload {
 struct UpdateSourceConfig {
     endpoint: String,
     public_key: String,
+    repository: String,
 }
 
 impl UpdateSourceConfig {
@@ -266,29 +268,91 @@ impl UpdateSourceConfig {
 
         let endpoint = values.0?.trim();
         let public_key = values.1?.trim();
+        let repository = option_env!("PIXNYA_UPDATE_REPOSITORY")
+            .unwrap_or(DEFAULT_UPDATE_REPOSITORY)
+            .trim();
         if endpoint.is_empty() || public_key.is_empty() {
             return None;
         }
         Some(Self {
             endpoint: endpoint.to_owned(),
             public_key: public_key.to_owned(),
+            repository: repository.to_owned(),
         })
     }
 
     fn validate(&self) -> bool {
-        tauri::Url::parse(&self.endpoint).ok().is_some_and(|url| {
-            url.scheme() == "https"
-                && url.host_str() == Some("github.com")
-                && url.port().is_none()
-                && url.username().is_empty()
-                && url.password().is_none()
-                && (url
-                    .path()
-                    .starts_with("/space2233/pixnya/releases/download/")
-                    || url
-                        .path()
-                        .starts_with("/space2233/pixnya/releases/latest/download/"))
-        }) && !self.public_key.trim().is_empty()
+        tauri::Url::parse(&self.endpoint)
+            .ok()
+            .is_some_and(|url| is_github_release_url(&url, &self.repository))
+            && !self.public_key.trim().is_empty()
+    }
+}
+
+pub(crate) fn valid_github_repository(repository: &str) -> bool {
+    let mut parts = repository.split('/');
+    let (Some(owner), Some(name), None) = (parts.next(), parts.next(), parts.next()) else {
+        return false;
+    };
+    let valid_owner = !owner.is_empty()
+        && owner.len() <= 39
+        && !owner.starts_with('-')
+        && !owner.ends_with('-')
+        && owner
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-');
+    let valid_name = !name.is_empty()
+        && name.len() <= 100
+        && name != "."
+        && name != ".."
+        && name
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b'.'));
+    valid_owner && valid_name
+}
+
+pub(crate) fn is_github_release_url(url: &tauri::Url, repository: &str) -> bool {
+    if !valid_github_repository(repository)
+        || url.scheme() != "https"
+        || url.host_str() != Some("github.com")
+        || url.port().is_some()
+        || !url.username().is_empty()
+        || url.password().is_some()
+        || url.query().is_some()
+        || url.fragment().is_some()
+    {
+        return false;
+    }
+
+    let mut repository_parts = repository.split('/');
+    let owner = repository_parts.next().unwrap_or_default();
+    let name = repository_parts.next().unwrap_or_default();
+    let Some(mut segments) = url.path_segments() else {
+        return false;
+    };
+    if !segments
+        .next()
+        .is_some_and(|value| value.eq_ignore_ascii_case(owner))
+        || !segments
+            .next()
+            .is_some_and(|value| value.eq_ignore_ascii_case(name))
+        || segments.next() != Some("releases")
+    {
+        return false;
+    }
+
+    match segments.next() {
+        Some("download") => {
+            segments.next().is_some_and(|tag| !tag.is_empty())
+                && segments.next().is_some_and(|asset| !asset.is_empty())
+                && segments.next().is_none()
+        }
+        Some("latest") => {
+            segments.next() == Some("download")
+                && segments.next().is_some_and(|asset| !asset.is_empty())
+                && segments.next().is_none()
+        }
+        _ => false,
     }
 }
 
@@ -484,9 +548,14 @@ async fn platform_check(
     app: &AppHandle,
     config: &UpdateSourceConfig,
 ) -> Result<Option<AvailableUpdate>, UpdateFailure> {
-    let update = crate::desktop_update::check(app, &config.endpoint, &config.public_key)
-        .await
-        .map_err(desktop_failure)?;
+    let update = crate::desktop_update::check(
+        app,
+        &config.endpoint,
+        &config.public_key,
+        &config.repository,
+    )
+    .await
+    .map_err(desktop_failure)?;
     Ok(update.map(|candidate| AvailableUpdate {
         version: candidate.summary.version,
         notes: candidate.summary.notes,
@@ -503,11 +572,13 @@ async fn platform_check(
     let status = android_install_status(app).await?;
     let endpoint = config.endpoint.clone();
     let public_key = config.public_key.clone();
+    let repository = config.repository.clone();
     let current_version = app.package_info().version.to_string();
     let candidate = tauri::async_runtime::spawn_blocking(move || {
         crate::android_update::fetch_candidate(
             &endpoint,
             &public_key,
+            &repository,
             &current_version,
             std::env::consts::ARCH,
             status.sdk_int,
@@ -619,11 +690,16 @@ async fn platform_download(
     config: &UpdateSourceConfig,
     available: &AvailableUpdate,
 ) -> Result<(), UpdateFailure> {
-    let candidate = crate::desktop_update::check(app, &config.endpoint, &config.public_key)
-        .await
-        .map_err(desktop_failure)?
-        .filter(|candidate| candidate.summary.version == available.version)
-        .ok_or(UpdateFailure::UpdateUnavailable)?;
+    let candidate = crate::desktop_update::check(
+        app,
+        &config.endpoint,
+        &config.public_key,
+        &config.repository,
+    )
+    .await
+    .map_err(desktop_failure)?
+    .filter(|candidate| candidate.summary.version == available.version)
+    .ok_or(UpdateFailure::UpdateUnavailable)?;
     let public_key = config.public_key.clone();
     let runtime = manager.runtime.clone();
     let cancelled = manager.cancelled.clone();
@@ -652,11 +728,13 @@ async fn platform_download(
     let status = android_install_status(app).await?;
     let endpoint = config.endpoint.clone();
     let public_key = config.public_key.clone();
+    let repository = config.repository.clone();
     let current_version = app.package_info().version.to_string();
     let candidate = tauri::async_runtime::spawn_blocking(move || {
         crate::android_update::fetch_candidate(
             &endpoint,
             &public_key,
+            &repository,
             &current_version,
             std::env::consts::ARCH,
             status.sdk_int,
@@ -674,9 +752,11 @@ async fn platform_download(
         .join("updates");
     let runtime = manager.runtime.clone();
     let cancelled = manager.cancelled.clone();
+    let repository = config.repository.clone();
     let prepared = tauri::async_runtime::spawn_blocking(move || {
         crate::android_update::download_candidate(
             &candidate,
+            &repository,
             &update_directory,
             &cancelled,
             |downloaded, total| update_progress(&runtime, downloaded, Some(total)),
@@ -1165,10 +1245,11 @@ fn unix_seconds() -> u64 {
 #[cfg(test)]
 mod tests {
     use super::{
-        automatic_check_due, clear_state_at, load_state_at, normalize_available_update,
-        persist_state_at, recover_state_files, AvailableUpdate, StoredUpdateState, UpdateFailure,
-        UpdatePreferences, AUTOMATIC_CHECK_INTERVAL_SECONDS, SETTINGS_BACKUP_FILE, SETTINGS_FILE,
-        SETTINGS_STAGING_FILE,
+        automatic_check_due, clear_state_at, is_github_release_url, load_state_at,
+        normalize_available_update, persist_state_at, recover_state_files, valid_github_repository,
+        AvailableUpdate, StoredUpdateState, UpdateFailure, UpdatePreferences, UpdateSourceConfig,
+        AUTOMATIC_CHECK_INTERVAL_SECONDS, DEFAULT_UPDATE_REPOSITORY, SETTINGS_BACKUP_FILE,
+        SETTINGS_FILE, SETTINGS_STAGING_FILE,
     };
     use std::{fs, path::PathBuf};
 
@@ -1195,6 +1276,36 @@ mod tests {
             &state,
             10 + AUTOMATIC_CHECK_INTERVAL_SECONDS
         ));
+    }
+
+    #[test]
+    fn release_repository_configuration_pins_the_full_github_path() {
+        assert!(valid_github_repository(DEFAULT_UPDATE_REPOSITORY));
+        assert!(valid_github_repository("space2233/pixnya-releases"));
+        assert!(!valid_github_repository("space2233/pixnya/extra"));
+        assert!(!valid_github_repository("attacker.example/pixnya"));
+
+        let alternate = UpdateSourceConfig {
+            endpoint:
+                "https://github.com/space2233/pixnya-releases/releases/latest/download/latest.json"
+                    .to_owned(),
+            public_key: "configured-key".to_owned(),
+            repository: "space2233/pixnya-releases".to_owned(),
+        };
+        assert!(alternate.validate());
+
+        let mismatched = UpdateSourceConfig {
+            endpoint: "https://github.com/space2233/pixnya/releases/latest/download/latest.json"
+                .to_owned(),
+            ..alternate.clone()
+        };
+        assert!(!mismatched.validate());
+
+        let query = tauri::Url::parse(
+            "https://github.com/space2233/pixnya-releases/releases/latest/download/latest.json?token=private",
+        )
+        .unwrap();
+        assert!(!is_github_release_url(&query, "space2233/pixnya-releases"));
     }
 
     #[test]

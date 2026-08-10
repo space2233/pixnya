@@ -161,7 +161,8 @@ test("connection settings expose redacted three-target diagnostics", () => {
 
   assert.match(page, /run_connection_diagnostics/);
   assert.match(page, /m\.network_diagnostic_title\(\)/);
-  assert.match(page, /navigator\.clipboard\.writeText\(diagnosticReport\.text\)/);
+  assert.match(page, /navigator\.clipboard\.writeText\(formatDiagnosticReport\(diagnosticReport\)\)/);
+  assert.match(page, /JSON\.stringify\(report, null, 2\)/);
   assert.match(page, /m\.network_report_privacy\(\)/);
   assert.match(backend, /async fn run_connection_diagnostics/);
   assert.match(backend, /run_connection_diagnostics,/);

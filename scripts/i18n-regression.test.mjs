@@ -36,6 +36,21 @@ test("application source keeps user-facing copy in the message catalogs", async 
   assert.deepEqual(hardcoded, []);
 });
 
+test("native network probes return structured data instead of fixed-language summaries", async () => {
+  const [gateway, types, page] = await Promise.all([
+    read("crates/network/src/gateway.rs"),
+    read("src/lib/types.ts"),
+    read("src/routes/settings/network/+page.svelte"),
+  ]);
+
+  assert.doesNotMatch(gateway, /[\u3400-\u9fff]/u);
+  assert.doesNotMatch(gateway, /dns_source|tls_summary/);
+  assert.doesNotMatch(types, /dnsSource|tlsSummary/);
+  assert.match(page, /m\.network_probe_tls_standard\(\)/);
+  assert.match(page, /m\.network_probe_tls_ech\(\)/);
+  assert.match(page, /m\.network_probe_tls_compatible\(\)/);
+});
+
 test("system language mapping distinguishes Chinese scripts and defaults to English", async () => {
   const localeModuleUrl = pathToFileURL(path.join(root, "src/lib/i18n-locale.ts")).href;
   const { mapSystemLanguages } = await import(localeModuleUrl);

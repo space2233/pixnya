@@ -21,7 +21,6 @@ const FALLBACK_ECH_ADDRESSES: [[u8; 4]; 2] = [[104, 18, 10, 118], [104, 18, 11, 
 pub(crate) struct EchProbeOutcome {
     pub connected_ip: IpAddr,
     pub http_status: u16,
-    pub ttl_seconds: u32,
     pub candidate_address_count: u16,
 }
 
@@ -132,7 +131,6 @@ fn probe_with_bundle(
         return Ok(EchProbeOutcome {
             connected_ip: address.ip(),
             http_status: status,
-            ttl_seconds: bundle.ttl_seconds,
             candidate_address_count: bundle.addresses.len().min(usize::from(u16::MAX)) as u16,
         });
     }

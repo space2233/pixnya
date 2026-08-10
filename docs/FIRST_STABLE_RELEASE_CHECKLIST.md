@@ -15,11 +15,13 @@
 
 - [x] 发布工作流只能从 `main` 分支的固定提交触发，并校验 npm、Cargo、Tauri 与请求版本一致。
 - [x] 签名构建开始前运行 `npm run test:full`，覆盖全部 Node 回归、Svelte 检查、Rust 格式、Clippy 与 workspace tests。
+- [x] 发布前阻断运行时 npm 低危以上告警、全部 npm 高危以上告警、RustSec advisory，并用 OSV 扫描 ARM64 APK 的 `arm64ReleaseRuntimeClasspath`；runtime 零例外。构建工具图使用 86 条精确、限 scope、限版本、限期的临时 OSV 基线（1 条 Critical 于 2026-08-23 到期，其余 85 条于 2026-09-08 到期），新增、变化或到期即失败，原始报告随每个 Release 归档。
 - [x] Windows、Linux 与 Android 构建均要求完整的生产构建参数和签名 Secret，缺少任意一项立即失败。
 - [x] Android Release 只允许一个 ARM64 APK，并用 `apksigner` 反查实际 APK 证书与受保护 keystore 一致。
 - [x] Draft Release 创建前，用公开密钥重新验证 Windows/Linux updater 签名和 Android 清单签名。
 - [x] Draft Release 只接受唯一的桌面 updater 归档，并生成 `SHA256SUMS.txt` 与记录源提交的 `BUILD-PROVENANCE.txt`。
-- [x] Release tag 明确指向触发工作流的 `github.sha`，所有平台成功后才创建 Draft Release。
+- [x] Draft Release 的 SPDX 2.3 SBOM 与逐依赖许可证归档覆盖 npm、Cargo 和最终 Android Gradle/Maven 锁图；最终 360 组件 Gradle 图及其 396 份组件/父 POM 证据已重建并离线复核。
+- [x] 所有平台和附件验证成功后，Release job 才通过 Git refs API 原子创建 tag 并回读确认其指向触发工作流的 `github.sha`；若上传中断，只允许同一 SHA 且尚无 Release/仍为 Draft 的幂等续传，已发布或不同 SHA 一律失败，上传后再次核对 tag 与 20 个附件。
 
 ## 3. 发布前阻塞项
 
@@ -32,17 +34,22 @@
 
 ### 3.2 长期签名材料
 
-- [ ] 生成 Tauri updater 长期密钥，私钥至少保存两份离线备份。
-- [ ] 生成 Android Release keystore，记录 alias、证书 SHA-256 和恢复说明，并至少保存两份离线备份。
-- [ ] 生成独立的 Android 更新清单签名密钥并离线备份。
-- [ ] 将所需 Secrets 配置到 GitHub Actions；当前仓库尚未配置任何发布 Secret。
+- [x] 提供不把密码写入文件或命令行、使用工作树外 staging 原子落盘、并可从既有恢复目录重新验密和幂等上传全部 Secrets 的交互式初始化脚本 `scripts/provision-release-signing.ps1`。
+- [x] Tauri updater 长期密钥已生成，私钥已保存两份离线备份。
+- [x] Android Release keystore 已生成，alias、证书 SHA-256 和恢复说明已记录，并已保存两份离线备份。
+- [x] 独立的 Android 更新清单签名密钥已生成，并已保存两份离线备份。
+- [x] GitHub 已创建 `production-release` 环境并只允许 `main` 分支部署。
+- [x] 13 个生产构建与签名 Secrets 已配置到 `production-release` 环境，并核对名称完整。
+- [ ] 主仓库公开后为 `production-release` 启用维护者审核；当前私人仓库套餐不支持 required reviewers。
+- [ ] 为 `v*` 配置禁止更新和删除的 tag ruleset；工作流只负责原子创建，仓库规则负责阻止创建后的 tag 被移动。
 - [ ] 用一份故意错误的公钥运行发布验证，确认工作流 fail closed。
 
 ### 3.3 匿名更新源
 
-- [ ] 在发布 stable 前让更新附件可匿名读取：公开主仓库，或使用独立的公开 Release 仓库/静态更新源。
+- [ ] 在发布 stable 前公开主仓库，使源码、tag 与更新附件处于同一匿名可读信任边界。
 - [ ] 不在应用中内置 GitHub 私人访问令牌。
 - [ ] 确认桌面与 Android 正式端点均为经过固定验证的 HTTPS 地址。
+- [x] 更新客户端、重定向校验与清单生成器统一绑定编译期 `owner/repository`，仓库错配会被拒绝。
 
 ### 3.4 真实安装与升级验收
 
@@ -55,19 +62,20 @@
 
 ### 3.5 公开发布治理
 
-- [ ] 明确上游 App API、OAuth 参数与公开分发的风险决定，并写入 Release 说明。
-- [ ] 补齐标准 GPL-3.0 许可证正文、第三方依赖/许可证清单。
+- [x] 已在 `docs/PUBLIC_DISTRIBUTION_DECISION.md` 记录上游 App API、OAuth 参数与公开分发决定；公开 Release 仍必须复述其中的风险边界。
+- [x] 标准 GPL-3.0 正文、第三方清单、逐依赖归档与可复现 SPDX SBOM 已在最终 Gradle 锁图上完成 Maven 许可证证据闭环；非标准化条款以明确的 `LicenseRef` 和上游声明证据保留。
 - [x] 增加 `PRIVACY.md` 与 `SECURITY.md`，说明本地数据、无遥测、低安全连接风险和私密漏洞报告方式。
 - [ ] Windows 若没有 Authenticode 证书，在下载页明确 SmartScreen 提示；取得证书后再加入代码签名。
 
 ## 4. Draft 到 stable 的人工步骤
 
-1. 从 `main` 的固定 SHA 手动运行 “Draft signed release”，输入与源码一致的版本和最终发布说明。
+1. 按 [`RELEASE_NOTES_TEMPLATE.md`](RELEASE_NOTES_TEMPLATE.md) 填写公开分发、许可与校验信息；从 `main` 的固定 SHA 手动运行 “Draft signed release”。因为升级测试需要签名附件，Draft 中三平台结果、失败路径和已知限制可暂时明确写成 `PENDING after Draft artifacts`，但不能保留 `{{...}}` 模板占位符。
 2. 下载 Draft 的全部附件，核对文件名、大小、SHA-256、签名、ABI、应用 ID 与版本。
 3. 在三平台完成上节的原地升级和数据保留测试，并记录测试设备、系统版本、源版本、目标版本与结果。
 4. 确认匿名环境能够读取 `latest.json`、`android-latest.json` 和对应安装包。
-5. 所有阻塞项关闭后才公开 Release；失败时保留 Draft 供诊断，不移动 stable 更新入口。
+5. 把真实设备、系统、`PASS`、失败路径结果和已知限制写回 Draft 说明，再从相同 `main` SHA 运行 “Publish verified stable release”。该工作流会重新下载并严格验证 20 个附件、SHA-256、来源记录、tag、发布说明和三套签名；只有 Draft 在验证期间未变化才会切换为 stable。
+6. 任一检查失败时保留 Draft 供诊断，不移动 stable 更新入口；禁止在 GitHub 页面绕过最终化工作流直接点击发布。
 
 ## 5. 当前结论
 
-代码结构已经接近正式候选版，但 `1.0.0` 目前仍被四项外部条件阻塞：固定候选提交、生产签名材料、匿名更新源、三平台真实升级证据。完成这些条件之前可以继续完善自动化和清理正式构建边界，但不能把现有 `0.29.0` Debug 产物当作正式更新链起点。
+代码结构已经接近正式候选版，但 `1.0.0` 目前仍被四项外部条件阻塞：固定候选提交、生产签名材料、主仓库公开、三平台真实升级证据。完成这些条件之前可以继续完善自动化和清理正式构建边界，但不能把现有 `0.29.0` Debug 产物当作正式更新链起点。

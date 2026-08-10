@@ -210,9 +210,20 @@ pub(crate) async fn get_export_destination_status(
 
 #[tauri::command]
 pub(crate) async fn select_export_destination(
+    title: String,
     app: tauri::AppHandle,
 ) -> Result<ExportDestinationSelection, ApiCommandError> {
-    select_platform_destination(&app).await
+    let title = safe_dialog_title(title);
+    select_platform_destination(&app, &title).await
+}
+
+fn safe_dialog_title(title: String) -> String {
+    let title = title.trim();
+    if title.is_empty() || title.chars().count() > 80 || title.chars().any(char::is_control) {
+        "PixNya".to_owned()
+    } else {
+        title.to_owned()
+    }
 }
 
 #[tauri::command]
@@ -372,14 +383,16 @@ async fn platform_status(
 #[cfg(not(target_os = "android"))]
 async fn select_platform_destination(
     app: &tauri::AppHandle,
+    title: &str,
 ) -> Result<ExportDestinationSelection, ApiCommandError> {
     use tauri_plugin_dialog::DialogExt;
 
     let manager = export_manager(app)?;
     let initial = manager.desktop_directory()?;
     let picker_app = app.clone();
+    let title = title.to_owned();
     let picked = tauri::async_runtime::spawn_blocking(move || {
-        let mut picker = picker_app.dialog().file().set_title("选择 PixNya 导出目录");
+        let mut picker = picker_app.dialog().file().set_title(title);
         if let Some(initial) = initial {
             picker = picker.set_directory(initial);
         }
@@ -492,6 +505,7 @@ async fn platform_status(
 #[cfg(target_os = "android")]
 async fn select_platform_destination(
     app: &tauri::AppHandle,
+    _title: &str,
 ) -> Result<ExportDestinationSelection, ApiCommandError> {
     let selected = app
         .state::<AndroidExportPlugin>()

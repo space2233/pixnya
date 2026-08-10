@@ -187,21 +187,18 @@ mod diagnostic_contract_tests {
         assert_eq!(report.checks[0].target, DiagnosticTarget::Api);
         assert_eq!(report.checks[1].target, DiagnosticTarget::Media);
         assert_eq!(report.checks[2].target, DiagnosticTarget::Login);
-        assert!(!report.text.contains("Authorization:"));
-        assert!(!report.text.contains("session=secret"));
-        assert!(!report.text.contains("secret"));
+        assert_eq!(report.application_version, "unavailable");
+        assert_eq!(report.platform, "unavailable");
     }
 
     #[test]
-    fn report_text_is_derived_from_safe_structured_fields() {
+    fn report_contains_only_safe_structured_fields() {
         let report =
             ConnectionDiagnosticReport::for_test(ConnectionMode::Ech, "android", "aarch64", false);
 
-        assert!(report.text.contains("API"));
-        assert!(report.text.contains("图片"));
-        assert!(report.text.contains("登录"));
-        assert!(report
-            .text
-            .contains("不包含访问令牌、Cookie、OAuth URL、搜索词或浏览内容"));
+        assert_eq!(report.application_version, "0.9.0");
+        assert_eq!(report.platform, "android");
+        assert_eq!(report.architecture, "aarch64");
+        assert_eq!(report.checks.len(), 3);
     }
 }

@@ -1,0 +1,195 @@
+name: Publish verified stable release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Stable version without the v prefix; must equal the checked-out source
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pixnya-stable-publication-${{ inputs.version }}
+  cancel-in-progress: false
+
+env:
+  PIXNYA_RELEASE_VERSION: ${{ inputs.version }}
+
+jobs:
+  publish:
+    runs-on: ubuntu-22.04
+    environment:
+      name: production-release
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+      - name: Install the pinned Android signature verifier
+        run: sdkmanager "build-tools;36.0.0"
+      - name: Require the main stable source
+        shell: bash
+        run: |
+          test "$GITHUB_REF" = "refs/heads/main" || {
+            echo "Stable publication can only run from main; got $GITHUB_REF" >&2
+            exit 1
+          }
+          SOURCE_VERSION="$(node -p "require('./package.json').version")"
+          [[ "$SOURCE_VERSION" =~ ^[1-9][0-9]*\.[0-9]+\.[0-9]+$ ]] || {
+            echo "Only stable 1.x-or-later versions can be published; got $SOURCE_VERSION" >&2
+            exit 1
+          }
+          test "$SOURCE_VERSION" = "$PIXNYA_RELEASE_VERSION"
+          test "$(node -p "require('./package-lock.json').version")" = "$SOURCE_VERSION"
+          test "$(node -p "require('./src-tauri/tauri.conf.json').version")" = "$SOURCE_VERSION"
+          test "$(node -e "const fs=require('node:fs'); const m=fs.readFileSync('Cargo.toml','utf8').match(/\[workspace\.package\][\s\S]*?version\s*=\s*\"([^\"]+)\"/); if(!m) process.exit(2); process.stdout.write(m[1]);")" = "$SOURCE_VERSION"
+      - name: Require the official repository to be anonymously readable
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}" > "$RUNNER_TEMP/repository.json"
+          REPOSITORY_FILE="$RUNNER_TEMP/repository.json" node -e '
+            const fs = require("node:fs");
+            const metadata = JSON.parse(fs.readFileSync(process.env.REPOSITORY_FILE, "utf8"));
+            if (
+              metadata.full_name !== process.env.GITHUB_REPOSITORY ||
+              metadata.private !== false ||
+              metadata.visibility !== "public"
+            ) {
+              throw new Error("stable releases require the official repository to be anonymously readable");
+            }
+          '
+      - name: Download the existing signed Draft and its trust metadata
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir candidate
+          gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/v${PIXNYA_RELEASE_VERSION}" > "$RUNNER_TEMP/candidate-tag.json"
+          gh api "repos/${GITHUB_REPOSITORY}/releases/tags/v${PIXNYA_RELEASE_VERSION}" > "$RUNNER_TEMP/candidate-release.json"
+          RELEASE_FILE="$RUNNER_TEMP/candidate-release.json" TAG_FILE="$RUNNER_TEMP/candidate-tag.json" node -e '
+            const fs = require("node:fs");
+            const release = JSON.parse(fs.readFileSync(process.env.RELEASE_FILE, "utf8"));
+            const tag = JSON.parse(fs.readFileSync(process.env.TAG_FILE, "utf8"));
+            if (release.draft !== true) throw new Error("Only an existing Draft Release can be finalized");
+            if (tag.object?.sha !== process.env.GITHUB_SHA) {
+              throw new Error("The stable tag does not point to the selected main commit");
+            }
+          '
+          gh release download "v${PIXNYA_RELEASE_VERSION}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --dir candidate
+      - name: Strictly validate release notes, assets, checksums, and provenance
+        shell: bash
+        run: |
+          node scripts/validate-release-candidate.mjs \
+            --release-json "$RUNNER_TEMP/candidate-release.json" \
+            --tag-json "$RUNNER_TEMP/candidate-tag.json" \
+            --assets-dir candidate \
+            --version "$PIXNYA_RELEASE_VERSION" \
+            --commit "$GITHUB_SHA" \
+            --repository "$GITHUB_REPOSITORY" \
+            --snapshot-output "$RUNNER_TEMP/candidate-snapshot.txt"
+      - name: Install the independent signature verifier
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends minisign
+      - name: Reverify desktop archives and the Android manifest
+        shell: bash
+        env:
+          PIXNYA_UPDATER_PUBKEY: ${{ secrets.PIXNYA_UPDATER_PUBKEY }}
+          PIXNYA_ANDROID_UPDATE_PUBKEY: ${{ secrets.PIXNYA_ANDROID_UPDATE_PUBKEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          test -n "$PIXNYA_UPDATER_PUBKEY"
+          test -n "$PIXNYA_ANDROID_UPDATE_PUBKEY"
+          DESKTOP_PUBLIC_KEY="$RUNNER_TEMP/desktop-updater.pub"
+          ANDROID_PUBLIC_KEY="$RUNNER_TEMP/android-update-manifest.pub"
+          printf '%s' "$PIXNYA_UPDATER_PUBKEY" | base64 --decode > "$DESKTOP_PUBLIC_KEY"
+          printf '%s' "$PIXNYA_ANDROID_UPDATE_PUBKEY" | base64 --decode > "$ANDROID_PUBLIC_KEY"
+
+          WINDOWS_ARCHIVE="$(find candidate -maxdepth 1 -type f -name '*.nsis.zip' -print -quit)"
+          LINUX_ARCHIVE="$(find candidate -maxdepth 1 -type f -name '*.AppImage.tar.gz' -print -quit)"
+          test -n "$WINDOWS_ARCHIVE" && test -f "${WINDOWS_ARCHIVE}.sig"
+          test -n "$LINUX_ARCHIVE" && test -f "${LINUX_ARCHIVE}.sig"
+          base64 --decode "${WINDOWS_ARCHIVE}.sig" > "$RUNNER_TEMP/windows-updater.minisig"
+          base64 --decode "${LINUX_ARCHIVE}.sig" > "$RUNNER_TEMP/linux-updater.minisig"
+          minisign -Vm "$WINDOWS_ARCHIVE" -x "$RUNNER_TEMP/windows-updater.minisig" -p "$DESKTOP_PUBLIC_KEY"
+          minisign -Vm "$LINUX_ARCHIVE" -x "$RUNNER_TEMP/linux-updater.minisig" -p "$DESKTOP_PUBLIC_KEY"
+          minisign -Vm candidate/android-latest.json -x candidate/android-latest.json.minisig -p "$ANDROID_PUBLIC_KEY"
+
+          ANDROID_APK="candidate/pixnya-${PIXNYA_RELEASE_VERSION}-android-arm64-v8a.apk"
+          APKSIGNER="$ANDROID_HOME/build-tools/36.0.0/apksigner"
+          APK_CERTIFICATE_SHA256="$("$APKSIGNER" verify --verbose --print-certs "$ANDROID_APK" \
+            | awk -F': ' '/Signer #1 certificate SHA-256 digest:/{gsub(":", "", $2); print tolower($2); exit}')"
+          MANIFEST_CERTIFICATE_SHA256="$(node -p \
+            "JSON.parse(require('node:fs').readFileSync('candidate/android-latest.json', 'utf8')).artifacts[0].certificateSha256.toLowerCase()")"
+          test "${#APK_CERTIFICATE_SHA256}" -eq 64
+          test "$APK_CERTIFICATE_SHA256" = "$MANIFEST_CERTIFICATE_SHA256" || {
+            echo "APK certificate does not match the signed Android update manifest" >&2
+            exit 1
+          }
+      - name: "Fail: The Draft changed while it was being verified"
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/v${PIXNYA_RELEASE_VERSION}" > "$RUNNER_TEMP/final-tag.json"
+          gh api "repos/${GITHUB_REPOSITORY}/releases/tags/v${PIXNYA_RELEASE_VERSION}" > "$RUNNER_TEMP/final-release.json"
+          node scripts/validate-release-candidate.mjs \
+            --release-json "$RUNNER_TEMP/final-release.json" \
+            --tag-json "$RUNNER_TEMP/final-tag.json" \
+            --assets-dir candidate \
+            --version "$PIXNYA_RELEASE_VERSION" \
+            --commit "$GITHUB_SHA" \
+            --repository "$GITHUB_REPOSITORY" \
+            --expect-snapshot "$RUNNER_TEMP/candidate-snapshot.txt"
+      - name: Publish the verified stable Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RELEASE_ID="$(node -p "JSON.parse(require('node:fs').readFileSync(process.env.RUNNER_TEMP + '/final-release.json', 'utf8')).id")"
+          test -n "$RELEASE_ID"
+          gh api --method PATCH "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}" \
+            -F draft=false \
+            -F prerelease=false \
+            -f make_latest=true > "$RUNNER_TEMP/published-release.json"
+          PUBLISHED_FILE="$RUNNER_TEMP/published-release.json" node -e '
+            const fs = require("node:fs");
+            const release = JSON.parse(fs.readFileSync(process.env.PUBLISHED_FILE, "utf8"));
+            if (
+              release.tag_name !== `v${process.env.PIXNYA_RELEASE_VERSION}` ||
+              release.draft !== false ||
+              release.prerelease !== false
+            ) {
+              throw new Error("The stable Release was not published as expected");
+            }
+          '
+      - name: Remove downloaded artifacts and public-key files
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          rm -rf -- candidate
+          rm -f -- \
+            "$RUNNER_TEMP/desktop-updater.pub" \
+            "$RUNNER_TEMP/android-update-manifest.pub" \
+            "$RUNNER_TEMP/windows-updater.minisig" \
+            "$RUNNER_TEMP/linux-updater.minisig"

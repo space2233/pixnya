@@ -8,12 +8,12 @@ on:
         required: true
         type: string
       notes:
-        description: Short release notes included in update manifests
+        description: Release notes; stable versions must complete docs/RELEASE_NOTES_TEMPLATE.md
         required: true
         type: string
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: pixnya-release-${{ inputs.version }}
@@ -21,8 +21,12 @@ concurrency:
 
 env:
   PIXNYA_RELEASE_VERSION: ${{ inputs.version }}
-  PIXNYA_UPDATER_ENDPOINT: https://github.com/space2233/pixnya/releases/latest/download/latest.json
-  PIXNYA_ANDROID_UPDATE_MANIFEST: https://github.com/space2233/pixnya/releases/latest/download/android-latest.json
+  # The official release must keep source, tags, generated source archives and
+  # anonymous update assets in one repository. Forks can still override the
+  # compile-time repository outside this protected workflow.
+  PIXNYA_UPDATE_REPOSITORY: ${{ github.repository }}
+  PIXNYA_UPDATER_ENDPOINT: https://github.com/${{ github.repository }}/releases/latest/download/latest.json
+  PIXNYA_ANDROID_UPDATE_MANIFEST: https://github.com/${{ github.repository }}/releases/latest/download/android-latest.json
 
 jobs:
   preflight:
@@ -34,18 +38,27 @@ jobs:
       PIXIV_OAUTH_HASH_SALT: release-preflight-placeholder
       RELEASE_NOTES: ${{ inputs.notes }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v6
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 24
           cache: npm
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
         with:
+          toolchain: 1.97.1
           components: clippy, rustfmt
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
       - name: Require the main release source and matching metadata
         shell: bash
+        env:
+          GITHUB_API_TOKEN: ${{ github.token }}
         run: |
           test "$GITHUB_REF" = "refs/heads/main" || {
             echo "Stable releases must be dispatched from refs/heads/main, got $GITHUB_REF" >&2
@@ -54,13 +67,91 @@ jobs:
           SOURCE_VERSION="$(node -p "require('./package.json').version")"
           [[ "$SOURCE_VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
           test -n "$(printf '%s' "$RELEASE_NOTES" | tr -d '[:space:]')"
+          if (( 10#${SOURCE_VERSION%%.*} >= 1 )); then
+            node scripts/validate-release-notes.mjs \
+              --version "$SOURCE_VERSION" \
+              --commit "$GITHUB_SHA" \
+              --allow-pending-upgrades
+          fi
           test "$(node -p "require('./package-lock.json').version")" = "$SOURCE_VERSION"
           test "$SOURCE_VERSION" = "$PIXNYA_RELEASE_VERSION"
           test "$(node -p "require('./src-tauri/tauri.conf.json').version")" = "$SOURCE_VERSION"
           test "$(sed -n 's/^version = "\([^"]*\)"/\1/p' Cargo.toml | head -n 1)" = "$SOURCE_VERSION"
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          if git show-ref --verify --quiet "refs/tags/v${SOURCE_VERSION}"; then
+            TAG_SHA="$(git rev-list -n 1 "v${SOURCE_VERSION}")"
+            test "$TAG_SHA" = "$GITHUB_SHA" || {
+              echo "Release tag v${SOURCE_VERSION} already points to a different commit." >&2
+              exit 1
+            }
+            EXISTING_RELEASE_FILE="$RUNNER_TEMP/preflight-existing-release.json"
+            EXISTING_RELEASE_STATUS="$(curl --silent --show-error --location \
+              --output "$EXISTING_RELEASE_FILE" --write-out '%{http_code}' \
+              -H 'Accept: application/vnd.github+json' \
+              -H 'X-GitHub-Api-Version: 2022-11-28' \
+              -H "Authorization: Bearer ${GITHUB_API_TOKEN}" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/v${SOURCE_VERSION}")"
+            case "$EXISTING_RELEASE_STATUS" in
+              404) ;;
+              200)
+                EXISTING_RELEASE_FILE="$EXISTING_RELEASE_FILE" node -e '
+                  const fs = require("node:fs");
+                  const existingRelease = JSON.parse(fs.readFileSync(process.env.EXISTING_RELEASE_FILE, "utf8"));
+                  if (existingRelease.draft !== true) {
+                    throw new Error("A published release cannot be reused");
+                  }
+                '
+                ;;
+              *)
+                echo "Could not inspect an existing v${SOURCE_VERSION} release (HTTP ${EXISTING_RELEASE_STATUS})." >&2
+                cat "$EXISTING_RELEASE_FILE" >&2
+                exit 1
+                ;;
+            esac
+          fi
+          node -e '
+            const repository = process.env.PIXNYA_UPDATE_REPOSITORY ?? "";
+            if (!/^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?\/[A-Za-z0-9._-]{1,100}$/.test(repository)) {
+              throw new Error("the official update repository must be a valid GitHub owner/repository pair");
+            }
+          '
+          if (( 10#${SOURCE_VERSION%%.*} >= 1 )); then
+            REPOSITORY_JSON="$(curl --fail --silent --show-error --location \
+              -H 'Accept: application/vnd.github+json' \
+              -H "Authorization: Bearer ${GITHUB_API_TOKEN}" \
+              "https://api.github.com/repos/${PIXNYA_UPDATE_REPOSITORY}")"
+            REPOSITORY_JSON="$REPOSITORY_JSON" node -e '
+              const metadata = JSON.parse(process.env.REPOSITORY_JSON);
+              const expected = process.env.PIXNYA_UPDATE_REPOSITORY.toLowerCase();
+              if (
+                metadata.full_name?.toLowerCase() !== expected ||
+                metadata.private !== false ||
+                metadata.visibility !== "public"
+              ) {
+                throw new Error("stable releases require the official repository to be anonymously readable");
+              }
+            '
+          fi
       - name: Install frontend dependencies
         run: npm ci
+      - name: Install the pinned Android SDK used by the locked graph
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - name: Resolve and prove the locked Android Gradle and Maven graph
+        shell: bash
+        run: |
+          chmod +x src-tauri/gen/android/gradlew
+          pushd src-tauri/gen/android
+          ./gradlew --no-daemon :app:dependencies buildEnvironment
+          ./gradlew --no-daemon --offline :app:dependencies buildEnvironment
+          popd
+          node scripts/complete-gradle-pom-verification.mjs --check
+          node scripts/generate-gradle-license-review.mjs \
+            --output "$RUNNER_TEMP/gradle-license-review.json"
+          cmp gradle-license-review.json "$RUNNER_TEMP/gradle-license-review.json"
+      - name: Audit runtime and build-time npm dependencies
+        run: |
+          npm audit --omit=dev --audit-level=low
+          npm audit --audit-level=high
       - name: Install Tauri Linux prerequisites for workspace verification
         run: |
           sudo apt-get update
@@ -69,27 +160,111 @@ jobs:
             libssl-dev libayatana-appindicator3-dev librsvg2-dev
       - name: Run the full frontend and Rust release gate
         run: npm run test:full
+      - name: Verify tracked notices and create the release SBOM/source bundle
+        run: |
+          mkdir -p release-artifacts
+          export SOURCE_DATE_EPOCH="$(git show -s --format=%ct "$GITHUB_SHA")"
+          cargo fetch --locked
+          node scripts/check-android-gradle-supply-chain.mjs --check \
+            --output "release-artifacts/pixnya-${PIXNYA_RELEASE_VERSION}-android-gradle-dependencies.json"
+          node scripts/generate-android-runtime-sbom.mjs \
+            --output "release-artifacts/pixnya-${PIXNYA_RELEASE_VERSION}-android-runtime.spdx.json"
+          OSV_SCANNER="$RUNNER_TEMP/osv-scanner"
+          curl --fail --location --retry 3 --silent --show-error \
+            --output "$OSV_SCANNER" \
+            https://github.com/google/osv-scanner/releases/download/v2.5.0/osv-scanner_linux_amd64
+          printf '%s  %s\n' \
+            edcfc41d257db36148f065055655fe3fcfc434b0b423ea67468a84c207524e0c \
+            "$OSV_SCANNER" | sha256sum --check --strict
+          chmod 700 "$OSV_SCANNER"
+          set +e
+          "$OSV_SCANNER" scan source \
+            --lockfile src-tauri/gen/android/app/gradle.lockfile \
+            --lockfile src-tauri/gen/android/buildscript-gradle.lockfile \
+            --lockfile src-tauri/gen/android/buildSrc/gradle.lockfile \
+            --format json \
+            --all-packages \
+            --output-file "release-artifacts/pixnya-${PIXNYA_RELEASE_VERSION}-android-build-tools-osv.json"
+          OSV_STATUS="$?"
+          set -e
+          if (( OSV_STATUS > 1 )); then
+            echo "OSV Scanner failed before producing a reviewable report (status ${OSV_STATUS})." >&2
+            exit "$OSV_STATUS"
+          fi
+          node scripts/check-android-build-tool-osv-baseline.mjs \
+            --report "release-artifacts/pixnya-${PIXNYA_RELEASE_VERSION}-android-build-tools-osv.json" \
+            --as-of "$(date -u +%F)"
+          node scripts/generate-supply-chain-artifacts.mjs --check
+          node scripts/generate-supply-chain-artifacts.mjs \
+            --notices release-artifacts/THIRD_PARTY_NOTICES.md \
+            --sbom "release-artifacts/pixnya-${PIXNYA_RELEASE_VERSION}.spdx.json" \
+            --licenses-dir "$RUNNER_TEMP/pixnya-${PIXNYA_RELEASE_VERSION}-third-party-licenses"
+          cmp THIRD_PARTY_NOTICES.md release-artifacts/THIRD_PARTY_NOTICES.md
+          tar --sort=name --mtime="@${SOURCE_DATE_EPOCH}" --owner=0 --group=0 --numeric-owner \
+            --pax-option=delete=atime,delete=ctime \
+            -czf "release-artifacts/pixnya-${PIXNYA_RELEASE_VERSION}-third-party-licenses.tar.gz" \
+            -C "$RUNNER_TEMP" "pixnya-${PIXNYA_RELEASE_VERSION}-third-party-licenses"
+          cp LICENSE release-artifacts/LICENSE.txt
+          git archive --format=tar.gz \
+            --prefix="pixnya-${PIXNYA_RELEASE_VERSION}/" \
+            --output="release-artifacts/pixnya-${PIXNYA_RELEASE_VERSION}-source.tar.gz" \
+            "$GITHUB_SHA"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: supply-chain
+          if-no-files-found: error
+          path: release-artifacts/*
+
+  rust-advisories:
+    needs: preflight
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2
+        with:
+          command: check advisories
+
+  android-gradle-advisories:
+    needs: preflight
+    permissions:
+      actions: read
+      contents: read
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@8deb546fdb875b9996d27d4950be7312dac076a1 # v2.5.0
+    with:
+      download-artifact: supply-chain
+      scan-args: |-
+        --sbom=pixnya-${{ inputs.version }}-android-runtime.spdx.json
+      upload-sarif: false
+      fail-on-vuln: true
 
   windows:
-    needs: preflight
+    needs: [preflight, rust-advisories, android-gradle-advisories]
     runs-on: windows-2025
-    env:
-      PIXIV_OAUTH_CLIENT_ID: ${{ secrets.PIXIV_OAUTH_CLIENT_ID }}
-      PIXIV_OAUTH_CLIENT_SECRET: ${{ secrets.PIXIV_OAUTH_CLIENT_SECRET }}
-      PIXIV_OAUTH_HASH_SALT: ${{ secrets.PIXIV_OAUTH_HASH_SALT }}
-      PIXNYA_UPDATER_PUBKEY: ${{ secrets.PIXNYA_UPDATER_PUBKEY }}
-      PIXNYA_ANDROID_UPDATE_PUBKEY: ${{ secrets.PIXNYA_ANDROID_UPDATE_PUBKEY }}
-      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+    environment:
+      name: production-release
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 24
           cache: npm
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
+        with:
+          toolchain: 1.97.1
       - name: Require protected build and updater secrets
         shell: pwsh
+        env:
+          PIXIV_OAUTH_CLIENT_ID: ${{ secrets.PIXIV_OAUTH_CLIENT_ID }}
+          PIXIV_OAUTH_CLIENT_SECRET: ${{ secrets.PIXIV_OAUTH_CLIENT_SECRET }}
+          PIXIV_OAUTH_HASH_SALT: ${{ secrets.PIXIV_OAUTH_HASH_SALT }}
+          PIXNYA_UPDATER_PUBKEY: ${{ secrets.PIXNYA_UPDATER_PUBKEY }}
+          PIXNYA_ANDROID_UPDATE_PUBKEY: ${{ secrets.PIXNYA_ANDROID_UPDATE_PUBKEY }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           @(
             'PIXIV_OAUTH_CLIENT_ID', 'PIXIV_OAUTH_CLIENT_SECRET', 'PIXIV_OAUTH_HASH_SALT',
@@ -100,8 +275,16 @@ jobs:
           }
       - run: npm ci
       - name: Build signed NSIS updater artifacts
+        env:
+          PIXIV_OAUTH_CLIENT_ID: ${{ secrets.PIXIV_OAUTH_CLIENT_ID }}
+          PIXIV_OAUTH_CLIENT_SECRET: ${{ secrets.PIXIV_OAUTH_CLIENT_SECRET }}
+          PIXIV_OAUTH_HASH_SALT: ${{ secrets.PIXIV_OAUTH_HASH_SALT }}
+          PIXNYA_UPDATER_PUBKEY: ${{ secrets.PIXNYA_UPDATER_PUBKEY }}
+          PIXNYA_ANDROID_UPDATE_PUBKEY: ${{ secrets.PIXNYA_ANDROID_UPDATE_PUBKEY }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: npm run tauri -- build --config src-tauri/tauri.release.conf.json --bundles nsis
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: windows-x64
           if-no-files-found: error
@@ -111,23 +294,21 @@ jobs:
             target/release/bundle/nsis/*.sig
 
   linux:
-    needs: preflight
+    needs: [preflight, rust-advisories, android-gradle-advisories]
     runs-on: ubuntu-22.04
-    env:
-      PIXIV_OAUTH_CLIENT_ID: ${{ secrets.PIXIV_OAUTH_CLIENT_ID }}
-      PIXIV_OAUTH_CLIENT_SECRET: ${{ secrets.PIXIV_OAUTH_CLIENT_SECRET }}
-      PIXIV_OAUTH_HASH_SALT: ${{ secrets.PIXIV_OAUTH_HASH_SALT }}
-      PIXNYA_UPDATER_PUBKEY: ${{ secrets.PIXNYA_UPDATER_PUBKEY }}
-      PIXNYA_ANDROID_UPDATE_PUBKEY: ${{ secrets.PIXNYA_ANDROID_UPDATE_PUBKEY }}
-      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+    environment:
+      name: production-release
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 24
           cache: npm
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
+        with:
+          toolchain: 1.97.1
       - name: Install Tauri Linux prerequisites
         run: |
           sudo apt-get update
@@ -136,6 +317,14 @@ jobs:
             libssl-dev libayatana-appindicator3-dev librsvg2-dev
       - name: Require protected build and updater secrets
         shell: bash
+        env:
+          PIXIV_OAUTH_CLIENT_ID: ${{ secrets.PIXIV_OAUTH_CLIENT_ID }}
+          PIXIV_OAUTH_CLIENT_SECRET: ${{ secrets.PIXIV_OAUTH_CLIENT_SECRET }}
+          PIXIV_OAUTH_HASH_SALT: ${{ secrets.PIXIV_OAUTH_HASH_SALT }}
+          PIXNYA_UPDATER_PUBKEY: ${{ secrets.PIXNYA_UPDATER_PUBKEY }}
+          PIXNYA_ANDROID_UPDATE_PUBKEY: ${{ secrets.PIXNYA_ANDROID_UPDATE_PUBKEY }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           for name in PIXIV_OAUTH_CLIENT_ID PIXIV_OAUTH_CLIENT_SECRET PIXIV_OAUTH_HASH_SALT \
             PIXNYA_UPDATER_PUBKEY PIXNYA_ANDROID_UPDATE_PUBKEY \
@@ -144,8 +333,16 @@ jobs:
           done
       - run: npm ci
       - name: Build signed AppImage updater artifacts
+        env:
+          PIXIV_OAUTH_CLIENT_ID: ${{ secrets.PIXIV_OAUTH_CLIENT_ID }}
+          PIXIV_OAUTH_CLIENT_SECRET: ${{ secrets.PIXIV_OAUTH_CLIENT_SECRET }}
+          PIXIV_OAUTH_HASH_SALT: ${{ secrets.PIXIV_OAUTH_HASH_SALT }}
+          PIXNYA_UPDATER_PUBKEY: ${{ secrets.PIXNYA_UPDATER_PUBKEY }}
+          PIXNYA_ANDROID_UPDATE_PUBKEY: ${{ secrets.PIXNYA_ANDROID_UPDATE_PUBKEY }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: npm run tauri -- build --config src-tauri/tauri.release.conf.json --bundles appimage
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: linux-x64
           if-no-files-found: error
@@ -155,8 +352,10 @@ jobs:
             target/release/bundle/appimage/*.sig
 
   android:
-    needs: preflight
+    needs: [preflight, rust-advisories, android-gradle-advisories]
     runs-on: ubuntu-22.04
+    environment:
+      name: production-release
     strategy:
       fail-fast: true
       matrix:
@@ -164,48 +363,67 @@ jobs:
           - tauriTarget: aarch64
             rustTarget: aarch64-linux-android
             abi: arm64-v8a
-    env:
-      PIXIV_OAUTH_CLIENT_ID: ${{ secrets.PIXIV_OAUTH_CLIENT_ID }}
-      PIXIV_OAUTH_CLIENT_SECRET: ${{ secrets.PIXIV_OAUTH_CLIENT_SECRET }}
-      PIXIV_OAUTH_HASH_SALT: ${{ secrets.PIXIV_OAUTH_HASH_SALT }}
-      PIXNYA_UPDATER_PUBKEY: ${{ secrets.PIXNYA_UPDATER_PUBKEY }}
-      PIXNYA_ANDROID_UPDATE_PUBKEY: ${{ secrets.PIXNYA_ANDROID_UPDATE_PUBKEY }}
-      PIXNYA_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.PIXNYA_ANDROID_KEYSTORE_PASSWORD }}
-      PIXNYA_ANDROID_KEY_ALIAS: ${{ secrets.PIXNYA_ANDROID_KEY_ALIAS }}
-      PIXNYA_ANDROID_KEY_PASSWORD: ${{ secrets.PIXNYA_ANDROID_KEY_PASSWORD }}
-      ANDROID_KEYSTORE_BASE64: ${{ secrets.PIXNYA_ANDROID_KEYSTORE_BASE64 }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 24
           cache: npm
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
           java-version: 17
-      - uses: android-actions/setup-android@v3
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
         with:
+          toolchain: 1.97.1
           targets: ${{ matrix.rustTarget }}
+      - run: npm ci
+      - name: Install the pinned Android NDK
+        run: |
+          chmod +x src-tauri/gen/android/gradlew
+          sdkmanager "ndk;29.0.14206865"
       - name: Require and restore the Android release keystore
         shell: bash
+        env:
+          PIXIV_OAUTH_CLIENT_ID: ${{ secrets.PIXIV_OAUTH_CLIENT_ID }}
+          PIXIV_OAUTH_CLIENT_SECRET: ${{ secrets.PIXIV_OAUTH_CLIENT_SECRET }}
+          PIXIV_OAUTH_HASH_SALT: ${{ secrets.PIXIV_OAUTH_HASH_SALT }}
+          PIXNYA_UPDATER_PUBKEY: ${{ secrets.PIXNYA_UPDATER_PUBKEY }}
+          PIXNYA_ANDROID_UPDATE_PUBKEY: ${{ secrets.PIXNYA_ANDROID_UPDATE_PUBKEY }}
+          PIXNYA_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.PIXNYA_ANDROID_KEYSTORE_PASSWORD }}
+          PIXNYA_ANDROID_KEY_ALIAS: ${{ secrets.PIXNYA_ANDROID_KEY_ALIAS }}
+          PIXNYA_ANDROID_KEY_PASSWORD: ${{ secrets.PIXNYA_ANDROID_KEY_PASSWORD }}
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.PIXNYA_ANDROID_KEYSTORE_BASE64 }}
         run: |
           for name in PIXIV_OAUTH_CLIENT_ID PIXIV_OAUTH_CLIENT_SECRET PIXIV_OAUTH_HASH_SALT \
             PIXNYA_UPDATER_PUBKEY PIXNYA_ANDROID_UPDATE_PUBKEY ANDROID_KEYSTORE_BASE64 \
             PIXNYA_ANDROID_KEYSTORE_PASSWORD PIXNYA_ANDROID_KEY_ALIAS PIXNYA_ANDROID_KEY_PASSWORD; do
             test -n "${!name}" || { echo "Missing $name" >&2; exit 1; }
           done
+          umask 077
           KEYSTORE_PATH="$RUNNER_TEMP/pixnya-release.jks"
           printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+          chmod 600 "$KEYSTORE_PATH"
           echo "PIXNYA_ANDROID_KEYSTORE_PATH=$KEYSTORE_PATH" >> "$GITHUB_ENV"
-      - run: npm ci
-      - name: Install the pinned Android NDK
-        run: sdkmanager "ndk;29.0.14206865"
       - name: Build the signed split APK
+        env:
+          PIXIV_OAUTH_CLIENT_ID: ${{ secrets.PIXIV_OAUTH_CLIENT_ID }}
+          PIXIV_OAUTH_CLIENT_SECRET: ${{ secrets.PIXIV_OAUTH_CLIENT_SECRET }}
+          PIXIV_OAUTH_HASH_SALT: ${{ secrets.PIXIV_OAUTH_HASH_SALT }}
+          PIXNYA_UPDATER_PUBKEY: ${{ secrets.PIXNYA_UPDATER_PUBKEY }}
+          PIXNYA_ANDROID_UPDATE_PUBKEY: ${{ secrets.PIXNYA_ANDROID_UPDATE_PUBKEY }}
+          PIXNYA_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.PIXNYA_ANDROID_KEYSTORE_PASSWORD }}
+          PIXNYA_ANDROID_KEY_ALIAS: ${{ secrets.PIXNYA_ANDROID_KEY_ALIAS }}
+          PIXNYA_ANDROID_KEY_PASSWORD: ${{ secrets.PIXNYA_ANDROID_KEY_PASSWORD }}
         run: npm run tauri -- android build --target ${{ matrix.tauriTarget }} --split-per-abi --apk --ci
       - name: Give the APK a stable release asset name
         shell: bash
+        env:
+          PIXNYA_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.PIXNYA_ANDROID_KEYSTORE_PASSWORD }}
+          PIXNYA_ANDROID_KEY_ALIAS: ${{ secrets.PIXNYA_ANDROID_KEY_ALIAS }}
         run: |
           mapfile -t APKS < <(find src-tauri/gen/android/app/build/outputs/apk \
             -type f -name '*-release.apk' -print | sort)
@@ -241,31 +459,37 @@ jobs:
           }
           mkdir -p release-artifacts
           cp "$APK" "release-artifacts/pixnya-${PIXNYA_RELEASE_VERSION}-android-${{ matrix.abi }}.apk"
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: android-${{ matrix.abi }}
           if-no-files-found: error
           path: release-artifacts/*.apk
+      - name: Remove the restored Android keystore
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          if test -n "${PIXNYA_ANDROID_KEYSTORE_PATH:-}"; then
+            rm -f -- "$PIXNYA_ANDROID_KEYSTORE_PATH"
+          fi
 
   draft-release:
     needs: [windows, linux, android]
     runs-on: ubuntu-22.04
+    environment:
+      name: production-release
+    permissions:
+      contents: write
     env:
       RELEASE_NOTES: ${{ inputs.notes }}
-      ANDROID_KEYSTORE_BASE64: ${{ secrets.PIXNYA_ANDROID_KEYSTORE_BASE64 }}
-      PIXNYA_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.PIXNYA_ANDROID_KEYSTORE_PASSWORD }}
-      PIXNYA_ANDROID_KEY_ALIAS: ${{ secrets.PIXNYA_ANDROID_KEY_ALIAS }}
-      PIXNYA_UPDATER_PUBKEY: ${{ secrets.PIXNYA_UPDATER_PUBKEY }}
-      PIXNYA_ANDROID_UPDATE_PUBKEY: ${{ secrets.PIXNYA_ANDROID_UPDATE_PUBKEY }}
-      ANDROID_MANIFEST_PRIVATE_KEY_BASE64: ${{ secrets.PIXNYA_ANDROID_MANIFEST_PRIVATE_KEY_BASE64 }}
-      ANDROID_MANIFEST_PRIVATE_KEY_PASSWORD: ${{ secrets.PIXNYA_ANDROID_MANIFEST_PRIVATE_KEY_PASSWORD }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 24
           cache: npm
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
           java-version: 17
@@ -273,22 +497,40 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends minisign
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           path: dist
           merge-multiple: true
       - run: npm ci
       - name: Create signed update manifests and checksums
         shell: bash
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.PIXNYA_ANDROID_KEYSTORE_BASE64 }}
+          PIXNYA_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.PIXNYA_ANDROID_KEYSTORE_PASSWORD }}
+          PIXNYA_ANDROID_KEY_ALIAS: ${{ secrets.PIXNYA_ANDROID_KEY_ALIAS }}
+          PIXNYA_UPDATER_PUBKEY: ${{ secrets.PIXNYA_UPDATER_PUBKEY }}
+          PIXNYA_ANDROID_UPDATE_PUBKEY: ${{ secrets.PIXNYA_ANDROID_UPDATE_PUBKEY }}
+          ANDROID_MANIFEST_PRIVATE_KEY_BASE64: ${{ secrets.PIXNYA_ANDROID_MANIFEST_PRIVATE_KEY_BASE64 }}
+          ANDROID_MANIFEST_PRIVATE_KEY_PASSWORD: ${{ secrets.PIXNYA_ANDROID_MANIFEST_PRIVATE_KEY_PASSWORD }}
         run: |
+          umask 077
           for name in ANDROID_KEYSTORE_BASE64 PIXNYA_ANDROID_KEYSTORE_PASSWORD \
             PIXNYA_ANDROID_KEY_ALIAS PIXNYA_UPDATER_PUBKEY PIXNYA_ANDROID_UPDATE_PUBKEY \
             ANDROID_MANIFEST_PRIVATE_KEY_BASE64 \
             ANDROID_MANIFEST_PRIVATE_KEY_PASSWORD; do
             test -n "${!name}" || { echo "Missing $name" >&2; exit 1; }
           done
-          printf '%s\n' "$RELEASE_NOTES" > "$RUNNER_TEMP/release-notes.md"
-          RELEASE_BASE="https://github.com/space2233/pixnya/releases/download/v${PIXNYA_RELEASE_VERSION}/"
+          RELEASE_NOTES_FILE="$RUNNER_TEMP/release-notes.md"
+          MANIFEST_NOTES_FILE="$RUNNER_TEMP/update-manifest-notes.md"
+          printf '%s\n' "$RELEASE_NOTES" > "$RELEASE_NOTES_FILE"
+          if (( 10#${PIXNYA_RELEASE_VERSION%%.*} >= 1 )); then
+            printf 'PixNya v%s. See https://github.com/%s/releases/tag/v%s for verified release notes and upgrade limitations.\n' \
+              "$PIXNYA_RELEASE_VERSION" "$GITHUB_REPOSITORY" "$PIXNYA_RELEASE_VERSION" \
+              > "$MANIFEST_NOTES_FILE"
+          else
+            cp "$RELEASE_NOTES_FILE" "$MANIFEST_NOTES_FILE"
+          fi
+          RELEASE_BASE="https://github.com/${PIXNYA_UPDATE_REPOSITORY}/releases/download/v${PIXNYA_RELEASE_VERSION}/"
 
           mapfile -t WINDOWS_ARCHIVES < <(find dist -type f -name '*.nsis.zip' -print | sort)
           mapfile -t LINUX_ARCHIVES < <(find dist -type f -name '*.AppImage.tar.gz' -print | sort)
@@ -307,7 +549,8 @@ jobs:
           node scripts/generate-desktop-update-manifest.mjs \
             --windows-archive "$WINDOWS_ARCHIVE" --windows-signature "${WINDOWS_ARCHIVE}.sig" \
             --linux-archive "$LINUX_ARCHIVE" --linux-signature "${LINUX_ARCHIVE}.sig" \
-            --base-url "$RELEASE_BASE" --notes-file "$RUNNER_TEMP/release-notes.md" \
+            --repository "$PIXNYA_UPDATE_REPOSITORY" \
+            --base-url "$RELEASE_BASE" --notes-file "$MANIFEST_NOTES_FILE" \
             --output dist/latest.json
 
           KEYSTORE_PATH="$RUNNER_TEMP/pixnya-release.jks"
@@ -319,7 +562,8 @@ jobs:
           node scripts/generate-android-update-manifest.mjs \
             --arm64 "dist/pixnya-${PIXNYA_RELEASE_VERSION}-android-arm64-v8a.apk" \
             --certificate-sha256 "$CERTIFICATE_SHA256" --base-url "$RELEASE_BASE" \
-            --notes-file "$RUNNER_TEMP/release-notes.md" --output dist/android-latest.json
+            --repository "$PIXNYA_UPDATE_REPOSITORY" \
+            --notes-file "$MANIFEST_NOTES_FILE" --output dist/android-latest.json
 
           MANIFEST_KEY_PATH="$RUNNER_TEMP/android-manifest.key"
           printf '%s' "$ANDROID_MANIFEST_PRIVATE_KEY_BASE64" | base64 --decode > "$MANIFEST_KEY_PATH"
@@ -339,14 +583,190 @@ jobs:
           source_ref=${GITHUB_REF}
           workflow_run=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
           EOF
+          exact_one() {
+            local description="$1"
+            shift
+            local -a matches=("$@")
+            test "${#matches[@]}" -eq 1 && test -f "${matches[0]}" || {
+              printf 'Expected exactly one %s, found %s\n' "$description" "${#matches[@]}" >&2
+              exit 1
+            }
+          }
+          shopt -s nullglob
+          exact_one 'Windows NSIS installer' dist/*.exe
+          exact_one 'Linux AppImage installer' dist/*.AppImage
+          exact_one 'Android ARM64 APK' dist/pixnya-${PIXNYA_RELEASE_VERSION}-android-arm64-v8a.apk
+          exact_one 'SPDX SBOM' dist/pixnya-${PIXNYA_RELEASE_VERSION}.spdx.json
+          exact_one 'Android ARM64 runtime SBOM' dist/pixnya-${PIXNYA_RELEASE_VERSION}-android-runtime.spdx.json
+          exact_one 'Android Gradle dependency inventory' dist/pixnya-${PIXNYA_RELEASE_VERSION}-android-gradle-dependencies.json
+          exact_one 'Android build-tool OSV raw report' dist/pixnya-${PIXNYA_RELEASE_VERSION}-android-build-tools-osv.json
+          exact_one 'third-party license archive' dist/pixnya-${PIXNYA_RELEASE_VERSION}-third-party-licenses.tar.gz
+          exact_one 'source archive' dist/pixnya-${PIXNYA_RELEASE_VERSION}-source.tar.gz
+          exact_one 'project license' dist/LICENSE.txt
+          exact_one 'third-party notices' dist/THIRD_PARTY_NOTICES.md
+          exact_one 'desktop update manifest' dist/latest.json
+          exact_one 'Android update manifest' dist/android-latest.json
+          exact_one 'Android update manifest signature' dist/android-latest.json.minisig
+          exact_one 'build provenance' dist/BUILD-PROVENANCE.txt
           find dist -maxdepth 1 -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > dist/SHA256SUMS.txt
-      - name: Create a draft Release for manual verification
-        uses: softprops/action-gh-release@v2
+          exact_one 'SHA-256 checksums' dist/SHA256SUMS.txt
+          ACTUAL_FILE_COUNT="$(find dist -maxdepth 1 -type f | wc -l | tr -d '[:space:]')"
+          test "$ACTUAL_FILE_COUNT" = 20 || {
+            echo "Expected exactly 20 whitelisted release files, found $ACTUAL_FILE_COUNT" >&2
+            find dist -maxdepth 1 -type f -print | sort >&2
+            exit 1
+          }
+      - name: Remove temporary release signing material
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          rm -f -- \
+            "$RUNNER_TEMP/release-notes.md" \
+            "$RUNNER_TEMP/update-manifest-notes.md" \
+            "$RUNNER_TEMP/desktop-updater.pub" \
+            "$RUNNER_TEMP/windows-updater.minisig" \
+            "$RUNNER_TEMP/linux-updater.minisig" \
+            "$RUNNER_TEMP/pixnya-release.jks" \
+            "$RUNNER_TEMP/android-manifest.key" \
+            "$RUNNER_TEMP/android-update-manifest.pub"
+      - name: Atomically bind the release tag to the source commit
+        shell: bash
+        env:
+          GITHUB_API_TOKEN: ${{ github.token }}
+        run: |
+          TAG_REF="refs/tags/v${PIXNYA_RELEASE_VERSION}"
+          CREATED_TAG_FILE="$RUNNER_TEMP/created-release-tag.json"
+          TAG_API_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}/git/ref/tags/v${PIXNYA_RELEASE_VERSION}"
+          HTTP_STATUS="$(curl --silent --show-error --location \
+            --output "$CREATED_TAG_FILE" --write-out '%{http_code}' \
+            -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            -H "Authorization: Bearer ${GITHUB_API_TOKEN}" \
+            "$TAG_API_URL")"
+          if [[ "$HTTP_STATUS" == 404 ]]; then
+            REQUEST_BODY="$(TAG_REF="$TAG_REF" node -e '
+              process.stdout.write(JSON.stringify({
+                ref: process.env.TAG_REF,
+                sha: process.env.GITHUB_SHA,
+              }));
+            ')"
+            HTTP_STATUS="$(curl --silent --show-error --location \
+              --output "$CREATED_TAG_FILE" --write-out '%{http_code}' \
+              --request POST \
+              -H 'Accept: application/vnd.github+json' \
+              -H 'X-GitHub-Api-Version: 2022-11-28' \
+              -H "Authorization: Bearer ${GITHUB_API_TOKEN}" \
+              -H 'Content-Type: application/json' \
+              --data "$REQUEST_BODY" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/git/refs")"
+          fi
+          if [[ "$HTTP_STATUS" != 200 && "$HTTP_STATUS" != 201 ]]; then
+            echo "Could not reserve or resume ${TAG_REF}; GitHub returned HTTP ${HTTP_STATUS}." >&2
+            cat "$CREATED_TAG_FILE" >&2
+            exit 1
+          fi
+          CREATED_TAG_FILE="$CREATED_TAG_FILE" TAG_REF="$TAG_REF" node -e '
+            const fs = require("node:fs");
+            const createdTag = JSON.parse(fs.readFileSync(process.env.CREATED_TAG_FILE, "utf8"));
+            if (
+              createdTag.ref !== process.env.TAG_REF ||
+              createdTag.object?.type !== "commit" ||
+              createdTag.object?.sha !== process.env.GITHUB_SHA
+            ) {
+              throw new Error("GitHub did not bind the reserved release tag to this workflow commit");
+            }
+          '
+          EXISTING_RELEASE_FILE="$RUNNER_TEMP/existing-draft-release.json"
+          EXISTING_RELEASE_STATUS="$(curl --silent --show-error --location \
+            --output "$EXISTING_RELEASE_FILE" --write-out '%{http_code}' \
+            -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            -H "Authorization: Bearer ${GITHUB_API_TOKEN}" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/v${PIXNYA_RELEASE_VERSION}")"
+          case "$EXISTING_RELEASE_STATUS" in
+            404) ;;
+            200)
+              EXISTING_RELEASE_FILE="$EXISTING_RELEASE_FILE" node -e '
+                const fs = require("node:fs");
+                const existingRelease = JSON.parse(fs.readFileSync(process.env.EXISTING_RELEASE_FILE, "utf8"));
+                if (existingRelease.draft !== true) {
+                  throw new Error("A published release cannot be reused");
+                }
+              '
+              ;;
+            *)
+              echo "Could not inspect the existing release reservation (HTTP ${EXISTING_RELEASE_STATUS})." >&2
+              cat "$EXISTING_RELEASE_FILE" >&2
+              exit 1
+              ;;
+          esac
+      - name: Create or resume a draft Release for manual verification
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
         with:
+          repository: ${{ github.repository }}
+          token: ${{ github.token }}
           tag_name: v${{ inputs.version }}
-          target_commitish: ${{ github.sha }}
           name: PixNya v${{ inputs.version }}
           body: ${{ inputs.notes }}
           draft: true
+          prerelease: ${{ startsWith(inputs.version, '0.') }}
+          make_latest: ${{ startsWith(inputs.version, '0.') && 'false' || 'true' }}
+          overwrite_files: true
           fail_on_unmatched_files: true
-          files: dist/*
+          files: |
+            dist/*.exe
+            dist/*.nsis.zip
+            dist/*.nsis.zip.sig
+            dist/*.AppImage
+            dist/*.AppImage.tar.gz
+            dist/*.AppImage.tar.gz.sig
+            dist/pixnya-${{ inputs.version }}-android-arm64-v8a.apk
+            dist/pixnya-${{ inputs.version }}.spdx.json
+            dist/pixnya-${{ inputs.version }}-android-runtime.spdx.json
+            dist/pixnya-${{ inputs.version }}-android-gradle-dependencies.json
+            dist/pixnya-${{ inputs.version }}-android-build-tools-osv.json
+            dist/pixnya-${{ inputs.version }}-third-party-licenses.tar.gz
+            dist/pixnya-${{ inputs.version }}-source.tar.gz
+            dist/LICENSE.txt
+            dist/THIRD_PARTY_NOTICES.md
+            dist/latest.json
+            dist/android-latest.json
+            dist/android-latest.json.minisig
+            dist/BUILD-PROVENANCE.txt
+            dist/SHA256SUMS.txt
+      - name: Verify the draft Release remains bound to the source commit
+        shell: bash
+        env:
+          GITHUB_API_TOKEN: ${{ github.token }}
+        run: |
+          TAG_FILE="$RUNNER_TEMP/final-release-tag.json"
+          RELEASE_FILE="$RUNNER_TEMP/final-draft-release.json"
+          curl --fail --silent --show-error --location \
+            --output "$TAG_FILE" \
+            -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            -H "Authorization: Bearer ${GITHUB_API_TOKEN}" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/git/ref/tags/v${PIXNYA_RELEASE_VERSION}"
+          curl --fail --silent --show-error --location \
+            --output "$RELEASE_FILE" \
+            -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            -H "Authorization: Bearer ${GITHUB_API_TOKEN}" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/v${PIXNYA_RELEASE_VERSION}"
+          TAG_FILE="$TAG_FILE" RELEASE_FILE="$RELEASE_FILE" node -e '
+            const fs = require("node:fs");
+            const tag = JSON.parse(fs.readFileSync(process.env.TAG_FILE, "utf8"));
+            const release = JSON.parse(fs.readFileSync(process.env.RELEASE_FILE, "utf8"));
+            const expectedTag = `v${process.env.PIXNYA_RELEASE_VERSION}`;
+            const expectedAssets = fs.readdirSync("dist").sort();
+            const actualAssets = release.assets.map((asset) => asset.name).sort();
+            if (tag.object?.type !== "commit" || tag.object?.sha !== process.env.GITHUB_SHA) {
+              throw new Error("The release tag moved away from the source commit");
+            }
+            if (release.tag_name !== expectedTag || release.draft !== true) {
+              throw new Error("The uploaded release is not the expected draft");
+            }
+            if (JSON.stringify(actualAssets) !== JSON.stringify(expectedAssets)) {
+              throw new Error("The draft Release asset set does not match the verified local whitelist");
+            }
+          '

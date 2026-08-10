@@ -35,8 +35,6 @@ pub struct ConnectionProbe {
     pub candidate_address_count: Option<u16>,
     pub http_status: u16,
     pub latency_ms: u64,
-    pub dns_source: String,
-    pub tls_summary: String,
     pub ech_status: ProbeEchStatus,
 }
 
@@ -222,15 +220,7 @@ impl NetworkGateway {
         let started = Instant::now();
         let response = send_probe(&client, host)?;
 
-        Ok(report_from_response(
-            route,
-            host,
-            response,
-            started,
-            "系统 DNS / 代理",
-            "系统 TLS（证书已验证）",
-            None,
-        ))
+        Ok(report_from_response(route, host, response, started, None))
     }
 
     fn probe_ech(&self, route: RoutePlan, host: &str) -> Result<ConnectionProbe, ProbeError> {
@@ -243,8 +233,6 @@ impl NetworkGateway {
             candidate_address_count: Some(outcome.candidate_address_count),
             http_status: outcome.http_status,
             latency_ms: elapsed_millis(started),
-            dns_source: format!("AliDNS DoH · TTL {}s", outcome.ttl_seconds),
-            tls_summary: "TLS 1.3 + ECH（证书已验证）".into(),
             ech_status: ProbeEchStatus::Accepted,
         })
     }
@@ -278,8 +266,6 @@ impl NetworkGateway {
             host,
             response,
             started,
-            "内置 Pixiv IP 白名单",
-            "TLS（SNI 与证书验证已关闭）",
             Some(1),
         ))
     }
@@ -300,8 +286,6 @@ fn report_from_response(
     host: &str,
     response: Response,
     started: Instant,
-    dns_source: &str,
-    tls_summary: &str,
     candidate_address_count: Option<u16>,
 ) -> ConnectionProbe {
     ConnectionProbe {
@@ -313,8 +297,6 @@ fn report_from_response(
         candidate_address_count,
         http_status: response.status().as_u16(),
         latency_ms: elapsed_millis(started),
-        dns_source: dns_source.into(),
-        tls_summary: tls_summary.into(),
         ech_status: ProbeEchStatus::NotApplicable,
     }
 }

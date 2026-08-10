@@ -265,8 +265,8 @@ export function getExportDestinationStatus(): Promise<ExportDestinationStatus> {
   return invoke<ExportDestinationStatus>("get_export_destination_status");
 }
 
-export function selectExportDestination(): Promise<ExportDestinationSelection> {
-  return invoke<ExportDestinationSelection>("select_export_destination");
+export function selectExportDestination(title: string): Promise<ExportDestinationSelection> {
+  return invoke<ExportDestinationSelection>("select_export_destination", { title });
 }
 
 export function clearExportDestination(): Promise<ExportDestinationStatus> {

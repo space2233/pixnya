@@ -181,7 +181,7 @@ class ExportDirectoryPlugin(private val activity: Activity) : Plugin(activity) {
       val label = activity.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
         .getString(LABEL_KEY, null)
         ?.takeIf { it.isNotBlank() }
-        ?: "已授权目录"
+        ?: activity.getString(R.string.export_authorized_directory)
       result.put("destination", "$label/$directoryName")
       invoke.resolve(result)
     } catch (error: SecurityException) {
@@ -205,7 +205,8 @@ class ExportDirectoryPlugin(private val activity: Activity) : Plugin(activity) {
     if (accessible) {
       result.put(
         "label",
-        preferences.getString(LABEL_KEY, null)?.takeIf { it.isNotBlank() } ?: "已授权目录",
+        preferences.getString(LABEL_KEY, null)?.takeIf { it.isNotBlank() }
+          ?: activity.getString(R.string.export_authorized_directory),
       )
     }
     return result
@@ -243,7 +244,7 @@ class ExportDirectoryPlugin(private val activity: Activity) : Plugin(activity) {
         if (!value.isNullOrEmpty()) return value.take(80)
       }
     }
-    return "已授权目录"
+    return activity.getString(R.string.export_authorized_directory)
   }
 
   private fun validateSourceDirectory(

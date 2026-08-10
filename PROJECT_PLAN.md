@@ -2,7 +2,8 @@
 
 > 状态：当前路线仅保留自动检查更新与自动更新
 > 日期：2026-08-04
-> 目标平台：Windows、Linux、Android
+> 当前候选版：`0.29.0`；首个稳定版目标：`1.0.0`
+> 首个稳定版平台：Windows x64、Linux x64、Android ARM64（ARMv7 暂缓）
 > 分发方式：个人使用、开源、侧载
 > 说明：本项目为非官方客户端，与 pixiv Inc. 无隶属或授权关系。
 
@@ -50,7 +51,7 @@ PixNya 是由个人维护的开源、非官方、侧载客户端，不是 pixiv 
 - [x] Windows 与 Android 可以从应用内打开隔离的 Pixiv 官方登录页。
 - [x] 标准模式使用系统 WebView 网络；ECH 模式先做严格 Rust `Accepted` 预检；Android ECH/兼容登录再使用一次性低安全 TLS 桥连接固定 Pixiv IP。
 - [x] Android 等待 `ProxyController` 应用完成后才加载页面；只对当前会话 Pixiv 白名单和匹配的一次性证书指纹放行，其余证书错误取消。
-- [x] Windows x64 Debug 与 Android ARM64、ARMv7 Debug 构建通过并归档到 `artifacts/`。
+- [x] Windows x64 Debug 与 Android ARM64 Debug 构建通过并归档到 `artifacts/`；ARMv7 Debug 曾完成可行性构建，现已暂缓。
 - Linux WebKitGTK 活体测试已暂停并移入[备选功能计划](docs/OPTIONAL_FEATURES_PLAN.md)。
 - [x] 接入私有登录表面的 callback、authorization code 交换与平台安全令牌存储。
 - [x] 设置中心支持连接诊断、媒体缓存管理、固定字段脱敏日志的本机导出/清除，以及强确认清除全部本机数据，并覆盖安全存储、Cookie、离线资料库和前端偏好边界测试。
@@ -134,22 +135,22 @@ Pixiv 面向现有客户端使用的 App API、Web AJAX 和 OAuth 行为并非�
 
 ## 4. 平台支持基线
 
-| 平台 | 第一版支持范围 | 发布架构 | 备注 |
+| 平台 | 首个稳定版支持范围 | 发布架构 | 备注 |
 |---|---|---|---|
 | Windows | Windows 10/11 | `x86_64` | 依赖 WebView2 Runtime；ARM64 后续评估 |
 | Linux | WebKitGTK 4.1 可用的主流发行版 | `x86_64` | 重点验证 Ubuntu LTS、Fedora；Wayland/X11 均测试 |
-| Android | Android 10–16，API 29–36 | `arm64-v8a`、`armeabi-v7a` | ARM64 与 ARMv7 分包发布；`x86_64` 仅用于模拟器/CI |
+| Android | Android 10–16，API 29–36 | `arm64-v8a` | ARMv7 正式发布暂缓；`x86_64` 仅用于模拟器/CI |
 
 Android 构建基线：
 
 - `minSdkVersion = 29`
 - `targetSdkVersion = 36`
 - `compileSdkVersion = 36`
-- 发布 ABI：`arm64-v8a`、`armeabi-v7a`
-- 测试 ABI：`arm64-v8a`、`armeabi-v7a`、`x86_64`
-- Rust Android targets：`aarch64-linux-android`、`armv7-linux-androideabi`、`x86_64-linux-android`
-- 默认分别生成 ARM64 和 ARMv7 APK，避免 universal APK 增加下载体积；是否额外提供 universal APK 在候选发布阶段决定
-- ARMv7 构建必须通过 CI，并至少在一台真实 32 位设备上完成登录、浏览、图片和 Ugoira 冒烟测试后才能进入正式发布
+- 正式发布 ABI：`arm64-v8a`
+- 当前测试 ABI：`arm64-v8a`；`x86_64` 只用于模拟器/CI
+- 当前 Rust Android targets：`aarch64-linux-android`；`x86_64-linux-android` 按模拟器/CI 需要安装
+- 默认只生成 ARM64 APK，不生成 universal APK
+- `armeabi-v7a` 和 `armv7-linux-androideabi` 仅保留为暂缓的兼容性路线；未重新完成 32 位真机验收前，不得进入候选版或正式 Release
 
 提高 Android 最低版本的主要原因是 WebView/Chromium 安全更新和登录兼容性，而不是单纯为了放弃 32 位设备。
 
@@ -168,10 +169,10 @@ Android 构建基线：
 7. 添加 Rust Android targets：
 
    ```powershell
-   rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android
+   rustup target add aarch64-linux-android x86_64-linux-android
    ```
 
-8. 用 Tauri 最小工程分别完成 Windows 调试构建、Android ARM64 构建和 Android ARMv7 构建。
+8. 用 Tauri 最小工程分别完成 Windows x64 调试构建和 Android ARM64 构建；Linux x64 由 Linux 环境或 CI 验证。
 
 Android Studio 是本地调试、SDK 管理和模拟器的推荐方案，但不是命令行构建的硬性条件。如果开发机资源有限，可以只安装 Android Command-line Tools、SDK、NDK、JDK 并连接真实 Android 设备。项目在首次成功构建后固定 Rust toolchain、Android Gradle Plugin、SDK、Build-Tools 和 NDK 版本，避免后续使用“本机最新版本”导致不可复现。
 
@@ -494,7 +495,7 @@ pixiv-client/
 - 按第 4.1 节安装并验证 Rust、C++ Build Tools、Node.js 和 Android 工具链。
 - 建立 Tauri 2 的 Windows、Linux、Android 最小工程。
 - 在三个平台显示同一个页面并调用一个 Rust 命令。
-- 分别构建 Android `arm64-v8a` 和 `armeabi-v7a` 原生库/APK，尽早识别不支持 ARMv7 的依赖。
+- （历史可行性验证）曾分别构建 Android `arm64-v8a` 和 `armeabi-v7a` 原生库/APK，用于识别 32 位依赖问题；当前候选范围只保留 ARM64。
 - 验证官方登录页、PKCE callback 和 token 交换。
 - 确认不需要在仓库或发行包中复制受保护的官方凭据。
 - 验证 Android WebView 代理覆盖，验证 Windows/Linux WebView 代理可行性。
@@ -512,7 +513,7 @@ pixiv-client/
 验收：
 
 - `rustc`、`cargo`、Node.js、JDK、Android SDK、NDK 和 `adb` 版本检查通过并记录到开发文档；
-- Windows 调试包与 Android ARM64、ARMv7 调试包均能成功构建；
+- Windows x64 调试包与 Android ARM64 调试包能成功构建；历史 ARMv7 结果仅作可行性记录；
 - 至少在一个真实测试账号上完成低频只读登录闭环；
 - 三个平台标准登录页可加载，兼容直连路径至少完成代理设置和 TLS 验证；
 - Rust ECH 测试连接能报告 `Accepted` 或提供明确失败原因；
@@ -624,14 +625,14 @@ pixiv-client/
 ## 15. CI、发布与更新
 
 - 使用 GitHub Actions 构建 Windows、Linux 和 Android。
-- Android 正式发布当前只编译 `arm64-v8a` 签名 APK；ARMv7 手动调试入口保留，但已移入备选计划，`x86_64` 只用于模拟器/CI。
+- 首个稳定版的 Android 正式发布只编译 `arm64-v8a` 签名 APK；ARMv7 手动调试入口保留，但已移入备选计划，`x86_64` 只用于模拟器/CI。
 - 固定 Cargo 与前端 lockfile，使用 Dependabot 或 Renovate 提交更新。
 - 执行格式化、静态检查、单元测试、许可证检查和依赖漏洞扫描。
 - 生成 SBOM、校验和与签名发布清单。
 - Windows 提供安装包和便携包；Linux 至少提供一个通用包和一个发行版包；Android 提供签名 APK。
 - Android 签名密钥离线备份，CI 使用受保护的发布凭据。
 - 当前唯一活跃建设项是自动更新：桌面使用 Tauri updater 的签名更新产物，Android 使用独立签名清单、ABI APK 验证和系统安装器，详见[自动更新计划](docs/AUTO_UPDATE_PLAN.md)。
-- 首版更新源推荐 GitHub Releases；自动检查默认开启，自动下载默认关闭，所有平台安装前保留用户确认。
+- 首个稳定版更新源使用 GitHub Releases；自动检查默认开启，自动下载默认关闭，所有平台安装前保留用户确认。
 - 更新检查和下载只使用系统网络与经过验证的 HTTPS，永不使用 Pixiv 低安全直连。
 - 发布页明确列出支持平台、网络模式限制、上游接口非官方性质和数据清理方式。
 
@@ -664,7 +665,7 @@ pixiv-client/
 
 当前发布完成标准只针对自动更新：
 
-- [ ] Windows NSIS、Linux AppImage、Android ARM64 生成可更新的正式签名产物；ARMv7 暂不进入首个正式版。
+- [ ] Windows x64 NSIS、Linux x64 AppImage、Android ARM64 APK 生成可更新的正式签名产物。
 - [ ] 桌面更新包通过 Tauri updater 签名验证；Android 通过清单、哈希、包名、ABI 和 APK 证书验证。
 - [ ] 自动检查、可选自动下载、用户确认安装和手动检查均可用。
 - [ ] 断网、清单损坏、签名错误、下载中断、空间不足、用户取消和重启恢复均经过测试。
@@ -677,7 +678,7 @@ pixiv-client/
 
 1. 是否确定使用 GitHub Releases 作为更新源。
 2. Windows 是否确定使用 NSIS 作为正式安装和自动更新格式。
-3. Linux 是否接受首版仅 AppImage 支持应用内自动安装。
+3. Linux 是否接受首个稳定版仅 AppImage 支持应用内自动安装。
 4. Android 是否接受自动检查、可选自动下载、系统确认安装，而不是静默安装。
 5. 自动检查默认开启、自动下载默认关闭是否符合预期。
 
@@ -692,9 +693,9 @@ pixiv-client/
 3. 先完成签名版本检查和设置页状态，不立即开放安装。
 4. 接入 Windows NSIS 与 Linux AppImage 的 Tauri updater。
 5. 实现 Android ABI APK 下载、验证和系统安装 Adapter。
-6. 完成从旧一版更新到当前版的跨平台回归与发布闸门。
+6. 完成从 `0.29.0` 候选基线更新到 `1.0.0` 的 Windows x64、Linux x64 和 Android ARM64 回归与发布闸门。
 
-首个正式版的逐项状态、生产密钥、匿名更新源和三平台升级验收统一记录在[首个正式版发布清单](docs/FIRST_STABLE_RELEASE_CHECKLIST.md)。计划版本为 `1.0.0`，但在发布闸门完成前源码继续保持当前版本，不提前制造正式版本产物。
+首个正式版的逐项状态、生产密钥、匿名更新源和三平台升级验收统一记录在[首个正式版发布清单](docs/FIRST_STABLE_RELEASE_CHECKLIST.md)。当前候选基线为 `0.29.0`，计划稳定版为 `1.0.0`；发布闸门完成前不提前改版本号或制造 stable 产物。
 
 ## 21. 参考资料
 

@@ -2,6 +2,8 @@ import { createHash } from "node:crypto";
 import { basename, dirname, resolve } from "node:path";
 import { mkdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 
+import { releaseRepository, validateReleaseBaseUrl } from "./release-url-policy.mjs";
+
 const PACKAGE_NAME = "io.github.space2233.pixnya";
 const MAX_APK_BYTES = 1024 * 1024 * 1024;
 
@@ -80,14 +82,9 @@ async function main() {
   const version = rootPackage.version;
   const versionCode = androidVersionCode(version);
   const certificateSha256 = normalizeDigest(requireArgument(argumentsMap, "certificate-sha256"));
+  const repository = releaseRepository(argumentsMap);
   const baseUrl = new URL(requireArgument(argumentsMap, "base-url"));
-  if (baseUrl.protocol !== "https:" || baseUrl.hostname !== "github.com") {
-    throw new Error("--base-url must be an HTTPS github.com Release download directory");
-  }
-  const expectedPrefix = "/space2233/pixnya/releases/download/";
-  if (!baseUrl.pathname.startsWith(expectedPrefix) || !baseUrl.pathname.endsWith("/")) {
-    throw new Error(`--base-url must start with ${expectedPrefix} and end with /`);
-  }
+  validateReleaseBaseUrl(baseUrl, repository);
 
   const outputPath = resolve(argumentsMap.get("output") ?? "artifacts/android-latest.json");
   const publishedAt = argumentsMap.get("published-at") ?? new Date().toISOString();

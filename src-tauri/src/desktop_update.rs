@@ -1,17 +1,19 @@
 use base64::{engine::general_purpose::STANDARD, Engine as _};
 use minisign_verify::{PublicKey, Signature};
-use reqwest::{
-    blocking::Client,
-    redirect::{Attempt, Policy},
-    Url,
-};
+use reqwest::{blocking::Client, Url};
 use std::{
     io::Read,
     sync::atomic::{AtomicBool, Ordering},
-    time::Duration,
 };
 use tauri::AppHandle;
 use tauri_plugin_updater::{Update, UpdaterExt};
+
+use crate::{
+    update_http::{
+        update_redirect_policy, UPDATE_CONNECT_TIMEOUT, UPDATE_REQUEST_TIMEOUT, UPDATE_USER_AGENT,
+    },
+    updates::is_github_release_url,
+};
 
 const MAX_DESKTOP_UPDATE_BYTES: u64 = 1024 * 1024 * 1024;
 
@@ -24,6 +26,7 @@ pub(crate) struct DesktopUpdateSummary {
 
 pub(crate) struct DesktopUpdateCandidate {
     update: Update,
+    repository: String,
     pub summary: DesktopUpdateSummary,
 }
 
@@ -45,6 +48,7 @@ pub(crate) async fn check(
     app: &AppHandle,
     endpoint: &str,
     public_key: &str,
+    repository: &str,
 ) -> Result<Option<DesktopUpdateCandidate>, DesktopUpdateError> {
     let endpoint = Url::parse(endpoint).map_err(|_| DesktopUpdateError::InvalidConfiguration)?;
     let updater = app
@@ -52,6 +56,17 @@ pub(crate) async fn check(
         .endpoints(vec![endpoint])
         .map_err(|_| DesktopUpdateError::InvalidConfiguration)?
         .pubkey(public_key.to_owned())
+        .configure_client({
+            let repository = repository.to_owned();
+            move |client| {
+                let repository = repository.clone();
+                client
+                    .connect_timeout(UPDATE_CONNECT_TIMEOUT)
+                    .timeout(UPDATE_REQUEST_TIMEOUT)
+                    .redirect(update_redirect_policy(&repository))
+                    .user_agent(UPDATE_USER_AGENT)
+            }
+        })
         .build()
         .map_err(|_| DesktopUpdateError::Platform)?;
     let update = updater
@@ -60,7 +75,7 @@ pub(crate) async fn check(
         .map_err(|_| DesktopUpdateError::Network)?;
     update
         .map(|update| {
-            if !is_github_release_url(&update.download_url) {
+            if !is_github_release_url(&update.download_url, repository) {
                 return Err(DesktopUpdateError::InvalidConfiguration);
             }
             let summary = DesktopUpdateSummary {
@@ -68,7 +83,11 @@ pub(crate) async fn check(
                 notes: update.body.clone(),
                 published_at: update.date.map(|date| date.to_string()),
             };
-            Ok(DesktopUpdateCandidate { update, summary })
+            Ok(DesktopUpdateCandidate {
+                update,
+                repository: repository.to_owned(),
+                summary,
+            })
         })
         .transpose()
 }
@@ -82,7 +101,7 @@ pub(crate) fn download<F>(
 where
     F: FnMut(u64, Option<u64>),
 {
-    let client = update_client()?;
+    let client = update_client(&candidate.repository)?;
     let mut response = client
         .get(candidate.update.download_url.clone())
         .send()
@@ -162,68 +181,37 @@ fn verify_tauri_signature(
         .map_err(|_| DesktopUpdateError::Verification)
 }
 
-fn update_client() -> Result<Client, DesktopUpdateError> {
+fn update_client(repository: &str) -> Result<Client, DesktopUpdateError> {
     Client::builder()
-        .connect_timeout(Duration::from_secs(15))
-        .timeout(Duration::from_secs(60))
-        .redirect(Policy::custom(validate_redirect))
-        .user_agent("PixNya-Updater/1")
+        .connect_timeout(UPDATE_CONNECT_TIMEOUT)
+        .timeout(UPDATE_REQUEST_TIMEOUT)
+        .redirect(update_redirect_policy(repository))
+        .user_agent(UPDATE_USER_AGENT)
         .build()
         .map_err(|_| DesktopUpdateError::Network)
 }
 
-fn validate_redirect(attempt: Attempt<'_>) -> reqwest::redirect::Action {
-    if attempt.previous().len() >= 5 {
-        return attempt.error("too many update redirects");
-    }
-    if is_allowed_download_url(attempt.url()) {
-        attempt.follow()
-    } else {
-        attempt.error("update redirect left the GitHub release origin")
-    }
-}
-
-fn is_github_release_url(url: &Url) -> bool {
-    url.scheme() == "https"
-        && url.host_str() == Some("github.com")
-        && url.port().is_none()
-        && url.username().is_empty()
-        && url.password().is_none()
-        && (url
-            .path()
-            .starts_with("/space2233/pixnya/releases/download/")
-            || url
-                .path()
-                .starts_with("/space2233/pixnya/releases/latest/download/"))
-}
-
-fn is_allowed_download_url(url: &Url) -> bool {
-    is_github_release_url(url)
-        || (url.scheme() == "https"
-            && url.port().is_none()
-            && url.username().is_empty()
-            && url.password().is_none()
-            && matches!(
-                url.host_str(),
-                Some("release-assets.githubusercontent.com" | "objects.githubusercontent.com")
-            ))
-}
-
 #[cfg(test)]
 mod tests {
-    use super::is_github_release_url;
+    use crate::updates::is_github_release_url;
 
     #[test]
-    fn desktop_assets_are_pinned_to_pixnya_releases() {
+    fn desktop_assets_are_pinned_to_the_configured_release_repository() {
         let accepted = reqwest::Url::parse(
-            "https://github.com/space2233/pixnya/releases/download/v0.25.0/PixNya.nsis.zip",
+            "https://github.com/space2233/pixnya-releases/releases/download/v0.25.0/PixNya.nsis.zip",
         )
         .unwrap();
         let rejected = reqwest::Url::parse(
-            "https://github.com/space2233/other/releases/download/v0.25.0/PixNya.nsis.zip",
+            "https://github.com/space2233/pixnya/releases/download/v0.25.0/PixNya.nsis.zip",
         )
         .unwrap();
-        assert!(is_github_release_url(&accepted));
-        assert!(!is_github_release_url(&rejected));
+        assert!(is_github_release_url(
+            &accepted,
+            "space2233/pixnya-releases"
+        ));
+        assert!(!is_github_release_url(
+            &rejected,
+            "space2233/pixnya-releases"
+        ));
     }
 }

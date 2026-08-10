@@ -1,0 +1,70 @@
+name: Android build-tool OSV audit
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-build-tool-osv-audit-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+      - name: Install the checksum-pinned OSV Scanner
+        shell: bash
+        run: |
+          curl --fail --location --retry 3 --silent --show-error \
+            --output "$RUNNER_TEMP/osv-scanner" \
+            https://github.com/google/osv-scanner/releases/download/v2.5.0/osv-scanner_linux_amd64
+          printf '%s  %s\n' \
+            edcfc41d257db36148f065055655fe3fcfc434b0b423ea67468a84c207524e0c \
+            "$RUNNER_TEMP/osv-scanner" | sha256sum --check --strict
+          chmod 700 "$RUNNER_TEMP/osv-scanner"
+      - name: Produce the raw Android build-tool report
+        id: osv-scan
+        shell: bash
+        run: |
+          mkdir -p audit-artifacts
+          set +e
+          "$RUNNER_TEMP/osv-scanner" scan source \
+            --lockfile src-tauri/gen/android/app/gradle.lockfile \
+            --lockfile src-tauri/gen/android/buildscript-gradle.lockfile \
+            --lockfile src-tauri/gen/android/buildSrc/gradle.lockfile \
+            --format json \
+            --all-packages \
+            --output-file audit-artifacts/android-build-tools-osv.json
+          STATUS="$?"
+          set -e
+          echo "status=${STATUS}" >> "$GITHUB_OUTPUT"
+      - name: Enforce the exact expiring build-only baseline
+        shell: bash
+        env:
+          OSV_SCAN_STATUS: ${{ steps.osv-scan.outputs.status }}
+        run: |
+          if (( OSV_SCAN_STATUS > 1 )); then
+            echo "OSV Scanner failed before producing a reviewable report (status ${OSV_SCAN_STATUS})." >&2
+            exit "$OSV_SCAN_STATUS"
+          fi
+          node scripts/check-android-build-tool-osv-baseline.mjs \
+            --report audit-artifacts/android-build-tools-osv.json \
+            --as-of "$(date -u +%F)"
+      - name: Preserve the raw report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: android-build-tools-osv-${{ github.run_id }}
+          path: audit-artifacts/android-build-tools-osv.json
+          if-no-files-found: error
+          retention-days: 30

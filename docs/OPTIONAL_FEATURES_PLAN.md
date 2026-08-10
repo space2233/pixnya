@@ -55,9 +55,9 @@
 - Windows ARM64。
 - Linux ARM64。
 - Android `x86_64` 模拟器发布包。
-- Android universal APK 与恢复 ARMv7 Release；当前只发布 ARM64，ARMv7 手动构建入口继续保留。
+- Android universal APK 与恢复 ARMv7 Release；首个稳定版只发布 ARM64，ARMv7 手动调试入口继续保留。
 - iOS 与 macOS；需要独立评估 WebView、签名、分发和商店规则。
-- 更多 Linux 包格式；自动更新首版只以 AppImage 为应用内安装路线。
+- 更多 Linux 包格式；首个稳定版的自动更新只以 AppImage 为应用内安装路线。
 
 ## 5. 网络与登录实验
 
@@ -74,7 +74,7 @@
 - 标准、ECH、兼容三条路线的真实测试账号低频闭环。
 - Android ARMv7 真实 32 位设备核心流程冒烟测试。
 - Windows/Linux 新架构与更多安装包矩阵。
-- 完整 SBOM、许可证清单、发布说明和外部测试用户流程。
+- 按最终二进制精确裁剪的逐平台 SBOM 和外部测试用户门户（当前正式流水线已提供完整锁图 SPDX SBOM、许可证清单与自动正文归档）。
 
 ## 7. 明确不做
 

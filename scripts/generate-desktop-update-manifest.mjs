@@ -1,6 +1,8 @@
 import { basename, dirname, resolve } from "node:path";
 import { mkdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 
+import { releaseRepository, validateReleaseBaseUrl } from "./release-url-policy.mjs";
+
 const MAX_ARCHIVE_BYTES = 2 * 1024 * 1024 * 1024;
 const MAX_SIGNATURE_BYTES = 16 * 1024;
 
@@ -71,16 +73,9 @@ async function main() {
   if (!/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(version)) {
     throw new Error(`Version ${version} is not a stable major.minor.patch version`);
   }
+  const repository = releaseRepository(argumentsMap);
   const baseUrl = new URL(requireArgument(argumentsMap, "base-url"));
-  const expectedPrefix = "/space2233/pixnya/releases/download/";
-  if (
-    baseUrl.protocol !== "https:" ||
-    baseUrl.hostname !== "github.com" ||
-    !baseUrl.pathname.startsWith(expectedPrefix) ||
-    !baseUrl.pathname.endsWith("/")
-  ) {
-    throw new Error(`--base-url must be an HTTPS github.com URL under ${expectedPrefix}`);
-  }
+  validateReleaseBaseUrl(baseUrl, repository);
 
   const publishedAt = argumentsMap.get("published-at") ?? new Date().toISOString();
   if (Number.isNaN(Date.parse(publishedAt))) {

@@ -220,7 +220,7 @@
     if (!diagnosticReport) return;
 
     try {
-      await navigator.clipboard.writeText(diagnosticReport.text);
+      await navigator.clipboard.writeText(formatDiagnosticReport(diagnosticReport));
       copyState = "copied";
       return;
     } catch {
@@ -228,6 +228,10 @@
       reportTextArea?.select();
       copyState = document.execCommand("copy") ? "copied" : "failed";
     }
+  }
+
+  function formatDiagnosticReport(report: ConnectionDiagnosticReport): string {
+    return JSON.stringify(report, null, 2);
   }
 
   const diagnosticTargetLabels = {
@@ -314,7 +318,14 @@
             </div>
             <div>
               <dt>TLS / ECH</dt>
-              <dd>{probeReport.tlsSummary} · {echLabels[routePlan.echRequirement]()}</dd>
+              <dd>
+                {routePlan.transport === "ech"
+                  ? m.network_probe_tls_ech()
+                  : routePlan.transport === "compatible_direct"
+                    ? m.network_probe_tls_compatible()
+                    : m.network_probe_tls_standard()}
+                · {echLabels[routePlan.echRequirement]()}
+              </dd>
             </div>
           </dl>
         {:else if policyError}
@@ -435,7 +446,7 @@
           id="diagnostic-report-text"
           bind:this={reportTextArea}
           readonly
-          value={diagnosticReport.text}
+          value={formatDiagnosticReport(diagnosticReport)}
           rows="13"
           spellcheck="false"
         ></textarea>

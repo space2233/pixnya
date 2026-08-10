@@ -11,4 +11,5 @@
     <string name="login_mode_ech">ECH preflight · lower-security sign-in bridge</string>
     <string name="login_mode_compatible">Compatible · fixed IP / lower-security TLS</string>
     <string name="login_mode_standard">Standard · system network</string>
+    <string name="export_authorized_directory">Authorized directory</string>
 </resources>

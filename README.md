@@ -16,7 +16,7 @@ PixNya 是个人维护的独立项目，与 pixiv Inc. 没有隶属、授权、�
 
 PixNya 是独立实现，PixEz 等公开项目仅用于研究可观察行为和兼容思路，不是项目依赖，当前仓库未复制或改写 PixEz 源码。完整边界见[项目计划书](PROJECT_PLAN.md#11-项目性质与对接边界)。
 
-隐私数据、网络请求与本机清除边界见[隐私说明](PRIVACY.md)；漏洞请按[安全政策](SECURITY.md)私密报告，不要在公开 Issue 中粘贴令牌、Cookie 或登录截图。
+隐私数据、网络请求与本机清除边界见[隐私说明](PRIVACY.md)；漏洞请按[安全政策](SECURITY.md)私密报告，不要在公开 Issue 中粘贴令牌、Cookie 或登录截图。首个 stable 前保持私人候选、成熟后公开当前源码仓库的决定及停止分发条件见[公开分发决定](docs/PUBLIC_DISTRIBUTION_DECISION.md)。
 
 当前开发版已完成登录、主要浏览/交互、小说阅读、Ugoira 与离线资料库。项目没有账号密码输入框；低安全路线默认关闭，用户首次启用前必须确认风险，也可在完整披露后选择停止重复提醒。只有明确确认状态才会允许 Pixiv OAuth、API、图片以及 Android 非标准网页登录关闭上游 SNI 与证书验证。
 
@@ -55,7 +55,7 @@ PixNya 是独立实现，PixEz 等公开项目仅用于研究可观察行为和�
 - 设置页可强确认清除令牌、登录 Cookie、下载队列、离线内容、缓存、浏览与搜索历史、阅读进度和界面偏好，并逐项报告失败；
 - “默认显示 R18”是本机、默认关闭的界面开关，统一控制作品、小说及作者预览的受限内容遮罩，不改变 Pixiv 账号自身的内容范围；
 - Pixiv 站内通知、评论删除、投稿、私信、直播与多账号没有可靠的 App API 或不在客户端授权范围内，界面会明确标记而不伪造数据；
-- Android API 29；正式发布当前只提供 ARM64 APK，ARMv7 分离调试构建入口继续保留但暂不发布。
+- 首个稳定版的正式平台为 Windows x64、Linux x64 和 Android ARM64（Android API 29+）；ARMv7 分离调试入口继续保留，但暂缓正式发布。
 
 三种模式现在都能在 Android 打开官方登录页并完成回调处理：标准模式使用系统 TLS；ECH 和兼容模式经本地桥连接内置 Pixiv IP。ECH 模式的令牌交换重新使用强制 ECH 与证书验证；兼容模式的网页登录和令牌交换均关闭上游 SNI 与证书验证。桥不记录 HTTP 正文，但解密后的页面数据会经过应用内存。
 
@@ -98,7 +98,7 @@ cargo test --workspace
 
 ## 版本规则
 
-版本号使用 `主版本.功能版本.修复版本`：修复 bug 只增加第三位，新增功能增加第二位，只有不兼容的大改版才增加第一位。当前版本为 `0.29.0`。
+版本号使用 `主版本.功能版本.修复版本`：修复 bug 只增加第三位，新增功能增加第二位，只有不兼容的大改版才增加第一位。当前源码版本 `0.29.0` 是首个稳定版的候选基线；完成签名、更新源和三平台验收后，首个 stable 版本目标为 `1.0.0`。
 
 ## 当前开发路线
 
@@ -129,19 +129,19 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File F:\ACM\.toolchains\andro
 npm run tauri android init
 ```
 
-生成 ARM64 与 ARMv7 分离调试 APK：
-
-```powershell
-npm run tauri -- android build --debug --target aarch64 armv7 --split-per-abi --apk --ci
-```
-
-只构建 ARM64 并自动收集 APK：
+默认只构建当前候选范围内的 ARM64 调试 APK：
 
 ```powershell
 npm run build:android:arm64:debug
 ```
 
-只构建 ARMv7 并自动收集 APK：
+底层 Tauri 等价命令为：
+
+```powershell
+npm run tauri -- android build --debug --target aarch64 --split-per-abi --apk --ci
+```
+
+ARMv7 已暂缓，不得进入候选版或正式 Release。只有重新激活 32 位兼容性验证时，才手动使用保留的调试入口：
 
 ```powershell
 npm run build:android:armv7:debug
@@ -152,7 +152,7 @@ npm run build:android:armv7:debug
 产物位于：
 
 - `src-tauri/gen/android/app/build/outputs/apk/arm64/debug/app-arm64-debug.apk`
-- `src-tauri/gen/android/app/build/outputs/apk/arm/debug/app-arm-debug.apk`
+- `src-tauri/gen/android/app/build/outputs/apk/arm/debug/app-arm-debug.apk`（仅暂缓的 ARMv7 兼容性调试，非正式产物）
 
 对外测试时统一从以下目录取文件：
 
@@ -167,5 +167,7 @@ Linux 由 `scripts/check-linux.sh` 执行前端、Rust、测试与 Tauri 桌面�
 ## 许可证
 
 项目代码按 [GNU GPL-3.0-only](LICENSE) 发布。Pixiv 名称、商标与服务内容归其各自权利人所有；本项目与 pixiv Inc. 无隶属、授权或认可关系。
+
+第三方依赖的锁定清单、SPDX SBOM、离线许可证正文归档和正式发布要求见 [许可证与软件物料清单](docs/SUPPLY_CHAIN.md)。
 
 关于 PixEz 等参考项目与本项目代码之间的边界，见 [来源与独立实现说明](docs/PROVENANCE.md)。

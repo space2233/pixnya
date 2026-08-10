@@ -4,7 +4,6 @@ use base64::{engine::general_purpose::STANDARD, Engine as _};
 use minisign_verify::{PublicKey, Signature};
 use reqwest::{
     blocking::{Client, Response},
-    redirect::{Attempt, Policy},
     Url,
 };
 use semver::Version;
@@ -15,9 +14,12 @@ use std::{
     io::{Read, Write},
     path::{Path, PathBuf},
     sync::atomic::{AtomicBool, Ordering},
-    time::Duration,
 };
 use zip::ZipArchive;
+
+use crate::update_http::{
+    update_redirect_policy, UPDATE_CONNECT_TIMEOUT, UPDATE_REQUEST_TIMEOUT, UPDATE_USER_AGENT,
+};
 
 const PACKAGE_NAME: &str = "io.github.space2233.pixnya";
 const MANIFEST_SCHEMA_VERSION: u32 = 1;
@@ -82,17 +84,18 @@ struct AndroidUpdateArtifact {
 pub(crate) fn fetch_candidate(
     manifest_url: &str,
     public_key: &str,
+    repository: &str,
     current_version: &str,
     architecture: &str,
     runtime_sdk: u32,
 ) -> Result<Option<AndroidUpdateCandidate>, AndroidUpdateError> {
     let manifest_url = Url::parse(manifest_url).map_err(|_| AndroidUpdateError::InvalidManifest)?;
-    if !is_github_release_url(&manifest_url) {
+    if !crate::updates::is_github_release_url(&manifest_url, repository) {
         return Err(AndroidUpdateError::InvalidManifest);
     }
     let signature_url = Url::parse(&format!("{}.minisig", manifest_url.as_str()))
         .map_err(|_| AndroidUpdateError::InvalidManifest)?;
-    let client = update_client()?;
+    let client = update_client(repository)?;
     let manifest_bytes = fetch_bounded(&client, manifest_url, MAX_MANIFEST_BYTES)?;
     let signature_bytes = fetch_bounded(&client, signature_url, MAX_SIGNATURE_BYTES)?;
     let signature_text =
@@ -100,11 +103,18 @@ pub(crate) fn fetch_candidate(
     verify_manifest_signature(&manifest_bytes, signature_text, public_key)?;
     let manifest: AndroidUpdateManifest =
         serde_json::from_slice(&manifest_bytes).map_err(|_| AndroidUpdateError::InvalidManifest)?;
-    select_candidate(manifest, current_version, architecture, runtime_sdk)
+    select_candidate(
+        manifest,
+        repository,
+        current_version,
+        architecture,
+        runtime_sdk,
+    )
 }
 
 pub(crate) fn download_candidate<F>(
     candidate: &AndroidUpdateCandidate,
+    repository: &str,
     update_directory: &Path,
     cancelled: &AtomicBool,
     mut on_progress: F,
@@ -114,7 +124,7 @@ where
 {
     if candidate.size == 0
         || candidate.size > MAX_APK_BYTES
-        || !is_github_release_url(&candidate.url)
+        || !crate::updates::is_github_release_url(&candidate.url, repository)
     {
         return Err(AndroidUpdateError::InvalidManifest);
     }
@@ -133,7 +143,7 @@ where
     let staging = update_directory.join(format!("pixnya-{safe_version}-{safe_abi}.apk.part"));
     remove_owned_file_if_present(&staging)?;
 
-    let client = update_client()?;
+    let client = update_client(repository)?;
     let mut response = client
         .get(candidate.url.clone())
         .send()
@@ -201,6 +211,7 @@ where
 
 fn select_candidate(
     manifest: AndroidUpdateManifest,
+    repository: &str,
     current_version: &str,
     architecture: &str,
     runtime_sdk: u32,
@@ -242,7 +253,7 @@ fn select_candidate(
     if artifact.package_name != PACKAGE_NAME
         || artifact.size == 0
         || artifact.size > MAX_APK_BYTES
-        || !is_github_release_url(&url)
+        || !crate::updates::is_github_release_url(&url, repository)
     {
         return Err(AndroidUpdateError::InvalidManifest);
     }
@@ -301,25 +312,14 @@ fn decode_public_key(public_key_text: &str) -> Result<PublicKey, AndroidUpdateEr
     PublicKey::decode(decoded_text).map_err(|_| AndroidUpdateError::InvalidSignature)
 }
 
-fn update_client() -> Result<Client, AndroidUpdateError> {
+fn update_client(repository: &str) -> Result<Client, AndroidUpdateError> {
     Client::builder()
-        .connect_timeout(Duration::from_secs(15))
-        .timeout(Duration::from_secs(60))
-        .redirect(Policy::custom(validate_redirect))
-        .user_agent("PixNya-Updater/1")
+        .connect_timeout(UPDATE_CONNECT_TIMEOUT)
+        .timeout(UPDATE_REQUEST_TIMEOUT)
+        .redirect(update_redirect_policy(repository))
+        .user_agent(UPDATE_USER_AGENT)
         .build()
         .map_err(|_| AndroidUpdateError::Network)
-}
-
-fn validate_redirect(attempt: Attempt<'_>) -> reqwest::redirect::Action {
-    if attempt.previous().len() >= 5 {
-        return attempt.error("too many update redirects");
-    }
-    if is_allowed_download_url(attempt.url()) {
-        attempt.follow()
-    } else {
-        attempt.error("update redirect left the GitHub release origin")
-    }
 }
 
 fn fetch_bounded(client: &Client, url: Url, limit: u64) -> Result<Vec<u8>, AndroidUpdateError> {
@@ -353,22 +353,8 @@ fn ensure_success(response: &Response) -> Result<(), AndroidUpdateError> {
     }
 }
 
-fn is_github_release_url(url: &Url) -> bool {
-    url.scheme() == "https"
-        && url.host_str() == Some("github.com")
-        && url.port().is_none()
-        && url.username().is_empty()
-        && url.password().is_none()
-        && (url
-            .path()
-            .starts_with("/space2233/pixnya/releases/download/")
-            || url
-                .path()
-                .starts_with("/space2233/pixnya/releases/latest/download/"))
-}
-
-fn is_allowed_download_url(url: &Url) -> bool {
-    if is_github_release_url(url) {
+fn is_allowed_download_url(url: &Url, repository: &str) -> bool {
+    if crate::updates::is_github_release_url(url, repository) {
         return true;
     }
     url.scheme() == "https"
@@ -459,9 +445,10 @@ mod tests {
     use base64::{engine::general_purpose::STANDARD, Engine as _};
 
     use super::{
-        android_abi, decode_public_key, decode_signature, is_github_release_url, normalize_digest,
-        select_candidate, AndroidUpdateArtifact, AndroidUpdateError, AndroidUpdateManifest,
+        android_abi, decode_public_key, decode_signature, normalize_digest, select_candidate,
+        AndroidUpdateArtifact, AndroidUpdateError, AndroidUpdateManifest,
     };
+    use crate::updates::is_github_release_url;
 
     fn manifest() -> AndroidUpdateManifest {
         AndroidUpdateManifest {
@@ -486,7 +473,7 @@ mod tests {
 
     #[test]
     fn selects_only_the_runtime_abi_and_a_newer_stable_version() {
-        let candidate = select_candidate(manifest(), "0.25.0", "aarch64", 29)
+        let candidate = select_candidate(manifest(), "space2233/pixnya", "0.25.0", "aarch64", 29)
             .unwrap()
             .unwrap();
         assert_eq!(candidate.abi, "arm64-v8a");
@@ -498,23 +485,29 @@ mod tests {
         let mut value = manifest();
         value.version_code = 25_000;
         assert_eq!(
-            select_candidate(value, "0.25.0", "aarch64", 29),
+            select_candidate(value, "space2233/pixnya", "0.25.0", "aarch64", 29),
             Err(AndroidUpdateError::InvalidManifest)
         );
     }
 
     #[test]
-    fn release_urls_are_pinned_to_the_pixnya_repository() {
+    fn release_urls_are_pinned_to_the_configured_repository() {
         let accepted = reqwest::Url::parse(
-            "https://github.com/space2233/pixnya/releases/download/v0.26.0/android-latest.json",
+            "https://github.com/space2233/pixnya-releases/releases/download/v0.26.0/android-latest.json",
         )
         .unwrap();
         let rejected = reqwest::Url::parse(
-            "https://github.com/attacker/repository/releases/download/v1/pixnya.apk",
+            "https://github.com/space2233/pixnya/releases/download/v1/pixnya.apk",
         )
         .unwrap();
-        assert!(is_github_release_url(&accepted));
-        assert!(!is_github_release_url(&rejected));
+        assert!(is_github_release_url(
+            &accepted,
+            "space2233/pixnya-releases"
+        ));
+        assert!(!is_github_release_url(
+            &rejected,
+            "space2233/pixnya-releases"
+        ));
     }
 
     #[test]

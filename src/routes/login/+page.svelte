@@ -209,6 +209,7 @@
       launchResult = await invoke<LoginLaunchResult>("open_interactive_login", {
         mode,
         unsafeAcknowledged,
+        windowTitle: m.login_head_title(),
       });
       if (launchResult.target === "android_login_activity") {
         activeMobileLaunchId = launchResult.launchId;

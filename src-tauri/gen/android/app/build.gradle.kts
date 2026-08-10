@@ -1,4 +1,5 @@
 import java.util.Properties
+import org.gradle.api.artifacts.dsl.LockMode
 
 plugins {
     id("com.android.application")
@@ -90,7 +91,16 @@ rust {
     rootDirRel = "../../../"
 }
 
+dependencyLocking {
+    lockAllConfigurations()
+    lockMode.set(LockMode.STRICT)
+}
+
 dependencies {
+    // Tauri 2.11.5 currently requests Jackson 2.15.3. Pin a current patched
+    // release at the application boundary so the vulnerable transitive
+    // version is never packaged in the APK.
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.22.1")
     implementation("androidx.webkit:webkit:1.14.0")
     implementation("androidx.appcompat:appcompat:1.7.1")
     implementation("androidx.activity:activity-ktx:1.10.1")

@@ -1,7 +1,6 @@
 use crate::{ConnectionPolicy, ConnectionProbe, NetworkGateway, ProbeError, ProbeRequest};
 use pixiv_client_domain::{
-    ConnectionMode, PlatformCapabilities, RoutePlan, RouteRequest, TrafficClass, TransportRoute,
-    TransportSecurity,
+    ConnectionMode, PlatformCapabilities, RoutePlan, RouteRequest, TrafficClass,
 };
 use serde::Serialize;
 use std::net::IpAddr;
@@ -27,14 +26,6 @@ pub enum DiagnosticTarget {
 }
 
 impl DiagnosticTarget {
-    fn label(self) -> &'static str {
-        match self {
-            Self::Api => "API",
-            Self::Media => "图片",
-            Self::Login => "登录",
-        }
-    }
-
     fn host(self) -> &'static str {
         match self {
             Self::Api | Self::Login => API_HOST,
@@ -74,25 +65,6 @@ pub enum DiagnosticFailureKind {
     EchNotAccepted,
     ConnectionFailed,
     HttpProtocolError,
-}
-
-impl DiagnosticFailureKind {
-    fn label(self) -> &'static str {
-        match self {
-            Self::InvalidHost => "主机不在诊断白名单",
-            Self::UnsafeAcknowledgementRequired => "尚未确认低安全模式",
-            Self::EchUnavailable => "该目标不支持当前 ECH 路线",
-            Self::CompatibleDirectUnavailable => "低安全直连不可用",
-            Self::InsecureTransportForbidden => "敏感流量禁止低安全传输",
-            Self::WebViewProxyUnavailable => "WebView 代理不可用",
-            Self::WebViewTransportUnavailable => "WebView 只能由平台运行时检查",
-            Self::DnsQueryFailed => "加密 DNS 查询失败",
-            Self::EchConfigUnavailable => "ECH 配置不可用",
-            Self::EchNotAccepted => "服务器未接受 ECH",
-            Self::ConnectionFailed => "连接失败",
-            Self::HttpProtocolError => "HTTP 响应无效",
-        }
-    }
 }
 
 impl From<&ProbeError> for DiagnosticFailureKind {
@@ -139,7 +111,6 @@ pub struct ConnectionDiagnosticReport {
     pub capabilities: PlatformCapabilities,
     pub webview_proxy_active: bool,
     pub checks: Vec<DiagnosticCheck>,
-    pub text: String,
 }
 
 impl NetworkGateway {
@@ -214,7 +185,7 @@ impl ConnectionDiagnosticReport {
         capabilities: PlatformCapabilities,
         checks: Vec<DiagnosticCheck>,
     ) -> Self {
-        let mut report = Self {
+        Self {
             schema_version: 1,
             application_version: safe_metadata(context.application_version),
             platform: safe_metadata(context.platform),
@@ -223,77 +194,7 @@ impl ConnectionDiagnosticReport {
             capabilities,
             webview_proxy_active: context.webview_proxy_active,
             checks,
-            text: String::new(),
-        };
-        report.text = report.render_text();
-        report
-    }
-
-    fn render_text(&self) -> String {
-        let mut lines = vec![
-            "PixNya 连接诊断报告".to_owned(),
-            format!("报告格式: {}", self.schema_version),
-            format!("应用版本: {}", self.application_version),
-            format!("平台: {} / {}", self.platform, self.architecture),
-            format!("连接模式: {}", mode_label(self.mode)),
-            format!(
-                "能力: ECH={} 兼容直连={} WebView代理={} Android低安全桥={}",
-                yes_no(self.capabilities.rust_ech),
-                yes_no(self.capabilities.rust_compatible_direct),
-                yes_no(self.capabilities.webview_proxy),
-                yes_no(self.capabilities.webview_insecure_bridge),
-            ),
-            format!(
-                "WebView 代理当前应用: {}",
-                yes_no(self.webview_proxy_active)
-            ),
-            String::new(),
-        ];
-
-        for check in &self.checks {
-            let status = match check.status {
-                DiagnosticStatus::Reachable => "可连接",
-                DiagnosticStatus::Unreachable => "不可连接",
-                DiagnosticStatus::PlatformRouteReady => "平台路线已就绪（未代替 WebView 发起请求）",
-            };
-            lines.push(format!(
-                "[{}] {} · {}",
-                check.target.label(),
-                check.host,
-                status
-            ));
-            if let Some(route) = &check.route {
-                lines.push(format!(
-                    "  路线: {} · 安全性: {}",
-                    route_label(route.transport),
-                    security_label(route.security)
-                ));
-            }
-            if let Some(count) = check.candidate_address_count {
-                lines.push(format!("  候选地址: {count}"));
-            } else if check.target != DiagnosticTarget::Login {
-                lines.push("  候选地址: 由系统管理，应用不可见".to_owned());
-            }
-            if let Some(ip) = &check.connected_ip {
-                lines.push(format!("  实际连接: {ip}"));
-            }
-            if let Some(status) = check.http_status {
-                lines.push(format!("  HTTP: {status}"));
-            }
-            if let Some(latency) = check.latency_ms {
-                lines.push(format!("  延迟: {latency} ms"));
-            }
-            if let Some(failure) = check.failure {
-                lines.push(format!("  失败阶段: {}", failure.label()));
-            }
         }
-
-        lines.extend([
-            String::new(),
-            "隐私声明: 此报告只使用白名单主机与结构化状态。".to_owned(),
-            "不包含访问令牌、Cookie、OAuth URL、搜索词或浏览内容。".to_owned(),
-        ]);
-        lines.join("\n")
     }
 
     #[cfg(test)]
@@ -476,39 +377,4 @@ fn safe_ip(value: Option<String>) -> Option<String> {
         .parse::<IpAddr>()
         .ok()
         .map(|address| address.to_string())
-}
-
-fn mode_label(mode: ConnectionMode) -> &'static str {
-    match mode {
-        ConnectionMode::Standard => "标准",
-        ConnectionMode::Ech => "ECH",
-        ConnectionMode::Compatible => "低安全直连",
-    }
-}
-
-fn route_label(route: TransportRoute) -> &'static str {
-    match route {
-        TransportRoute::System => "系统网络",
-        TransportRoute::Ech => "TLS 1.3 + ECH",
-        TransportRoute::CompatibleDirect => "低安全直连",
-        TransportRoute::WebViewSystem => "WebView 系统网络",
-        TransportRoute::WebViewProxy => "WebView 本地代理",
-        TransportRoute::WebViewInsecureBridge => "WebView 低安全桥",
-    }
-}
-
-fn security_label(security: TransportSecurity) -> &'static str {
-    match security {
-        TransportSecurity::SystemTls => "系统 TLS 验证",
-        TransportSecurity::EchVerified => "ECH 已接受且证书已验证",
-        TransportSecurity::Insecure => "低安全（未验证上游证书）",
-    }
-}
-
-fn yes_no(value: bool) -> &'static str {
-    if value {
-        "是"
-    } else {
-        "否"
-    }
 }

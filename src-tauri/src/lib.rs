@@ -10,6 +10,7 @@ mod login_route;
 mod paths;
 mod secure_storage;
 mod session;
+mod update_http;
 mod updates;
 
 use catalog::{
@@ -236,6 +237,7 @@ struct LoginProxyEndpoint {
 struct LoginSurfaceRequest {
     launch_id: u64,
     mode: ConnectionMode,
+    window_title: String,
     authorization_url: tauri::Url,
     proxy_url: Option<tauri::Url>,
     proxy_port: Option<u16>,
@@ -945,6 +947,7 @@ fn create_login_attempt(
 async fn open_interactive_login(
     mode: ConnectionMode,
     unsafe_acknowledged: bool,
+    window_title: String,
     app: tauri::AppHandle,
     state: tauri::State<'_, InteractiveLoginState>,
 ) -> Result<LoginLaunchResult, LoginLaunchError> {
@@ -988,6 +991,7 @@ async fn open_interactive_login(
     };
 
     let launch_id = LOGIN_LAUNCH_SEQUENCE.fetch_add(1, Ordering::Relaxed);
+    let window_title = safe_window_title(window_title);
     let prepared_oauth_client = begin_oauth_client_preparation(mode, unsafe_acknowledged);
     {
         let mut pending = state
@@ -1007,6 +1011,7 @@ async fn open_interactive_login(
         LoginSurfaceRequest {
             launch_id,
             mode,
+            window_title,
             authorization_url,
             proxy_url: proxy.url,
             proxy_port: proxy.port,
@@ -1046,6 +1051,18 @@ async fn open_interactive_login(
         ech_preflight,
         proxy_active,
     })
+}
+
+fn safe_window_title(window_title: String) -> String {
+    let window_title = window_title.trim();
+    if window_title.is_empty()
+        || window_title.chars().count() > 80
+        || window_title.chars().any(char::is_control)
+    {
+        "PixNya".to_owned()
+    } else {
+        window_title.to_owned()
+    }
 }
 
 fn build_authorization_url(attempt: &LoginAttempt) -> Result<tauri::Url, LoginLaunchError> {
@@ -1134,6 +1151,7 @@ async fn open_login_surface(
     let LoginSurfaceRequest {
         launch_id,
         mode,
+        window_title,
         authorization_url,
         proxy_url,
         proxy_port: _proxy_port,
@@ -1158,7 +1176,7 @@ async fn open_login_surface(
         label.clone(),
         tauri::WebviewUrl::External(authorization_url),
     )
-    .title("Pixiv 官方登录")
+    .title(window_title)
     .inner_size(520.0, 760.0)
     .min_inner_size(420.0, 620.0)
     .center()
@@ -1225,6 +1243,7 @@ async fn open_login_surface(
     let LoginSurfaceRequest {
         launch_id,
         mode,
+        window_title: _window_title,
         authorization_url,
         proxy_url: _proxy_url,
         proxy_port,

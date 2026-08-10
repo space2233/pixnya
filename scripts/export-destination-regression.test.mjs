@@ -65,7 +65,10 @@ test("download worker exports before completion and settings expose manual recov
   ]);
   assert.match(downloads, /auto_export_offline_entry\(&app, &entry_key\)[\s\S]*?mark_completed/);
   assert.match(types, /export interface ExportDestinationStatus/);
-  assert.match(api, /invoke<ExportDestinationSelection>\("select_export_destination"\)/);
+  assert.match(
+    api,
+    /invoke<ExportDestinationSelection>\("select_export_destination", \{ title \}\)/,
+  );
   assert.match(api, /invoke<OfflineExportResult>\("export_offline_entry"/);
   assert.match(settings, /m\.settings_export_directory\(\)/);
   assert.match(settings, /m\.settings_auto_export\(\)/);

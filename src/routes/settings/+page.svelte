@@ -214,7 +214,7 @@
     exportDestinationNotice = null;
     exportDestinationNoticeIsError = false;
     try {
-      const selection = await selectExportDestination();
+      const selection = await selectExportDestination(m.settings_export_directory());
       exportDestination = selection.status;
       if (!selection.cancelled) {
         exportDestinationNotice = m.settings_export_authorized();

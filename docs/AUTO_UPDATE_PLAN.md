@@ -6,7 +6,7 @@
 
 首个正式版的逐项发布状态与人工验收记录见[首个正式版发布清单](FIRST_STABLE_RELEASE_CHECKLIST.md)。
 
-已确认：产品名为 **PixNya**；最终应用 ID 为 `io.github.space2233.pixnya`；更新源使用 GitHub Releases；Android 交给系统安装组件，并始终保留用户确认。当前版本为 `0.29.0`。
+已确认：产品名为 **PixNya**；最终应用 ID 为 `io.github.space2233.pixnya`；更新源使用 GitHub Releases；Android 交给系统安装组件，并始终保留用户确认。当前候选基线为 `0.29.0`，首个稳定版目标为 `1.0.0`。
 
 ## 1. 产品定义
 
@@ -16,11 +16,11 @@
 2. **自动下载**：发现稳定版后，根据用户设置下载正确平台和架构的产物，并显示进度、大小和发布说明。
 3. **安装更新**：Windows/Linux 在用户确认后交给桌面 updater 安装；Android 交给系统安装器，始终准备处理用户确认和“允许此来源安装应用”的系统设置。
 
-默认建议：自动检查开启；自动下载关闭；从不静默安装。首版只提供 `stable` 通道，不做灰度、测试通道和降级。
+默认建议：自动检查开启；自动下载关闭；从不静默安装。首个稳定版只提供 `stable` 通道，不做灰度、测试通道和降级。
 
 ## 2. 平台路线
 
-| 平台 | 检查与下载 | 安装 | 首版限制 |
+| 平台 | 检查与下载 | 安装 | 首个稳定版限制 |
 |---|---|---|---|
 | Windows x64 | Tauri updater + GitHub Releases `latest.json` | NSIS `passive`，应用内确认后执行 | 不再用裸 Debug EXE 作为更新产物 |
 | Linux x64 | Tauri updater + 同一桌面清单 | AppImage 更新后重启 | deb/rpm 只提示前往发布页，暂不自更新 |
@@ -72,7 +72,7 @@ pub trait UpdateManager {
 
 ## 4. 发布源与清单
 
-首版推荐 GitHub Releases，不建设自有更新服务器。每个稳定版发布以下文件：
+首个稳定版使用 GitHub Releases，不建设自有更新服务器。每个稳定版发布以下文件：
 
 - Windows NSIS 更新包及 Tauri `.sig`；
 - Linux AppImage 及 Tauri `.sig`；
@@ -108,7 +108,7 @@ Android 清单至少包含：schema 版本、`versionName`、`versionCode`、发
 - 下载进度、重试、取消和“安装并重启/打开系统安装器”；
 - 检查失败只显示可重试状态，不阻塞正常使用。
 
-首版不提供“自动静默安装”开关。安全更新可以提高提示显著性，但仍不绕过用户确认。
+首个稳定版不提供“自动静默安装”开关。安全更新可以提高提示显著性，但仍不绕过用户确认。
 
 ## 7. 实施顺序
 
@@ -139,7 +139,7 @@ Android 清单至少包含：schema 版本、`versionName`、`versionCode`、发
 
 ### 阶段 E：发布闸门
 
-- 从旧一版分别更新到当前版，验证 Windows、Linux 和 Android ARM64。
+- 从 `0.29.0` 签名候选基线分别更新到 `1.0.0`，验证 Windows x64、Linux x64 和 Android ARM64。
 - 确认签名错误、HTTP、降级和错误架构全部 fail closed。
 - 确认更新检查不会携带 Pixiv token、Cookie 或账号标识。
 
@@ -160,7 +160,7 @@ Android 清单至少包含：schema 版本、`versionName`、`versionCode`、发
 2. [x] 源码仓库已确定为私有仓库 `space2233/pixnya`，本地 `origin` 已连接。
 3. [ ] 确定匿名可访问的正式更新发布源；私人仓库 Release 不能直接作为无凭据客户端的稳定更新源，禁止在应用中内置 GitHub 私人访问令牌。
 4. [ ] Windows 确认以 NSIS 安装包作为正式分发和更新格式。
-5. [ ] Linux 确认首版只有 AppImage 能应用内自动安装更新。
+5. [ ] Linux 确认首个稳定版只有 AppImage 能应用内自动安装更新。
 6. [x] Android 使用“自动检查，可选自动下载，系统确认安装”，不追求静默安装。
 7. [x] 自动检查默认开启、自动下载默认关闭。
 
@@ -173,20 +173,36 @@ Android 清单至少包含：schema 版本、`versionName`、`versionCode`、发
 - [x] Android 注册系统安装 Adapter，限制 APK 位于应用私有更新目录，并引导未知来源授权与系统确认。
 - [x] 正式端点使用编译期配置，并建立只创建 Draft Release 的签名发布工作流。
 - [x] Draft Release 在签名构建前强制运行前端/Rust 全量检查，并反查 APK 包名、版本、ABI、证书及桌面/Android 签名公私钥配对。
-- [ ] 生成并离线备份 Tauri updater 私钥、Android Release keystore 与 Android 清单签名密钥。
+- [x] 更新仓库由编译期 `PIXNYA_UPDATE_REPOSITORY` 绑定；端点、下载重定向和两类清单拒绝跨仓库资源。
+- [x] 发布流水线阻断 npm 高危和 RustSec advisory，并附带 GPL 正文、第三方许可证清单、逐依赖许可证正文归档、SPDX SBOM 与固定提交源码归档。
+- [x] Tauri updater 私钥、Android Release keystore 与 Android 清单签名密钥已生成，已上传受保护的环境 Secrets，并已完成两份加密离线备份。
 - [x] 完成桌面下载/安装以及 Android 清单验证、下载与系统安装链路。
-- [ ] 使用生产签名从旧版本升级到当前版，完成 Windows、Linux、Android ARM64 真机回归。
+- [ ] 使用生产签名从 `0.29.0` 候选基线升级到 `1.0.0`，完成 Windows x64、Linux x64、Android ARM64 真机回归。
 
 ## 11. 发布配置
 
-### 生产发布前需要配置的 GitHub Actions Secrets
+### 生产发布前需要配置的 GitHub Environment Secrets
+
+所有生产签名与 OAuth 参数放在 `production-release` 环境中，而不是普通仓库级 Secret。Windows、Linux、Android 和最终 Draft job 都显式引用该环境。该环境已经只允许 `main` 分支；当前私人仓库套餐不支持 required reviewers，主仓库公开后、发布 stable 前必须再启用维护者审核。
 
 - Pixiv 构建参数：`PIXIV_OAUTH_CLIENT_ID`、`PIXIV_OAUTH_CLIENT_SECRET`、`PIXIV_OAUTH_HASH_SALT`。
 - 桌面更新签名：`TAURI_SIGNING_PRIVATE_KEY`、`TAURI_SIGNING_PRIVATE_KEY_PASSWORD`、`PIXNYA_UPDATER_PUBKEY`。
 - Android APK 签名：`PIXNYA_ANDROID_KEYSTORE_BASE64`、`PIXNYA_ANDROID_KEYSTORE_PASSWORD`、`PIXNYA_ANDROID_KEY_ALIAS`、`PIXNYA_ANDROID_KEY_PASSWORD`。
 - Android 清单签名：`PIXNYA_ANDROID_MANIFEST_PRIVATE_KEY_BASE64`、`PIXNYA_ANDROID_MANIFEST_PRIVATE_KEY_PASSWORD`、`PIXNYA_ANDROID_UPDATE_PUBKEY`。其中公钥使用完整 minisign 公钥文件的 Base64，避免多行 Secret 注入出错。
 
-工作流只接受手动触发并创建 Draft Release。人工核对产物、签名、安装升级和清单后才能发布；仓库仍为私人状态时，匿名客户端无法读取 Release，因此生产更新检查保持未配置状态，不向客户端内置 GitHub Token。
+在项目根目录运行以下交互式脚本，可在 Git 工作树之外的临时 staging 目录生成并验密三套长期签名材料，全部成功后才原子移动到恢复目录；添加 `-UploadSecrets` 后会读取 `.env.oauth.local` 并通过标准输入上传全部 `production-release` 环境 Secrets。四个密码只在内存与进程环境中短暂存在，必须由维护者保存到密码管理器；生成目录随后至少复制到两份加密离线介质。
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\provision-release-signing.ps1 -UploadSecrets
+```
+
+若密钥已经成功落盘、但 GitHub 上传中途失败，不要重新生成或删除密钥。使用相同四个密码运行恢复模式；脚本会重新签名验密 Tauri 私钥、导入验证 Android 私钥、核对证书指纹与公钥格式，再幂等覆盖全部 13 个环境 Secret 并检查名称完整性：
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\provision-release-signing.ps1 -UploadSecrets -UploadExisting
+```
+
+官方工作流只接受手动触发、只创建当前源码仓库的 Draft Release，并将源码、tag、显式源码归档和匿名更新附件保持在同一信任边界。人工核对产物、签名、安装升级和清单后才能发布；`1.0.0` 及更高版本会在预检阶段要求仓库可匿名读取。仓库仍为私人状态时可以生成 `0.x` 签名候选基线，但不能发布 stable，也不向客户端内置 GitHub Token。`PIXNYA_UPDATE_REPOSITORY` 仍供分支或复刻项目在自有工作流中编译期配置。
 
 ## 12. 官方依据
 
