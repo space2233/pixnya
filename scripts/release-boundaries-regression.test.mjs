@@ -290,6 +290,9 @@ test("formal releases are gated by main-branch full verification and signed arti
   assert.ok(assetsVerified < tagReserved, "all release assets must be verified before reserving the tag");
   assert.ok(tagReserved < releaseCreated, "the exact tag must be reserved before creating the draft release");
   assert.ok(releaseCreated < bindingVerified, "the tag and draft release binding must be checked after upload");
+  assert.match(workflow, /id:\s+draft_release/);
+  assert.match(workflow, /RELEASE_ID:\s+\$\{\{\s*steps\.draft_release\.outputs\.id\s*\}\}/);
+  assert.match(workflow, /releases\/\$\{RELEASE_ID\}/);
 });
 
 test("stable release notes disclose every public distribution boundary", async () => {
