@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "gradleFingerprint": "sha256:0163af73d05fad72b869d91fac01621bfa1d2603abf2c19be5a02a2afd89893b",
+  "gradleFingerprint": "sha256:f31ead0c4cca7e177657fb0cbc88cc0d18fd172cf63f0cb509ddaa1530e9c373",
   "components": [
     {
       "coordinate": "androidx.activity:activity-ktx:1.10.1",
@@ -2549,25 +2549,6 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "com.github.ben-manes.caffeine:caffeine:2.9.3",
-      "declaredLicense": "Apache License, Version 2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://github.com/ben-manes/caffeine",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "6fa4f1c10192806f8ef05b5d4be7bd9f5ce58b876f64364d4e90c3fc092323dc",
-        "sourceCoordinate": "com.github.ben-manes.caffeine:caffeine:2.9.3",
-        "sourcePomSha256": "6fa4f1c10192806f8ef05b5d4be7bd9f5ce58b876f64364d4e90c3fc092323dc",
-        "declaredLicenses": [
-          {
-            "name": "Apache License, Version 2.0",
-            "url": "https://www.apache.org/licenses/LICENSE-2.0.txt"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
       "coordinate": "com.google.android:annotations:4.1.1.4",
       "declaredLicense": "Apache 2.0",
       "spdxLicense": "Apache-2.0",
@@ -3640,25 +3621,6 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "io.github.java-diff-utils:java-diff-utils:4.12",
-      "declaredLicense": "The Apache Software License, Version 2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://github.com/java-diff-utils/java-diff-utils",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "c26e097edc8ec6805d1319817d23d4e496cc1015cc55dc5202112d8f6a9165fc",
-        "sourceCoordinate": "io.github.java-diff-utils:java-diff-utils-parent:4.12",
-        "sourcePomSha256": "d811cf9f118cc2cad130c9427ad55c174d4c0a6f1a00ac1ae1c9bcbec5c44b19",
-        "declaredLicenses": [
-          {
-            "name": "The Apache Software License, Version 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
       "coordinate": "io.grpc:grpc-api:1.57.2",
       "declaredLicense": "Apache 2.0",
       "spdxLicense": "Apache-2.0",
@@ -4438,44 +4400,6 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "io.opentelemetry:opentelemetry-api:1.41.0",
-      "declaredLicense": "The Apache License, Version 2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://github.com/open-telemetry/opentelemetry-java",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "bc1ef0f77b3bd6db0b7a6f1652fdb421698a0e54374504a7419fb1beb4562993",
-        "sourceCoordinate": "io.opentelemetry:opentelemetry-api:1.41.0",
-        "sourcePomSha256": "bc1ef0f77b3bd6db0b7a6f1652fdb421698a0e54374504a7419fb1beb4562993",
-        "declaredLicenses": [
-          {
-            "name": "The Apache License, Version 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
-      "coordinate": "io.opentelemetry:opentelemetry-context:1.41.0",
-      "declaredLicense": "The Apache License, Version 2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://github.com/open-telemetry/opentelemetry-java",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "cb3b396259983429594d62e476675cc00bb252c90d314d647a9b56dec23e5526",
-        "sourceCoordinate": "io.opentelemetry:opentelemetry-context:1.41.0",
-        "sourcePomSha256": "cb3b396259983429594d62e476675cc00bb252c90d314d647a9b56dec23e5526",
-        "declaredLicenses": [
-          {
-            "name": "The Apache License, Version 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
       "coordinate": "io.perfmark:perfmark-api:0.26.0",
       "declaredLicense": "Apache 2.0",
       "spdxLicense": "Apache-2.0",
@@ -4832,39 +4756,6 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.bouncycastle:bcpg-jdk18on:1.80",
-      "declaredLicense": "Bouncy Castle Licence OR Apache Software License, Version 2.0",
-      "spdxLicense": "LicenseRef-Bouncy-Castle OR Apache-2.0",
-      "projectUrl": "https://www.bouncycastle.org/download/bouncy-castle-java/",
-      "licenseEvidence": {
-        "classification": "reviewed-with-license-ref",
-        "componentPomSha256": "07a246c2adafb628783a1ae84ac18d4df4025df06ae3634dfe9387ab94f9ea74",
-        "sourceCoordinate": "org.bouncycastle:bcpg-jdk18on:1.80",
-        "sourcePomSha256": "07a246c2adafb628783a1ae84ac18d4df4025df06ae3634dfe9387ab94f9ea74",
-        "declaredLicenses": [
-          {
-            "name": "Bouncy Castle Licence",
-            "url": "https://www.bouncycastle.org/licence.html"
-          },
-          {
-            "name": "Apache Software License, Version 2.0",
-            "url": "https://www.apache.org/licenses/LICENSE-2.0"
-          }
-        ]
-      },
-      "licenseReferences": [
-        {
-          "licenseId": "LicenseRef-Bouncy-Castle",
-          "name": "Bouncy Castle Licence",
-          "classification": "upstream-metadata-only",
-          "extractedText": "Upstream Maven metadata identifies this component under the Bouncy Castle Licence and records the official terms URL. The declaration is retained as a LicenseRef instead of assuming equivalence to a standardized SPDX license.",
-          "seeAlso": [
-            "https://www.bouncycastle.org/licence.html"
-          ]
-        }
-      ]
-    },
-    {
       "coordinate": "org.bouncycastle:bcpkix-jdk18on:1.79",
       "declaredLicense": "Bouncy Castle Licence",
       "spdxLicense": "LicenseRef-Bouncy-Castle",
@@ -4874,35 +4765,6 @@
         "componentPomSha256": "35e49f4134de2ac326c3a50a25762cbb4db56f3802fa3f730cc85b653ad0987b",
         "sourceCoordinate": "org.bouncycastle:bcpkix-jdk18on:1.79",
         "sourcePomSha256": "35e49f4134de2ac326c3a50a25762cbb4db56f3802fa3f730cc85b653ad0987b",
-        "declaredLicenses": [
-          {
-            "name": "Bouncy Castle Licence",
-            "url": "https://www.bouncycastle.org/licence.html"
-          }
-        ]
-      },
-      "licenseReferences": [
-        {
-          "licenseId": "LicenseRef-Bouncy-Castle",
-          "name": "Bouncy Castle Licence",
-          "classification": "upstream-metadata-only",
-          "extractedText": "Upstream Maven metadata identifies this component under the Bouncy Castle Licence and records the official terms URL. The declaration is retained as a LicenseRef instead of assuming equivalence to a standardized SPDX license.",
-          "seeAlso": [
-            "https://www.bouncycastle.org/licence.html"
-          ]
-        }
-      ]
-    },
-    {
-      "coordinate": "org.bouncycastle:bcpkix-jdk18on:1.80",
-      "declaredLicense": "Bouncy Castle Licence",
-      "spdxLicense": "LicenseRef-Bouncy-Castle",
-      "projectUrl": "https://www.bouncycastle.org/download/bouncy-castle-java/",
-      "licenseEvidence": {
-        "classification": "reviewed-with-license-ref",
-        "componentPomSha256": "a4a122113467b728e18f26fb0cfd57f0b1a0d7c4a53b86718ace70bf8b86ed47",
-        "sourceCoordinate": "org.bouncycastle:bcpkix-jdk18on:1.80",
-        "sourcePomSha256": "a4a122113467b728e18f26fb0cfd57f0b1a0d7c4a53b86718ace70bf8b86ed47",
         "declaredLicenses": [
           {
             "name": "Bouncy Castle Licence",
@@ -4952,35 +4814,6 @@
       ]
     },
     {
-      "coordinate": "org.bouncycastle:bcprov-jdk18on:1.80.2",
-      "declaredLicense": "Bouncy Castle Licence",
-      "spdxLicense": "LicenseRef-Bouncy-Castle",
-      "projectUrl": "https://www.bouncycastle.org/download/bouncy-castle-java/",
-      "licenseEvidence": {
-        "classification": "reviewed-with-license-ref",
-        "componentPomSha256": "12a505a717a3bc7647f7d8edea77732c9c6dcb53c4df62a3bb58b7a54228a28f",
-        "sourceCoordinate": "org.bouncycastle:bcprov-jdk18on:1.80.2",
-        "sourcePomSha256": "12a505a717a3bc7647f7d8edea77732c9c6dcb53c4df62a3bb58b7a54228a28f",
-        "declaredLicenses": [
-          {
-            "name": "Bouncy Castle Licence",
-            "url": "https://www.bouncycastle.org/licence.html"
-          }
-        ]
-      },
-      "licenseReferences": [
-        {
-          "licenseId": "LicenseRef-Bouncy-Castle",
-          "name": "Bouncy Castle Licence",
-          "classification": "upstream-metadata-only",
-          "extractedText": "Upstream Maven metadata identifies this component under the Bouncy Castle Licence and records the official terms URL. The declaration is retained as a LicenseRef instead of assuming equivalence to a standardized SPDX license.",
-          "seeAlso": [
-            "https://www.bouncycastle.org/licence.html"
-          ]
-        }
-      ]
-    },
-    {
       "coordinate": "org.bouncycastle:bcutil-jdk18on:1.79",
       "declaredLicense": "Bouncy Castle Licence",
       "spdxLicense": "LicenseRef-Bouncy-Castle",
@@ -4990,35 +4823,6 @@
         "componentPomSha256": "e24c1fb4cf1605405a6988e9e4d6e4b2e1f4393fc73a89a9452ae625ee311d02",
         "sourceCoordinate": "org.bouncycastle:bcutil-jdk18on:1.79",
         "sourcePomSha256": "e24c1fb4cf1605405a6988e9e4d6e4b2e1f4393fc73a89a9452ae625ee311d02",
-        "declaredLicenses": [
-          {
-            "name": "Bouncy Castle Licence",
-            "url": "https://www.bouncycastle.org/licence.html"
-          }
-        ]
-      },
-      "licenseReferences": [
-        {
-          "licenseId": "LicenseRef-Bouncy-Castle",
-          "name": "Bouncy Castle Licence",
-          "classification": "upstream-metadata-only",
-          "extractedText": "Upstream Maven metadata identifies this component under the Bouncy Castle Licence and records the official terms URL. The declaration is retained as a LicenseRef instead of assuming equivalence to a standardized SPDX license.",
-          "seeAlso": [
-            "https://www.bouncycastle.org/licence.html"
-          ]
-        }
-      ]
-    },
-    {
-      "coordinate": "org.bouncycastle:bcutil-jdk18on:1.80.2",
-      "declaredLicense": "Bouncy Castle Licence",
-      "spdxLicense": "LicenseRef-Bouncy-Castle",
-      "projectUrl": "https://www.bouncycastle.org/download/bouncy-castle-java/",
-      "licenseEvidence": {
-        "classification": "reviewed-with-license-ref",
-        "componentPomSha256": "2688be1af499d525096114cc2f51c7a7a4ca23c3d27317b71e18c1c96bec03d1",
-        "sourceCoordinate": "org.bouncycastle:bcutil-jdk18on:1.80.2",
-        "sourcePomSha256": "2688be1af499d525096114cc2f51c7a7a4ca23c3d27317b71e18c1c96bec03d1",
         "declaredLicenses": [
           {
             "name": "Bouncy Castle Licence",
@@ -5316,44 +5120,6 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jetbrains.kotlin:abi-tools-api:2.2.21",
-      "declaredLicense": "Apache-2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://kotlinlang.org/",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "92490acca0f450581d56ce057961d8ffa9835587e69f66e96d0a7175bacecd85",
-        "sourceCoordinate": "org.jetbrains.kotlin:abi-tools-api:2.2.21",
-        "sourcePomSha256": "92490acca0f450581d56ce057961d8ffa9835587e69f66e96d0a7175bacecd85",
-        "declaredLicenses": [
-          {
-            "name": "Apache-2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
-      "coordinate": "org.jetbrains.kotlin:abi-tools:2.2.21",
-      "declaredLicense": "Apache-2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://kotlinlang.org/",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "953d6734472b99889402704567145f6cd9d0141e12724435c902c34569682cdc",
-        "sourceCoordinate": "org.jetbrains.kotlin:abi-tools:2.2.21",
-        "sourcePomSha256": "953d6734472b99889402704567145f6cd9d0141e12724435c902c34569682cdc",
-        "declaredLicenses": [
-          {
-            "name": "Apache-2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
       "coordinate": "org.jetbrains.kotlin:kotlin-android-extensions:1.9.25",
       "declaredLicense": "The Apache License, Version 2.0",
       "spdxLicense": "Apache-2.0",
@@ -5563,25 +5329,6 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jetbrains.kotlin:kotlin-compiler-embeddable:2.2.21",
-      "declaredLicense": "Apache-2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://kotlinlang.org/",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "0b33c64f2622ba3bc8283378bdb7505f2be330a2275807038ad54359b33ddf9b",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-compiler-embeddable:2.2.21",
-        "sourcePomSha256": "0b33c64f2622ba3bc8283378bdb7505f2be330a2275807038ad54359b33ddf9b",
-        "declaredLicenses": [
-          {
-            "name": "Apache-2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
       "coordinate": "org.jetbrains.kotlin:kotlin-compiler-runner:1.9.25",
       "declaredLicense": "The Apache License, Version 2.0",
       "spdxLicense": "Apache-2.0",
@@ -5689,25 +5436,6 @@
         "declaredLicenses": [
           {
             "name": "The Apache License, Version 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
-      "coordinate": "org.jetbrains.kotlin:kotlin-daemon-embeddable:2.2.21",
-      "declaredLicense": "Apache-2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://kotlinlang.org/",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "170bdbecba57ff00a2b8d17ef2c79e08b85f67df69d853ba0a259a4183bfb923",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-daemon-embeddable:2.2.21",
-        "sourcePomSha256": "170bdbecba57ff00a2b8d17ef2c79e08b85f67df69d853ba0a259a4183bfb923",
-        "declaredLicenses": [
-          {
-            "name": "Apache-2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
           }
         ]
@@ -5905,25 +5633,6 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jetbrains.kotlin:kotlin-metadata-jvm:2.2.21",
-      "declaredLicense": "Apache-2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://kotlinlang.org/",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "4cb6bd5de8aed7293a8befae7a900c3c36ac927c4094cc7027f4ab58cd6b3c9d",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-metadata-jvm:2.2.21",
-        "sourcePomSha256": "4cb6bd5de8aed7293a8befae7a900c3c36ac927c4094cc7027f4ab58cd6b3c9d",
-        "declaredLicenses": [
-          {
-            "name": "Apache-2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
       "coordinate": "org.jetbrains.kotlin:kotlin-native-utils:1.9.25",
       "declaredLicense": "The Apache License, Version 2.0",
       "spdxLicense": "Apache-2.0",
@@ -6088,25 +5797,6 @@
         "declaredLicenses": [
           {
             "name": "The Apache License, Version 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
-      "coordinate": "org.jetbrains.kotlin:kotlin-script-runtime:2.2.21",
-      "declaredLicense": "Apache-2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://kotlinlang.org/",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "8767a540fc5dbe20b7e1283a95f510297e6c0c98b2eac2edc4d0612a2d0f2eaf",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-script-runtime:2.2.21",
-        "sourcePomSha256": "8767a540fc5dbe20b7e1283a95f510297e6c0c98b2eac2edc4d0612a2d0f2eaf",
-        "declaredLicenses": [
-          {
-            "name": "Apache-2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
           }
         ]
@@ -6532,25 +6222,6 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jetbrains.kotlin:kotlin-stdlib:2.2.21",
-      "declaredLicense": "Apache-2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://kotlinlang.org/",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "cf31f923196c63aedecd0a57c24269bd3702a4e47c0bf0bd64b5ada5de522272",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-stdlib:2.2.21",
-        "sourcePomSha256": "cf31f923196c63aedecd0a57c24269bd3702a4e47c0bf0bd64b5ada5de522272",
-        "declaredLicenses": [
-          {
-            "name": "Apache-2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
       "coordinate": "org.jetbrains.kotlin:kotlin-tooling-core:1.9.25",
       "declaredLicense": "The Apache License, Version 2.0",
       "spdxLicense": "Apache-2.0",
@@ -6601,25 +6272,6 @@
         "declaredLicenses": [
           {
             "name": "The Apache License, Version 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
-      "coordinate": "org.jetbrains.kotlin:swift-export-embeddable:2.2.21",
-      "declaredLicense": "Apache-2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://kotlinlang.org/",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "aee9b4c63454f0cb1415d965b776c17476567832b24320f4ce3c5fa78f6bd9ae",
-        "sourceCoordinate": "org.jetbrains.kotlin:swift-export-embeddable:2.2.21",
-        "sourcePomSha256": "aee9b4c63454f0cb1415d965b776c17476567832b24320f4ce3c5fa78f6bd9ae",
-        "declaredLicenses": [
-          {
-            "name": "Apache-2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
           }
         ]
@@ -6769,25 +6421,6 @@
         "componentPomSha256": "753858753decbbb2397343e2b871f062f697812e9422e41c9ee46a66b93eee30",
         "sourceCoordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.7.3",
         "sourcePomSha256": "753858753decbbb2397343e2b871f062f697812e9422e41c9ee46a66b93eee30",
-        "declaredLicenses": [
-          {
-            "name": "The Apache Software License, Version 2.0",
-            "url": "https://www.apache.org/licenses/LICENSE-2.0.txt"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
-      "coordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.0",
-      "declaredLicense": "The Apache Software License, Version 2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://github.com/Kotlin/kotlinx.coroutines",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "a5633abd53467ceb91622d81f2e982080877145e0b76e1b75788715434885d0b",
-        "sourceCoordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.0",
-        "sourcePomSha256": "a5633abd53467ceb91622d81f2e982080877145e0b76e1b75788715434885d0b",
         "declaredLicenses": [
           {
             "name": "The Apache Software License, Version 2.0",

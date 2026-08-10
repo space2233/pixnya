@@ -138,13 +138,15 @@ jobs:
         run: cargo fetch --locked
       - name: Install the pinned Android SDK used by the locked graph
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - name: Generate the ignored Tauri Android Gradle bridge from the locked graph
+        run: node scripts/generate-tauri-android-gradle-bridge.mjs
       - name: Resolve and prove the locked Android Gradle and Maven graph
         shell: bash
         run: |
           chmod +x src-tauri/gen/android/gradlew
           pushd src-tauri/gen/android
-          ./gradlew --no-daemon :app:dependencies buildEnvironment
-          ./gradlew --no-daemon --offline :app:dependencies buildEnvironment
+          ./gradlew --no-daemon :app:resolveLockedDependencies buildEnvironment
+          ./gradlew --no-daemon --offline :app:resolveLockedDependencies buildEnvironment
           popd
           node scripts/complete-gradle-pom-verification.mjs --check
           node scripts/generate-gradle-license-review.mjs \

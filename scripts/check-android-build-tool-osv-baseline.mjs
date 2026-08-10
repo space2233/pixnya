@@ -38,18 +38,6 @@ export const scopeDefinitions = Object.freeze([
     configurationPolicy: "prefix:_internal-unified-test-platform-",
     packagedInArm64Runtime: false,
   },
-  {
-    id: "android-kotlin-bouncycastle-build-tools",
-    lockfile: "src-tauri/gen/android/app/gradle.lockfile",
-    configurationPolicy: "exact:kotlinBouncyCastleConfiguration",
-    packagedInArm64Runtime: false,
-  },
-  {
-    id: "android-kotlin-swift-export-build-tools",
-    lockfile: "src-tauri/gen/android/app/gradle.lockfile",
-    configurationPolicy: "exact:swiftExportClasspathResolvable",
-    packagedInArm64Runtime: false,
-  },
 ]);
 
 const scopeById = new Map(scopeDefinitions.map((scope) => [scope.id, scope]));
@@ -307,16 +295,6 @@ function chainFor(finding) {
   if (finding.scopes.includes("android-internal-unified-test-platform")) {
     chain.push("Android Gradle Plugin Unified Test Platform internal configuration");
   }
-  if (
-    finding.scopes.some((scope) =>
-      [
-        "android-kotlin-bouncycastle-build-tools",
-        "android-kotlin-swift-export-build-tools",
-      ].includes(scope),
-    )
-  ) {
-    chain.push("Kotlin Gradle Plugin build-only tooling configuration");
-  }
   chain.push(`${finding.mavenCoordinate}:${finding.version}`);
   return chain;
 }
@@ -337,9 +315,7 @@ function reasonFor(finding) {
             ? "No release task accepts or validates an external JWT with this build-only jose4j copy."
             : finding.mavenCoordinate === "org.jdom:jdom2"
               ? "No release task parses user-supplied XML with this build-only JDOM copy; project XML is repository controlled."
-              : finding.mavenCoordinate === "io.opentelemetry:opentelemetry-api"
-                ? "The Swift export tooling configuration is not executed by the Android ARM64 release build."
-                : "The affected code path is not executed by the reviewed Android ARM64 release tasks.";
+            : "The affected code path is not executed by the reviewed Android ARM64 release tasks.";
   return (
     `The coordinate is confined to ${locations}; it is absent from ` +
     "arm64ReleaseRuntimeClasspath and is not packaged in the APK. " +

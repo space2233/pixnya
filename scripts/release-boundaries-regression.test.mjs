@@ -75,7 +75,13 @@ test("Linux verification compiles the actual Tauri desktop target", async () => 
 });
 
 test("formal releases are gated by main-branch full verification and signed artifact checks", async () => {
-  const workflow = await read(".github/workflows/release.yml");
+  const [workflow, androidBridgeGenerator, androidIgnore, androidAppIgnore, androidAppBuild] = await Promise.all([
+    read(".github/workflows/release.yml"),
+    read("scripts/generate-tauri-android-gradle-bridge.mjs"),
+    read("src-tauri/gen/android/.gitignore"),
+    read("src-tauri/gen/android/app/.gitignore"),
+    read("src-tauri/gen/android/app/build.gradle.kts"),
+  ]);
   assert.match(workflow, /Require the main release source/);
   assert.match(workflow, /refs\/heads\/main/);
   assert.match(workflow, /npm run test:full/);
@@ -101,18 +107,56 @@ test("formal releases are gated by main-branch full verification and signed arti
   );
   assert.match(workflow, /actions\/setup-java@[0-9a-f]{40} # v5/);
   assert.match(workflow, /android-actions\/setup-android@[0-9a-f]{40} # v3/);
-  assert.match(workflow, /\.\/gradlew --no-daemon :app:dependencies buildEnvironment/);
-  assert.match(workflow, /\.\/gradlew --no-daemon --offline :app:dependencies buildEnvironment/);
+  assert.match(workflow, /node scripts\/generate-tauri-android-gradle-bridge\.mjs/);
+  assert.match(
+    androidBridgeGenerator,
+    /\["metadata", "--locked", "--offline", "--filter-platform", "aarch64-linux-android"/,
+  );
+  assert.match(androidBridgeGenerator, /"--manifest-path", "src-tauri\/Cargo\.toml"/);
+  assert.match(androidBridgeGenerator, /tauriPackage\.version !== "2\.11\.5"/);
+  assert.match(androidBridgeGenerator, /tauriBuildPackage\.version !== "2\.6\.3"/);
+  assert.match(androidBridgeGenerator, /Android Tauri plugin/);
+  assert.match(androidBridgeGenerator, /include ':tauri-android'/);
+  assert.match(androidBridgeGenerator, /implementation\(project\(":tauri-android"\)\)/);
+  assert.match(androidIgnore, /^\/tauri\.settings\.gradle$/m);
+  assert.match(androidAppIgnore, /^\/tauri\.build\.gradle\.kts$/m);
+  assert.match(workflow, /\.\/gradlew --no-daemon :app:resolveLockedDependencies buildEnvironment/);
+  assert.match(workflow, /\.\/gradlew --no-daemon --offline :app:resolveLockedDependencies buildEnvironment/);
+  assert.doesNotMatch(workflow, /:app:dependencies buildEnvironment/);
+  assert.match(androidAppBuild, /tasks\.register\("resolveLockedDependencies"\)/);
+  assert.match(androidAppBuild, /file\("gradle\.lockfile"\)/);
+  assert.match(androidAppBuild, /arm64ReleaseCompileClasspath/);
+  assert.match(androidAppBuild, /arm64ReleaseRuntimeClasspath/);
+  assert.match(
+    androidAppBuild,
+    /reviewedMetadataConfiguration = "implementationDependenciesMetadata"/,
+  );
+  assert.match(androidAppBuild, /projectPaths == setOf\(":tauri-android"\)/);
+  assert.match(androidAppBuild, /it in releaseCompileLock && it in releaseRuntimeLock/);
+  assert.match(androidAppBuild, /variant-ambiguous between debug and release/);
+  assert.match(androidAppBuild, /com\.fasterxml\.jackson\.core:jackson-databind:2\.22\.1/);
+  assert.match(androidAppBuild, /project :tauri-android/);
   assert.match(workflow, /complete-gradle-pom-verification\.mjs --check/);
   assert.match(workflow, /generate-gradle-license-review\.mjs/);
   assert.match(workflow, /--output "\$RUNNER_TEMP\/gradle-license-review\.json"/);
   assert.match(workflow, /chmod \+x src-tauri\/gen\/android\/gradlew/);
   const androidSetup = workflow.indexOf("android-actions/setup-android@");
-  const onlineGradleResolution = workflow.indexOf("./gradlew --no-daemon :app:dependencies buildEnvironment");
-  const offlineGradleResolution = workflow.indexOf("./gradlew --no-daemon --offline :app:dependencies buildEnvironment");
+  const androidBridgeGeneration = workflow.indexOf(
+    "node scripts/generate-tauri-android-gradle-bridge.mjs",
+  );
+  const onlineGradleResolution = workflow.indexOf(
+    "./gradlew --no-daemon :app:resolveLockedDependencies buildEnvironment",
+  );
+  const offlineGradleResolution = workflow.indexOf(
+    "./gradlew --no-daemon --offline :app:resolveLockedDependencies buildEnvironment",
+  );
   const pomEvidenceCheck = workflow.indexOf("complete-gradle-pom-verification.mjs --check");
   const supplyCheck = workflow.indexOf("generate-supply-chain-artifacts.mjs --check");
   assert.ok(androidSetup < onlineGradleResolution, "the clean runner must configure Android before resolving Gradle");
+  assert.ok(
+    androidSetup < androidBridgeGeneration && androidBridgeGeneration < onlineGradleResolution,
+    "the clean runner must generate and validate Tauri's ignored Android Gradle bridge before Gradle starts",
+  );
   assert.ok(onlineGradleResolution < offlineGradleResolution, "the locked graph must be hydrated before the offline proof");
   assert.ok(offlineGradleResolution < pomEvidenceCheck, "offline Gradle resolution must precede POM evidence checks");
   assert.ok(pomEvidenceCheck < supplyCheck, "verified Maven POM evidence must precede the combined SBOM");

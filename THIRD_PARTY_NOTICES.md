@@ -7,11 +7,11 @@ Copyright (C) 2026 PixNya contributors
 
 This inventory records the reviewed license expressions for the exact dependency versions locked for PixNya 0.29.0. It is generated locally from `package-lock.json`, `Cargo.lock`, the Android Gradle lock and verification graph, installed npm/Cargo package evidence, and the tracked Maven license review. It is not legal advice and does not replace any upstream license or notice file shipped with a dependency.
 
-- Lock fingerprint: `sha256:1b68f787b68195640a3128e8d3ea9a10b34a756b628eb1459676b614fff54942`
+- Lock fingerprint: `sha256:423397b58c900a735a222a1a3acb9e9631d0ce5436a67596585b5228dc64d6ef`
 - npm runtime/optional packages: 1
 - npm build/development packages: 144
 - Rust target-dependent locked packages: 570
-- Android Gradle/Maven locked components: 360
+- Android Gradle/Maven locked components: 343
 - SPDX SBOM command: `node scripts/generate-supply-chain-artifacts.mjs`
 
 ## npm runtime and optional dependencies
@@ -886,7 +886,6 @@ These components come from the strictly locked Android app, buildscript and buil
 | com.fasterxml.jackson.core:jackson-annotations | 2.22 | The Apache Software License, Version 2.0 | runtime/target-dependent |
 | com.fasterxml.jackson.core:jackson-core | 2.22.1 | The Apache Software License, Version 2.0 | runtime/target-dependent |
 | com.fasterxml.jackson.core:jackson-databind | 2.22.1 | The Apache Software License, Version 2.0 | runtime/target-dependent |
-| com.github.ben-manes.caffeine:caffeine | 2.9.3 | Apache License, Version 2.0 | runtime/target-dependent |
 | com.google.android:annotations | 4.1.1.4 | Apache 2.0 | runtime/target-dependent |
 | com.google.android.material:material | 1.12.0 | The Apache Software License, Version 2.0 | runtime/target-dependent |
 | com.google.api.grpc:proto-google-common-protos | 2.17.0 | Apache-2.0 | runtime/target-dependent |
@@ -939,7 +938,6 @@ These components come from the strictly locked Android app, buildscript and buil
 | commons-codec:commons-codec | 1.11 | Apache License, Version 2.0 | build/development |
 | commons-io:commons-io | 2.16.1 | Apache-2.0 | runtime/target-dependent |
 | commons-logging:commons-logging | 1.2 | The Apache Software License, Version 2.0 | build/development |
-| io.github.java-diff-utils:java-diff-utils | 4.12 | The Apache Software License, Version 2.0 | runtime/target-dependent |
 | io.grpc:grpc-api | 1.57.2 | Apache 2.0 | runtime/target-dependent |
 | io.grpc:grpc-api | 1.69.1 | Apache 2.0 | runtime/target-dependent |
 | io.grpc:grpc-context | 1.57.2 | Apache 2.0 | runtime/target-dependent |
@@ -981,8 +979,6 @@ These components come from the strictly locked Android app, buildscript and buil
 | io.netty:netty-transport-native-unix-common | 4.1.93.Final | Apache License, Version 2.0 | runtime/target-dependent |
 | io.opencensus:opencensus-api | 0.31.0 | The Apache License, Version 2.0 | runtime/target-dependent |
 | io.opencensus:opencensus-proto | 0.2.0 | The Apache License, Version 2.0 | runtime/target-dependent |
-| io.opentelemetry:opentelemetry-api | 1.41.0 | The Apache License, Version 2.0 | runtime/target-dependent |
-| io.opentelemetry:opentelemetry-context | 1.41.0 | The Apache License, Version 2.0 | runtime/target-dependent |
 | io.perfmark:perfmark-api | 0.26.0 | Apache 2.0 | runtime/target-dependent |
 | io.perfmark:perfmark-api | 0.27.0 | Apache 2.0 | runtime/target-dependent |
 | jakarta.activation:jakarta.activation-api | 1.2.1 | EDL 1.0 | build/development |
@@ -999,13 +995,9 @@ These components come from the strictly locked Android app, buildscript and buil
 | org.apache.httpcomponents:httpcore | 4.4.16 | Apache License, Version 2.0 | build/development |
 | org.apache.httpcomponents:httpmime | 4.5.6 | Apache License, Version 2.0 | build/development |
 | org.bitbucket.b_c:jose4j | 0.9.5 | The Apache Software License, Version 2.0 | build/development |
-| org.bouncycastle:bcpg-jdk18on | 1.80 | Bouncy Castle Licence OR Apache Software License, Version 2.0 | runtime/target-dependent |
 | org.bouncycastle:bcpkix-jdk18on | 1.79 | Bouncy Castle Licence | build/development |
-| org.bouncycastle:bcpkix-jdk18on | 1.80 | Bouncy Castle Licence | runtime/target-dependent |
 | org.bouncycastle:bcprov-jdk18on | 1.79 | Bouncy Castle Licence | build/development |
-| org.bouncycastle:bcprov-jdk18on | 1.80.2 | Bouncy Castle Licence | runtime/target-dependent |
 | org.bouncycastle:bcutil-jdk18on | 1.79 | Bouncy Castle Licence | build/development |
-| org.bouncycastle:bcutil-jdk18on | 1.80.2 | Bouncy Castle Licence | runtime/target-dependent |
 | org.checkerframework:checker-qual | 3.33.0 | The MIT License | runtime/target-dependent |
 | org.checkerframework:checker-qual | 3.43.0 | The MIT License | runtime/target-dependent |
 | org.codehaus.mojo:animal-sniffer-annotations | 1.23 | MIT license | runtime/target-dependent |
@@ -1019,8 +1011,6 @@ These components come from the strictly locked Android app, buildscript and buil
 | org.jetbrains:annotations | 13.0 | The Apache Software License, Version 2.0 | runtime/target-dependent |
 | org.jetbrains:annotations | 23.0.0 | The Apache Software License, Version 2.0 | runtime/target-dependent |
 | org.jetbrains.intellij.deps:trove4j | 1.0.20200330 | GNU LESSER GENERAL PUBLIC LICENSE 2.1 | runtime/target-dependent |
-| org.jetbrains.kotlin:abi-tools | 2.2.21 | Apache-2.0 | runtime/target-dependent |
-| org.jetbrains.kotlin:abi-tools-api | 2.2.21 | Apache-2.0 | runtime/target-dependent |
 | org.jetbrains.kotlin:kotlin-android-extensions | 1.9.25 | The Apache License, Version 2.0 | build/development |
 | org.jetbrains.kotlin:kotlin-assignment-compiler-plugin-embeddable | 2.0.21 | The Apache License, Version 2.0 | build/development |
 | org.jetbrains.kotlin:kotlin-bom | 1.8.22 | The Apache Software License, Version 2.0 | runtime/target-dependent |
@@ -1032,14 +1022,12 @@ These components come from the strictly locked Android app, buildscript and buil
 | org.jetbrains.kotlin:kotlin-build-tools-impl | 2.0.21 | The Apache License, Version 2.0 | build/development |
 | org.jetbrains.kotlin:kotlin-compiler-embeddable | 1.9.25 | The Apache License, Version 2.0 | runtime/target-dependent |
 | org.jetbrains.kotlin:kotlin-compiler-embeddable | 2.0.21 | The Apache License, Version 2.0 | build/development |
-| org.jetbrains.kotlin:kotlin-compiler-embeddable | 2.2.21 | Apache-2.0 | runtime/target-dependent |
 | org.jetbrains.kotlin:kotlin-compiler-runner | 1.9.25 | The Apache License, Version 2.0 | runtime/target-dependent |
 | org.jetbrains.kotlin:kotlin-compiler-runner | 2.0.21 | The Apache License, Version 2.0 | build/development |
 | org.jetbrains.kotlin:kotlin-daemon-client | 1.9.25 | The Apache License, Version 2.0 | runtime/target-dependent |
 | org.jetbrains.kotlin:kotlin-daemon-client | 2.0.21 | The Apache License, Version 2.0 | build/development |
 | org.jetbrains.kotlin:kotlin-daemon-embeddable | 1.9.25 | The Apache License, Version 2.0 | runtime/target-dependent |
 | org.jetbrains.kotlin:kotlin-daemon-embeddable | 2.0.21 | The Apache License, Version 2.0 | build/development |
-| org.jetbrains.kotlin:kotlin-daemon-embeddable | 2.2.21 | Apache-2.0 | runtime/target-dependent |
 | org.jetbrains.kotlin:kotlin-gradle-plugin | 1.9.25 | The Apache License, Version 2.0 | build/development |
 | org.jetbrains.kotlin:kotlin-gradle-plugin-annotations | 1.9.25 | The Apache License, Version 2.0 | build/development |
 | org.jetbrains.kotlin:kotlin-gradle-plugin-api | 1.9.25 | The Apache License, Version 2.0 | build/development |
@@ -1050,7 +1038,6 @@ These components come from the strictly locked Android app, buildscript and buil
 | org.jetbrains.kotlin:kotlin-klib-commonizer-api | 1.9.25 | The Apache License, Version 2.0 | build/development |
 | org.jetbrains.kotlin:kotlin-klib-commonizer-embeddable | 1.9.25 | The Apache License, Version 2.0 | runtime/target-dependent |
 | org.jetbrains.kotlin:kotlin-klib-commonizer-embeddable | 2.0.21 | The Apache License, Version 2.0 | build/development |
-| org.jetbrains.kotlin:kotlin-metadata-jvm | 2.2.21 | Apache-2.0 | runtime/target-dependent |
 | org.jetbrains.kotlin:kotlin-native-utils | 1.9.25 | The Apache License, Version 2.0 | build/development |
 | org.jetbrains.kotlin:kotlin-project-model | 1.9.25 | The Apache License, Version 2.0 | build/development |
 | org.jetbrains.kotlin:kotlin-reflect | 1.6.10 | The Apache License, Version 2.0 | runtime/target-dependent |
@@ -1060,7 +1047,6 @@ These components come from the strictly locked Android app, buildscript and buil
 | org.jetbrains.kotlin:kotlin-sam-with-receiver-compiler-plugin-embeddable | 2.0.21 | The Apache License, Version 2.0 | build/development |
 | org.jetbrains.kotlin:kotlin-script-runtime | 1.9.25 | The Apache License, Version 2.0 | runtime/target-dependent |
 | org.jetbrains.kotlin:kotlin-script-runtime | 2.0.21 | The Apache License, Version 2.0 | build/development |
-| org.jetbrains.kotlin:kotlin-script-runtime | 2.2.21 | Apache-2.0 | runtime/target-dependent |
 | org.jetbrains.kotlin:kotlin-scripting-common | 1.9.25 | The Apache License, Version 2.0 | build/development |
 | org.jetbrains.kotlin:kotlin-scripting-common | 2.0.21 | The Apache License, Version 2.0 | build/development |
 | org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable | 1.9.25 | The Apache License, Version 2.0 | build/development |
@@ -1075,7 +1061,6 @@ These components come from the strictly locked Android app, buildscript and buil
 | org.jetbrains.kotlin:kotlin-stdlib | 1.9.25 | The Apache License, Version 2.0 | runtime/target-dependent |
 | org.jetbrains.kotlin:kotlin-stdlib | 2.0.21 | The Apache License, Version 2.0 | runtime/target-dependent |
 | org.jetbrains.kotlin:kotlin-stdlib | 2.1.20 | The Apache License, Version 2.0 | runtime/target-dependent |
-| org.jetbrains.kotlin:kotlin-stdlib | 2.2.21 | Apache-2.0 | runtime/target-dependent |
 | org.jetbrains.kotlin:kotlin-stdlib-common | 1.7.10 | The Apache License, Version 2.0 | runtime/target-dependent |
 | org.jetbrains.kotlin:kotlin-stdlib-common | 1.8.21 | The Apache License, Version 2.0 | runtime/target-dependent |
 | org.jetbrains.kotlin:kotlin-stdlib-common | 1.9.0 | The Apache License, Version 2.0 | runtime/target-dependent |
@@ -1087,7 +1072,6 @@ These components come from the strictly locked Android app, buildscript and buil
 | org.jetbrains.kotlin:kotlin-tooling-core | 1.9.25 | The Apache License, Version 2.0 | build/development |
 | org.jetbrains.kotlin:kotlin-util-io | 1.9.25 | The Apache License, Version 2.0 | build/development |
 | org.jetbrains.kotlin:kotlin-util-klib | 1.9.25 | The Apache License, Version 2.0 | build/development |
-| org.jetbrains.kotlin:swift-export-embeddable | 2.2.21 | Apache-2.0 | runtime/target-dependent |
 | org.jetbrains.kotlinx:atomicfu | 0.22.0 | The Apache Software License, Version 2.0 | runtime/target-dependent |
 | org.jetbrains.kotlinx:atomicfu-jvm | 0.22.0 | The Apache Software License, Version 2.0 | runtime/target-dependent |
 | org.jetbrains.kotlinx:kotlinx-coroutines-android | 1.9.0 | The Apache Software License, Version 2.0 | runtime/target-dependent |
@@ -1098,7 +1082,6 @@ These components come from the strictly locked Android app, buildscript and buil
 | org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm | 1.5.0 | The Apache Software License, Version 2.0 | runtime/target-dependent |
 | org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm | 1.6.4 | The Apache Software License, Version 2.0 | build/development |
 | org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm | 1.7.3 | The Apache Software License, Version 2.0 | runtime/target-dependent |
-| org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm | 1.8.0 | The Apache Software License, Version 2.0 | runtime/target-dependent |
 | org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm | 1.9.0 | The Apache Software License, Version 2.0 | runtime/target-dependent |
 | org.jetbrains.kotlinx:kotlinx-serialization-bom | 1.7.3 | The Apache Software License, Version 2.0 | runtime/target-dependent |
 | org.jetbrains.kotlinx:kotlinx-serialization-core | 1.7.3 | The Apache Software License, Version 2.0 | runtime/target-dependent |

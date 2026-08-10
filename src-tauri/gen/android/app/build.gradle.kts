@@ -1,5 +1,9 @@
 import java.util.Properties
 import org.gradle.api.artifacts.dsl.LockMode
+import org.gradle.api.artifacts.ExternalModuleDependency
+import org.gradle.api.artifacts.ProjectDependency
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier
+import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 
 plugins {
     id("com.android.application")
@@ -112,3 +116,179 @@ dependencies {
 }
 
 apply(from = "tauri.build.gradle.kts")
+
+tasks.register("resolveLockedDependencies") {
+    group = "verification"
+    description = "Resolves every configuration represented by the reviewed Gradle lock state."
+
+    doLast {
+        val lockFile = file("gradle.lockfile")
+        if (!lockFile.isFile) {
+            throw GradleException("The reviewed app/gradle.lockfile is missing.")
+        }
+        val lockedCoordinatesByConfiguration = sortedMapOf<String, MutableSet<String>>()
+        lockFile.readLines()
+            .asSequence()
+            .map(String::trim)
+            .filter { it.isNotEmpty() && !it.startsWith("#") && it.contains('=') }
+            .forEach { line ->
+                val coordinate = line.substringBeforeLast('=')
+                line.substringAfterLast('=')
+                    .split(',')
+                    .map(String::trim)
+                    .filter(String::isNotEmpty)
+                    .forEach { configurationName ->
+                        val coordinates = lockedCoordinatesByConfiguration
+                            .getOrPut(configurationName) { sortedSetOf() }
+                        if (coordinate != "empty") {
+                            coordinates.add(coordinate)
+                        }
+                    }
+            }
+        val lockedConfigurationNames = lockedCoordinatesByConfiguration.keys
+
+        val requiredReleaseConfigurations = setOf(
+            "arm64ReleaseCompileClasspath",
+            "arm64ReleaseRuntimeClasspath",
+        )
+        val missingReleaseLockState = requiredReleaseConfigurations - lockedConfigurationNames
+        if (missingReleaseLockState.isNotEmpty()) {
+            throw GradleException(
+                "The ARM64 release graph is missing reviewed lock state for: " +
+                    missingReleaseLockState.sorted().joinToString(", ")
+            )
+        }
+
+        val missingConfigurations = lockedConfigurationNames.filter {
+            configurations.findByName(it) == null
+        }
+        if (missingConfigurations.isNotEmpty()) {
+            throw GradleException(
+                "The lockfile references configurations that no longer exist: " +
+                    missingConfigurations.joinToString(", ")
+            )
+        }
+        val unresolvableConfigurations = lockedConfigurationNames.filter {
+            configurations.getByName(it).isCanBeResolved.not()
+        }
+        if (unresolvableConfigurations.isNotEmpty()) {
+            throw GradleException(
+                "The lockfile references configurations that can no longer be resolved: " +
+                    unresolvableConfigurations.joinToString(", ")
+            )
+        }
+
+        fun declaredCoordinate(group: String?, name: String, version: String?): String {
+            if (group.isNullOrBlank() || version.isNullOrBlank()) {
+                throw GradleException("Unlocked external declaration is not pinned: $group:$name:$version")
+            }
+            return "$group:$name:$version"
+        }
+
+        val releaseCompileLock = lockedCoordinatesByConfiguration
+            .getValue("arm64ReleaseCompileClasspath")
+        val releaseRuntimeLock = lockedCoordinatesByConfiguration
+            .getValue("arm64ReleaseRuntimeClasspath")
+        val reviewedMetadataConfiguration = "implementationDependenciesMetadata"
+        var reviewedMetadataConfigurationObserved = false
+        val unlockedExternalGraphs = mutableListOf<String>()
+        configurations
+            .filter { it.isCanBeResolved && it.name !in lockedConfigurationNames }
+            .sortedBy { it.name }
+            .forEach { configuration ->
+                val modules = configuration.allDependencies
+                    .filterIsInstance<ExternalModuleDependency>()
+                    .map { declaredCoordinate(it.group, it.name, it.version) }
+                    .toSortedSet()
+                val constraints = configuration.allDependencyConstraints
+                    .map {
+                        declaredCoordinate(
+                            it.group,
+                            it.name,
+                            it.versionConstraint.requiredVersion.takeIf(String::isNotBlank),
+                        )
+                    }
+                    .toSortedSet()
+                if (modules.isEmpty() && constraints.isEmpty()) {
+                    return@forEach
+                }
+
+                val projectPaths = configuration.allDependencies
+                    .filterIsInstance<ProjectDependency>()
+                    .map { it.path }
+                    .toSortedSet()
+                val reviewedCoordinates = modules + constraints
+                val coveredByBothReleaseGraphs = reviewedCoordinates.all {
+                    it in releaseCompileLock && it in releaseRuntimeLock
+                }
+                if (
+                    configuration.name == reviewedMetadataConfiguration &&
+                    projectPaths == setOf(":tauri-android") &&
+                    coveredByBothReleaseGraphs
+                ) {
+                    // Tauri's project dependency makes this Kotlin common-metadata
+                    // configuration variant-ambiguous between debug and release.
+                    // Formal ARM64 variants are resolvable, so prove every external
+                    // declaration is covered by both reviewed release lock graphs
+                    // without attempting to resolve this invalid internal surface.
+                    reviewedMetadataConfigurationObserved = true
+                    logger.lifecycle(
+                        "Verified {} against both ARM64 release lock graphs without resolving it",
+                        reviewedMetadataConfiguration,
+                    )
+                } else {
+                    unlockedExternalGraphs.add(
+                        "${configuration.name} [modules=${modules.joinToString(";")}; " +
+                            "constraints=${constraints.joinToString(";")}; " +
+                            "projects=${projectPaths.joinToString(";")}]"
+                    )
+                }
+            }
+        if (unlockedExternalGraphs.isNotEmpty()) {
+            throw GradleException(
+                "Resolvable configurations with external dependencies lack reviewed lock state:\n" +
+                    unlockedExternalGraphs.joinToString("\n")
+            )
+        }
+        if (!reviewedMetadataConfigurationObserved) {
+            throw GradleException(
+                "The exact $reviewedMetadataConfiguration variant-ambiguity exception " +
+                    "was not observed; review the dependency-lock boundary again."
+            )
+        }
+
+        lockedConfigurationNames.forEach { name ->
+            val componentCount = configurations.getByName(name)
+                .incoming
+                .resolutionResult
+                .allComponents
+                .size
+            logger.lifecycle("Resolved locked configuration {} ({} components)", name, componentCount)
+        }
+
+        val releaseRuntimeComponents = configurations
+            .getByName("arm64ReleaseRuntimeClasspath")
+            .incoming
+            .resolutionResult
+            .allComponents
+            .map { it.id }
+        val includesTauriAndroid = releaseRuntimeComponents.any {
+            it is ProjectComponentIdentifier && it.projectPath == ":tauri-android"
+        }
+        if (!includesTauriAndroid) {
+            throw GradleException("arm64ReleaseRuntimeClasspath does not contain project :tauri-android")
+        }
+        val includesReviewedJackson = releaseRuntimeComponents.any {
+            it is ModuleComponentIdentifier &&
+                it.group == "com.fasterxml.jackson.core" &&
+                it.module == "jackson-databind" &&
+                it.version == "2.22.1"
+        }
+        if (!includesReviewedJackson) {
+            throw GradleException(
+                "arm64ReleaseRuntimeClasspath does not contain " +
+                    "com.fasterxml.jackson.core:jackson-databind:2.22.1"
+            )
+        }
+    }
+}

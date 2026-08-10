@@ -66,10 +66,19 @@ function appReport() {
 
 test("tracked baseline records exact, short-lived, non-runtime findings", async () => {
   const baseline = JSON.parse(await read("docs/android-gradle-osv-risk-baseline.json"));
-  assert.equal(baseline.exceptions.length, 86);
+  assert.equal(baseline.exceptions.length, 82);
   assert.deepEqual(baseline.toolchain, expectedToolchain);
   assert.equal(baseline.policy.runtimeExceptionsAllowed, false);
   assert.ok(baseline.exceptions.some((entry) => entry.severity === "CRITICAL"));
+  assert.deepEqual(
+    scopeDefinitions.map((scope) => scope.id),
+    [
+      "android-buildscript-classpath",
+      "android-buildsrc-build-time",
+      "android-internal-unified-test-platform",
+    ],
+  );
+  assert.deepEqual(baseline.scopeDefinitions, scopeDefinitions);
 
   for (const entry of baseline.exceptions) {
     assert.match(entry.advisory, /^GHSA-/);
