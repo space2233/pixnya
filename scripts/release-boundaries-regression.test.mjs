@@ -118,11 +118,34 @@ test("formal releases are gated by main-branch full verification and signed arti
   assert.match(workflow, /pixnya-\$\{PIXNYA_RELEASE_VERSION\}-third-party-licenses\.tar\.gz/);
   assert.match(workflow, /--licenses-dir/);
   assert.match(workflow, /pixnya-\$\{PIXNYA_RELEASE_VERSION\}-source\.tar\.gz/);
-  assert.match(workflow, /android-gradle-advisories:/);
-  assert.match(workflow, /google\/osv-scanner-action\/.github\/workflows\/osv-scanner-reusable\.yml@[0-9a-f]{40}/);
-  assert.match(workflow, /download-artifact: supply-chain/);
-  assert.match(workflow, /--sbom=pixnya-\$\{\{ inputs\.version \}\}-android-runtime\.spdx\.json/);
-  assert.match(workflow, /needs: \[preflight, rust-advisories, android-gradle-advisories\]/);
+  assert.match(workflow, /OSV_SCANNER="\$RUNNER_TEMP\/osv-scanner"/);
+  assert.match(
+    workflow,
+    /edcfc41d257db36148f065055655fe3fcfc434b0b423ea67468a84c207524e0c/,
+  );
+  assert.match(
+    workflow,
+    /"\$OSV_SCANNER" scan --sbom="release-artifacts\/pixnya-\$\{PIXNYA_RELEASE_VERSION\}-android-runtime\.spdx\.json"/,
+  );
+  const runtimeOsvScan = workflow.indexOf(
+    '"$OSV_SCANNER" scan --sbom="release-artifacts/pixnya-${PIXNYA_RELEASE_VERSION}-android-runtime.spdx.json"',
+  );
+  const strictOsvFailures = workflow.lastIndexOf("set -e", runtimeOsvScan);
+  assert.ok(
+    strictOsvFailures >= 0 &&
+      strictOsvFailures < runtimeOsvScan &&
+      runtimeOsvScan < workflow.indexOf("set +e", runtimeOsvScan),
+    "the exception-free runtime scan must fail preflight on every nonzero scanner status",
+  );
+  assert.doesNotMatch(workflow, /android-runtime[^\n]*--ignore/i);
+  assert.doesNotMatch(workflow, /android-gradle-advisories:/);
+  assert.doesNotMatch(workflow, /osv-scanner-reusable\.yml/);
+  assert.doesNotMatch(workflow, /google\/osv-scanner-action/);
+  assert.equal(
+    workflow.match(/needs: \[preflight, rust-advisories\]/g)?.length,
+    3,
+    "all platform builds must wait for the in-preflight Android runtime scan and Rust advisory gate",
+  );
   assert.match(workflow, /Signer #1 certificate SHA-256 digest/);
   assert.match(workflow, /check-android-arm64-apk\.ps1/);
   assert.match(workflow, /package: name='io\.github\.space2233\.pixnya'/);

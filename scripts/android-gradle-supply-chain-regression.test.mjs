@@ -20,6 +20,13 @@ const androidFixtureFiles = [
   "gradle/wrapper/gradle-wrapper.jar",
   "gradle/wrapper/gradle-wrapper.properties",
 ];
+const fingerprintTextFiles = [
+  "app/gradle.lockfile",
+  "buildscript-gradle.lockfile",
+  "buildSrc/gradle.lockfile",
+  "gradle/verification-metadata.xml",
+  "gradle/wrapper/gradle-wrapper.properties",
+];
 
 async function createFixture(context) {
   const fixtureRoot = await mkdtemp(path.join(tmpdir(), "pixnya-android-gradle-"));
@@ -67,6 +74,35 @@ test("the offline inventory is deterministic and includes direct and transitive 
     coordinates.includes("com.fasterxml.jackson.core:jackson-databind:2.22.1"),
     "transitive Gradle dependency must be inventoried",
   );
+});
+
+test("the offline inventory fingerprint is identical for LF and CRLF Gradle text", async (context) => {
+  const lfFixtureRoot = await createFixture(context);
+  const crlfFixtureRoot = await createFixture(context);
+  const lfAndroidRoot = path.join(lfFixtureRoot, "src-tauri", "gen", "android");
+  const crlfAndroidRoot = path.join(crlfFixtureRoot, "src-tauri", "gen", "android");
+
+  for (const relativePath of fingerprintTextFiles) {
+    const source = await readFile(path.join(lfAndroidRoot, relativePath), "utf8");
+    const lfSource = source.replace(/\r\n?/g, "\n");
+    await writeFile(path.join(lfAndroidRoot, relativePath), lfSource, "utf8");
+    await writeFile(path.join(crlfAndroidRoot, relativePath), lfSource.replaceAll("\n", "\r\n"), "utf8");
+  }
+
+  const lfOutput = path.join(lfFixtureRoot, "inventory-lf.json");
+  const crlfOutput = path.join(crlfFixtureRoot, "inventory-crlf.json");
+  await execFileAsync(process.execPath, [checker, "--project-root", lfFixtureRoot, "--output", lfOutput], {
+    cwd: root,
+    windowsHide: true,
+  });
+  await execFileAsync(process.execPath, [checker, "--project-root", crlfFixtureRoot, "--output", crlfOutput], {
+    cwd: root,
+    windowsHide: true,
+  });
+
+  const lfInventory = JSON.parse(await readFile(lfOutput, "utf8"));
+  const crlfInventory = JSON.parse(await readFile(crlfOutput, "utf8"));
+  assert.equal(crlfInventory.fingerprint, lfInventory.fingerprint);
 });
 
 test("the offline check fails closed when a locked component loses checksum evidence", async (context) => {

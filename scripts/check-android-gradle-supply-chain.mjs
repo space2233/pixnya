@@ -42,6 +42,10 @@ function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
 }
 
+function normalizedTextBytes(value) {
+  return Buffer.from(value.toString("utf8").replace(/\r\n?/g, "\n"), "utf8");
+}
+
 function readRequired(path, description) {
   if (!existsSync(path)) throw new Error(`${description} is missing: ${path}`);
   return readFileSync(path);
@@ -184,7 +188,7 @@ export function inspectAndroidGradleSupplyChain(projectRoot = defaultProjectRoot
   }
 
   const lockedComponents = new Map();
-  const fingerprintParts = [wrapperPropertiesBytes, wrapperJarBytes];
+  const fingerprintParts = [normalizedTextBytes(wrapperPropertiesBytes), wrapperJarBytes];
   for (const definition of lockDefinitions) {
     const buildPath = join(androidRoot, definition.buildPath);
     const buildSource = readRequired(buildPath, `${definition.name} Gradle build`).toString("utf8");
@@ -193,7 +197,7 @@ export function inspectAndroidGradleSupplyChain(projectRoot = defaultProjectRoot
     }
     const lockPath = join(androidRoot, definition.lockPath);
     const lockBytes = readRequired(lockPath, `${definition.name} Gradle lockfile`);
-    fingerprintParts.push(Buffer.from(definition.lockPath), lockBytes);
+    fingerprintParts.push(Buffer.from(definition.lockPath), normalizedTextBytes(lockBytes));
     const entries = parseLockfile(lockBytes.toString("utf8"), definition.lockPath);
     const entriesByCoordinate = new Map(entries.map((entry) => [entry.coordinate, entry]));
     for (const coordinate of declaredCoordinates(buildSource)) {
@@ -211,7 +215,10 @@ export function inspectAndroidGradleSupplyChain(projectRoot = defaultProjectRoot
 
   const verificationPath = join(androidRoot, "gradle", "verification-metadata.xml");
   const verificationBytes = readRequired(verificationPath, "Gradle dependency verification metadata");
-  fingerprintParts.push(Buffer.from("gradle/verification-metadata.xml"), verificationBytes);
+  fingerprintParts.push(
+    Buffer.from("gradle/verification-metadata.xml"),
+    normalizedTextBytes(verificationBytes),
+  );
   const verifiedComponents = parseVerificationMetadata(verificationBytes.toString("utf8"));
   for (const coordinate of lockedComponents.keys()) {
     if (!verifiedComponents.has(coordinate)) {

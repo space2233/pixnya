@@ -177,6 +177,8 @@ jobs:
             edcfc41d257db36148f065055655fe3fcfc434b0b423ea67468a84c207524e0c \
             "$OSV_SCANNER" | sha256sum --check --strict
           chmod 700 "$OSV_SCANNER"
+          set -e
+          "$OSV_SCANNER" scan --sbom="release-artifacts/pixnya-${PIXNYA_RELEASE_VERSION}-android-runtime.spdx.json"
           set +e
           "$OSV_SCANNER" scan source \
             --lockfile src-tauri/gen/android/app/gradle.lockfile \
@@ -226,21 +228,8 @@ jobs:
         with:
           command: check advisories
 
-  android-gradle-advisories:
-    needs: preflight
-    permissions:
-      actions: read
-      contents: read
-    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@8deb546fdb875b9996d27d4950be7312dac076a1 # v2.5.0
-    with:
-      download-artifact: supply-chain
-      scan-args: |-
-        --sbom=pixnya-${{ inputs.version }}-android-runtime.spdx.json
-      upload-sarif: false
-      fail-on-vuln: true
-
   windows:
-    needs: [preflight, rust-advisories, android-gradle-advisories]
+    needs: [preflight, rust-advisories]
     runs-on: windows-2025
     environment:
       name: production-release
@@ -294,7 +283,7 @@ jobs:
             target/release/bundle/nsis/*.sig
 
   linux:
-    needs: [preflight, rust-advisories, android-gradle-advisories]
+    needs: [preflight, rust-advisories]
     runs-on: ubuntu-22.04
     environment:
       name: production-release
@@ -352,7 +341,7 @@ jobs:
             target/release/bundle/appimage/*.sig
 
   android:
-    needs: [preflight, rust-advisories, android-gradle-advisories]
+    needs: [preflight, rust-advisories]
     runs-on: ubuntu-22.04
     environment:
       name: production-release

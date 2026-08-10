@@ -144,7 +144,11 @@ test("release preflight scans raw build-tool locks while runtime OSV remains ign
   assert.match(workflow, /src-tauri\/gen\/android\/app\/gradle\.lockfile/);
   assert.match(workflow, /src-tauri\/gen\/android\/buildscript-gradle\.lockfile/);
   assert.match(workflow, /src-tauri\/gen\/android\/buildSrc\/gradle\.lockfile/);
-  assert.match(workflow, /--sbom=pixnya-\$\{\{ inputs\.version \}\}-android-runtime\.spdx\.json/);
+  assert.match(
+    workflow,
+    /"\$OSV_SCANNER" scan --sbom="release-artifacts\/pixnya-\$\{PIXNYA_RELEASE_VERSION\}-android-runtime\.spdx\.json"/,
+  );
+  assert.doesNotMatch(workflow, /osv-scanner-reusable\.yml|google\/osv-scanner-action/);
   assert.doesNotMatch(workflow, /--sbom=[^\n]+--config|android-runtime[^\n]+ignore/i);
 });
 
