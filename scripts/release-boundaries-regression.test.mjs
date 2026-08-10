@@ -93,6 +93,13 @@ test("formal releases are gated by main-branch full verification and signed arti
   assert.doesNotMatch(workflow, /uses: [^\n]+@(v\d+|stable)\s*$/m);
   assert.match(workflow, /toolchain: 1\.97\.1/);
   assert.match(workflow, /generate-supply-chain-artifacts\.mjs --check/);
+  assert.match(
+    workflow,
+    /jedisct1\/minisign\/releases\/download\/0\.12\/minisign-0\.12-linux\.tar\.gz/,
+  );
+  assert.match(workflow, /9a599b48ba6eb7b1e80f12f36b94ceca7c00b7a5173c95c3efc88d9822957e73/);
+  assert.match(workflow, /sha256sum --check --strict/);
+  assert.doesNotMatch(workflow, /apt-get install[^\n]*minisign/);
   assert.match(workflow, /keytool -J-Duser\.language=en -exportcert/);
   assert.match(workflow, /"\$APKSIGNER" verify --verbose --print-certs-pem "\$APK"/);
   assert.match(workflow, /base64 --decode > "\$APK_CERTIFICATE"/);
