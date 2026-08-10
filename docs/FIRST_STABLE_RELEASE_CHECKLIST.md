@@ -21,7 +21,7 @@
 - [x] Draft Release 创建前，用公开密钥重新验证 Windows/Linux updater 签名和 Android 清单签名。
 - [x] Draft Release 只接受唯一的桌面 updater 归档，并生成 `SHA256SUMS.txt` 与记录源提交的 `BUILD-PROVENANCE.txt`。
 - [x] Draft Release 的 SPDX 2.3 SBOM 与逐依赖许可证归档覆盖 npm、Cargo 和最终 Android Gradle/Maven 锁图；清理无效配置后重新解析的 343 组件 Gradle 图及其 378 份组件/父 POM 证据已重建并离线复核。
-- [x] 所有平台和附件验证成功后，Release job 才通过 Git refs API 原子创建 tag 并回读确认其指向触发工作流的 `github.sha`；若上传中断，只允许同一 SHA 且尚无 Release/仍为 Draft 的幂等续传，已发布或不同 SHA 一律失败，上传后再次核对 tag 与 20 个附件。
+- [x] 所有平台和附件验证成功后，Release job 才通过 Git refs API 原子创建 tag 并回读确认其指向已验证 artifact 的源码 SHA；若上传中断，只允许复用同一源码 SHA 且尚无 Release/仍为 Draft 的幂等续传，已发布或不同源码 SHA 一律失败，上传后再次核对 tag 与 18 个附件。
 
 ## 3. 发布前阻塞项
 
@@ -73,7 +73,7 @@
 2. 下载 Draft 的全部附件，核对文件名、大小、SHA-256、签名、ABI、应用 ID 与版本。
 3. 在三平台完成上节的原地升级和数据保留测试，并记录测试设备、系统版本、源版本、目标版本与结果。
 4. 确认匿名环境能够读取 `latest.json`、`android-latest.json` 和对应安装包。
-5. 把真实设备、系统、`PASS`、失败路径结果和已知限制写回 Draft 说明，再从相同 `main` SHA 运行 “Publish verified stable release”。该工作流会重新下载并严格验证 20 个附件、SHA-256、来源记录、tag、发布说明和三套签名；只有 Draft 在验证期间未变化才会切换为 stable。
+5. 把真实设备、系统、`PASS`、失败路径结果和已知限制写回 Draft 说明，再从相同 `main` SHA 运行 “Publish verified stable release”。该工作流会重新下载并严格验证 18 个附件、SHA-256、来源记录、tag、发布说明和三套签名；只有 Draft 在验证期间未变化才会切换为 stable。
 6. 任一检查失败时保留 Draft 供诊断，不移动 stable 更新入口；禁止在 GitHub 页面绕过最终化工作流直接点击发布。
 
 ## 5. 当前结论

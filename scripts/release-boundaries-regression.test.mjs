@@ -100,6 +100,12 @@ test("formal releases are gated by main-branch full verification and signed arti
   assert.match(workflow, /9a599b48ba6eb7b1e80f12f36b94ceca7c00b7a5173c95c3efc88d9822957e73/);
   assert.match(workflow, /sha256sum --check --strict/);
   assert.doesNotMatch(workflow, /apt-get install[^\n]*minisign/);
+  assert.match(workflow, /artifact_run_id:/);
+  assert.match(workflow, /validate-release-artifact-run\.mjs/);
+  assert.match(workflow, /artifact-ids: \$\{\{ steps\.validate-artifact-run\.outputs\.artifact_ids \}\}/);
+  assert.match(workflow, /run-id: \$\{\{ inputs\.artifact_run_id \}\}/);
+  assert.match(workflow, /PIXNYA_RELEASE_SOURCE_SHA/);
+  assert.match(workflow, /source_commit=\$\{PIXNYA_RELEASE_SOURCE_SHA\}/);
   assert.match(workflow, /keytool -J-Duser\.language=en -exportcert/);
   assert.match(workflow, /"\$APKSIGNER" verify --verbose --print-certs-pem "\$APK"/);
   assert.match(workflow, /base64 --decode > "\$APK_CERTIFICATE"/);
@@ -261,7 +267,10 @@ test("formal releases are gated by main-branch full verification and signed arti
   assert.match(workflow, /stable releases require the official repository to be anonymously readable/);
   assert.match(workflow, /metadata\.visibility !== "public"/);
   assert.match(workflow, /exactly one %s/);
-  assert.match(workflow, /Expected exactly 20 whitelisted release files/);
+  assert.match(workflow, /Expected exactly 18 whitelisted release files/);
+  assert.match(workflow, /find dist -maxdepth 1 -type f -name '\*\.exe'/);
+  assert.doesNotMatch(workflow, /nsis\.zip/);
+  assert.doesNotMatch(workflow, /AppImage\.tar\.gz/);
   assert.match(workflow, /prerelease: \$\{\{ startsWith\(inputs\.version, '0\.'\) \}\}/);
   assert.match(workflow, /make_latest: \$\{\{ startsWith\(inputs\.version, '0\.'\) && 'false' \|\| 'true' \}\}/);
   assert.match(workflow, /overwrite_files: true/);
@@ -274,7 +283,7 @@ test("formal releases are gated by main-branch full verification and signed arti
   assert.match(workflow, /repository: \$\{\{ github\.repository \}\}/);
   assert.match(workflow, /--repository "\$PIXNYA_UPDATE_REPOSITORY"/);
 
-  const assetsVerified = workflow.indexOf("Expected exactly 20 whitelisted release files");
+  const assetsVerified = workflow.indexOf("Expected exactly 18 whitelisted release files");
   const tagReserved = workflow.indexOf("Atomically bind the release tag to the source commit");
   const releaseCreated = workflow.indexOf("Create or resume a draft Release for manual verification");
   const bindingVerified = workflow.indexOf("Verify the draft Release remains bound to the source commit");
@@ -383,6 +392,14 @@ test("stable publication revalidates the signed Draft instead of trusting the bu
   assert.match(workflow, /tag\.object\?\.sha !== process\.env\.GITHUB_SHA/);
   assert.match(workflow, /validate-release-candidate\.mjs/);
   assert.doesNotMatch(workflow, /allow-pending-upgrades/);
+  assert.match(
+    workflow,
+    /jedisct1\/minisign\/releases\/download\/0\.12\/minisign-0\.12-linux\.tar\.gz/,
+  );
+  assert.match(workflow, /9a599b48ba6eb7b1e80f12f36b94ceca7c00b7a5173c95c3efc88d9822957e73/);
+  assert.doesNotMatch(workflow, /apt-get install[^\n]*minisign/);
+  assert.match(workflow, /-name '\*\.exe'/);
+  assert.match(workflow, /-name '\*\.AppImage'/);
   assert.match(workflow, /minisign -Vm "\$WINDOWS_ARCHIVE"/);
   assert.match(workflow, /minisign -Vm "\$LINUX_ARCHIVE"/);
   assert.match(workflow, /minisign -Vm candidate\/android-latest\.json/);

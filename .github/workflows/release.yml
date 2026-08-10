@@ -11,8 +11,14 @@ on:
         description: Release notes; stable versions must complete docs/RELEASE_NOTES_TEMPLATE.md
         required: true
         type: string
+      artifact_run_id:
+        description: Optional completed release run whose successful signed artifacts should be finalized without rebuilding
+        required: false
+        default: ''
+        type: string
 
 permissions:
+  actions: read
   contents: read
 
 concurrency:
@@ -30,6 +36,7 @@ env:
 
 jobs:
   preflight:
+    if: ${{ inputs.artifact_run_id == '' }}
     runs-on: ubuntu-22.04
     env:
       # Full verification compiles the app without publishing these placeholders.
@@ -487,14 +494,34 @@ jobs:
           fi
 
   draft-release:
-    needs: [windows, linux, android]
+    needs: [preflight, rust-advisories, windows, linux, android]
+    if: >-
+      ${{ always() && (
+        (
+          inputs.artifact_run_id == '' &&
+          needs.preflight.result == 'success' &&
+          needs.rust-advisories.result == 'success' &&
+          needs.windows.result == 'success' &&
+          needs.linux.result == 'success' &&
+          needs.android.result == 'success'
+        ) || (
+          inputs.artifact_run_id != '' &&
+          needs.preflight.result == 'skipped' &&
+          needs.rust-advisories.result == 'skipped' &&
+          needs.windows.result == 'skipped' &&
+          needs.linux.result == 'skipped' &&
+          needs.android.result == 'skipped'
+        )
+      ) }}
     runs-on: ubuntu-22.04
     environment:
       name: production-release
     permissions:
+      actions: read
       contents: write
     env:
       RELEASE_NOTES: ${{ inputs.notes }}
+      PIXNYA_RELEASE_SOURCE_SHA: ${{ github.sha }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -503,6 +530,34 @@ jobs:
         with:
           node-version: 24
           cache: npm
+      - name: Validate a completed signed-artifact run for fast recovery
+        id: validate-artifact-run
+        if: ${{ inputs.artifact_run_id != '' }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PIXNYA_ARTIFACT_RUN_ID: ${{ inputs.artifact_run_id }}
+        run: |
+          set -euo pipefail
+          [[ "$PIXNYA_ARTIFACT_RUN_ID" =~ ^[1-9][0-9]*$ ]]
+          RUN_FILE="$RUNNER_TEMP/prior-release-run.json"
+          JOBS_FILE="$RUNNER_TEMP/prior-release-jobs.json"
+          ARTIFACTS_FILE="$RUNNER_TEMP/prior-release-artifacts.json"
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${PIXNYA_ARTIFACT_RUN_ID}" > "$RUN_FILE"
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${PIXNYA_ARTIFACT_RUN_ID}/attempts/1/jobs?per_page=100" > "$JOBS_FILE"
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${PIXNYA_ARTIFACT_RUN_ID}/artifacts?per_page=100" > "$ARTIFACTS_FILE"
+          VALIDATION_JSON="$(node scripts/validate-release-artifact-run.mjs \
+            --run "$RUN_FILE" \
+            --jobs "$JOBS_FILE" \
+            --artifacts "$ARTIFACTS_FILE" \
+            --run-id "$PIXNYA_ARTIFACT_RUN_ID" \
+            --repository "$GITHUB_REPOSITORY")"
+          ARTIFACT_IDS="$(VALIDATION_JSON="$VALIDATION_JSON" node -p \
+            'JSON.parse(process.env.VALIDATION_JSON).artifactIds.join(",")')"
+          SOURCE_SHA="$(VALIDATION_JSON="$VALIDATION_JSON" node -p \
+            'JSON.parse(process.env.VALIDATION_JSON).sourceSha')"
+          echo "artifact_ids=$ARTIFACT_IDS" >> "$GITHUB_OUTPUT"
+          echo "PIXNYA_RELEASE_SOURCE_SHA=$SOURCE_SHA" >> "$GITHUB_ENV"
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
@@ -524,8 +579,20 @@ jobs:
             "$RUNNER_TEMP/minisign-linux/x86_64/minisign" \
             "$RUNNER_TEMP/pixnya-release-tools/minisign"
           echo "$RUNNER_TEMP/pixnya-release-tools" >> "$GITHUB_PATH"
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+      - name: Download artifacts built in this run
+        if: ${{ inputs.artifact_run_id == '' }}
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
+          path: dist
+          merge-multiple: true
+      - name: Download verified artifacts from the completed run
+        if: ${{ inputs.artifact_run_id != '' }}
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.artifact_run_id }}
+          artifact-ids: ${{ steps.validate-artifact-run.outputs.artifact_ids }}
+          github-token: ${{ github.token }}
           path: dist
           merge-multiple: true
       - run: npm ci
@@ -559,10 +626,20 @@ jobs:
           fi
           RELEASE_BASE="https://github.com/${PIXNYA_UPDATE_REPOSITORY}/releases/download/v${PIXNYA_RELEASE_VERSION}/"
 
-          mapfile -t WINDOWS_ARCHIVES < <(find dist -type f -name '*.nsis.zip' -print | sort)
-          mapfile -t LINUX_ARCHIVES < <(find dist -type f -name '*.AppImage.tar.gz' -print | sort)
-          test "${#WINDOWS_ARCHIVES[@]}" -eq 1
-          test "${#LINUX_ARCHIVES[@]}" -eq 1
+          mapfile -t WINDOWS_ARCHIVES < <(find dist -maxdepth 1 -type f -name '*.exe' -print | sort)
+          mapfile -t LINUX_ARCHIVES < <(find dist -maxdepth 1 -type f -name '*.AppImage' -print | sort)
+          test "${#WINDOWS_ARCHIVES[@]}" -eq 1 || {
+            printf 'Expected exactly one signed Windows updater installer, found %s\n' \
+              "${#WINDOWS_ARCHIVES[@]}" >&2
+            find dist -maxdepth 1 -type f -print | sort >&2
+            exit 1
+          }
+          test "${#LINUX_ARCHIVES[@]}" -eq 1 || {
+            printf 'Expected exactly one signed Linux updater archive, found %s\n' \
+              "${#LINUX_ARCHIVES[@]}" >&2
+            find dist -maxdepth 1 -type f -print | sort >&2
+            exit 1
+          }
           WINDOWS_ARCHIVE="${WINDOWS_ARCHIVES[0]}"
           LINUX_ARCHIVE="${LINUX_ARCHIVES[0]}"
           test -f "$WINDOWS_ARCHIVE" && test -f "${WINDOWS_ARCHIVE}.sig"
@@ -606,7 +683,8 @@ jobs:
           project=PixNya
           version=${PIXNYA_RELEASE_VERSION}
           source_repository=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}
-          source_commit=${GITHUB_SHA}
+          source_commit=${PIXNYA_RELEASE_SOURCE_SHA}
+          release_workflow_commit=${GITHUB_SHA}
           source_ref=${GITHUB_REF}
           workflow_run=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
           EOF
@@ -638,8 +716,8 @@ jobs:
           find dist -maxdepth 1 -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > dist/SHA256SUMS.txt
           exact_one 'SHA-256 checksums' dist/SHA256SUMS.txt
           ACTUAL_FILE_COUNT="$(find dist -maxdepth 1 -type f | wc -l | tr -d '[:space:]')"
-          test "$ACTUAL_FILE_COUNT" = 20 || {
-            echo "Expected exactly 20 whitelisted release files, found $ACTUAL_FILE_COUNT" >&2
+          test "$ACTUAL_FILE_COUNT" = 18 || {
+            echo "Expected exactly 18 whitelisted release files, found $ACTUAL_FILE_COUNT" >&2
             find dist -maxdepth 1 -type f -print | sort >&2
             exit 1
           }
@@ -674,7 +752,7 @@ jobs:
             REQUEST_BODY="$(TAG_REF="$TAG_REF" node -e '
               process.stdout.write(JSON.stringify({
                 ref: process.env.TAG_REF,
-                sha: process.env.GITHUB_SHA,
+                sha: process.env.PIXNYA_RELEASE_SOURCE_SHA,
               }));
             ')"
             HTTP_STATUS="$(curl --silent --show-error --location \
@@ -698,9 +776,9 @@ jobs:
             if (
               createdTag.ref !== process.env.TAG_REF ||
               createdTag.object?.type !== "commit" ||
-              createdTag.object?.sha !== process.env.GITHUB_SHA
+              createdTag.object?.sha !== process.env.PIXNYA_RELEASE_SOURCE_SHA
             ) {
-              throw new Error("GitHub did not bind the reserved release tag to this workflow commit");
+              throw new Error("GitHub did not bind the reserved release tag to the verified artifact source commit");
             }
           '
           EXISTING_RELEASE_FILE="$RUNNER_TEMP/existing-draft-release.json"
@@ -742,11 +820,9 @@ jobs:
           fail_on_unmatched_files: true
           files: |
             dist/*.exe
-            dist/*.nsis.zip
-            dist/*.nsis.zip.sig
+            dist/*.exe.sig
             dist/*.AppImage
-            dist/*.AppImage.tar.gz
-            dist/*.AppImage.tar.gz.sig
+            dist/*.AppImage.sig
             dist/pixnya-${{ inputs.version }}-android-arm64-v8a.apk
             dist/pixnya-${{ inputs.version }}.spdx.json
             dist/pixnya-${{ inputs.version }}-android-runtime.spdx.json
@@ -787,7 +863,10 @@ jobs:
             const expectedTag = `v${process.env.PIXNYA_RELEASE_VERSION}`;
             const expectedAssets = fs.readdirSync("dist").sort();
             const actualAssets = release.assets.map((asset) => asset.name).sort();
-            if (tag.object?.type !== "commit" || tag.object?.sha !== process.env.GITHUB_SHA) {
+            if (
+              tag.object?.type !== "commit" ||
+              tag.object?.sha !== process.env.PIXNYA_RELEASE_SOURCE_SHA
+            ) {
               throw new Error("The release tag moved away from the source commit");
             }
             if (release.tag_name !== expectedTag || release.draft !== true) {

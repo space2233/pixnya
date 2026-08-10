@@ -49,8 +49,8 @@ test("manifest generators default to pixnya and accept an explicit public releas
   const temporaryRoot = await mkdtemp(path.join(tmpdir(), "pixnya-update-source-"));
   try {
     const { version } = JSON.parse(await readFile(path.join(root, "package.json"), "utf8"));
-    const windowsArchive = path.join(temporaryRoot, `PixNya_${version}_x64-setup.nsis.zip`);
-    const linuxArchive = path.join(temporaryRoot, `PixNya_${version}_amd64.AppImage.tar.gz`);
+    const windowsArchive = path.join(temporaryRoot, `PixNya_${version}_x64-setup.exe`);
+    const linuxArchive = path.join(temporaryRoot, `PixNya_${version}_amd64.AppImage`);
     const androidApk = path.join(temporaryRoot, `pixnya-${version}-android-arm64-v8a.apk`);
     const signature = path.join(temporaryRoot, "updater.sig");
     const encodedSignature = Buffer.from(

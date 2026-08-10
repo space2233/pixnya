@@ -12,11 +12,9 @@ const repository = "space2233/pixnya";
 
 const assetNames = [
   `PixNya_${version}_x64-setup.exe`,
-  `PixNya_${version}_x64-setup.nsis.zip`,
-  `PixNya_${version}_x64-setup.nsis.zip.sig`,
+  `PixNya_${version}_x64-setup.exe.sig`,
   `PixNya_${version}_amd64.AppImage`,
-  `PixNya_${version}_amd64.AppImage.tar.gz`,
-  `PixNya_${version}_amd64.AppImage.tar.gz.sig`,
+  `PixNya_${version}_amd64.AppImage.sig`,
   `pixnya-${version}-android-arm64-v8a.apk`,
   `pixnya-${version}.spdx.json`,
   `pixnya-${version}-android-runtime.spdx.json`,
@@ -72,6 +70,7 @@ async function createCandidate() {
         `version=${version}`,
         `source_repository=https://github.com/${repository}`,
         `source_commit=${commitSha}`,
+        `release_workflow_commit=${commitSha}`,
         "source_ref=refs/heads/main",
         "workflow_run=https://github.com/space2233/pixnya/actions/runs/123",
         "",
@@ -79,8 +78,8 @@ async function createCandidate() {
     }
     contents.set(name, value);
   }
-  const windowsArchive = `PixNya_${version}_x64-setup.nsis.zip`;
-  const linuxArchive = `PixNya_${version}_amd64.AppImage.tar.gz`;
+  const windowsArchive = `PixNya_${version}_x64-setup.exe`;
+  const linuxArchive = `PixNya_${version}_amd64.AppImage`;
   const androidApk = `pixnya-${version}-android-arm64-v8a.apk`;
   contents.set(`${windowsArchive}.sig`, Buffer.from("windows minisign fixture").toString("base64"));
   contents.set(`${linuxArchive}.sig`, Buffer.from("linux minisign fixture").toString("base64"));

@@ -20,12 +20,10 @@ const hashFile = (filePath) => createHash("sha256").update(readFileSync(filePath
 export const releaseAssetPatterns = (version) => {
   const escapedVersion = escapeRegExp(version);
   return [
-    ["Windows NSIS installer", /\.exe$/],
-    ["Windows updater archive", /\.nsis\.zip$/],
-    ["Windows updater signature", /\.nsis\.zip\.sig$/],
-    ["Linux AppImage installer", /\.AppImage$/],
-    ["Linux updater archive", /\.AppImage\.tar\.gz$/],
-    ["Linux updater signature", /\.AppImage\.tar\.gz\.sig$/],
+    ["Windows NSIS updater installer", /\.exe$/],
+    ["Windows updater signature", /\.exe\.sig$/],
+    ["Linux AppImage updater", /\.AppImage$/],
+    ["Linux updater signature", /\.AppImage\.sig$/],
     ["Android ARM64 APK", new RegExp(`^pixnya-${escapedVersion}-android-arm64-v8a\\.apk$`)],
     ["SPDX SBOM", new RegExp(`^pixnya-${escapedVersion}\\.spdx\\.json$`)],
     ["Android runtime SPDX SBOM", new RegExp(`^pixnya-${escapedVersion}-android-runtime\\.spdx\\.json$`)],
@@ -102,8 +100,8 @@ const verifyUpdateManifests = (assetsDir, assetNames, version, repository) => {
   requireValue(!Number.isNaN(Date.parse(desktopManifest.pub_date)), "desktop update publication date is invalid");
   validateEmbeddedNotes(desktopManifest.notes, "desktop");
   const desktopTargets = [
-    ["windows-x86_64", assetNames.find((name) => name.endsWith(".nsis.zip"))],
-    ["linux-x86_64", assetNames.find((name) => name.endsWith(".AppImage.tar.gz"))],
+    ["windows-x86_64", assetNames.find((name) => name.endsWith(".exe"))],
+    ["linux-x86_64", assetNames.find((name) => name.endsWith(".AppImage"))],
   ];
   requireValue(
     JSON.stringify(Object.keys(desktopManifest.platforms ?? {}).sort()) ===
@@ -169,7 +167,7 @@ export function validateReleaseCandidate({ release, tag, assetsDir, version, com
   validateStableReleaseNotes({ notes: release.body ?? "", version, commitSha });
 
   requireValue(Array.isArray(release.assets), "Draft assets are missing");
-  requireValue(release.assets.length === 20, `expected exactly 20 Draft assets, found ${release.assets.length}`);
+  requireValue(release.assets.length === 18, `expected exactly 18 Draft assets, found ${release.assets.length}`);
   const remoteNames = release.assets.map((asset) => asset.name).sort();
   requireValue(new Set(remoteNames).size === remoteNames.length, "Draft contains duplicate asset names");
   for (const asset of release.assets) {
@@ -201,6 +199,10 @@ export function validateReleaseCandidate({ release, tag, assetsDir, version, com
   requireValue(provenance.get("version") === version, "build provenance version does not match");
   requireValue(provenance.get("source_repository") === `https://github.com/${repository}`, "build provenance repository does not match");
   requireValue(provenance.get("source_commit") === commitSha, "build provenance commit does not match");
+  requireValue(
+    /^[0-9a-f]{40}$/i.test(provenance.get("release_workflow_commit") ?? ""),
+    "build provenance release workflow commit is invalid",
+  );
 
   return { snapshot: releaseCandidateSnapshot(release) };
 }
