@@ -27,6 +27,14 @@ const fingerprintTextFiles = [
   "gradle/verification-metadata.xml",
   "gradle/wrapper/gradle-wrapper.properties",
 ];
+const sharedGradleConfigFiles = [
+  "app/build.gradle.kts",
+  "build.gradle.kts",
+  "buildSrc/build.gradle.kts",
+  "gradle.properties",
+  "gradle/wrapper/gradle-wrapper.properties",
+  "settings.gradle",
+];
 
 async function createFixture(context) {
   const fixtureRoot = await mkdtemp(path.join(tmpdir(), "pixnya-android-gradle-"));
@@ -50,6 +58,39 @@ test("the checked-in Android Gradle graph is locked and checksum verified offlin
 
   assert.match(stdout, /Android Gradle supply chain verified offline:/);
   assert.match(stdout, /locked components/);
+});
+
+test("checked-in Android Gradle configuration is machine neutral", async () => {
+  const androidRoot = path.join(root, "src-tauri", "gen", "android");
+  const androidIgnore = await readFile(path.join(androidRoot, ".gitignore"), "utf8");
+  assert.match(
+    androidIgnore,
+    /^\/local\.properties$/m,
+    "developer-specific sdk.dir configuration must remain local and untracked",
+  );
+
+  const violations = [];
+  for (const relativePath of sharedGradleConfigFiles) {
+    const content = await readFile(path.join(androidRoot, relativePath), "utf8");
+    for (const [index, line] of content.split(/\r?\n/).entries()) {
+      const trimmed = line.trimStart();
+      if (trimmed.startsWith("#") || trimmed.startsWith("//")) {
+        continue;
+      }
+      if (
+        /(?:^|[=\s"'(,])(?:[A-Za-z]\\?:[\\/]+|\/(?![/*])|~[\\/])/.test(line) ||
+        /(?:^|[=\s"'(,])\\\\[A-Za-z0-9_.-]+[\\/]/.test(line)
+      ) {
+        violations.push(`${relativePath}:${index + 1}: ${line.trim()}`);
+      }
+    }
+  }
+
+  assert.deepEqual(
+    violations,
+    [],
+    `shared Gradle configuration must use JAVA_HOME, SDK environment variables, or ignored local.properties:\n${violations.join("\n")}`,
+  );
 });
 
 test("the offline inventory is deterministic and includes direct and transitive dependencies", async (context) => {
