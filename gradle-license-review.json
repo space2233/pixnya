@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "gradleFingerprint": "sha256:659217c28c617e82b2f92815e743af751e408b72b171c4cd4c829299b26c4f95",
+  "gradleFingerprint": "sha256:7ae081dc3b11b6cd57eca9cdc7cabe2a94821155e5438c4f63a1ae04d0f011ce",
   "components": [
     {
       "coordinate": "androidx.activity:activity-ktx:1.10.1",

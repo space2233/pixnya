@@ -77,6 +77,23 @@ test("verification metadata pins the JUnit BOM module required by clean buildSrc
   );
 });
 
+test("verification metadata pins the Jackson parent POM required by the Tauri Android build", async () => {
+  const metadata = await readFile(
+    path.join(root, "src-tauri", "gen", "android", "gradle", "verification-metadata.xml"),
+    "utf8",
+  );
+  const jacksonBase = metadata.match(
+    /<component group="com\.fasterxml\.jackson" name="jackson-base" version="2\.15\.3">([\s\S]*?)<\/component>/,
+  )?.[1];
+
+  assert.ok(jacksonBase, "verification metadata must include com.fasterxml.jackson:jackson-base:2.15.3");
+  assert.match(
+    jacksonBase,
+    /<artifact name="jackson-base-2\.15\.3\.pom">\s*<sha256 value="4290342abf0b0e4567322ffb2d0c36e25b0a87a217bb56b35680a8dd8f8d66e4"/,
+    "the Tauri Android parent POM must match the independently recomputed Maven Central SHA-256",
+  );
+});
+
 test("checked-in Android Gradle configuration is machine neutral", async () => {
   const androidRoot = path.join(root, "src-tauri", "gen", "android");
   const androidIgnore = await readFile(path.join(androidRoot, ".gitignore"), "utf8");
