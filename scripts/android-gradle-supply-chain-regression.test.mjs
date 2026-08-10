@@ -60,6 +60,23 @@ test("the checked-in Android Gradle graph is locked and checksum verified offlin
   assert.match(stdout, /locked components/);
 });
 
+test("verification metadata pins the JUnit BOM module required by clean buildSrc resolution", async () => {
+  const metadata = await readFile(
+    path.join(root, "src-tauri", "gen", "android", "gradle", "verification-metadata.xml"),
+    "utf8",
+  );
+  const junitBom = metadata.match(
+    /<component group="org\.junit" name="junit-bom" version="5\.10\.2">([\s\S]*?)<\/component>/,
+  )?.[1];
+
+  assert.ok(junitBom, "verification metadata must include org.junit:junit-bom:5.10.2");
+  assert.match(
+    junitBom,
+    /<artifact name="junit-bom-5\.10\.2\.module">\s*<sha256 value="de23b114b3e4119a8fe6eb17bed5a3852816698bace67071579d6d927ebb080a"/,
+    "the clean-runner Gradle module artifact must match Maven Central's published SHA-256",
+  );
+});
+
 test("checked-in Android Gradle configuration is machine neutral", async () => {
   const androidRoot = path.join(root, "src-tauri", "gen", "android");
   const androidIgnore = await readFile(path.join(androidRoot, ".gitignore"), "utf8");
