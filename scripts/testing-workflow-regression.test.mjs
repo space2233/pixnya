@@ -32,13 +32,24 @@ test("Rust tests remain strict without recreating incremental caches", async () 
   assert.match(runner, /"test", "--workspace"/);
 });
 
-test("Linux CI fails fast on quick tests before installing platform packages", async () => {
+test("Linux CI hydrates the pinned Rust graph before quick tests and defers platform packages", async () => {
   const workflow = await read(".github/workflows/linux.yml");
+  const rustSetupIndex = workflow.indexOf(
+    "uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c",
+  );
+  const cargoFetchIndex = workflow.indexOf("cargo fetch --locked");
   const quickIndex = workflow.indexOf("npm run test:quick");
   const aptIndex = workflow.indexOf("sudo apt-get update");
 
+  assert.ok(rustSetupIndex >= 0);
+  assert.ok(cargoFetchIndex >= 0);
   assert.ok(quickIndex >= 0);
   assert.ok(aptIndex >= 0);
+  assert.ok(rustSetupIndex < cargoFetchIndex);
+  assert.ok(cargoFetchIndex < quickIndex);
   assert.ok(quickIndex < aptIndex);
+  assert.match(workflow, /toolchain: 1\.97\.1/);
+  assert.match(workflow, /components: clippy, rustfmt/);
+  assert.doesNotMatch(workflow, /rustup default stable/);
   assert.match(workflow, /bash scripts\/check-linux\.sh rust-only/);
 });

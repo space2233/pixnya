@@ -134,6 +134,8 @@ jobs:
           fi
       - name: Install frontend dependencies
         run: npm ci
+      - name: Hydrate the locked Rust graph for offline supply-chain checks
+        run: cargo fetch --locked
       - name: Install the pinned Android SDK used by the locked graph
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
       - name: Resolve and prove the locked Android Gradle and Maven graph
@@ -164,7 +166,6 @@ jobs:
         run: |
           mkdir -p release-artifacts
           export SOURCE_DATE_EPOCH="$(git show -s --format=%ct "$GITHUB_SHA")"
-          cargo fetch --locked
           node scripts/check-android-gradle-supply-chain.mjs --check \
             --output "release-artifacts/pixnya-${PIXNYA_RELEASE_VERSION}-android-gradle-dependencies.json"
           node scripts/generate-android-runtime-sbom.mjs \

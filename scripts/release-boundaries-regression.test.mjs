@@ -86,6 +86,19 @@ test("formal releases are gated by main-branch full verification and signed arti
   assert.match(workflow, /toolchain: 1\.97\.1/);
   assert.match(workflow, /generate-supply-chain-artifacts\.mjs --check/);
   assert.match(workflow, /cargo fetch --locked/);
+  const preflightRustSetup = workflow.indexOf(
+    "uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c",
+  );
+  const preflightRustVersion = workflow.indexOf("toolchain: 1.97.1", preflightRustSetup);
+  const cargoFetch = workflow.indexOf("cargo fetch --locked");
+  const fullTest = workflow.indexOf("npm run test:full");
+  assert.ok(
+    preflightRustSetup >= 0 &&
+      preflightRustVersion > preflightRustSetup &&
+      preflightRustVersion < cargoFetch &&
+      cargoFetch < fullTest,
+    "the clean release runner must pin Rust and hydrate Cargo before offline supply-chain tests",
+  );
   assert.match(workflow, /actions\/setup-java@[0-9a-f]{40} # v5/);
   assert.match(workflow, /android-actions\/setup-android@[0-9a-f]{40} # v3/);
   assert.match(workflow, /\.\/gradlew --no-daemon :app:dependencies buildEnvironment/);
