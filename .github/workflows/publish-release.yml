@@ -103,8 +103,8 @@ jobs:
               throw new Error("The Draft Release has no stable ID");
             }
             const assets = release.assets ?? [];
-            if (assets.length !== 18) {
-              throw new Error(`Expected exactly 18 Draft assets, found ${assets.length}`);
+            if (assets.length !== 8) {
+              throw new Error(`Expected exactly 8 Draft assets, found ${assets.length}`);
             }
             const names = new Set();
             const plan = assets.map((asset) => {
@@ -127,6 +127,27 @@ jobs:
       - name: Strictly validate release notes, assets, checksums, and provenance
         shell: bash
         run: |
+          VERIFICATION_BUNDLE="candidate/pixnya-${PIXNYA_RELEASE_VERSION}-verification.tar.gz"
+          EXPECTED_MEMBERS=(
+            BUILD-PROVENANCE.txt
+            LICENSE.txt
+            pixnya-${PIXNYA_RELEASE_VERSION}-android-build-tools-osv.json
+            pixnya-${PIXNYA_RELEASE_VERSION}-android-gradle-dependencies.json
+            pixnya-${PIXNYA_RELEASE_VERSION}-android-runtime.spdx.json
+            pixnya-${PIXNYA_RELEASE_VERSION}-source.tar.gz
+            pixnya-${PIXNYA_RELEASE_VERSION}-third-party-licenses.tar.gz
+            pixnya-${PIXNYA_RELEASE_VERSION}.spdx.json
+            PixNya_${PIXNYA_RELEASE_VERSION}_amd64.AppImage.sig
+            PixNya_${PIXNYA_RELEASE_VERSION}_x64-setup.exe.sig
+            THIRD_PARTY_NOTICES.md
+          )
+          mapfile -t BUNDLED_MEMBERS < <(tar -tzf "$VERIFICATION_BUNDLE" | sort)
+          mapfile -t SORTED_EXPECTED_MEMBERS < <(printf '%s\n' "${EXPECTED_MEMBERS[@]}" | sort)
+          test "${BUNDLED_MEMBERS[*]}" = "${SORTED_EXPECTED_MEMBERS[*]}" || {
+            echo "The verification bundle does not contain the exact reviewed evidence set" >&2
+            exit 1
+          }
+          tar -xOf "$VERIFICATION_BUNDLE" BUILD-PROVENANCE.txt > "$RUNNER_TEMP/candidate-provenance.txt"
           node scripts/validate-release-candidate.mjs \
             --release-json "$RUNNER_TEMP/candidate-release.json" \
             --tag-json "$RUNNER_TEMP/candidate-tag.json" \
@@ -134,6 +155,7 @@ jobs:
             --version "$PIXNYA_RELEASE_VERSION" \
             --commit "$GITHUB_SHA" \
             --repository "$GITHUB_REPOSITORY" \
+            --provenance-file "$RUNNER_TEMP/candidate-provenance.txt" \
             --snapshot-output "$RUNNER_TEMP/candidate-snapshot.txt"
       - name: Install the independent signature verifier
         shell: bash
@@ -169,10 +191,26 @@ jobs:
 
           WINDOWS_ARCHIVE="$(find candidate -maxdepth 1 -type f -name '*.exe' -print -quit)"
           LINUX_ARCHIVE="$(find candidate -maxdepth 1 -type f -name '*.AppImage' -print -quit)"
-          test -n "$WINDOWS_ARCHIVE" && test -f "${WINDOWS_ARCHIVE}.sig"
-          test -n "$LINUX_ARCHIVE" && test -f "${LINUX_ARCHIVE}.sig"
-          base64 --decode "${WINDOWS_ARCHIVE}.sig" > "$RUNNER_TEMP/windows-updater.minisig"
-          base64 --decode "${LINUX_ARCHIVE}.sig" > "$RUNNER_TEMP/linux-updater.minisig"
+          test -n "$WINDOWS_ARCHIVE" && test -n "$LINUX_ARCHIVE"
+          WINDOWS_SIGNATURE_FILE="$RUNNER_TEMP/windows-updater.minisig" \
+            LINUX_SIGNATURE_FILE="$RUNNER_TEMP/linux-updater.minisig" node -e '
+              const fs = require("node:fs");
+              const manifest = JSON.parse(fs.readFileSync("candidate/latest.json", "utf8"));
+              for (const [target, output] of [
+                ["windows-x86_64", process.env.WINDOWS_SIGNATURE_FILE],
+                ["linux-x86_64", process.env.LINUX_SIGNATURE_FILE],
+              ]) {
+                const encoded = manifest.platforms?.[target]?.signature;
+                if (typeof encoded !== "string" || encoded === "") {
+                  throw new Error(`Missing embedded updater signature: ${target}`);
+                }
+                const signature = Buffer.from(encoded, "base64");
+                if (signature.toString("base64") !== encoded || !signature.toString("utf8").startsWith("untrusted comment:")) {
+                  throw new Error(`Invalid embedded updater signature: ${target}`);
+                }
+                fs.writeFileSync(output, signature);
+              }
+            '
           minisign -Vm "$WINDOWS_ARCHIVE" -x "$RUNNER_TEMP/windows-updater.minisig" -p "$DESKTOP_PUBLIC_KEY"
           minisign -Vm "$LINUX_ARCHIVE" -x "$RUNNER_TEMP/linux-updater.minisig" -p "$DESKTOP_PUBLIC_KEY"
           minisign -Vm candidate/android-latest.json -x candidate/android-latest.json.minisig -p "$ANDROID_PUBLIC_KEY"
@@ -202,6 +240,7 @@ jobs:
             --version "$PIXNYA_RELEASE_VERSION" \
             --commit "$GITHUB_SHA" \
             --repository "$GITHUB_REPOSITORY" \
+            --provenance-file "$RUNNER_TEMP/candidate-provenance.txt" \
             --expect-snapshot "$RUNNER_TEMP/candidate-snapshot.txt"
       - name: Publish the verified stable Release
         shell: bash
@@ -232,5 +271,6 @@ jobs:
           rm -f -- \
             "$RUNNER_TEMP/desktop-updater.pub" \
             "$RUNNER_TEMP/android-update-manifest.pub" \
+            "$RUNNER_TEMP/candidate-provenance.txt" \
             "$RUNNER_TEMP/windows-updater.minisig" \
             "$RUNNER_TEMP/linux-updater.minisig"

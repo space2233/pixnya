@@ -95,7 +95,7 @@ Linux GTK3 路径要等待 [Tauri 上游尚无发布日期的 GTK4 迁移](https
 
 1. 与对应源码提交一致的完整 `LICENSE` 和 `THIRD_PARTY_NOTICES.md`；
 2. 使用相同 npm、Cargo 与 Gradle 锁图生成的 `pixnya-<version>.spdx.json`，其中必须包含全部锁定 Maven 组件；
-3. 包含 npm、Cargo 与 Gradle/Maven 逐依赖正文、声明、通知和审计元数据的 `pixnya-<version>-third-party-licenses.tar.gz`；
+3. 一个 `pixnya-<version>-verification.tar.gz`，统一包含 npm、Cargo 与 Gradle/Maven 逐依赖正文、声明、通知、SBOM、来源记录和审计元数据；
 4. 安装包、更新清单、SBOM、许可证归档和通知文件的 SHA-256；
 5. 对新增或变更许可证的人工复核记录。
 

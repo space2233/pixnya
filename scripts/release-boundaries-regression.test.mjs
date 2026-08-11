@@ -279,7 +279,8 @@ test("formal releases are gated by main-branch full verification and signed arti
   assert.match(workflow, /stable releases require the official repository to be anonymously readable/);
   assert.match(workflow, /metadata\.visibility !== "public"/);
   assert.match(workflow, /exactly one %s/);
-  assert.match(workflow, /Expected exactly 18 whitelisted release files/);
+  assert.match(workflow, /Expected exactly 8 public release files/);
+  assert.match(workflow, /pixnya-\$\{PIXNYA_RELEASE_VERSION\}-verification\.tar\.gz/);
   assert.match(workflow, /find dist -maxdepth 1 -type f -name '\*\.exe'/);
   assert.doesNotMatch(workflow, /nsis\.zip/);
   assert.doesNotMatch(workflow, /AppImage\.tar\.gz/);
@@ -295,7 +296,7 @@ test("formal releases are gated by main-branch full verification and signed arti
   assert.match(workflow, /repository: \$\{\{ github\.repository \}\}/);
   assert.match(workflow, /--repository "\$PIXNYA_UPDATE_REPOSITORY"/);
 
-  const assetsVerified = workflow.indexOf("Expected exactly 18 whitelisted release files");
+  const assetsVerified = workflow.indexOf("Expected exactly 8 public release files");
   const tagReserved = workflow.indexOf("Atomically bind the release tag to the source commit");
   const releaseCreated = workflow.indexOf("Create or resume a draft Release for manual verification");
   const bindingVerified = workflow.indexOf("Verify the draft Release remains bound to the source commit");
@@ -351,6 +352,7 @@ pixnya-${version}-source.tar.gz
 pixnya-${version}-third-party-licenses.tar.gz
 pixnya-${version}.spdx.json
 pixnya-${version}-android-runtime.spdx.json
+pixnya-${version}-verification.tar.gz
 SHA256SUMS.txt
 
 ${requiredSections[4]}
@@ -376,7 +378,7 @@ Known limitations: Windows binaries are not Authenticode-signed.`;
   }));
   for (const invalidNotes of [
     completeNotes.replace(commitSha, "{{full commit SHA}}"),
-    completeNotes.replace(`pixnya-${version}.spdx.json`, "combined SBOM"),
+    completeNotes.replace(`pixnya-${version}-verification.tar.gz`, "combined evidence"),
     completeNotes.replace("- Android ARM64: 0.29.0 -> 1.0.0; Android 15 test device; PASS", ""),
     completeNotes.replace("PASS", "{{result}}"),
     completeNotes.replace("0.29.0 -> 1.0.0; Windows 11 24H2", "1.0.0 -> 1.0.0; Windows 11 24H2"),
@@ -421,6 +423,7 @@ test("stable publication revalidates the signed Draft instead of trusting the bu
   assert.match(workflow, /-name '\*\.AppImage'/);
   assert.match(workflow, /minisign -Vm "\$WINDOWS_ARCHIVE"/);
   assert.match(workflow, /minisign -Vm "\$LINUX_ARCHIVE"/);
+  assert.match(workflow, /Missing embedded updater signature/);
   assert.match(workflow, /minisign -Vm candidate\/android-latest\.json/);
   assert.match(workflow, /sdkmanager "build-tools;36\.0\.0"/);
   assert.match(workflow, /"\$APKSIGNER" verify --verbose --print-certs/);

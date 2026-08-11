@@ -713,6 +713,38 @@ jobs:
           exact_one 'Android update manifest' dist/android-latest.json
           exact_one 'Android update manifest signature' dist/android-latest.json.minisig
           exact_one 'build provenance' dist/BUILD-PROVENANCE.txt
+          VERIFICATION_BUNDLE="dist/pixnya-${PIXNYA_RELEASE_VERSION}-verification.tar.gz"
+          VERIFICATION_MEMBERS=(
+            BUILD-PROVENANCE.txt
+            LICENSE.txt
+            pixnya-${PIXNYA_RELEASE_VERSION}-android-build-tools-osv.json
+            pixnya-${PIXNYA_RELEASE_VERSION}-android-gradle-dependencies.json
+            pixnya-${PIXNYA_RELEASE_VERSION}-android-runtime.spdx.json
+            pixnya-${PIXNYA_RELEASE_VERSION}-source.tar.gz
+            pixnya-${PIXNYA_RELEASE_VERSION}-third-party-licenses.tar.gz
+            pixnya-${PIXNYA_RELEASE_VERSION}.spdx.json
+            "$(basename "${LINUX_ARCHIVE}.sig")"
+            "$(basename "${WINDOWS_ARCHIVE}.sig")"
+            THIRD_PARTY_NOTICES.md
+          )
+          tar -czf "$VERIFICATION_BUNDLE" -C dist "${VERIFICATION_MEMBERS[@]}"
+          mapfile -t BUNDLED_MEMBERS < <(tar -tzf "$VERIFICATION_BUNDLE" | sort)
+          mapfile -t EXPECTED_MEMBERS < <(printf '%s\n' "${VERIFICATION_MEMBERS[@]}" | sort)
+          test "${BUNDLED_MEMBERS[*]}" = "${EXPECTED_MEMBERS[*]}" || {
+            echo "The verification bundle does not contain the exact reviewed evidence set" >&2
+            printf 'actual: %s\n' "${BUNDLED_MEMBERS[@]}" >&2
+            exit 1
+          }
+          for name in "${VERIFICATION_MEMBERS[@]}"; do
+            rm -- "dist/$name"
+          done
+          exact_one 'verification bundle' "$VERIFICATION_BUNDLE"
+          exact_one 'Windows NSIS installer' dist/*.exe
+          exact_one 'Linux AppImage installer' dist/*.AppImage
+          exact_one 'Android ARM64 APK' dist/pixnya-${PIXNYA_RELEASE_VERSION}-android-arm64-v8a.apk
+          exact_one 'desktop update manifest' dist/latest.json
+          exact_one 'Android update manifest' dist/android-latest.json
+          exact_one 'Android update manifest signature' dist/android-latest.json.minisig
           (
             cd dist
             find . -maxdepth 1 -type f ! -name SHA256SUMS.txt -printf '%f\0' |
@@ -721,8 +753,8 @@ jobs:
           )
           exact_one 'SHA-256 checksums' dist/SHA256SUMS.txt
           ACTUAL_FILE_COUNT="$(find dist -maxdepth 1 -type f | wc -l | tr -d '[:space:]')"
-          test "$ACTUAL_FILE_COUNT" = 18 || {
-            echo "Expected exactly 18 whitelisted release files, found $ACTUAL_FILE_COUNT" >&2
+          test "$ACTUAL_FILE_COUNT" = 8 || {
+            echo "Expected exactly 8 public release files, found $ACTUAL_FILE_COUNT" >&2
             find dist -maxdepth 1 -type f -print | sort >&2
             exit 1
           }
@@ -826,22 +858,12 @@ jobs:
           fail_on_unmatched_files: true
           files: |
             dist/*.exe
-            dist/*.exe.sig
             dist/*.AppImage
-            dist/*.AppImage.sig
             dist/pixnya-${{ inputs.version }}-android-arm64-v8a.apk
-            dist/pixnya-${{ inputs.version }}.spdx.json
-            dist/pixnya-${{ inputs.version }}-android-runtime.spdx.json
-            dist/pixnya-${{ inputs.version }}-android-gradle-dependencies.json
-            dist/pixnya-${{ inputs.version }}-android-build-tools-osv.json
-            dist/pixnya-${{ inputs.version }}-third-party-licenses.tar.gz
-            dist/pixnya-${{ inputs.version }}-source.tar.gz
-            dist/LICENSE.txt
-            dist/THIRD_PARTY_NOTICES.md
+            dist/pixnya-${{ inputs.version }}-verification.tar.gz
             dist/latest.json
             dist/android-latest.json
             dist/android-latest.json.minisig
-            dist/BUILD-PROVENANCE.txt
             dist/SHA256SUMS.txt
       - name: Verify the draft Release remains bound to the source commit
         shell: bash

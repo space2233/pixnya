@@ -21,22 +21,12 @@ export const releaseAssetPatterns = (version) => {
   const escapedVersion = escapeRegExp(version);
   return [
     ["Windows NSIS updater installer", /\.exe$/],
-    ["Windows updater signature", /\.exe\.sig$/],
     ["Linux AppImage updater", /\.AppImage$/],
-    ["Linux updater signature", /\.AppImage\.sig$/],
     ["Android ARM64 APK", new RegExp(`^pixnya-${escapedVersion}-android-arm64-v8a\\.apk$`)],
-    ["SPDX SBOM", new RegExp(`^pixnya-${escapedVersion}\\.spdx\\.json$`)],
-    ["Android runtime SPDX SBOM", new RegExp(`^pixnya-${escapedVersion}-android-runtime\\.spdx\\.json$`)],
-    ["Android Gradle inventory", new RegExp(`^pixnya-${escapedVersion}-android-gradle-dependencies\\.json$`)],
-    ["Android build-tool OSV report", new RegExp(`^pixnya-${escapedVersion}-android-build-tools-osv\\.json$`)],
-    ["third-party license archive", new RegExp(`^pixnya-${escapedVersion}-third-party-licenses\\.tar\\.gz$`)],
-    ["source archive", new RegExp(`^pixnya-${escapedVersion}-source\\.tar\\.gz$`)],
-    ["project license", /^LICENSE\.txt$/],
-    ["third-party notices", /^THIRD_PARTY_NOTICES\.md$/],
+    ["verification bundle", new RegExp(`^pixnya-${escapedVersion}-verification\\.tar\\.gz$`)],
     ["desktop update manifest", /^latest\.json$/],
     ["Android update manifest", /^android-latest\.json$/],
     ["Android update manifest signature", /^android-latest\.json\.minisig$/],
-    ["build provenance", /^BUILD-PROVENANCE\.txt$/],
     ["SHA-256 checksums", /^SHA256SUMS\.txt$/],
   ];
 };
@@ -114,8 +104,12 @@ const verifyUpdateManifests = (assetsDir, assetNames, version, repository) => {
       entry?.url === releaseAssetUrl(repository, version, archiveName),
       `desktop update URL does not match the verified Release asset: ${target}`,
     );
-    const signature = readFileSync(path.join(assetsDir, `${archiveName}.sig`), "utf8").trim();
-    requireValue(entry?.signature === signature, `desktop update signature does not match its asset: ${target}`);
+    requireValue(typeof entry?.signature === "string" && entry.signature !== "", `desktop update signature is missing: ${target}`);
+    const signature = Buffer.from(entry.signature, "base64");
+    requireValue(
+      signature.length > 0 && signature.toString("base64") === entry.signature,
+      `desktop update signature is not canonical Base64: ${target}`,
+    );
   }
 
   const androidManifest = readJsonAsset(assetsDir, "android-latest.json");
@@ -153,7 +147,7 @@ export const releaseCandidateSnapshot = (release) => {
   return createHash("sha256").update(JSON.stringify(material)).digest("hex");
 };
 
-export function validateReleaseCandidate({ release, tag, assetsDir, version, commitSha, repository }) {
+export function validateReleaseCandidate({ release, tag, assetsDir, version, commitSha, repository, provenanceText }) {
   requireValue(/^[1-9][0-9]*\.[0-9]+\.[0-9]+$/.test(version), "stable candidate version is invalid");
   requireValue(/^[0-9a-f]{40}$/i.test(commitSha), "candidate commit must be a full Git SHA");
   requireValue(/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository), "candidate repository is invalid");
@@ -167,7 +161,7 @@ export function validateReleaseCandidate({ release, tag, assetsDir, version, com
   validateStableReleaseNotes({ notes: release.body ?? "", version, commitSha });
 
   requireValue(Array.isArray(release.assets), "Draft assets are missing");
-  requireValue(release.assets.length === 18, `expected exactly 18 Draft assets, found ${release.assets.length}`);
+  requireValue(release.assets.length === 8, `expected exactly 8 Draft assets, found ${release.assets.length}`);
   const remoteNames = release.assets.map((asset) => asset.name).sort();
   requireValue(new Set(remoteNames).size === remoteNames.length, "Draft contains duplicate asset names");
   for (const asset of release.assets) {
@@ -194,7 +188,8 @@ export function validateReleaseCandidate({ release, tag, assetsDir, version, com
   verifyChecksums(assetsDir, localNames);
   verifyUpdateManifests(assetsDir, localNames, version, repository);
 
-  const provenance = parseProvenance(readFileSync(path.join(assetsDir, "BUILD-PROVENANCE.txt"), "utf8"));
+  requireValue(typeof provenanceText === "string" && provenanceText !== "", "build provenance is missing from the verification bundle");
+  const provenance = parseProvenance(provenanceText);
   requireValue(provenance.get("project") === "PixNya", "build provenance project is invalid");
   requireValue(provenance.get("version") === version, "build provenance version does not match");
   requireValue(provenance.get("source_repository") === `https://github.com/${repository}`, "build provenance repository does not match");
@@ -221,7 +216,7 @@ const parseArguments = (argv) => {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {
     const args = parseArguments(process.argv);
-    const required = ["--release-json", "--tag-json", "--assets-dir", "--version", "--commit", "--repository"];
+    const required = ["--release-json", "--tag-json", "--assets-dir", "--version", "--commit", "--repository", "--provenance-file"];
     for (const name of required) requireValue(args.has(name), `missing argument: ${name}`);
     const release = JSON.parse(readFileSync(args.get("--release-json"), "utf8"));
     const tag = JSON.parse(readFileSync(args.get("--tag-json"), "utf8"));
@@ -232,6 +227,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       version: args.get("--version"),
       commitSha: args.get("--commit"),
       repository: args.get("--repository"),
+      provenanceText: readFileSync(args.get("--provenance-file"), "utf8"),
     });
     if (args.has("--snapshot-output")) writeFileSync(args.get("--snapshot-output"), `${result.snapshot}\n`);
     if (args.has("--expect-snapshot")) {

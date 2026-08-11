@@ -80,11 +80,7 @@ export function validateStableReleaseNotes({ notes, version, commitSha, allowPen
   requireText(/(?:default|默认)/i.test(bodies[2]) && /(?:man-in-the-middle|中间人)/i.test(bodies[2]), "low-security default or risk is missing");
 
   const requiredAssets = [
-    "LICENSE.txt",
-    `pixnya-${version}-source.tar.gz`,
-    `pixnya-${version}-third-party-licenses.tar.gz`,
-    `pixnya-${version}.spdx.json`,
-    `pixnya-${version}-android-runtime.spdx.json`,
+    `pixnya-${version}-verification.tar.gz`,
     "SHA256SUMS.txt",
   ];
   requireText(bodies[3].includes(commitSha), "release notes do not name the source commit");

@@ -12,22 +12,12 @@ const repository = "space2233/pixnya";
 
 const assetNames = [
   `PixNya_${version}_x64-setup.exe`,
-  `PixNya_${version}_x64-setup.exe.sig`,
   `PixNya_${version}_amd64.AppImage`,
-  `PixNya_${version}_amd64.AppImage.sig`,
   `pixnya-${version}-android-arm64-v8a.apk`,
-  `pixnya-${version}.spdx.json`,
-  `pixnya-${version}-android-runtime.spdx.json`,
-  `pixnya-${version}-android-gradle-dependencies.json`,
-  `pixnya-${version}-android-build-tools-osv.json`,
-  `pixnya-${version}-third-party-licenses.tar.gz`,
-  `pixnya-${version}-source.tar.gz`,
-  "LICENSE.txt",
-  "THIRD_PARTY_NOTICES.md",
+  `pixnya-${version}-verification.tar.gz`,
   "latest.json",
   "android-latest.json",
   "android-latest.json.minisig",
-  "BUILD-PROVENANCE.txt",
   "SHA256SUMS.txt",
 ];
 
@@ -48,6 +38,7 @@ pixnya-${version}-source.tar.gz
 pixnya-${version}-third-party-licenses.tar.gz
 pixnya-${version}.spdx.json
 pixnya-${version}-android-runtime.spdx.json
+pixnya-${version}-verification.tar.gz
 SHA256SUMS.txt
 
 ## Upgrade verification and limitations
@@ -63,37 +54,24 @@ async function createCandidate() {
   const assetsDir = await mkdtemp(path.join(os.tmpdir(), "pixnya-release-candidate-"));
   const contents = new Map();
   for (const name of assetNames.filter((name) => name !== "SHA256SUMS.txt")) {
-    let value = `fixture:${name}`;
-    if (name === "BUILD-PROVENANCE.txt") {
-      value = [
-        "project=PixNya",
-        `version=${version}`,
-        `source_repository=https://github.com/${repository}`,
-        `source_commit=${commitSha}`,
-        `release_workflow_commit=${commitSha}`,
-        "source_ref=refs/heads/main",
-        "workflow_run=https://github.com/space2233/pixnya/actions/runs/123",
-        "",
-      ].join("\n");
-    }
-    contents.set(name, value);
+    contents.set(name, `fixture:${name}`);
   }
   const windowsArchive = `PixNya_${version}_x64-setup.exe`;
   const linuxArchive = `PixNya_${version}_amd64.AppImage`;
   const androidApk = `pixnya-${version}-android-arm64-v8a.apk`;
-  contents.set(`${windowsArchive}.sig`, Buffer.from("windows minisign fixture").toString("base64"));
-  contents.set(`${linuxArchive}.sig`, Buffer.from("linux minisign fixture").toString("base64"));
+  const windowsSignature = Buffer.from("windows minisign fixture").toString("base64");
+  const linuxSignature = Buffer.from("linux minisign fixture").toString("base64");
   contents.set("latest.json", `${JSON.stringify({
     version,
     notes: completeNotes,
     pub_date: "2026-08-10T00:00:00.000Z",
     platforms: {
       "windows-x86_64": {
-        signature: contents.get(`${windowsArchive}.sig`),
+        signature: windowsSignature,
         url: `https://github.com/${repository}/releases/download/v${version}/${encodeURIComponent(windowsArchive)}`,
       },
       "linux-x86_64": {
-        signature: contents.get(`${linuxArchive}.sig`),
+        signature: linuxSignature,
         url: `https://github.com/${repository}/releases/download/v${version}/${encodeURIComponent(linuxArchive)}`,
       },
     },
@@ -134,7 +112,17 @@ async function createCandidate() {
     }))),
   };
   const tag = { ref: `refs/tags/v${version}`, object: { type: "commit", sha: commitSha } };
-  return { assetsDir, release, tag };
+  const provenanceText = [
+    "project=PixNya",
+    `version=${version}`,
+    `source_repository=https://github.com/${repository}`,
+    `source_commit=${commitSha}`,
+    `release_workflow_commit=${commitSha}`,
+    "source_ref=refs/heads/main",
+    "workflow_run=https://github.com/space2233/pixnya/actions/runs/123",
+    "",
+  ].join("\n");
+  return { assetsDir, release, tag, provenanceText };
 }
 
 async function refreshCandidateIntegrity(candidate) {

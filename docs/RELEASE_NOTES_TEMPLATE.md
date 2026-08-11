@@ -25,13 +25,11 @@ The compatibility connection mode is disabled by default and never selected as a
 ## Source, licenses, SBOM, and checksums
 
 - Source commit: `{{full Git commit SHA}}`
-- License: `GPL-3.0-only` (`LICENSE.txt` attachment)
-- Source archive: `pixnya-{{version}}-source.tar.gz`
-- Third-party licenses: `pixnya-{{version}}-third-party-licenses.tar.gz`
-- SPDX SBOMs: `pixnya-{{version}}.spdx.json` and `pixnya-{{version}}-android-runtime.spdx.json`
-- Checksums: `SHA256SUMS.txt`
+- License: `GPL-3.0-only`
+- Verification bundle: `pixnya-{{version}}-verification.tar.gz` (explicit source snapshot, GPL text, third-party licenses/notices, SPDX SBOMs, Gradle inventory, OSV report, provenance, and detached desktop signatures)
+- Checksums: `SHA256SUMS.txt` (covers the exact eight public attachments)
 
-The source tag, explicit source archive, binaries, manifests, SBOMs, license evidence, and checksums are published in this same repository.
+GitHub also generates Source code archives from the protected release tag automatically.
 
 ## Upgrade verification and limitations
 
