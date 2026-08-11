@@ -1,9 +1,15 @@
 <script lang="ts">
   import ArtworkThumbnail from "$lib/components/ArtworkThumbnail.svelte";
   import Icon from "$lib/components/Icon.svelte";
+  import {
+    publishIllustrationBookmarkState,
+    resolveIllustrationBookmarkState,
+    subscribeIllustrationBookmarkState,
+  } from "$lib/illustration-bookmark-state";
   import { m } from "$lib/i18n";
   import { describeDataFailure, setIllustrationBookmark } from "$lib/pixiv-api";
   import { r18DefaultVisible } from "$lib/preferences";
+  import { session } from "$lib/session";
   import type { IllustrationSummary } from "$lib/types";
 
   let {
@@ -21,10 +27,21 @@
   let bookmarked = $state(false);
   let bookmarkPending = $state(false);
   let bookmarkError = $state("");
+  let bookmarkAccount = $derived($session.loggedIn ? ($session.user?.id ?? "logged-in") : "");
 
   $effect(() => {
-    bookmarked = illustration.isBookmarked;
+    const account = bookmarkAccount;
+    const illustrationId = illustration.id;
+    bookmarked = resolveIllustrationBookmarkState(
+      account,
+      illustrationId,
+      illustration.isBookmarked,
+    );
     bookmarkError = "";
+    return subscribeIllustrationBookmarkState(account, illustrationId, (next) => {
+      bookmarked = next;
+      bookmarkError = "";
+    });
   });
 
   async function toggleBookmark(event: MouseEvent) {
@@ -32,11 +49,14 @@
     event.stopPropagation();
     if (bookmarkPending) return;
     const previous = bookmarked;
-    bookmarked = !previous;
+    const next = !previous;
+    const account = bookmarkAccount;
+    bookmarked = next;
     bookmarkPending = true;
     bookmarkError = "";
     try {
-      await setIllustrationBookmark(illustration.id, bookmarked);
+      await setIllustrationBookmark(illustration.id, next);
+      publishIllustrationBookmarkState(account, illustration.id, next);
     } catch (error) {
       bookmarked = previous;
       bookmarkError = describeDataFailure(error);

@@ -691,6 +691,10 @@
               <div><strong>{m.settings_pixiv_account()}</strong><small>{m.settings_pixiv_account_description()}</small></div>
               <span class="row-value muted">{$session.loggedIn ? ($session.user?.name ?? m.settings_logged_in()) : m.settings_logged_out()}</span><i>›</i>
             </a>
+            <a class="setting-row" href="/settings/account-controls">
+              <div><strong>{m.account_controls_title()}</strong><small>{m.account_controls_description()}</small></div>
+              <span class="row-value muted">Pixiv</span><i>›</i>
+            </a>
             <a class="setting-row" href={`/login?mode=${preferredConnectionMode}`}>
               <div><strong>{m.settings_web_login()}</strong><small>{m.settings_web_login_description()}</small></div>
               <span class="row-value">{m.settings_use_connection({ mode: connectionLabels[preferredConnectionMode] })}</span><i>›</i>
@@ -1069,7 +1073,7 @@
             {/if}
             <div class="setting-row static-row">
               <div><strong>{m.settings_version()}</strong><small>{m.settings_app_nature()}</small></div>
-              <span class="row-value">PixNya {appStatus?.version ?? "1.0.0"}</span>
+              <span class="row-value">PixNya {appStatus?.version ?? "1.1.0"}</span>
             </div>
           </div>
         </section>

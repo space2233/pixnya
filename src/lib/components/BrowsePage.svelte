@@ -4,6 +4,7 @@
   import ContentTabs from "$lib/components/ContentTabs.svelte";
   import FollowingTabs from "$lib/components/FollowingTabs.svelte";
   import Icon from "$lib/components/Icon.svelte";
+  import ThumbnailSkeleton from "$lib/components/ThumbnailSkeleton.svelte";
   import { m } from "$lib/i18n";
   import { loadHomeTagCache, saveHomeTagCache } from "$lib/home-tag-cache";
   import {
@@ -436,9 +437,9 @@
               <ArtworkCard {illustration} tone={(index % 6) + 1} />
             {/each}
           {:else}
-            {#each Array(6) as _, index}
+            {#each Array(6) as _}
               <article class="work-card loading-card">
-                <div class="work-cover tone-{(index % 6) + 1}"><span></span><i></i></div>
+                <div class="work-cover"><ThumbnailSkeleton /></div>
                 <div class="skeleton-line title-line"></div>
                 <div class="skeleton-line author-line"></div>
               </article>
@@ -480,9 +481,9 @@
         {:else}
           {#each Array(definition.layout === "novel" ? 6 : 8) as _, index}
             <article class="work-card loading-card">
-              <div class="work-cover tone-{((index + 2) % 6) + 1}">
+              <div class="work-cover">
+                <ThumbnailSkeleton />
                 {#if section === "ranking"}<b class="rank-number">{index + 1}</b>{/if}
-                <span></span><i></i>
               </div>
               <div class="card-copy">
                 <div class="skeleton-line title-line"></div>
@@ -811,31 +812,6 @@
   .portrait .work-cover {
     aspect-ratio: 0.78;
   }
-
-  .work-cover > span {
-    width: 45%;
-    aspect-ratio: 1;
-    border-radius: 48% 52% 55% 45%;
-    background: rgba(255, 255, 255, 0.62);
-    transform: rotate(18deg);
-  }
-
-  .work-cover > i {
-    position: absolute;
-    right: -10%;
-    bottom: -24%;
-    width: 75%;
-    aspect-ratio: 1;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.35);
-  }
-
-  .tone-1 { background: linear-gradient(145deg, #e1f3fb, #cbe1ee); }
-  .tone-2 { background: linear-gradient(145deg, #f4e6ef, #e7ccdc); }
-  .tone-3 { background: linear-gradient(145deg, #f4f0dc, #dfd4ae); }
-  .tone-4 { background: linear-gradient(145deg, #e7e4f5, #d1caeb); }
-  .tone-5 { background: linear-gradient(145deg, #e3f1e9, #c9e1d3); }
-  .tone-6 { background: linear-gradient(145deg, #f5e8df, #e9cdbc); }
 
   .skeleton-line {
     height: 7px;

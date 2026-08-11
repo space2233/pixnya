@@ -40,6 +40,16 @@ import type {
   HistoryKind,
   HistoryRecord,
   HistorySnapshot,
+  NotificationPage,
+  PixivCommentStamp,
+  UgoiraExportFormat,
+  UgoiraExportTask,
+  AccessBlockPage,
+  MuteSettings,
+  BatchOrganizationChange,
+  CatalogFilterDraft,
+  DuplicateGroup,
+  SavedCatalogFilter,
 } from "$lib/types";
 
 export function getRecommendedIllustrations(cursor?: string): Promise<IllustrationPage> {
@@ -128,12 +138,18 @@ export function addNovelComment(
   novelId: string,
   comment: string,
   parentCommentId?: string,
+  stampId?: string | null,
 ): Promise<PixivComment> {
   return invoke<PixivComment>("add_novel_comment", {
     novelId,
     comment,
     parentCommentId: parentCommentId ?? null,
+    stampId: stampId ?? null,
   });
+}
+
+export function deleteNovelComment(commentId: string): Promise<void> {
+  return invoke<void>("delete_novel_comment", { commentId });
 }
 
 export function getUgoiraMetadata(illustrationId: string): Promise<UgoiraMetadata> {
@@ -186,6 +202,21 @@ export function prepareUgoira(illustrationId: string): Promise<PreparedUgoira> {
   return invoke<PreparedUgoira>("prepare_ugoira", { illustrationId });
 }
 
+export function startUgoiraExport(
+  illustrationId: string,
+  format: UgoiraExportFormat,
+): Promise<UgoiraExportTask> {
+  return invoke<UgoiraExportTask>("start_ugoira_export", { illustrationId, format });
+}
+
+export function getUgoiraExportTask(taskId: string): Promise<UgoiraExportTask> {
+  return invoke<UgoiraExportTask>("get_ugoira_export_task", { taskId });
+}
+
+export function cancelUgoiraExportTask(taskId: string): Promise<UgoiraExportTask> {
+  return invoke<UgoiraExportTask>("cancel_ugoira_export_task", { taskId });
+}
+
 export function listOfflineEntries(): Promise<OfflineEntry[]> {
   return invoke<OfflineEntry[]>("list_offline_entries");
 }
@@ -219,6 +250,28 @@ export function organizeOfflineEntry(
     collectionId,
     tags,
   });
+}
+
+export function batchOrganizeOfflineEntries(
+  change: BatchOrganizationChange,
+): Promise<EntryOrganization[]> {
+  return invoke<EntryOrganization[]>("batch_organize_offline_entries", { change });
+}
+
+export function batchRemoveOfflineEntries(entryKeys: string[]): Promise<string[]> {
+  return invoke<string[]>("batch_remove_offline_entries", { entryKeys });
+}
+
+export function saveLocalCatalogFilter(filter: CatalogFilterDraft): Promise<SavedCatalogFilter> {
+  return invoke<SavedCatalogFilter>("save_local_catalog_filter", { filter });
+}
+
+export function deleteLocalCatalogFilter(filterId: number): Promise<boolean> {
+  return invoke<boolean>("delete_local_catalog_filter", { filterId });
+}
+
+export function findOfflineDuplicates(): Promise<DuplicateGroup[]> {
+  return invoke<DuplicateGroup[]>("find_offline_duplicates");
 }
 
 export function getBrowsingHistory(): Promise<HistorySnapshot> {
@@ -441,12 +494,60 @@ export function addIllustrationComment(
   illustrationId: string,
   comment: string,
   parentCommentId?: string,
+  stampId?: string | null,
 ): Promise<PixivComment> {
   return invoke<PixivComment>("add_illustration_comment", {
     illustrationId,
     comment,
     parentCommentId: parentCommentId ?? null,
+    stampId: stampId ?? null,
   });
+}
+
+export function deleteIllustrationComment(commentId: string): Promise<void> {
+  return invoke<void>("delete_illustration_comment", { commentId });
+}
+
+export function getCommentStamps(): Promise<PixivCommentStamp[]> {
+  return invoke<PixivCommentStamp[]>("get_comment_stamps");
+}
+
+export function getNotifications(cursor?: string): Promise<NotificationPage> {
+  return invoke<NotificationPage>("get_notifications", { cursor: cursor ?? null });
+}
+
+export function getNotificationViewMore(
+  notificationId: string,
+  cursor?: string,
+): Promise<NotificationPage> {
+  return invoke<NotificationPage>("get_notification_view_more", {
+    notificationId,
+    cursor: cursor ?? null,
+  });
+}
+
+export function openPixivUrl(url: string): Promise<void> {
+  return invoke<void>("open_pixiv_url", { url });
+}
+
+export function getAccessBlockedUsers(cursor?: string): Promise<AccessBlockPage> {
+  return invoke<AccessBlockPage>("get_access_blocked_users", { cursor: cursor ?? null });
+}
+
+export function setAccessBlock(userId: string, blocked: boolean): Promise<void> {
+  return invoke<void>("set_access_block", { userId, blocked });
+}
+
+export function getMuteSettings(): Promise<MuteSettings> {
+  return invoke<MuteSettings>("get_mute_settings");
+}
+
+export function setUserMute(userId: string, muted: boolean): Promise<void> {
+  return invoke<void>("set_user_mute", { userId, muted });
+}
+
+export function setTagMute(tag: string, muted: boolean): Promise<void> {
+  return invoke<void>("set_tag_mute", { tag, muted });
 }
 
 export function describeDataFailure(error: unknown): string {

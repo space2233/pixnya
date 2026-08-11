@@ -229,7 +229,7 @@
           class:active={activeKey === "notifications"}
           href={getNavigationItem("notifications").href}
           aria-label={m.navigation_notifications()}
-          title={m.shell_notifications_unavailable()}
+          title={m.navigation_notifications()}
           aria-current={activeKey === "notifications" ? "page" : undefined}
         >
           <Icon name="bell" size={20} />

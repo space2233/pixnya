@@ -10,12 +10,15 @@ mod login_route;
 mod paths;
 mod secure_storage;
 mod session;
+mod ugoira_export;
 mod update_http;
 mod updates;
 
 use catalog::{
-    create_local_collection, delete_local_collection, get_local_catalog_snapshot,
-    organize_offline_entry, rename_local_collection, CatalogState,
+    batch_organize_offline_entries, batch_remove_offline_entries, create_local_collection,
+    delete_local_catalog_filter, delete_local_collection, find_offline_duplicates,
+    get_local_catalog_snapshot, organize_offline_entry, rename_local_collection,
+    save_local_catalog_filter, CatalogState,
 };
 use downloads::{
     enqueue_download, get_download_queue_stats, list_download_tasks, pause_download_task,
@@ -31,10 +34,10 @@ use history::{
 };
 use login_route::{evaluate_login_route, LoginRouteError};
 use pixiv_client_api::{
-    validated_media_url, ApiError, Comment, CommentPage, IllustrationDetail, IllustrationPage,
-    IllustrationSeriesPage, NovelContent, NovelDetail, NovelPage, NovelSeriesPage, PixivApiClient,
-    TrendingTag, UgoiraMetadata, UserDetail, UserPreviewPage, API_HOST, MEDIA_REFERER,
-    MEDIA_USER_AGENT,
+    validated_media_url, AccessBlockPage, ApiError, Comment, CommentPage, CommentStamp,
+    IllustrationDetail, IllustrationPage, IllustrationSeriesPage, MuteSettings, NotificationPage,
+    NovelContent, NovelDetail, NovelPage, NovelSeriesPage, PixivApiClient, TrendingTag,
+    UgoiraMetadata, UserDetail, UserPreviewPage, API_HOST, MEDIA_REFERER, MEDIA_USER_AGENT,
 };
 use pixiv_client_auth::{
     CallbackTarget, ClientRequestSignature, LoginAttempt, LoginError, LoginStatus, OAuthClient,
@@ -65,10 +68,13 @@ use serde::{Deserialize, Serialize};
 use session::{AuthenticatedContext, SessionSnapshot, SessionState, SessionStateError};
 use std::io::{Cursor, Read};
 use std::sync::{
-    atomic::{AtomicU64, Ordering},
+    atomic::{AtomicBool, AtomicU64, Ordering},
     Arc, Mutex,
 };
 use tauri::{Emitter, Manager};
+use ugoira_export::{
+    cancel_ugoira_export_task, get_ugoira_export_task, start_ugoira_export, UgoiraExportState,
+};
 use updates::UpdateManagerState;
 use zeroize::Zeroizing;
 
@@ -1765,13 +1771,29 @@ where
         + Send
         + 'static,
 {
+    let expected_user_id = ensure_authenticated_context(app, session_state)
+        .await?
+        .user_id()
+        .to_owned();
     let _permit = data_state
         .mutation_gate
         .clone()
         .acquire_owned()
         .await
         .map_err(|_| ApiCommandError::StateUnavailable)?;
-    execute_authenticated_data_request(app, session_state, data_state, request).await
+    let prepared_context = ensure_authenticated_context(app, session_state).await?;
+    if prepared_context.user_id() != expected_user_id {
+        return Err(ApiCommandError::AuthenticationRequired);
+    }
+    let _operation = session_state.operation_guard().await;
+    let context = session_state
+        .authenticated_context(0)
+        .map_err(ApiCommandError::from)?
+        .ok_or(ApiCommandError::AuthenticationRequired)?;
+    if context.user_id() != expected_user_id {
+        return Err(ApiCommandError::AuthenticationRequired);
+    }
+    request_authenticated_data(context, data_state, request).await
 }
 
 async fn refresh_context_after_rejection(
@@ -2357,6 +2379,7 @@ async fn add_illustration_comment(
     illustration_id: String,
     comment: String,
     parent_comment_id: Option<String>,
+    stamp_id: Option<String>,
     app: tauri::AppHandle,
     session_state: tauri::State<'_, SessionState>,
     data_state: tauri::State<'_, AuthenticatedDataState>,
@@ -2371,8 +2394,27 @@ async fn add_illustration_comment(
                 &illustration_id,
                 &comment,
                 parent_comment_id.as_deref(),
+                stamp_id.as_deref(),
                 signature,
             )
+        },
+    )
+    .await
+}
+
+#[tauri::command]
+async fn delete_illustration_comment(
+    comment_id: String,
+    app: tauri::AppHandle,
+    session_state: tauri::State<'_, SessionState>,
+    data_state: tauri::State<'_, AuthenticatedDataState>,
+) -> Result<(), ApiCommandError> {
+    execute_authenticated_mutation(
+        &app,
+        &session_state,
+        data_state.inner().clone(),
+        move |api, token, signature, _user_id| {
+            api.delete_illustration_comment(token, &comment_id, signature)
         },
     )
     .await
@@ -2421,6 +2463,7 @@ async fn add_novel_comment(
     novel_id: String,
     comment: String,
     parent_comment_id: Option<String>,
+    stamp_id: Option<String>,
     app: tauri::AppHandle,
     session_state: tauri::State<'_, SessionState>,
     data_state: tauri::State<'_, AuthenticatedDataState>,
@@ -2435,11 +2478,243 @@ async fn add_novel_comment(
                 &novel_id,
                 &comment,
                 parent_comment_id.as_deref(),
+                stamp_id.as_deref(),
                 signature,
             )
         },
     )
     .await
+}
+
+#[tauri::command]
+async fn delete_novel_comment(
+    comment_id: String,
+    app: tauri::AppHandle,
+    session_state: tauri::State<'_, SessionState>,
+    data_state: tauri::State<'_, AuthenticatedDataState>,
+) -> Result<(), ApiCommandError> {
+    execute_authenticated_mutation(
+        &app,
+        &session_state,
+        data_state.inner().clone(),
+        move |api, token, signature, _user_id| {
+            api.delete_novel_comment(token, &comment_id, signature)
+        },
+    )
+    .await
+}
+
+#[tauri::command]
+async fn get_comment_stamps(
+    app: tauri::AppHandle,
+    session_state: tauri::State<'_, SessionState>,
+    data_state: tauri::State<'_, AuthenticatedDataState>,
+) -> Result<Vec<CommentStamp>, ApiCommandError> {
+    execute_authenticated_data_request(
+        &app,
+        &session_state,
+        data_state.inner().clone(),
+        move |api, token, signature, _user_id| api.comment_stamps(token, signature),
+    )
+    .await
+}
+
+#[tauri::command]
+async fn get_notifications(
+    cursor: Option<String>,
+    app: tauri::AppHandle,
+    session_state: tauri::State<'_, SessionState>,
+    data_state: tauri::State<'_, AuthenticatedDataState>,
+) -> Result<NotificationPage, ApiCommandError> {
+    execute_authenticated_data_request(
+        &app,
+        &session_state,
+        data_state.inner().clone(),
+        move |api, token, signature, _user_id| {
+            api.notifications(token, cursor.as_deref(), signature)
+        },
+    )
+    .await
+}
+
+#[tauri::command]
+async fn get_notification_view_more(
+    notification_id: String,
+    cursor: Option<String>,
+    app: tauri::AppHandle,
+    session_state: tauri::State<'_, SessionState>,
+    data_state: tauri::State<'_, AuthenticatedDataState>,
+) -> Result<NotificationPage, ApiCommandError> {
+    execute_authenticated_data_request(
+        &app,
+        &session_state,
+        data_state.inner().clone(),
+        move |api, token, signature, _user_id| {
+            api.notification_view_more(token, &notification_id, cursor.as_deref(), signature)
+        },
+    )
+    .await
+}
+
+#[tauri::command]
+async fn get_access_blocked_users(
+    cursor: Option<String>,
+    app: tauri::AppHandle,
+    session_state: tauri::State<'_, SessionState>,
+    data_state: tauri::State<'_, AuthenticatedDataState>,
+) -> Result<AccessBlockPage, ApiCommandError> {
+    execute_authenticated_data_request(
+        &app,
+        &session_state,
+        data_state.inner().clone(),
+        move |api, token, signature, _user_id| {
+            api.access_blocked_users(token, cursor.as_deref(), signature)
+        },
+    )
+    .await
+}
+
+#[tauri::command]
+async fn set_access_block(
+    user_id: String,
+    blocked: bool,
+    app: tauri::AppHandle,
+    session_state: tauri::State<'_, SessionState>,
+    data_state: tauri::State<'_, AuthenticatedDataState>,
+) -> Result<(), ApiCommandError> {
+    execute_authenticated_mutation(
+        &app,
+        &session_state,
+        data_state.inner().clone(),
+        move |api, token, signature, _authenticated_user_id| {
+            if blocked {
+                api.add_access_block(token, &user_id, signature)
+            } else {
+                api.delete_access_block(token, &user_id, signature)
+            }
+        },
+    )
+    .await
+}
+
+#[tauri::command]
+async fn get_mute_settings(
+    app: tauri::AppHandle,
+    session_state: tauri::State<'_, SessionState>,
+    data_state: tauri::State<'_, AuthenticatedDataState>,
+) -> Result<MuteSettings, ApiCommandError> {
+    execute_authenticated_data_request(
+        &app,
+        &session_state,
+        data_state.inner().clone(),
+        move |api, token, signature, _user_id| api.mute_settings(token, signature),
+    )
+    .await
+}
+
+#[tauri::command]
+async fn set_user_mute(
+    user_id: String,
+    muted: bool,
+    app: tauri::AppHandle,
+    session_state: tauri::State<'_, SessionState>,
+    data_state: tauri::State<'_, AuthenticatedDataState>,
+) -> Result<(), ApiCommandError> {
+    execute_authenticated_mutation(
+        &app,
+        &session_state,
+        data_state.inner().clone(),
+        move |api, token, signature, _authenticated_user_id| {
+            api.edit_user_mute(token, &user_id, muted, signature)
+        },
+    )
+    .await
+}
+
+#[tauri::command]
+async fn set_tag_mute(
+    tag: String,
+    muted: bool,
+    app: tauri::AppHandle,
+    session_state: tauri::State<'_, SessionState>,
+    data_state: tauri::State<'_, AuthenticatedDataState>,
+) -> Result<(), ApiCommandError> {
+    execute_authenticated_mutation(
+        &app,
+        &session_state,
+        data_state.inner().clone(),
+        move |api, token, signature, _authenticated_user_id| {
+            api.edit_tag_mute(token, &tag, muted, signature)
+        },
+    )
+    .await
+}
+
+#[cfg(target_os = "android")]
+struct AndroidExternalLinkPlugin(tauri::plugin::PluginHandle<tauri::Wry>);
+
+#[cfg(target_os = "android")]
+#[derive(Serialize)]
+struct AndroidExternalLinkPayload {
+    url: String,
+}
+
+#[cfg(target_os = "android")]
+fn android_external_link_plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
+    tauri::plugin::Builder::new("external_link")
+        .setup(|app, api| {
+            let handle =
+                api.register_android_plugin("io.github.space2233.pixnya", "ExternalLinkPlugin")?;
+            app.manage(AndroidExternalLinkPlugin(handle));
+            Ok(())
+        })
+        .build()
+}
+
+#[cfg(target_os = "android")]
+async fn platform_open_pixiv_url(
+    app: &tauri::AppHandle,
+    url: String,
+) -> Result<(), ApiCommandError> {
+    use tauri::Manager;
+    app.state::<AndroidExternalLinkPlugin>()
+        .0
+        .clone()
+        .run_mobile_plugin_async::<()>("openUrl", AndroidExternalLinkPayload { url })
+        .await
+        .map_err(|_| ApiCommandError::RequestFailed)
+}
+
+#[cfg(not(target_os = "android"))]
+async fn platform_open_pixiv_url(
+    _app: &tauri::AppHandle,
+    url: String,
+) -> Result<(), ApiCommandError> {
+    #[cfg(target_os = "windows")]
+    let result = std::process::Command::new("explorer.exe").arg(&url).spawn();
+    #[cfg(target_os = "linux")]
+    let result = std::process::Command::new("xdg-open").arg(&url).spawn();
+    #[cfg(not(any(target_os = "windows", target_os = "linux")))]
+    let result: std::io::Result<std::process::Child> = Err(std::io::Error::new(
+        std::io::ErrorKind::Unsupported,
+        "system URL opening is unavailable",
+    ));
+    result
+        .map(|_| ())
+        .map_err(|_| ApiCommandError::RequestFailed)
+}
+
+#[tauri::command]
+async fn open_pixiv_url(app: tauri::AppHandle, url: String) -> Result<(), ApiCommandError> {
+    let parsed = reqwest::Url::parse(&url).map_err(|_| ApiCommandError::InvalidInput)?;
+    if parsed.scheme() != "https"
+        || parsed.host_str() != Some("www.pixiv.net")
+        || parsed.username() != ""
+        || parsed.password().is_some()
+    {
+        return Err(ApiCommandError::InvalidInput);
+    }
+    platform_open_pixiv_url(&app, parsed.to_string()).await
 }
 
 #[derive(Clone, Copy)]
@@ -2502,6 +2777,7 @@ fn download_media_blocking(
     url: &str,
     max_bytes: usize,
     expectation: MediaExpectation,
+    cancelled: Option<&AtomicBool>,
 ) -> Result<DownloadedMedia, ApiCommandError> {
     let media_url = validated_media_url(url).map_err(ApiCommandError::from)?;
     let host = media_url
@@ -2562,10 +2838,20 @@ fn download_media_blocking(
         return Err(ApiCommandError::MediaTooLarge);
     }
     let mut bytes = Vec::new();
-    response
-        .take((max_bytes + 1) as u64)
-        .read_to_end(&mut bytes)
-        .map_err(|_| ApiCommandError::RequestFailed)?;
+    let mut reader = response.take((max_bytes + 1) as u64);
+    let mut buffer = [0_u8; 64 * 1024];
+    loop {
+        if cancelled.is_some_and(|flag| flag.load(Ordering::Acquire)) {
+            return Err(ApiCommandError::DownloadInterrupted);
+        }
+        let count = reader
+            .read(&mut buffer)
+            .map_err(|_| ApiCommandError::RequestFailed)?;
+        if count == 0 {
+            break;
+        }
+        bytes.extend_from_slice(&buffer[..count]);
+    }
     if bytes.len() > max_bytes {
         return Err(ApiCommandError::MediaTooLarge);
     }
@@ -2677,6 +2963,7 @@ async fn perform_artwork_download(
                         url,
                         MAX_ARTWORK_ASSET_BYTES,
                         MediaExpectation::Image,
+                        None,
                     )
                     .map_err(|_| LibraryError::Io)?;
                     storage
@@ -2785,6 +3072,7 @@ async fn perform_novel_download(
                     url,
                     MAX_THUMBNAIL_BYTES,
                     MediaExpectation::Image,
+                    None,
                 )
             })
             .transpose()?;
@@ -2837,6 +3125,7 @@ async fn prepare_ugoira(
         &session_state,
         data_state.inner().clone(),
         None,
+        None,
     )
     .await
 }
@@ -2847,7 +3136,14 @@ async fn perform_ugoira_download(
     session_state: &SessionState,
     data_state: AuthenticatedDataState,
     progress: Option<DownloadProgress>,
+    cancelled: Option<Arc<AtomicBool>>,
 ) -> Result<PreparedUgoira, ApiCommandError> {
+    if cancelled
+        .as_ref()
+        .is_some_and(|flag| flag.load(Ordering::Acquire))
+    {
+        return Err(ApiCommandError::DownloadInterrupted);
+    }
     if let Some(progress) = &progress {
         progress.checkpoint()?;
     }
@@ -2902,7 +3198,14 @@ async fn perform_ugoira_download(
             &metadata.zip_url,
             MAX_UGOIRA_ARCHIVE_BYTES,
             MediaExpectation::Zip,
+            cancelled.as_deref(),
         )?;
+        if cancelled
+            .as_ref()
+            .is_some_and(|flag| flag.load(Ordering::Acquire))
+        {
+            return Err(ApiCommandError::DownloadInterrupted);
+        }
         let metadata_json =
             serde_json::to_vec_pretty(&metadata).map_err(|_| ApiCommandError::InvalidResponse)?;
         let prepared_frames: Vec<_> = metadata
@@ -2951,6 +3254,12 @@ async fn perform_ugoira_download(
             for (index, (frame, prepared)) in
                 metadata.frames.iter().zip(&prepared_frames).enumerate()
             {
+                if cancelled
+                    .as_ref()
+                    .is_some_and(|flag| flag.load(Ordering::Acquire))
+                {
+                    return Err(LibraryError::Io);
+                }
                 if let Some(progress) = &progress {
                     progress.checkpoint().map_err(|_| LibraryError::Io)?;
                 }
@@ -3147,6 +3456,7 @@ async fn fetch_pixiv_thumbnail(
             &url,
             MAX_THUMBNAIL_BYTES,
             MediaExpectation::Image,
+            None,
         )
     })
     .await
@@ -3820,6 +4130,8 @@ pub fn run() {
     let builder = builder.plugin(exports::android_export_plugin());
     #[cfg(target_os = "android")]
     let builder = builder.plugin(updates::android_update_installer_plugin());
+    #[cfg(target_os = "android")]
+    let builder = builder.plugin(android_external_link_plugin());
     #[cfg(not(target_os = "android"))]
     let builder = builder.plugin(tauri_plugin_dialog::init());
     #[cfg(not(target_os = "android"))]
@@ -3837,6 +4149,7 @@ pub fn run() {
         .manage(CatalogState::default())
         .manage(HistoryState::default())
         .manage(UpdateManagerState::default())
+        .manage(UgoiraExportState::default())
         .setup(|app| {
             record_diagnostic_event(
                 app.handle(),
@@ -3900,9 +4213,20 @@ pub fn run() {
             get_illustration_comments,
             get_comment_replies,
             add_illustration_comment,
+            delete_illustration_comment,
             get_novel_comments,
             get_novel_comment_replies,
             add_novel_comment,
+            delete_novel_comment,
+            get_comment_stamps,
+            get_notifications,
+            get_notification_view_more,
+            get_access_blocked_users,
+            set_access_block,
+            get_mute_settings,
+            set_user_mute,
+            set_tag_mute,
+            open_pixiv_url,
             enqueue_download,
             list_download_tasks,
             get_download_queue_stats,
@@ -3912,6 +4236,9 @@ pub fn run() {
             download_artwork,
             download_novel,
             prepare_ugoira,
+            start_ugoira_export,
+            get_ugoira_export_task,
+            cancel_ugoira_export_task,
             list_offline_entries,
             get_offline_stats,
             get_media_cache_stats,
@@ -3928,6 +4255,11 @@ pub fn run() {
             rename_local_collection,
             delete_local_collection,
             organize_offline_entry,
+            batch_organize_offline_entries,
+            batch_remove_offline_entries,
+            save_local_catalog_filter,
+            delete_local_catalog_filter,
+            find_offline_duplicates,
             get_browsing_history,
             set_browsing_history_enabled,
             record_browsing_history,

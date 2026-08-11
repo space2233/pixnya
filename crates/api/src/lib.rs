@@ -30,6 +30,16 @@ const FOLLOW_DELETE_PATH: &str = "/v1/user/follow/delete";
 const ILLUSTRATION_COMMENTS_PATH: &str = "/v3/illust/comments";
 const COMMENT_REPLIES_PATH: &str = "/v2/illust/comment/replies";
 const COMMENT_ADD_PATH: &str = "/v1/illust/comment/add";
+const COMMENT_DELETE_PATH: &str = "/v1/illust/comment/delete";
+const COMMENT_STAMPS_PATH: &str = "/v1/stamps";
+const NOTIFICATION_LIST_PATH: &str = "/v1/notification/list";
+const NOTIFICATION_VIEW_MORE_PATH: &str = "/v1/notification/view-more";
+const NOTIFICATION_PAGE_LIMIT: &str = "30";
+const ACCESS_BLOCK_USERS_PATH: &str = "/v1/access-block/users";
+const ACCESS_BLOCK_ADD_PATH: &str = "/v1/access-block/user/add";
+const ACCESS_BLOCK_DELETE_PATH: &str = "/v1/access-block/user/delete";
+const MUTE_LIST_PATH: &str = "/v1/mute/list";
+const MUTE_EDIT_PATH: &str = "/v1/mute/edit";
 const MANGA_RECOMMENDED_PATH: &str = "/v1/illust/recommended";
 const NOVEL_RECOMMENDED_PATH: &str = "/v1/novel/recommended";
 const NOVEL_DETAIL_PATH: &str = "/v2/novel/detail";
@@ -45,6 +55,7 @@ const NOVEL_BOOKMARK_DELETE_PATH: &str = "/v1/novel/bookmark/delete";
 const NOVEL_COMMENTS_PATH: &str = "/v3/novel/comments";
 const NOVEL_COMMENT_REPLIES_PATH: &str = "/v2/novel/comment/replies";
 const NOVEL_COMMENT_ADD_PATH: &str = "/v1/novel/comment/add";
+const NOVEL_COMMENT_DELETE_PATH: &str = "/v1/novel/comment/delete";
 const UGOIRA_METADATA_PATH: &str = "/v1/ugoira/metadata";
 const APP_VERSION: &str = "5.0.166";
 const USER_AGENT: &str = "PixivAndroidApp/5.0.166 (Android 13; PixivClient)";
@@ -92,6 +103,133 @@ impl PixivApiClient {
         };
         let envelope: IllustrationListEnvelope = self.get_json(access_token, url, signature)?;
         page_from_envelope(envelope, MANGA_RECOMMENDED_PATH, &bindings)
+    }
+
+    pub fn notifications(
+        &self,
+        access_token: &str,
+        cursor: Option<&str>,
+        signature: &ClientRequestSignature,
+    ) -> Result<NotificationPage, ApiError> {
+        let bindings = [("limit", NOTIFICATION_PAGE_LIMIT)];
+        let url = match cursor {
+            Some(cursor) => decode_cursor(cursor, NOTIFICATION_LIST_PATH, &bindings)?,
+            None => endpoint_url(NOTIFICATION_LIST_PATH, &bindings)?,
+        };
+        let envelope: NotificationsEnvelope = self.get_json(access_token, url, signature)?;
+        notification_page_from_envelope_for(envelope, NOTIFICATION_LIST_PATH, &bindings)
+    }
+
+    pub fn notification_view_more(
+        &self,
+        access_token: &str,
+        notification_id: &str,
+        cursor: Option<&str>,
+        signature: &ClientRequestSignature,
+    ) -> Result<NotificationPage, ApiError> {
+        let notification_id = normalized_resource_id(notification_id)?;
+        let bindings = [
+            ("notification_id", notification_id.as_str()),
+            ("limit", NOTIFICATION_PAGE_LIMIT),
+        ];
+        let url = match cursor {
+            Some(cursor) => decode_cursor(cursor, NOTIFICATION_VIEW_MORE_PATH, &bindings)?,
+            None => endpoint_url(NOTIFICATION_VIEW_MORE_PATH, &bindings)?,
+        };
+        let envelope: NotificationsEnvelope = self.get_json(access_token, url, signature)?;
+        notification_page_from_envelope_for(envelope, NOTIFICATION_VIEW_MORE_PATH, &bindings)
+    }
+
+    pub fn access_blocked_users(
+        &self,
+        access_token: &str,
+        cursor: Option<&str>,
+        signature: &ClientRequestSignature,
+    ) -> Result<AccessBlockPage, ApiError> {
+        let url = match cursor {
+            Some(cursor) => decode_cursor(cursor, ACCESS_BLOCK_USERS_PATH, &[])?,
+            None => endpoint_url(ACCESS_BLOCK_USERS_PATH, &[])?,
+        };
+        let envelope: AccessBlockEnvelope = self.get_json(access_token, url, signature)?;
+        access_block_page_from_envelope(envelope)
+    }
+
+    pub fn add_access_block(
+        &self,
+        access_token: &str,
+        user_id: &str,
+        signature: &ClientRequestSignature,
+    ) -> Result<(), ApiError> {
+        let user_id = normalized_resource_id(user_id)?;
+        self.post_form_unit(
+            access_token,
+            endpoint_url(ACCESS_BLOCK_ADD_PATH, &[])?,
+            &[("user_id", user_id.as_str())],
+            signature,
+        )
+    }
+
+    pub fn delete_access_block(
+        &self,
+        access_token: &str,
+        user_id: &str,
+        signature: &ClientRequestSignature,
+    ) -> Result<(), ApiError> {
+        let user_id = normalized_resource_id(user_id)?;
+        self.post_form_unit(
+            access_token,
+            endpoint_url(ACCESS_BLOCK_DELETE_PATH, &[])?,
+            &[("user_id", user_id.as_str())],
+            signature,
+        )
+    }
+
+    pub fn mute_settings(
+        &self,
+        access_token: &str,
+        signature: &ClientRequestSignature,
+    ) -> Result<MuteSettings, ApiError> {
+        let envelope: MuteSettingsEnvelope =
+            self.get_json(access_token, endpoint_url(MUTE_LIST_PATH, &[])?, signature)?;
+        mute_settings_from_envelope(envelope)
+    }
+
+    pub fn edit_user_mute(
+        &self,
+        access_token: &str,
+        user_id: &str,
+        muted: bool,
+        signature: &ClientRequestSignature,
+    ) -> Result<(), ApiError> {
+        let user_id = normalized_resource_id(user_id)?;
+        let field = if muted {
+            "add_user_ids[]"
+        } else {
+            "delete_user_ids[]"
+        };
+        self.post_form_unit(
+            access_token,
+            endpoint_url(MUTE_EDIT_PATH, &[])?,
+            &[(field, user_id.as_str())],
+            signature,
+        )
+    }
+
+    pub fn edit_tag_mute(
+        &self,
+        access_token: &str,
+        tag: &str,
+        muted: bool,
+        signature: &ClientRequestSignature,
+    ) -> Result<(), ApiError> {
+        let tag = normalized_mute_tag(tag)?;
+        let field = if muted { "add_tags[]" } else { "delete_tags[]" };
+        self.post_form_unit(
+            access_token,
+            endpoint_url(MUTE_EDIT_PATH, &[])?,
+            &[(field, tag.as_str())],
+            signature,
+        )
     }
 
     pub fn recommended_novels(
@@ -345,10 +483,11 @@ impl PixivApiClient {
         novel_id: &str,
         comment: &str,
         parent_comment_id: Option<&str>,
+        stamp_id: Option<&str>,
         signature: &ClientRequestSignature,
     ) -> Result<Comment, ApiError> {
         let novel_id = normalized_resource_id(novel_id)?;
-        let comment = normalized_comment(comment)?;
+        let (comment, stamp_id) = normalized_comment_submission(comment, stamp_id)?;
         let parent_comment_id = parent_comment_id.map(normalized_resource_id).transpose()?;
         let mut form = vec![
             ("novel_id", novel_id.as_str()),
@@ -357,10 +496,29 @@ impl PixivApiClient {
         if let Some(parent_comment_id) = parent_comment_id.as_deref() {
             form.push(("parent_comment_id", parent_comment_id));
         }
+        if let Some(stamp_id) = stamp_id.as_deref() {
+            form.push(("stamp_id", stamp_id));
+        }
         let url = endpoint_url(NOVEL_COMMENT_ADD_PATH, &[])?;
         let envelope: CommentAddEnvelope =
             self.post_form_json(access_token, url, &form, signature)?;
         Comment::from_payload(&envelope.comment).ok_or(ApiError::InvalidResponse)
+    }
+
+    pub fn delete_novel_comment(
+        &self,
+        access_token: &str,
+        comment_id: &str,
+        signature: &ClientRequestSignature,
+    ) -> Result<(), ApiError> {
+        let comment_id = normalized_resource_id(comment_id)?;
+        let url = endpoint_url(NOVEL_COMMENT_DELETE_PATH, &[])?;
+        self.post_form_unit(
+            access_token,
+            url,
+            &[("comment_id", comment_id.as_str())],
+            signature,
+        )
     }
 
     pub fn ugoira_metadata(
@@ -740,10 +898,11 @@ impl PixivApiClient {
         illustration_id: &str,
         comment: &str,
         parent_comment_id: Option<&str>,
+        stamp_id: Option<&str>,
         signature: &ClientRequestSignature,
     ) -> Result<Comment, ApiError> {
         let illustration_id = normalized_resource_id(illustration_id)?;
-        let comment = normalized_comment(comment)?;
+        let (comment, stamp_id) = normalized_comment_submission(comment, stamp_id)?;
         let parent_comment_id = parent_comment_id.map(normalized_resource_id).transpose()?;
         let mut form = vec![
             ("illust_id", illustration_id.as_str()),
@@ -752,10 +911,39 @@ impl PixivApiClient {
         if let Some(parent_comment_id) = parent_comment_id.as_deref() {
             form.push(("parent_comment_id", parent_comment_id));
         }
+        if let Some(stamp_id) = stamp_id.as_deref() {
+            form.push(("stamp_id", stamp_id));
+        }
         let url = endpoint_url(COMMENT_ADD_PATH, &[])?;
         let envelope: CommentAddEnvelope =
             self.post_form_json(access_token, url, &form, signature)?;
         Comment::from_payload(&envelope.comment).ok_or(ApiError::InvalidResponse)
+    }
+
+    pub fn delete_illustration_comment(
+        &self,
+        access_token: &str,
+        comment_id: &str,
+        signature: &ClientRequestSignature,
+    ) -> Result<(), ApiError> {
+        let comment_id = normalized_resource_id(comment_id)?;
+        let url = endpoint_url(COMMENT_DELETE_PATH, &[])?;
+        self.post_form_unit(
+            access_token,
+            url,
+            &[("comment_id", comment_id.as_str())],
+            signature,
+        )
+    }
+
+    pub fn comment_stamps(
+        &self,
+        access_token: &str,
+        signature: &ClientRequestSignature,
+    ) -> Result<Vec<CommentStamp>, ApiError> {
+        let url = endpoint_url(COMMENT_STAMPS_PATH, &[])?;
+        let envelope: StampListEnvelope = self.get_json(access_token, url, signature)?;
+        Ok(comment_stamps_from_envelope(envelope))
     }
 
     fn get_json<T: DeserializeOwned>(
@@ -989,14 +1177,14 @@ pub struct NovelSeriesNavigationItem {
     pub viewable_message: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UgoiraMetadata {
     pub zip_url: String,
     pub frames: Vec<UgoiraFrame>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UgoiraFrame {
     pub file_name: String,
@@ -1182,6 +1370,80 @@ pub struct CommentStamp {
     pub url: String,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NotificationPage {
+    pub notifications: Vec<NotificationItem>,
+    pub next_cursor: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AccessBlockPage {
+    pub users: Vec<IllustrationAuthor>,
+    pub next_cursor: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MuteSettings {
+    pub tags: Vec<MutedTag>,
+    pub users: Vec<MutedUser>,
+    pub limit_count: u32,
+    pub text_limits: MuteTextLimits,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MutedTag {
+    pub name: String,
+    pub translated_name: Option<String>,
+    pub is_premium_slot: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MutedUser {
+    pub user: IllustrationAuthor,
+    pub is_premium_slot: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MuteTextLimits {
+    pub without_premium: u32,
+    pub with_premium: u32,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NotificationItem {
+    pub id: String,
+    pub type_id: u32,
+    pub is_read: bool,
+    pub created_datetime: String,
+    pub target_url: Option<String>,
+    pub content: NotificationContent,
+    pub view_more: Option<NotificationViewMore>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NotificationContent {
+    pub text: String,
+    pub left_icon: Option<String>,
+    pub left_image: Option<String>,
+    pub right_icon: Option<String>,
+    pub right_image: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NotificationViewMore {
+    pub title: String,
+    pub unread_exists: bool,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ApiError {
     AuthenticationRequired,
@@ -1259,6 +1521,14 @@ fn normalized_resource_id(candidate: &str) -> Result<String, ApiError> {
     Ok(value.to_string())
 }
 
+fn normalized_mute_tag(candidate: &str) -> Result<String, ApiError> {
+    let value = candidate.trim();
+    if value.is_empty() || value.chars().count() > 100 || value.chars().any(char::is_control) {
+        return Err(ApiError::InvalidInput);
+    }
+    Ok(value.to_owned())
+}
+
 fn normalized_work_kind(candidate: &str) -> Result<&'static str, ApiError> {
     match candidate {
         "illust" => Ok("illust"),
@@ -1309,6 +1579,22 @@ fn normalized_comment(candidate: &str) -> Result<String, ApiError> {
         return Err(ApiError::InvalidInput);
     }
     Ok(comment.to_owned())
+}
+
+fn normalized_comment_submission(
+    candidate: &str,
+    stamp_id: Option<&str>,
+) -> Result<(String, Option<String>), ApiError> {
+    let stamp_id = stamp_id.map(normalized_resource_id).transpose()?;
+    let comment = if candidate.trim().is_empty() {
+        if stamp_id.is_none() {
+            return Err(ApiError::InvalidInput);
+        }
+        String::new()
+    } else {
+        normalized_comment(candidate)?
+    };
+    Ok((comment, stamp_id))
 }
 
 fn normalized_bookmark_restrict(candidate: &str) -> Result<&'static str, ApiError> {
@@ -1420,6 +1706,62 @@ fn page_from_envelope(
     })
 }
 
+fn access_block_page_from_envelope(
+    envelope: AccessBlockEnvelope,
+) -> Result<AccessBlockPage, ApiError> {
+    let users = envelope
+        .blocked_users
+        .iter()
+        .filter_map(IllustrationAuthor::from_payload)
+        .collect();
+    let next_cursor = envelope
+        .next_url
+        .filter(|value| !value.is_empty())
+        .map(|value| {
+            validate_api_url(&value, ACCESS_BLOCK_USERS_PATH, &[]).map(|url| encode_cursor(&url))
+        })
+        .transpose()
+        .map_err(|_| ApiError::InvalidResponse)?;
+    Ok(AccessBlockPage { users, next_cursor })
+}
+
+fn mute_settings_from_envelope(envelope: MuteSettingsEnvelope) -> Result<MuteSettings, ApiError> {
+    let tags = envelope
+        .muted_tags
+        .into_iter()
+        .filter_map(|item| {
+            let name = item.tag.name.trim().to_owned();
+            (!name.is_empty()).then(|| MutedTag {
+                name,
+                translated_name: item
+                    .tag
+                    .translated_name
+                    .filter(|value| !value.trim().is_empty()),
+                is_premium_slot: item.is_premium_slot,
+            })
+        })
+        .collect();
+    let users = envelope
+        .muted_users
+        .into_iter()
+        .filter_map(|item| {
+            IllustrationAuthor::from_payload(&item.user).map(|user| MutedUser {
+                user,
+                is_premium_slot: item.is_premium_slot,
+            })
+        })
+        .collect();
+    Ok(MuteSettings {
+        tags,
+        users,
+        limit_count: envelope.mute_limit_count,
+        text_limits: MuteTextLimits {
+            without_premium: envelope.for_text.mute_limit_count_if_no_premium,
+            with_premium: envelope.for_text.mute_limit_count_if_premium,
+        },
+    })
+}
+
 fn novel_page_from_envelope(
     envelope: NovelListEnvelope,
     expected_path: &str,
@@ -1491,6 +1833,58 @@ fn comment_page_from_envelope(
         next_cursor,
         total_comments: envelope.total_comments,
         comment_access_control: envelope.comment_access_control,
+    })
+}
+
+fn comment_stamps_from_envelope(envelope: StampListEnvelope) -> Vec<CommentStamp> {
+    envelope
+        .stamps
+        .into_iter()
+        .filter_map(|stamp| {
+            (stamp.stamp_id != 0)
+                .then(|| validated_media_url(&stamp.stamp_url).ok())
+                .flatten()
+                .map(|url| CommentStamp {
+                    id: stamp.stamp_id.to_string(),
+                    url: url.to_string(),
+                })
+        })
+        .collect()
+}
+
+#[cfg(test)]
+fn notification_page_from_envelope(
+    envelope: NotificationsEnvelope,
+) -> Result<NotificationPage, ApiError> {
+    notification_page_from_envelope_for(
+        envelope,
+        NOTIFICATION_LIST_PATH,
+        &[("limit", NOTIFICATION_PAGE_LIMIT)],
+    )
+}
+
+fn notification_page_from_envelope_for(
+    envelope: NotificationsEnvelope,
+    expected_path: &str,
+    expected_bindings: &[(&str, &str)],
+) -> Result<NotificationPage, ApiError> {
+    let notifications = envelope
+        .notifications
+        .iter()
+        .filter_map(NotificationItem::from_payload)
+        .collect();
+    let next_cursor = envelope
+        .next_url
+        .filter(|value| !value.is_empty())
+        .map(|value| {
+            validate_api_url(&value, expected_path, expected_bindings)
+                .map(|url| encode_cursor(&url))
+        })
+        .transpose()
+        .map_err(|_| ApiError::InvalidResponse)?;
+    Ok(NotificationPage {
+        notifications,
+        next_cursor,
     })
 }
 
@@ -1936,6 +2330,54 @@ impl Comment {
     }
 }
 
+impl NotificationItem {
+    fn from_payload(payload: &NotificationPayload) -> Option<Self> {
+        (payload.id != 0).then(|| Self {
+            id: payload.id.to_string(),
+            type_id: payload.type_id,
+            is_read: payload.is_read,
+            created_datetime: payload.created_datetime.clone(),
+            target_url: payload
+                .target_url
+                .as_ref()
+                .map(|url| url.trim())
+                .filter(|url| !url.is_empty() && url.len() <= MAX_CURSOR_BYTES)
+                .map(ToOwned::to_owned),
+            content: NotificationContent {
+                text: payload.content.text.clone(),
+                left_icon: non_empty_string(payload.content.left_icon.as_deref()),
+                left_image: payload
+                    .content
+                    .left_image
+                    .as_deref()
+                    .and_then(|url| validated_media_url(url).ok())
+                    .map(|url| url.to_string()),
+                right_icon: non_empty_string(payload.content.right_icon.as_deref()),
+                right_image: payload
+                    .content
+                    .right_image
+                    .as_deref()
+                    .and_then(|url| validated_media_url(url).ok())
+                    .map(|url| url.to_string()),
+            },
+            view_more: payload
+                .view_more
+                .as_ref()
+                .map(|view_more| NotificationViewMore {
+                    title: view_more.title.clone(),
+                    unread_exists: view_more.unread_exists,
+                }),
+        })
+    }
+}
+
+fn non_empty_string(value: Option<&str>) -> Option<String> {
+    value
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(ToOwned::to_owned)
+}
+
 fn illustration_pages(payload: &IllustrationPayload) -> Vec<IllustrationImage> {
     if !payload.meta_pages.is_empty() {
         return payload
@@ -2290,6 +2732,102 @@ struct CommentStampPayload {
 }
 
 #[derive(Deserialize)]
+struct NotificationsEnvelope {
+    #[serde(default)]
+    notifications: Vec<NotificationPayload>,
+    #[serde(default)]
+    next_url: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct AccessBlockEnvelope {
+    #[serde(default)]
+    blocked_users: Vec<UserPayload>,
+    #[serde(default)]
+    next_url: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct MuteSettingsEnvelope {
+    #[serde(default)]
+    muted_tags: Vec<MutedTagPayload>,
+    #[serde(default)]
+    muted_users: Vec<MutedUserPayload>,
+    #[serde(default)]
+    mute_limit_count: u32,
+    #[serde(default)]
+    for_text: MuteTextLimitsPayload,
+}
+
+#[derive(Deserialize)]
+struct MutedTagPayload {
+    tag: TagPayload,
+    #[serde(default)]
+    is_premium_slot: bool,
+}
+
+#[derive(Deserialize)]
+struct MutedUserPayload {
+    user: UserPayload,
+    #[serde(default)]
+    is_premium_slot: bool,
+}
+
+#[derive(Default, Deserialize)]
+struct MuteTextLimitsPayload {
+    #[serde(default)]
+    mute_limit_count_if_no_premium: u32,
+    #[serde(default)]
+    mute_limit_count_if_premium: u32,
+}
+
+#[derive(Deserialize)]
+struct StampListEnvelope {
+    #[serde(default)]
+    stamps: Vec<CommentStampPayload>,
+}
+
+#[derive(Default, Deserialize)]
+struct NotificationPayload {
+    #[serde(default)]
+    id: u64,
+    #[serde(default, rename = "type")]
+    type_id: u32,
+    #[serde(default)]
+    is_read: bool,
+    #[serde(default)]
+    created_datetime: String,
+    #[serde(default)]
+    target_url: Option<String>,
+    #[serde(default)]
+    content: NotificationContentPayload,
+    #[serde(default)]
+    view_more: Option<NotificationViewMorePayload>,
+}
+
+#[derive(Default, Deserialize)]
+struct NotificationContentPayload {
+    #[serde(default)]
+    text: String,
+    #[serde(default)]
+    left_icon: Option<String>,
+    #[serde(default)]
+    left_image: Option<String>,
+    #[serde(default)]
+    right_icon: Option<String>,
+    #[serde(default)]
+    right_image: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct NotificationViewMorePayload {
+    #[serde(default)]
+    title: String,
+    #[serde(default)]
+    unread_exists: bool,
+}
+
+#[derive(Deserialize)]
 struct TrendingTagsEnvelope {
     #[serde(default)]
     trend_tags: Vec<TrendingTagPayload>,
@@ -2479,17 +3017,20 @@ const fn yes() -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        comment_page_from_envelope, decode_cursor, encode_cursor, extract_embedded_novel_json,
-        normalized_comment, novel_page_from_envelope, page_from_envelope, recommended_url,
-        user_preview_page_from_envelope, validated_media_url, ApiError, CommentsEnvelope,
-        IllustrationDetail, IllustrationDetailEnvelope, IllustrationListEnvelope,
-        IllustrationSeriesEnvelope, IllustrationSeriesPage, NovelContent, NovelContentPayload,
-        NovelDetail, NovelDetailEnvelope, NovelListEnvelope, NovelSeriesEnvelope, NovelSeriesPage,
-        TrendingTag, TrendingTagsEnvelope, UgoiraEnvelope, UgoiraMetadata, UserDetail,
-        UserDetailEnvelope, UserPreviewEnvelope, ILLUSTRATION_COMMENTS_PATH,
-        ILLUSTRATION_SERIES_PATH, NOVEL_COMMENTS_PATH, NOVEL_RECOMMENDED_PATH, NOVEL_SERIES_PATH,
-        RECOMMENDED_PATH, RELATED_ILLUSTRATIONS_PATH, SEARCH_ILLUSTRATIONS_PATH,
-        SEARCH_NOVELS_PATH, SEARCH_USERS_PATH, USER_FOLLOWING_PATH, USER_ILLUSTRATIONS_PATH,
+        access_block_page_from_envelope, comment_page_from_envelope, comment_stamps_from_envelope,
+        decode_cursor, encode_cursor, extract_embedded_novel_json, mute_settings_from_envelope,
+        normalized_comment, normalized_comment_submission, notification_page_from_envelope,
+        novel_page_from_envelope, page_from_envelope, recommended_url,
+        user_preview_page_from_envelope, validated_media_url, AccessBlockEnvelope, ApiError,
+        CommentsEnvelope, IllustrationDetail, IllustrationDetailEnvelope, IllustrationListEnvelope,
+        IllustrationSeriesEnvelope, IllustrationSeriesPage, MuteSettingsEnvelope,
+        NotificationsEnvelope, NovelContent, NovelContentPayload, NovelDetail, NovelDetailEnvelope,
+        NovelListEnvelope, NovelSeriesEnvelope, NovelSeriesPage, StampListEnvelope, TrendingTag,
+        TrendingTagsEnvelope, UgoiraEnvelope, UgoiraMetadata, UserDetail, UserDetailEnvelope,
+        UserPreviewEnvelope, ILLUSTRATION_COMMENTS_PATH, ILLUSTRATION_SERIES_PATH,
+        NOVEL_COMMENTS_PATH, NOVEL_RECOMMENDED_PATH, NOVEL_SERIES_PATH, RECOMMENDED_PATH,
+        RELATED_ILLUSTRATIONS_PATH, SEARCH_ILLUSTRATIONS_PATH, SEARCH_NOVELS_PATH,
+        SEARCH_USERS_PATH, USER_FOLLOWING_PATH, USER_ILLUSTRATIONS_PATH,
     };
 
     const LIST_RESPONSE: &str = r#"{
@@ -2519,6 +3060,50 @@ mod tests {
       }],
       "next_url": "https://app-api.pixiv.net/v1/illust/recommended?filter=for_ios&offset=30"
     }"#;
+
+    #[test]
+    fn parses_official_account_control_payloads_and_locks_access_block_cursor() {
+        let blocked: AccessBlockEnvelope = serde_json::from_str(
+            r#"{
+              "blocked_users": [{
+                "id": 42,
+                "name": "Alice",
+                "account": "alice",
+                "profile_image_urls": {"medium": "https://i.pximg.net/user-profile/alice.jpg"}
+              }],
+              "next_url": "https://app-api.pixiv.net/v1/access-block/users?offset=30"
+            }"#,
+        )
+        .expect("valid access-block response");
+        let blocked =
+            access_block_page_from_envelope(blocked).expect("validated access-block response");
+        assert_eq!(blocked.users.len(), 1);
+        assert_eq!(blocked.users[0].id, "42");
+        assert!(blocked.next_cursor.is_some());
+
+        let muted: MuteSettingsEnvelope = serde_json::from_str(
+            r#"{
+              "muted_tags": [{"tag": {"name": "spoiler", "translated_name": "剧透"}, "is_premium_slot": false}],
+              "muted_users": [{
+                "user": {"id": 43, "name": "Bob", "account": "bob"},
+                "is_premium_slot": true
+              }],
+              "mute_limit_count": 10,
+              "for_text": {
+                "mute_limit_count_if_no_premium": 1,
+                "mute_limit_count_if_premium": 500
+              }
+            }"#,
+        )
+        .expect("valid mute response");
+        let muted = mute_settings_from_envelope(muted).expect("validated mute response");
+        assert_eq!(muted.tags[0].name, "spoiler");
+        assert_eq!(muted.users[0].user.id, "43");
+        assert!(muted.users[0].is_premium_slot);
+        assert_eq!(muted.limit_count, 10);
+        assert_eq!(muted.text_limits.without_premium, 1);
+        assert_eq!(muted.text_limits.with_premium, 500);
+    }
 
     const DETAIL_RESPONSE: &str = r#"{
       "illust": {
@@ -2641,6 +3226,31 @@ mod tests {
       ],
       "next_url": "https://app-api.pixiv.net/v3/illust/comments?illust_id=99&offset=30",
       "comment_access_control": 0
+    }"#;
+
+    const NOTIFICATIONS_RESPONSE: &str = r#"{
+      "notifications": [{
+        "id": 901,
+        "type": 12,
+        "is_read": false,
+        "created_datetime": "2026-08-11T10:00:00+09:00",
+        "target_url": "https://www.pixiv.net/artworks/123",
+        "content": {
+          "text": "Alice bookmarked your work",
+          "left_image": "https://i.pximg.net/user-profile/alice.jpg",
+          "right_image": "https://i.pximg.net/c/360x360_70/example.jpg"
+        },
+        "view_more": {"title": "View more", "unread_exists": true}
+      }],
+      "next_url": "https://app-api.pixiv.net/v1/notification/list?limit=30&offset=30"
+    }"#;
+
+    const STAMPS_RESPONSE: &str = r#"{
+      "stamps": [
+        {"stamp_id": 501, "stamp_url": "https://s.pximg.net/common/images/emoji/501.png"},
+        {"stamp_id": 0, "stamp_url": "https://s.pximg.net/common/images/emoji/invalid.png"},
+        {"stamp_id": 502, "stamp_url": "https://example.com/not-allowed.png"}
+      ]
     }"#;
 
     const NOVEL_RESPONSE: &str = r#"{
@@ -3057,6 +3667,62 @@ mod tests {
         assert_eq!(
             UgoiraMetadata::from_payload(envelope.ugoira_metadata),
             Err(ApiError::InvalidResponse)
+        );
+    }
+
+    #[test]
+    fn maps_read_only_notifications_and_locks_pagination_to_the_list_endpoint() {
+        let envelope: NotificationsEnvelope = serde_json::from_str(NOTIFICATIONS_RESPONSE).unwrap();
+        let page = notification_page_from_envelope(envelope).unwrap();
+        assert_eq!(page.notifications.len(), 1);
+        assert_eq!(page.notifications[0].id, "901");
+        assert_eq!(
+            page.notifications[0].content.text,
+            "Alice bookmarked your work"
+        );
+        assert_eq!(
+            page.notifications[0].target_url.as_deref(),
+            Some("https://www.pixiv.net/artworks/123")
+        );
+        assert!(
+            page.notifications[0]
+                .view_more
+                .as_ref()
+                .unwrap()
+                .unread_exists
+        );
+        assert!(page.next_cursor.is_some());
+
+        let hostile = NOTIFICATIONS_RESPONSE.replace("app-api.pixiv.net", "example.com");
+        let envelope: NotificationsEnvelope = serde_json::from_str(&hostile).unwrap();
+        assert_eq!(
+            notification_page_from_envelope(envelope),
+            Err(ApiError::InvalidResponse)
+        );
+    }
+
+    #[test]
+    fn supports_official_comment_stamps_and_stamp_only_submissions() {
+        let envelope: StampListEnvelope = serde_json::from_str(STAMPS_RESPONSE).unwrap();
+        let stamps = comment_stamps_from_envelope(envelope);
+        assert_eq!(stamps.len(), 1);
+        assert_eq!(stamps[0].id, "501");
+
+        assert_eq!(
+            normalized_comment_submission("", Some("501")).unwrap(),
+            (String::new(), Some(String::from("501")))
+        );
+        assert_eq!(
+            normalized_comment_submission("hello", None).unwrap(),
+            (String::from("hello"), None)
+        );
+        assert_eq!(
+            normalized_comment_submission("", None),
+            Err(ApiError::InvalidInput)
+        );
+        assert_eq!(
+            normalized_comment_submission("hello", Some("bad")),
+            Err(ApiError::InvalidIdentifier)
         );
     }
 

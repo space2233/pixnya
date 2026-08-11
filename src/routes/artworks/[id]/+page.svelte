@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from "$app/state";
+  import { onMount } from "svelte";
   import AppShell from "$lib/components/AppShell.svelte";
   import ArtworkImageViewer from "$lib/components/ArtworkImageViewer.svelte";
   import ArtworkCard from "$lib/components/ArtworkCard.svelte";
@@ -8,6 +9,11 @@
   import PixivImage from "$lib/components/PixivImage.svelte";
   import ReturnLink from "$lib/components/ReturnLink.svelte";
   import { currentAppLocale, m } from "$lib/i18n";
+  import {
+    publishIllustrationBookmarkState,
+    resolveIllustrationBookmarkState,
+    subscribeIllustrationBookmarkState,
+  } from "$lib/illustration-bookmark-state";
   import { recallNavigationView, rememberNavigationView } from "$lib/navigation-view-memory";
   import UgoiraPlayer from "$lib/components/UgoiraPlayer.svelte";
   import { resolveArtworkSeriesNavigation, type ArtworkSeriesNavigation } from "$lib/artwork-series-navigation";
@@ -18,12 +24,15 @@
     enqueueDownload,
     recordBrowsingHistory,
     setIllustrationBookmark,
+    startUgoiraExport,
+    getUgoiraExportTask,
+    cancelUgoiraExportTask,
   } from "$lib/pixiv-api";
   import { plainPixivText } from "$lib/pixiv-text";
   import { r18DefaultVisible } from "$lib/preferences";
   import { recordSearchHistory } from "$lib/search-history";
   import { session, sessionRestoring } from "$lib/session";
-  import type { BookmarkRestrict, IllustrationDetail, IllustrationSummary } from "$lib/types";
+  import type { BookmarkRestrict, IllustrationDetail, IllustrationSummary, UgoiraExportFormat, UgoiraExportTask } from "$lib/types";
 
   let detail = $state<IllustrationDetail | null>(null);
   let related = $state<IllustrationSummary[]>([]);
@@ -39,11 +48,17 @@
   let bookmarkError = $state("");
   let downloadPending = $state(false);
   let downloadMessage = $state("");
+  let ugoiraExportFormat = $state<UgoiraExportFormat>("gif");
+  let ugoiraExportTask = $state<UgoiraExportTask | null>(null);
+  let ugoiraExportError = $state("");
+  let ugoiraExportSupported = $state(false);
+  let exportPollTimer: ReturnType<typeof setTimeout> | null = null;
   let seriesNavigation = $state<ArtworkSeriesNavigation | null>(null);
   let seriesNavigationLoading = $state(false);
   let requestedKey = $state("");
   let requestSequence = 0;
   let illustrationId = $derived(page.params.id ?? "");
+  let bookmarkAccount = $derived($session.loggedIn ? ($session.user?.id ?? "logged-in") : "");
   let restricted = $derived((detail?.illustration.xRestrict ?? 0) > 0);
   let caption = $derived(detail ? plainPixivText(detail.caption) : "");
   let viewerPages = $derived((detail?.pages ?? []).map((image) => ({
@@ -55,6 +70,14 @@
     previewUrl: image.displayUrl ?? image.originalUrl,
     originalUrl: image.originalUrl ?? image.displayUrl,
   })));
+  let ugoiraExportActive = $derived(ugoiraExportTask !== null && !["completed", "failed", "cancelled"].includes(ugoiraExportTask.phase));
+  let ugoiraExportProgress = $derived(ugoiraExportTask && ugoiraExportTask.totalUnits > 0 ? Math.min(100, Math.round(ugoiraExportTask.completedUnits / ugoiraExportTask.totalUnits * 100)) : 0);
+
+  onMount(() => {
+    ugoiraExportSupported = !/Android/i.test(navigator.userAgent);
+  });
+
+  $effect(() => () => { if (exportPollTimer) clearTimeout(exportPollTimer); });
 
   type ArtworkDetailSnapshot = {
     detail: IllustrationDetail | null;
@@ -102,8 +125,18 @@
   };
 
   $effect(() => {
-    bookmarked = detail?.illustration.isBookmarked ?? false;
+    const account = bookmarkAccount;
+    const currentIllustrationId = detail?.illustration.id ?? "";
+    bookmarked = resolveIllustrationBookmarkState(
+      account,
+      currentIllustrationId,
+      detail?.illustration.isBookmarked ?? false,
+    );
     bookmarkError = "";
+    return subscribeIllustrationBookmarkState(account, currentIllustrationId, (next) => {
+      bookmarked = next;
+      bookmarkError = "";
+    });
   });
 
   $effect(() => {
@@ -211,13 +244,16 @@
   async function toggleBookmark() {
     if (!detail || bookmarkPending) return;
     const previous = bookmarked;
-    bookmarked = !previous;
+    const next = !previous;
+    const account = bookmarkAccount;
+    bookmarked = next;
     bookmarkPending = true;
     bookmarkError = "";
     try {
-      await setIllustrationBookmark(detail.illustration.id, bookmarked, bookmarkRestrict);
-      detail.illustration.isBookmarked = bookmarked;
-      detail.totalBookmarks = Math.max(0, detail.totalBookmarks + (bookmarked ? 1 : -1));
+      await setIllustrationBookmark(detail.illustration.id, next, bookmarkRestrict);
+      detail.illustration.isBookmarked = next;
+      detail.totalBookmarks = Math.max(0, detail.totalBookmarks + (next ? 1 : -1));
+      publishIllustrationBookmarkState(account, detail.illustration.id, next);
     } catch (error) {
       bookmarked = previous;
       bookmarkError = describeDataFailure(error);
@@ -242,6 +278,40 @@
       downloadMessage = describeDataFailure(error);
     } finally {
       downloadPending = false;
+    }
+  }
+
+  async function beginUgoiraExport() {
+    if (!detail || detail.illustration.kind !== "ugoira" || ugoiraExportActive) return;
+    ugoiraExportError = "";
+    try {
+      ugoiraExportTask = await startUgoiraExport(detail.illustration.id, ugoiraExportFormat);
+      scheduleExportPoll();
+    } catch (error) {
+      ugoiraExportError = describeDataFailure(error);
+    }
+  }
+
+  function scheduleExportPoll() {
+    if (!ugoiraExportTask || !ugoiraExportActive) return;
+    if (exportPollTimer) clearTimeout(exportPollTimer);
+    exportPollTimer = setTimeout(async () => {
+      try {
+        if (ugoiraExportTask) ugoiraExportTask = await getUgoiraExportTask(ugoiraExportTask.id);
+      } catch (error) {
+        ugoiraExportError = describeDataFailure(error);
+      }
+      scheduleExportPoll();
+    }, 600);
+  }
+
+  async function cancelCurrentUgoiraExport() {
+    if (!ugoiraExportTask || !ugoiraExportActive) return;
+    try {
+      ugoiraExportTask = await cancelUgoiraExportTask(ugoiraExportTask.id);
+      scheduleExportPoll();
+    } catch (error) {
+      ugoiraExportError = describeDataFailure(error);
     }
   }
 
@@ -334,6 +404,14 @@
               {bookmarkPending ? m.common_processing() : bookmarked ? m.artwork_cancel_bookmark() : m.artwork_save_bookmark()}
             </button>
             <button type="button" disabled={downloadPending} onclick={saveOffline}><Icon name="download" size={16} />{downloadPending ? m.common_queueing() : m.common_offline_save()}</button>
+            {#if detail.illustration.kind === "ugoira" && ugoiraExportSupported}
+              <div class="ugoira-export">
+                <label>{m.ugoira_export_format()}<select bind:value={ugoiraExportFormat} disabled={ugoiraExportActive}><option value="gif">GIF</option><option value="apng">APNG</option><option value="webm">WebM</option></select></label>
+                <button type="button" disabled={ugoiraExportActive} onclick={beginUgoiraExport}>{m.ugoira_export_start()}</button>
+                {#if ugoiraExportActive}<button class="cancel" type="button" onclick={cancelCurrentUgoiraExport}>{m.common_cancel()}</button>{/if}
+                {#if ugoiraExportTask}<div class="export-progress"><progress max="100" value={ugoiraExportProgress}></progress><span>{m.ugoira_export_status({ phase: ugoiraExportTask.phase, progress: ugoiraExportProgress })}</span>{#if ugoiraExportTask.destination}<small>{ugoiraExportTask.destination}</small>{/if}{#if ugoiraExportTask.failure}<small class="error">{m.ugoira_export_failure({ reason: ugoiraExportTask.failure })}</small>{/if}</div>{/if}
+              </div>
+            {/if}
             {#if bookmarkError}<p role="alert">{bookmarkError}</p>{/if}
             {#if downloadMessage}<p role="status">{downloadMessage}</p>{/if}
           </div>
@@ -446,6 +524,13 @@
   .work-actions > button.active :global(svg) { fill: currentColor; }
   .work-actions > button:disabled { cursor: wait; opacity: .62; }
   .work-actions > p { flex-basis: 100%; margin: 0; color: #a44f5e; font-size: 8px; }
+  .ugoira-export { display: flex; flex-basis: 100%; gap: 8px; align-items: center; flex-wrap: wrap; padding-top: 5px; }
+  .ugoira-export > button { min-height: 32px; padding: 0 13px; color: white; border: 0; border-radius: 16px; background: var(--pixiv-blue); cursor: pointer; font-size: 8px; font-weight: 700; }
+  .ugoira-export > button.cancel { color: #9d5964; border: 1px solid #efcbd1; background: white; }
+  .export-progress { display: grid; flex: 1 1 100%; grid-template-columns: minmax(100px,1fr) auto; gap: 6px 10px; align-items: center; color: var(--muted); font-size: 8px; }
+  .export-progress progress { width: 100%; accent-color: var(--pixiv-blue); }
+  .export-progress small { grid-column: 1 / -1; overflow-wrap: anywhere; }
+  .export-progress small.error { color: #a44f5e; }
   .tag-list { display: flex; flex-wrap: wrap; gap: 7px; padding: 18px 22px; border-bottom: 1px solid var(--line); }
   .tag-list a { padding: 6px 9px; color: #4c7289; border-radius: 4px; background: #f0f7fb; font-size: 8px; text-decoration: none; }
   .metadata { margin: 0; padding: 12px 22px 17px; }

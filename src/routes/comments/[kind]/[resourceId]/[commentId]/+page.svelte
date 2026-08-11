@@ -1,21 +1,24 @@
 <script lang="ts">
   import { page } from "$app/state";
+  import { goto } from "$app/navigation";
   import AppShell from "$lib/components/AppShell.svelte";
   import CommentCard from "$lib/components/CommentCard.svelte";
   import CommentComposer from "$lib/components/CommentComposer.svelte";
   import ReturnLink from "$lib/components/ReturnLink.svelte";
   import { m } from "$lib/i18n";
-  import { recallCommentRoot, type CommentResourceKind } from "$lib/comment-thread-memory";
+  import { forgetComment, recallCommentRoot, type CommentResourceKind } from "$lib/comment-thread-memory";
   import { recallNavigationView, rememberNavigationView } from "$lib/navigation-view-memory";
   import {
     addIllustrationComment,
     addNovelComment,
+    deleteIllustrationComment,
+    deleteNovelComment,
     describeDataFailure,
     getCommentReplies,
     getNovelCommentReplies,
   } from "$lib/pixiv-api";
   import { session, sessionRestoring } from "$lib/session";
-  import type { PixivComment } from "$lib/types";
+  import type { CommentSubmission, PixivComment } from "$lib/types";
 
   let replies = $state<PixivComment[]>([]);
   let nextCursor = $state<string | null>(null);
@@ -90,10 +93,10 @@
       : getCommentReplies(commentId, cursor);
   }
 
-  function createReply(text: string) {
+  function createReply(submission: CommentSubmission) {
     return resourceKind === "novel"
-      ? addNovelComment(resourceId, text, commentId)
-      : addIllustrationComment(resourceId, text, commentId);
+      ? addNovelComment(resourceId, submission.text, commentId, submission.stampId)
+      : addIllustrationComment(resourceId, submission.text, commentId, submission.stampId);
   }
 
   async function loadReplies(key: string) {
@@ -136,14 +139,14 @@
     }
   }
 
-  async function submitReply(text: string): Promise<boolean> {
+  async function submitReply(submission: CommentSubmission): Promise<boolean> {
     if (submitting) return false;
     const key = requestedKey;
     const sequence = requestSequence;
     submitting = true;
     submitError = "";
     try {
-      const created = await createReply(text);
+      const created = await createReply(submission);
       if (sequence !== requestSequence || key !== requestedKey) return false;
       replies = [created, ...replies.filter((reply) => reply.id !== created.id)];
       return true;
@@ -152,6 +155,22 @@
       return false;
     } finally {
       if (sequence === requestSequence && key === requestedKey) submitting = false;
+    }
+  }
+
+  async function deleteComment(target: PixivComment, root = false): Promise<boolean> {
+    try {
+      if (resourceKind === "novel") await deleteNovelComment(target.id);
+      else await deleteIllustrationComment(target.id);
+      if (root) {
+        forgetComment(resourceKind, resourceId, target.id);
+        await goto(fallback);
+      }
+      else replies = replies.filter((reply) => reply.id !== target.id);
+      return true;
+    } catch (error) {
+      submitError = describeDataFailure(error);
+      return false;
     }
   }
 </script>
@@ -170,7 +189,7 @@
       <section class="thread-card">
         <header><div><span>{m.reply_thread()}</span><h1>{rootComment?.user?.name ? m.reply_to_user({ name: rootComment.user.name }) : m.reply_page_title()}</h1></div><strong>{m.reply_loaded_count({ count: replies.length })}</strong></header>
         {#if rootComment}
-          <div class="root-comment"><CommentCard comment={rootComment} {resourceKind} {resourceId} /></div>
+          <div class="root-comment"><CommentCard comment={rootComment} {resourceKind} {resourceId} canDelete={rootComment.user?.id === $session.user?.id} ondelete={() => deleteComment(rootComment, true)} /></div>
         {:else}
           <p class="root-missing">{m.reply_root_missing()}</p>
         {/if}
@@ -194,7 +213,7 @@
         {:else}
           <div class="reply-list">
             {#each replies as reply (reply.id)}
-              <CommentCard comment={reply} {resourceKind} {resourceId} />
+              <CommentCard comment={reply} {resourceKind} {resourceId} canDelete={reply.user?.id === $session.user?.id} ondelete={() => deleteComment(reply)} />
             {/each}
           </div>
         {/if}

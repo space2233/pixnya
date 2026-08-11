@@ -1,44 +1,21 @@
 # PixNya stable Release notes template
 
-Stable versions (`1.0.0` and later) must keep all five section headings below exactly as written. Candidate `0.x` Draft Releases may use shorter internal notes.
+正式版 Release 说明保持简短，只列用户可见变化和支持平台。连接风险、源码、许可证、SBOM、校验和及升级验证细节统一放在项目主页与 Release 的验证包中。
 
-For a stable Draft, replace every bracketed prompt that is already known. Because upgrade tests require the signed Draft artifacts, the three platform result lines, `Failure-path coverage`, and `Known limitations` may temporarily contain the literal text `PENDING after Draft artifacts` (without template placeholder markers). The Draft workflow accepts that explicit pending state but never publishes it. After testing, edit the Draft body with the real devices, `PASS` results, failure-path results, and limitations, then run **Publish verified stable release**. That final workflow rejects every `PENDING`, placeholder, missing attachment, checksum mismatch, signature mismatch, or wrong source commit.
+发布前替换版本号和变更列表；不得保留 `PENDING` 或模板占位符。
 
-## Unofficial status and platforms
+```markdown
+# PixNya {{version}}
 
-PixNya is an unofficial, community-maintained client and is not affiliated with, endorsed by, or supported by pixiv Inc.
+## 中文
 
-Supported artifacts in this Release:
+- {{主要新增功能}}
+- {{重要体验优化或修复}}
+- 支持 Windows x64、Linux x64、Android ARM64（Android 10+）。
 
-- Windows x64: NSIS installer
-- Linux x64: AppImage
-- Android ARM64 (`arm64-v8a`), Android 10 / API 29 or later: APK
+## English
 
-## API and OAuth boundary
-
-PixNya opens the official Pixiv sign-in page in an isolated WebView, but browsing and account actions use a non-public App API that may change or stop working without notice. OAuth build parameters are present in distributed binaries and must not be treated as secrets.
-
-## Low-security connections
-
-The compatibility connection mode is disabled by default and never selected as an automatic fallback. Enabling it weakens upstream certificate verification and may allow a network intermediary to observe or modify traffic. {{Describe any connection-mode changes in this Release, or write “No change”.}}
-
-## Source, licenses, SBOM, and checksums
-
-- Source commit: `{{full Git commit SHA}}`
-- License: `GPL-3.0-only`
-- Verification bundle: `pixnya-{{version}}-verification.tar.gz` (explicit source snapshot, GPL text, third-party licenses/notices, SPDX SBOMs, Gradle inventory, OSV report, provenance, and detached desktop signatures)
-- Checksums: `SHA256SUMS.txt` (covers the exact eight public attachments)
-
-GitHub also generates Source code archives from the protected release tag automatically.
-
-## Upgrade verification and limitations
-
-Verified in-place upgrades:
-
-- Windows x64: `{{baseline}} -> {{target}}; {{OS/device}}; PASS`
-- Linux x64: `{{baseline}} -> {{target}}; {{distribution}}; PASS`
-- Android ARM64: `{{baseline}} -> {{target}}; {{device/OS}}; PASS`
-
-Failure-path coverage: `{{wrong signature, corrupted manifest, interrupted download, low space, cancelled install, and retry results}}`
-
-Known limitations: `{{include every limitation or untested environment explicitly; do not leave blank}}`
+- {{Main new features}}
+- {{Important improvements or fixes}}
+- Supports Windows x64, Linux x64, and Android ARM64 (Android 10+).
+```

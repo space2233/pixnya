@@ -18,7 +18,7 @@ const readGenerated = async (relativePath) => {
 };
 
 test("all user-visible package versions agree on the stable source version", async () => {
-  const expectedVersion = "1.0.0";
+  const expectedVersion = "1.1.0";
   const [major, minor, patch] = expectedVersion.split(".").map(Number);
   const expectedAndroidVersionCode = major * 1_000_000 + minor * 1_000 + patch;
   const [workspace, packageJson, packageLock, tauri, androidProperties, androidIgnore, settings, readme] = await Promise.all([
@@ -308,25 +308,20 @@ test("formal releases are gated by main-branch full verification and signed arti
   assert.match(workflow, /releases\/\$\{RELEASE_ID\}/);
 });
 
-test("stable release notes disclose every public distribution boundary", async () => {
+test("stable release notes stay concise and bilingual", async () => {
   const [workflow, template, validator] = await Promise.all([
     read(".github/workflows/release.yml"),
     read("docs/RELEASE_NOTES_TEMPLATE.md"),
     read("scripts/validate-release-notes.mjs"),
   ]);
-  const requiredSections = [
-    "## Unofficial status and platforms",
-    "## API and OAuth boundary",
-    "## Low-security connections",
-    "## Source, licenses, SBOM, and checksums",
-    "## Upgrade verification and limitations",
-  ];
+  const requiredSections = ["## 中文", "## English"];
 
   for (const section of requiredSections) {
     assert.match(template, new RegExp(section.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   }
-  assert.match(template, /^Failure-path coverage:/m);
-  assert.match(template, /^Known limitations:/m);
+  assert.doesNotMatch(template, /Low-security connections/);
+  assert.doesNotMatch(template, /Source, licenses, SBOM, and checksums/);
+  assert.doesNotMatch(template, /Upgrade verification and limitations/);
   assert.match(workflow, /node scripts\/validate-release-notes\.mjs/);
   assert.match(workflow, /--commit "\$GITHUB_SHA"/);
   assert.match(workflow, /10#\$\{SOURCE_VERSION%%\.\*\} >= 1/);
@@ -335,61 +330,39 @@ test("stable release notes disclose every public distribution boundary", async (
 
   const version = "1.0.0";
   const commitSha = "0123456789abcdef0123456789abcdef01234567";
-  const completeNotes = `${requiredSections[0]}
-PixNya is unofficial. Windows x64, Linux x64, Android ARM64.
+  const completeNotes = `# PixNya ${version}
+
+${requiredSections[0]}
+
+- 新增通知、评论管理和动图导出。
+- 支持 Windows x64、Linux x64、Android ARM64（Android 10+）。
 
 ${requiredSections[1]}
-The non-public App API may change; OAuth build parameters are extractable.
 
-${requiredSections[2]}
-Compatibility mode is off by default and carries man-in-the-middle risk.
-
-${requiredSections[3]}
-Source commit: ${commitSha}
-GPL-3.0-only
-LICENSE.txt
-pixnya-${version}-source.tar.gz
-pixnya-${version}-third-party-licenses.tar.gz
-pixnya-${version}.spdx.json
-pixnya-${version}-android-runtime.spdx.json
-pixnya-${version}-verification.tar.gz
-SHA256SUMS.txt
-
-${requiredSections[4]}
-- Windows x64: 0.29.0 -> ${version}; Windows 11 24H2; PASS
-- Linux x64: 0.29.0 -> ${version}; Ubuntu 24.04; PASS
-- Android ARM64: 0.29.0 -> ${version}; Android 15 test device; PASS
-Failure-path coverage: wrong signature, corrupted manifest, interrupted download, low space, cancelled install, retry
-Known limitations: Windows binaries are not Authenticode-signed.`;
+- Added notifications, comment management, and animation export.
+- Supports Windows x64, Linux x64, and Android ARM64 (Android 10+).`;
 
   assert.doesNotThrow(() => validateStableReleaseNotes({ notes: completeNotes, version, commitSha }));
-  const pendingNotes = completeNotes
-    .replace(/; Windows 11 24H2; PASS/, "; PENDING after Draft artifacts")
-    .replace(/; Ubuntu 24\.04; PASS/, "; PENDING after Draft artifacts")
-    .replace(/; Android 15 test device; PASS/, "; PENDING after Draft artifacts")
-    .replace(/Failure-path coverage:.*/, "Failure-path coverage: PENDING after Draft artifacts")
-    .replace(/Known limitations:.*/, "Known limitations: PENDING after Draft artifacts");
+  const pendingNotes = `${completeNotes}\nPENDING`;
   assert.throws(() => validateStableReleaseNotes({ notes: pendingNotes, version, commitSha }));
-  assert.doesNotThrow(() => validateStableReleaseNotes({
-    notes: pendingNotes,
-    version,
-    commitSha,
-    allowPendingUpgrades: true,
-  }));
-  for (const invalidNotes of [
-    completeNotes.replace(commitSha, "{{full commit SHA}}"),
-    completeNotes.replace(`pixnya-${version}-verification.tar.gz`, "combined evidence"),
-    completeNotes.replace("- Android ARM64: 0.29.0 -> 1.0.0; Android 15 test device; PASS", ""),
-    completeNotes.replace("PASS", "{{result}}"),
-    completeNotes.replace("0.29.0 -> 1.0.0; Windows 11 24H2", "1.0.0 -> 1.0.0; Windows 11 24H2"),
-    completeNotes.replace("; Ubuntu 24.04; PASS", "; PASS"),
-    completeNotes.replace(/Failure-path coverage:.*\n/, ""),
-    completeNotes.replace("Known limitations: Windows binaries are not Authenticode-signed.", "Known limitations:"),
-    completeNotes.replace("Compatibility mode is off by default and carries man-in-the-middle risk.", "Compatibility mode is off by default and carries man-in-the-middle risk. PENDING"),
-    completeNotes.replace("OAuth build parameters are extractable.", "OAuth is used."),
-    completeNotes.replace("GPL-3.0-only\n", ""),
-  ]) {
-    assert.throws(() => validateStableReleaseNotes({ notes: invalidNotes, version, commitSha }));
+  const invalidNotes = [
+    completeNotes.replace(`# PixNya ${version}`, "# PixNya 9.9.9"),
+    completeNotes.replace("## 中文", "## Chinese"),
+    completeNotes.replace(
+      /## 中文[\s\S]*?## English/,
+      "## 中文\n\n- Added features.\n- Supports Windows x64, Linux x64, and Android ARM64.\n\n## English",
+    ),
+    completeNotes.replace("## English", "## 英文"),
+    completeNotes.replace(/## English[\s\S]*$/, "## English\n\n- 新增功能。"),
+    completeNotes.replaceAll("Android ARM64", "Android"),
+    completeNotes.replace("notifications", "{{features}}"),
+  ];
+  for (const [index, notes] of invalidNotes.entries()) {
+    assert.throws(
+      () => validateStableReleaseNotes({ notes, version, commitSha }),
+      undefined,
+      `invalid concise release note fixture ${index} must be rejected`,
+    );
   }
 });
 
@@ -456,13 +429,14 @@ test("throwaway thumbnail prototypes stay outside the formal application bundle"
   }
 });
 
-test("unsupported notification and posting surfaces stay explicit and non-interactive", async () => {
+test("notifications remain read-only while unsupported posting stays non-interactive", async () => {
   const [notifications, shell] = await Promise.all([
     read("src/routes/notifications/+page.svelte"),
     read("src/lib/components/AppShell.svelte"),
   ]);
-  assert.match(notifications, /m\.notifications_unsupported_title\(\)/);
-  assert.match(notifications, /m\.notifications_boundary_description\(\)/);
+  assert.match(notifications, /getNotifications/);
+  assert.match(notifications, /m\.notifications_read_only\(\)/);
+  assert.doesNotMatch(notifications, /markNotification|notification.*(?:post|write)/i);
   assert.match(shell, /class="text-action" type="button" disabled/);
   assert.match(shell, /m\.shell_post_unavailable\(\)/);
 });

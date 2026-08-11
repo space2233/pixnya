@@ -265,6 +265,82 @@ pub(crate) async fn auto_export_offline_entry(
     perform_export(app, entry_key.to_owned()).await.map(Some)
 }
 
+pub(crate) async fn export_generated_file(
+    app: &tauri::AppHandle,
+    source: &Path,
+    file_name: &str,
+) -> Result<String, ApiCommandError> {
+    if !valid_generated_file_name(file_name) || !source.is_file() {
+        return Err(ApiCommandError::InvalidInput);
+    }
+    let size = fs::metadata(source)
+        .map_err(|_| ApiCommandError::ExportUnavailable)?
+        .len();
+    if size == 0 {
+        return Err(ApiCommandError::ExportUnavailable);
+    }
+    if !platform_status(app).await?.configured {
+        return Err(ApiCommandError::ExportDestinationUnavailable);
+    }
+
+    #[cfg(not(target_os = "android"))]
+    {
+        let destination_root = export_manager(app)?
+            .desktop_directory()?
+            .ok_or(ApiCommandError::ExportDestinationUnavailable)?;
+        let destination = destination_root.join(file_name);
+        if destination.exists() {
+            return Err(ApiCommandError::ExportUnavailable);
+        }
+        let staging = destination_root.join(format!(".{file_name}.part"));
+        let result = (|| {
+            if staging.exists() {
+                fs::remove_file(&staging).map_err(|_| ApiCommandError::ExportUnavailable)?;
+            }
+            let copied =
+                fs::copy(source, &staging).map_err(|_| ApiCommandError::ExportUnavailable)?;
+            if copied != size {
+                return Err(ApiCommandError::ExportUnavailable);
+            }
+            fs::rename(&staging, &destination).map_err(|_| ApiCommandError::ExportUnavailable)?;
+            Ok(destination.to_string_lossy().into_owned())
+        })();
+        if result.is_err() {
+            let _ = fs::remove_file(staging);
+        }
+        result
+    }
+
+    #[cfg(target_os = "android")]
+    {
+        let result = app
+            .state::<AndroidExportPlugin>()
+            .0
+            .clone()
+            .run_mobile_plugin_async::<AndroidExportResult>(
+                "exportFile",
+                AndroidGeneratedFilePayload {
+                    source_file: source.to_string_lossy().into_owned(),
+                    file_name: file_name.to_owned(),
+                    expected_size_bytes: size,
+                },
+            )
+            .await
+            .map_err(|_| ApiCommandError::ExportUnavailable)?;
+        Ok(result.destination)
+    }
+}
+
+fn valid_generated_file_name(value: &str) -> bool {
+    !value.is_empty()
+        && value.len() <= 128
+        && value.starts_with("ugoira-")
+        && value
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b'_' | b'-'))
+        && matches!(value.rsplit('.').next(), Some("gif" | "png" | "webm"))
+}
+
 pub(crate) async fn clear_all_export_settings(app: &tauri::AppHandle) -> Result<(), ()> {
     clear_platform_destination(app).await.map_err(|_| ())?;
     export_manager(app)
@@ -455,6 +531,15 @@ struct AndroidExportPayload {
     source_directory: String,
     directory_name: String,
     expected_file_count: u32,
+    expected_size_bytes: u64,
+}
+
+#[cfg(target_os = "android")]
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct AndroidGeneratedFilePayload {
+    source_file: String,
+    file_name: String,
     expected_size_bytes: u64,
 }
 

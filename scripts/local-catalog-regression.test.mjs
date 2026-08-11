@@ -6,7 +6,8 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
 test("local catalog owns migration, validation, and transactional organization", async () => {
   const source = await read("crates/local-catalog/src/lib.rs");
-  assert.match(source, /const SCHEMA_VERSION: u32 = 1/);
+  assert.match(source, /const SCHEMA_VERSION: u32 = 2/);
+  assert.match(source, /CREATE TABLE catalog_saved_filters/);
   assert.match(source, /TransactionBehavior::Immediate/g);
   assert.match(source, /pragma_update\(None, "journal_mode", "WAL"\)/);
   assert.match(source, /MAX_TAGS_PER_ENTRY: usize = 16/);

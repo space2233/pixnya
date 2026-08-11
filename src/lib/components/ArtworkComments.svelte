@@ -11,11 +11,14 @@
   import {
     addIllustrationComment,
     addNovelComment,
+    deleteIllustrationComment,
+    deleteNovelComment,
     describeDataFailure,
     getIllustrationComments,
     getNovelComments,
   } from "$lib/pixiv-api";
-  import type { PixivComment } from "$lib/types";
+  import { session } from "$lib/session";
+  import type { CommentSubmission, PixivComment } from "$lib/types";
 
   let {
     illustrationId,
@@ -60,10 +63,10 @@
       : getIllustrationComments(id, cursor);
   }
 
-  function createComment(id: string, text: string) {
+  function createComment(id: string, submission: CommentSubmission) {
     return resourceKind === "novel"
-      ? addNovelComment(id, text)
-      : addIllustrationComment(id, text);
+      ? addNovelComment(id, submission.text, undefined, submission.stampId)
+      : addIllustrationComment(id, submission.text, undefined, submission.stampId);
   }
 
   function rememberCurrentThread() {
@@ -122,14 +125,14 @@
     }
   }
 
-  async function submitComment(text: string): Promise<boolean> {
+  async function submitComment(submission: CommentSubmission): Promise<boolean> {
     if (submitting) return false;
     const key = requestedKey;
     const sequence = requestSequence;
     submitting = true;
     submitError = "";
     try {
-      const created = await createComment(resourceId, text);
+      const created = await createComment(resourceId, submission);
       if (sequence !== requestSequence || key !== requestedKey) return false;
       comments = [created, ...comments.filter((comment) => comment.id !== created.id)];
       totalComments += 1;
@@ -142,6 +145,20 @@
       return false;
     } finally {
       if (sequence === requestSequence && key === requestedKey) submitting = false;
+    }
+  }
+
+  async function deleteComment(comment: PixivComment): Promise<boolean> {
+    try {
+      if (resourceKind === "novel") await deleteNovelComment(comment.id);
+      else await deleteIllustrationComment(comment.id);
+      comments = comments.filter((candidate) => candidate.id !== comment.id);
+      totalComments = Math.max(0, totalComments - 1);
+      rememberCurrentThread();
+      return true;
+    } catch (error) {
+      submitError = describeDataFailure(error);
+      return false;
     }
   }
 
@@ -184,6 +201,8 @@
           replyHref={repliesPath(comment, true)}
           repliesHref={repliesPath(comment)}
           onopen={() => rememberRoot(comment)}
+          canDelete={comment.user?.id === $session.user?.id}
+          ondelete={() => deleteComment(comment)}
         />
       {/each}
     </div>

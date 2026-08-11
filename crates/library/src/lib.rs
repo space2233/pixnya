@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::fmt;
 use std::fs;
+use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -64,6 +66,22 @@ pub struct OfflineAsset {
     pub bytes: Vec<u8>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OfflineEntryFingerprint {
+    pub entry_key: String,
+    pub kind: OfflineKind,
+    pub resource_id: String,
+    pub assets: Vec<OfflineAssetFingerprint>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OfflineAssetFingerprint {
+    pub content_type: String,
+    pub sha256: String,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ExportedEntry {
     pub directory: PathBuf,
@@ -114,6 +132,20 @@ impl OfflineLibrary {
     pub fn open(root: impl Into<PathBuf>) -> Result<Self, LibraryError> {
         let root = root.into();
         fs::create_dir_all(&root).map_err(|_| LibraryError::Io)?;
+        for child in fs::read_dir(&root).map_err(|_| LibraryError::Io)? {
+            let child = child.map_err(|_| LibraryError::Io)?;
+            if child
+                .file_name()
+                .to_string_lossy()
+                .starts_with(".batch-remove-")
+            {
+                let _ = if child.file_type().map_err(|_| LibraryError::Io)?.is_dir() {
+                    fs::remove_dir_all(child.path())
+                } else {
+                    fs::remove_file(child.path())
+                };
+            }
+        }
         Ok(Self { root })
     }
 
@@ -201,6 +233,62 @@ impl OfflineLibrary {
                 .then_with(|| left.key.cmp(&right.key))
         });
         Ok(entries)
+    }
+
+    pub fn entry_fingerprints(&self) -> Result<Vec<OfflineEntryFingerprint>, LibraryError> {
+        let entries = self.list_entries()?;
+        let mut fingerprints = Vec::with_capacity(entries.len());
+        for entry in entries {
+            let entry_path = self.entry_path(&entry.key)?;
+            let manifest = read_manifest(&entry_path)?;
+            if manifest.entry != entry {
+                return Err(LibraryError::InvalidManifest);
+            }
+            let mut assets = Vec::with_capacity(manifest.assets.len());
+            for asset in manifest.assets {
+                validate_asset_name(&asset.name)?;
+                validate_content_type(&asset.content_type)?;
+                let mut file = fs::File::open(entry_path.join(ASSET_DIRECTORY).join(&asset.name))
+                    .map_err(|_| LibraryError::AssetNotFound)?;
+                let mut hasher = Sha256::new();
+                let mut read_bytes = 0_u64;
+                let mut buffer = [0_u8; 64 * 1024];
+                loop {
+                    let count = file.read(&mut buffer).map_err(|_| LibraryError::Io)?;
+                    if count == 0 {
+                        break;
+                    }
+                    read_bytes = read_bytes
+                        .checked_add(
+                            u64::try_from(count).map_err(|_| LibraryError::InvalidManifest)?,
+                        )
+                        .ok_or(LibraryError::InvalidManifest)?;
+                    if read_bytes > asset.size_bytes || read_bytes > MAX_ASSET_BYTES {
+                        return Err(LibraryError::InvalidManifest);
+                    }
+                    hasher.update(&buffer[..count]);
+                }
+                if read_bytes != asset.size_bytes {
+                    return Err(LibraryError::InvalidManifest);
+                }
+                assets.push(OfflineAssetFingerprint {
+                    content_type: asset.content_type,
+                    sha256: format!("{:x}", hasher.finalize()),
+                });
+            }
+            assets.sort_by(|left, right| {
+                left.content_type
+                    .cmp(&right.content_type)
+                    .then_with(|| left.sha256.cmp(&right.sha256))
+            });
+            fingerprints.push(OfflineEntryFingerprint {
+                entry_key: entry.key,
+                kind: entry.kind,
+                resource_id: entry.resource_id,
+                assets,
+            });
+        }
+        Ok(fingerprints)
     }
 
     pub fn read_asset(&self, key: &str, name: &str) -> Result<OfflineAsset, LibraryError> {
@@ -318,6 +406,47 @@ impl OfflineLibrary {
         }
         fs::remove_dir_all(path).map_err(|_| LibraryError::Io)?;
         Ok(true)
+    }
+
+    pub fn remove_entries(&self, keys: &[String]) -> Result<Vec<String>, LibraryError> {
+        if keys.is_empty() || keys.len() > 1_000 {
+            return Err(LibraryError::InvalidIdentifier);
+        }
+        let sequence = STAGING_SEQUENCE.fetch_add(1, Ordering::Relaxed);
+        let mut planned = Vec::with_capacity(keys.len());
+        let mut seen = std::collections::HashSet::with_capacity(keys.len());
+        for (index, key) in keys.iter().enumerate() {
+            let source = self.entry_path(key)?;
+            if !seen.insert(key.clone()) || !source.is_dir() {
+                return Err(if source.exists() {
+                    LibraryError::InvalidIdentifier
+                } else {
+                    LibraryError::EntryNotFound
+                });
+            }
+            let manifest = read_manifest(&source)?;
+            if manifest.entry.key != *key {
+                return Err(LibraryError::InvalidManifest);
+            }
+            let quarantine = self.root.join(format!(".batch-remove-{sequence}-{index}"));
+            if quarantine.exists() {
+                return Err(LibraryError::Io);
+            }
+            planned.push((key.clone(), source, quarantine));
+        }
+
+        for (renamed, (_, source, quarantine)) in planned.iter().enumerate() {
+            if fs::rename(source, quarantine).is_err() {
+                for (_, restore_source, restore_quarantine) in planned[..renamed].iter().rev() {
+                    fs::rename(restore_quarantine, restore_source).map_err(|_| LibraryError::Io)?;
+                }
+                return Err(LibraryError::Io);
+            }
+        }
+        // Moving every entry into the hidden quarantine is the atomic logical commit.
+        // `open` retries physical cleanup later, so a cleanup failure can never leave a
+        // caller-visible batch only partly deleted.
+        Ok(planned.into_iter().map(|(key, _, _)| key).collect())
     }
 
     pub fn stats(&self) -> Result<LibraryStats, LibraryError> {
@@ -684,5 +813,41 @@ mod tests {
         );
         assert_eq!(fs::read(collision.join("keep.txt")).unwrap(), b"user data");
         fs::remove_dir_all(parent).unwrap();
+    }
+
+    #[test]
+    fn fingerprints_assets_and_batch_removal_is_all_or_nothing() {
+        let root = test_root("fingerprints-batch");
+        let library = OfflineLibrary::open(&root).unwrap();
+        for (kind, id) in [(OfflineKind::Artwork, "8"), (OfflineKind::Ugoira, "8")] {
+            library
+                .store_entry(
+                    EntryDraft {
+                        kind,
+                        resource_id: id.into(),
+                        title: "Duplicate".into(),
+                        author: "Artist".into(),
+                        cover_url: None,
+                    },
+                    |writer| writer.write_asset("asset.png", "image/png", b"same"),
+                )
+                .unwrap();
+        }
+        let fingerprints = library.entry_fingerprints().unwrap();
+        assert_eq!(fingerprints.len(), 2);
+        assert_eq!(fingerprints[0].assets[0].sha256.len(), 64);
+        assert_eq!(fingerprints[0].assets[0], fingerprints[1].assets[0]);
+
+        assert_eq!(
+            library.remove_entries(&["artwork-8".into(), "bad-key".into()]),
+            Err(LibraryError::InvalidIdentifier)
+        );
+        assert_eq!(library.list_entries().unwrap().len(), 2);
+        let removed = library
+            .remove_entries(&["artwork-8".into(), "ugoira-8".into()])
+            .unwrap();
+        assert_eq!(removed.len(), 2);
+        assert!(library.list_entries().unwrap().is_empty());
+        fs::remove_dir_all(root).unwrap();
     }
 }

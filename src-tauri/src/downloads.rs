@@ -245,6 +245,7 @@ pub(crate) async fn run_download_worker(app: tauri::AppHandle, worker: DownloadW
                 &session,
                 data,
                 Some(progress.clone()),
+                None,
             )
             .await
             .map(|prepared| {

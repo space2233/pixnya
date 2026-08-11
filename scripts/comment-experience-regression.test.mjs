@@ -15,6 +15,7 @@ import {
   unmuteComment,
 } from "../src/lib/comment-moderation.ts";
 import {
+  forgetComment,
   recallCommentRoot,
   recallCommentThread,
   rememberCommentRoot,
@@ -90,6 +91,10 @@ test("comment thread memory restores the source list and root comment", () => {
   rememberCommentRoot("illustration", "99", rootComment);
   assert.equal(recallCommentThread("illustration", "99")?.nextCursor, "opaque-cursor");
   assert.equal(recallCommentRoot("illustration", "99", "701")?.user?.name, "Alice");
+  forgetComment("illustration", "99", "701");
+  assert.equal(recallCommentRoot("illustration", "99", "701"), null);
+  assert.deepEqual(recallCommentThread("illustration", "99")?.comments, []);
+  assert.equal(recallCommentThread("illustration", "99")?.totalComments, 6);
 });
 
 test("UI uses an independent reply page, local moderation, and both emoji forms", async () => {
@@ -99,6 +104,7 @@ test("UI uses an independent reply page, local moderation, and both emoji forms"
   const composer = await source("src/lib/components/CommentComposer.svelte");
   const replies = await source("src/routes/comments/[kind]/[resourceId]/[commentId]/+page.svelte");
   const api = await source("crates/api/src/lib.rs");
+  const runtime = await source("src-tauri/src/lib.rs");
 
   assert.match(comments, /\/comments\/\$\{resourceKind\}\/\$\{resourceId\}\/\$\{comment\.id\}/);
   assert.doesNotMatch(comments, /replyCursors|replyErrors|reply-list/);
@@ -108,10 +114,22 @@ test("UI uses an independent reply page, local moderation, and both emoji forms"
   assert.match(content, /comment\.stamp\?\.url/);
   assert.match(content, /tokenizeCommentText/);
   assert.match(composer, /COMMENT_EMOJIS/);
+  assert.match(composer, /getCommentStamps/);
+  assert.match(composer, /selectedStampId/);
+  assert.match(comments, /deleteIllustrationComment/);
+  assert.match(comments, /deleteNovelComment/);
+  assert.match(card, /canDelete/);
+  assert.match(card, /ondelete/);
   assert.match(replies, /getCommentReplies/);
   assert.match(replies, /getNovelCommentReplies/);
-  assert.match(replies, /addIllustrationComment\(resourceId, text, commentId\)/);
-  assert.match(replies, /addNovelComment\(resourceId, text, commentId\)/);
+  assert.match(replies, /addIllustrationComment\(resourceId, submission\.text, commentId, submission\.stampId\)/);
+  assert.match(replies, /addNovelComment\(resourceId, submission\.text, commentId, submission\.stampId\)/);
+  assert.match(replies, /forgetComment\(resourceKind, resourceId, target\.id\)/);
   assert.match(api, /pub struct CommentStamp/);
   assert.match(api, /stamp_url: String/);
+  assert.match(api, /delete_illustration_comment/);
+  assert.match(api, /delete_novel_comment/);
+  assert.match(api, /stamp_id/);
+  assert.match(api, /comment_stamps\([\s\S]*access_token: &str[\s\S]*get_json\(access_token/);
+  assert.match(runtime, /api\.comment_stamps\(token, signature\)/);
 });

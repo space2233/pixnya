@@ -9,6 +9,8 @@ function source(path) {
 const appShell = source("../src/lib/components/AppShell.svelte");
 const profilePage = source("../src/routes/profile/+page.svelte");
 const artworkThumbnail = source("../src/lib/components/ArtworkThumbnail.svelte");
+const thumbnailSkeleton = source("../src/lib/components/ThumbnailSkeleton.svelte");
+const browsePage = source("../src/lib/components/BrowsePage.svelte");
 const pixivImage = source("../src/lib/components/PixivImage.svelte");
 const mediaState = source("../src/lib/media.ts");
 const rustCommands = source("../src-tauri/src/lib.rs");
@@ -28,10 +30,19 @@ test("Android IPC media bytes are normalized before Blob decoding", () => {
 });
 
 test("artwork thumbnails use the selected neutral skeleton placeholder", () => {
-  assert.match(artworkThumbnail, /class="skeleton-art"/);
+  assert.match(artworkThumbnail, /import ThumbnailSkeleton/);
+  assert.match(artworkThumbnail, /<ThumbnailSkeleton \/>/);
   assert.match(artworkThumbnail, /m\.thumbnail_unavailable\(\)/);
-  assert.match(artworkThumbnail, /linear-gradient\(135deg, #f1f3f5 52%, #eceff1 52%\)/);
+  assert.match(thumbnailSkeleton, /class="skeleton-art"/);
+  assert.match(thumbnailSkeleton, /linear-gradient\(135deg, #f1f3f5 52%, #eceff1 52%\)/);
+  assert.match(thumbnailSkeleton, /animation: sweep 1\.5s infinite/);
   assert.doesNotMatch(artworkThumbnail, /class="fallback"[^>]*>p</);
+});
+
+test("the animated thumbnail skeleton starts on the first browse render", () => {
+  assert.match(browsePage, /import ThumbnailSkeleton from "\$lib\/components\/ThumbnailSkeleton\.svelte"/);
+  assert.match(browsePage, /<ThumbnailSkeleton \/>/);
+  assert.doesNotMatch(browsePage, /<div class="work-cover tone-/);
 });
 
 test("ECH media fallback requires a session-scoped acknowledgement", () => {

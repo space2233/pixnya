@@ -28,6 +28,13 @@ class ExportDirectoryArgs {
   var expectedSizeBytes: Long = 0
 }
 
+@InvokeArg
+class ExportFileArgs {
+  var sourceFile: String? = null
+  var fileName: String? = null
+  var expectedSizeBytes: Long = 0
+}
+
 private data class DocumentChild(
   val uri: Uri,
   val mimeType: String,
@@ -40,11 +47,13 @@ class ExportDirectoryPlugin(private val activity: Activity) : Plugin(activity) {
     private const val URI_KEY = "tree-uri"
     private const val LABEL_KEY = "tree-label"
     private const val EXPORT_STAGING_DIRECTORY = "export-staging-v1"
+    private const val UGOIRA_EXPORT_STAGING_DIRECTORY = "ugoira-export-v1"
     private const val EXPORT_MARKER_FILE = "pixiv-client-entry.json"
     private const val MAX_EXPORT_FILES = 4096
     private const val MAX_MARKER_BYTES = 1024 * 1024
     private val DIRECTORY_NAME = Regex("(?:artwork|novel|ugoira)-[1-9][0-9]{0,19}")
     private val FILE_NAME = Regex("[A-Za-z0-9][A-Za-z0-9._-]{0,127}")
+    private val GENERATED_FILE_NAME = Regex("ugoira-[1-9][0-9]{0,19}\\.(?:gif|png|webm)")
   }
 
   @Command
@@ -191,6 +200,64 @@ class ExportDirectoryPlugin(private val activity: Activity) : Plugin(activity) {
       invoke.reject("The target contains unrelated user data", "export_conflict", error)
     } catch (error: Exception) {
       invoke.reject("Unable to export the offline entry", "export_unavailable", error)
+    }
+  }
+
+  @Command
+  fun exportFile(invoke: Invoke) {
+    val args = invoke.parseArgs(ExportFileArgs::class.java)
+    val sourceValue = args.sourceFile
+    val fileName = args.fileName
+    if (sourceValue.isNullOrBlank() || fileName == null || !GENERATED_FILE_NAME.matches(fileName) || args.expectedSizeBytes <= 0) {
+      invoke.reject("Invalid generated export request", "invalid_export")
+      return
+    }
+    try {
+      val treeUri = currentTreeUri()
+        ?: return invoke.reject("No export directory is configured", "export_destination_unavailable")
+      if (!hasPersistedAccess(treeUri)) {
+        clearStoredDestination()
+        invoke.reject("The export directory permission has expired", "export_permission_unavailable")
+        return
+      }
+      val source = File(sourceValue).canonicalFile
+      val allowedRoot = File(activity.cacheDir, UGOIRA_EXPORT_STAGING_DIRECTORY).canonicalFile
+      if (!source.isFile || source.length() != args.expectedSizeBytes || !source.toPath().startsWith(allowedRoot.toPath())) {
+        invoke.reject("Invalid generated export source", "invalid_export")
+        return
+      }
+      val rootDocument = DocumentsContract.buildDocumentUriUsingTree(
+        treeUri,
+        DocumentsContract.getTreeDocumentId(treeUri),
+      )
+      val mimeType = when (fileName.substringAfterLast('.')) {
+        "gif" -> "image/gif"
+        "png" -> "image/apng"
+        "webm" -> "video/webm"
+        else -> throw IllegalArgumentException("Unsupported generated export type")
+      }
+      val existing = findChild(treeUri, rootDocument, fileName)
+      if (existing != null) throw ExportConflictException()
+      val target = DocumentsContract.createDocument(activity.contentResolver, rootDocument, mimeType, fileName)
+        ?: throw IllegalStateException("Unable to create generated export")
+      try {
+        activity.contentResolver.openOutputStream(target, "w")?.use { output ->
+          source.inputStream().use { input -> input.copyTo(output) }
+        } ?: throw IllegalStateException("Unable to open generated export")
+      } catch (error: Exception) {
+        runCatching { DocumentsContract.deleteDocument(activity.contentResolver, target) }
+        throw error
+      }
+      val result = JSObject()
+      val label = activity.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
+        .getString(LABEL_KEY, null)?.takeIf { it.isNotBlank() }
+        ?: activity.getString(R.string.export_authorized_directory)
+      result.put("destination", "$label/$fileName")
+      invoke.resolve(result)
+    } catch (error: ExportConflictException) {
+      invoke.reject("The generated export already exists", "export_conflict", error)
+    } catch (error: Exception) {
+      invoke.reject("Unable to export generated media", "export_unavailable", error)
     }
   }
 

@@ -7,12 +7,16 @@
   import { recallNavigationView, rememberNavigationView } from "$lib/navigation-view-memory";
   import {
     describeDataFailure,
+    batchOrganizeOfflineEntries,
+    batchRemoveOfflineEntries,
     createLocalCollection,
     deleteLocalCollection,
+    deleteLocalCatalogFilter,
     exportOfflineEntry,
     getExportDestinationStatus,
     getLocalCatalogSnapshot,
     getOfflineStats,
+    findOfflineDuplicates,
     listDownloadTasks,
     listOfflineEntries,
     pauseDownloadTask,
@@ -21,6 +25,7 @@
     removeOfflineEntry,
     resumeDownloadTask,
     renameLocalCollection,
+    saveLocalCatalogFilter,
   } from "$lib/pixiv-api";
   import type {
     DownloadFailure,
@@ -32,6 +37,8 @@
     LocalCatalogSnapshot,
     OfflineEntry,
     OfflineStats,
+    DuplicateGroup,
+    SavedCatalogFilter,
   } from "$lib/types";
 
   let entries = $state<OfflineEntry[]>([]);
@@ -49,7 +56,7 @@
   let exporting = $state("");
   let exportNotice = $state("");
   let exportNoticeIsError = $state(false);
-  let catalog = $state<LocalCatalogSnapshot>({ collections: [], entries: [] });
+  let catalog = $state<LocalCatalogSnapshot>({ collections: [], entries: [], savedFilters: [] });
   let catalogStatus = $state<"loading" | "ready" | "error">("loading");
   let catalogError = $state("");
   let catalogNotice = $state("");
@@ -67,6 +74,18 @@
   let collectionFilter = $state("all");
   let tagFilter = $state("all");
   let sortOrder = $state<"newest" | "oldest" | "title" | "size">("newest");
+  let storedAfter = $state("");
+  let storedBefore = $state("");
+  let minSizeBytes = $state("");
+  let maxSizeBytes = $state("");
+  let savedFilterName = $state("");
+  let selectedEntryKeys = $state<string[]>([]);
+  let batchCollectionId = $state("keep");
+  let batchAddTags = $state("");
+  let batchRemoveTags = $state("");
+  let batchConfirmDelete = $state(false);
+  let duplicateGroups = $state<DuplicateGroup[]>([]);
+  let duplicateStatus = $state<"idle" | "loading" | "ready" | "error">("idle");
   let queueRequestId = 0;
   let libraryRequestId = 0;
   let catalogRequestId = 0;
@@ -89,13 +108,18 @@
     collectionFilter: string;
     tagFilter: string;
     sortOrder: "newest" | "oldest" | "title" | "size";
+    storedAfter: string;
+    storedBefore: string;
+    minSizeBytes: string;
+    maxSizeBytes: string;
   };
 
   export const snapshot = {
     capture: () => rememberNavigationView<OfflineLibrarySnapshot>({
       entries, stats, tasks, libraryStatus, queueStatus, libraryError, queueError,
       exportDestination, catalog, catalogStatus, catalogError, libraryQuery,
-      kindFilter, collectionFilter, tagFilter, sortOrder,
+      kindFilter, collectionFilter, tagFilter, sortOrder, storedAfter, storedBefore,
+      minSizeBytes, maxSizeBytes,
     }),
     restore: (key: unknown) => {
       const value = recallNavigationView<OfflineLibrarySnapshot>(key);
@@ -120,6 +144,10 @@
       collectionFilter = value.collectionFilter;
       tagFilter = value.tagFilter;
       sortOrder = value.sortOrder;
+      storedAfter = value.storedAfter ?? "";
+      storedBefore = value.storedBefore ?? "";
+      minSizeBytes = value.minSizeBytes ?? "";
+      maxSizeBytes = value.maxSizeBytes ?? "";
     },
   };
 
@@ -143,6 +171,14 @@
         if (organization?.collectionId !== Number(collectionFilter)) return false;
       }
       if (tagFilter !== "all" && !organization?.tags.includes(tagFilter)) return false;
+      const after = dateBoundary(storedAfter, false);
+      const before = dateBoundary(storedBefore, true);
+      const minimum = byteBoundary(minSizeBytes);
+      const maximum = byteBoundary(maxSizeBytes);
+      if (after !== null && entry.storedAtUnixSeconds < after) return false;
+      if (before !== null && entry.storedAtUnixSeconds > before) return false;
+      if (minimum !== null && entry.sizeBytes < minimum) return false;
+      if (maximum !== null && entry.sizeBytes > maximum) return false;
       if (!query) return true;
       const collectionName = organization?.collectionId == null
         ? ""
@@ -158,6 +194,22 @@
     });
     return result;
   });
+
+  function dateBoundary(value: string, endOfDay: boolean): number | null {
+    if (!value) return null;
+    const timestamp = Date.parse(`${value}T${endOfDay ? "23:59:59" : "00:00:00"}`);
+    return Number.isFinite(timestamp) ? Math.floor(timestamp / 1000) : null;
+  }
+
+  function byteBoundary(value: string): number | null {
+    if (!value.trim()) return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed >= 0 ? Math.floor(parsed * 1024 * 1024) : null;
+  }
+
+  function tagList(value: string): string[] {
+    return [...new Set(value.split(/[,，]/).map((tag) => tag.trim()).filter(Boolean))];
+  }
 
   onMount(() => {
     let disposed = false;
@@ -215,6 +267,7 @@
       ]);
       if (requestId !== libraryRequestId) return;
       entries = nextEntries;
+      selectedEntryKeys = selectedEntryKeys.filter((key) => nextEntries.some((entry) => entry.key === key));
       stats = nextStats;
       libraryStatus = "ready";
       await refreshCatalog(showLoading);
@@ -404,6 +457,134 @@
     collectionFilter = "all";
     tagFilter = "all";
     sortOrder = "newest";
+    storedAfter = "";
+    storedBefore = "";
+    minSizeBytes = "";
+    maxSizeBytes = "";
+  }
+
+  async function saveCurrentFilter(event: SubmitEvent) {
+    event.preventDefault();
+    if (catalogAction || !savedFilterName.trim()) return;
+    catalogAction = "save-filter";
+    showCatalogNotice("");
+    try {
+      await saveLocalCatalogFilter({
+        name: savedFilterName,
+        query: libraryQuery,
+        kind: kindFilter === "all" ? null : kindFilter,
+        collectionId: /^\d+$/.test(collectionFilter) ? Number(collectionFilter) : null,
+        tag: tagFilter === "all" ? null : tagFilter,
+        sortOrder,
+        storedAfter: dateBoundary(storedAfter, false),
+        storedBefore: dateBoundary(storedBefore, true),
+        minSizeBytes: byteBoundary(minSizeBytes),
+        maxSizeBytes: byteBoundary(maxSizeBytes),
+      });
+      savedFilterName = "";
+      showCatalogNotice(m.offline_filter_saved());
+      await refreshCatalog(false);
+    } catch (error) {
+      showCatalogNotice(describeDataFailure(error), true);
+    } finally {
+      catalogAction = "";
+    }
+  }
+
+  function applySavedFilter(filter: SavedCatalogFilter) {
+    libraryQuery = filter.query;
+    kindFilter = filter.kind ?? "all";
+    collectionFilter = filter.collectionId == null ? "all" : String(filter.collectionId);
+    tagFilter = filter.tag ?? "all";
+    sortOrder = filter.sortOrder;
+    storedAfter = filter.storedAfter == null ? "" : new Date(filter.storedAfter * 1000).toISOString().slice(0, 10);
+    storedBefore = filter.storedBefore == null ? "" : new Date(filter.storedBefore * 1000).toISOString().slice(0, 10);
+    minSizeBytes = filter.minSizeBytes == null ? "" : String(Math.round(filter.minSizeBytes / 1024 / 1024));
+    maxSizeBytes = filter.maxSizeBytes == null ? "" : String(Math.round(filter.maxSizeBytes / 1024 / 1024));
+  }
+
+  async function removeSavedFilter(filterId: number) {
+    if (catalogAction) return;
+    catalogAction = `delete-filter-${filterId}`;
+    try {
+      await deleteLocalCatalogFilter(filterId);
+      await refreshCatalog(false);
+    } catch (error) {
+      showCatalogNotice(describeDataFailure(error), true);
+    } finally {
+      catalogAction = "";
+    }
+  }
+
+  function toggleSelection(key: string) {
+    selectedEntryKeys = selectedEntryKeys.includes(key)
+      ? selectedEntryKeys.filter((entryKey) => entryKey !== key)
+      : [...selectedEntryKeys, key];
+    batchConfirmDelete = false;
+  }
+
+  function selectVisibleEntries() {
+    const visible = filteredEntries.map((entry) => entry.key);
+    selectedEntryKeys = visible.every((key) => selectedEntryKeys.includes(key))
+      ? selectedEntryKeys.filter((key) => !visible.includes(key))
+      : [...new Set([...selectedEntryKeys, ...visible])];
+    batchConfirmDelete = false;
+  }
+
+  async function applyBatchOrganization() {
+    if (catalogAction || selectedEntryKeys.length === 0) return;
+    catalogAction = "batch-organize";
+    showCatalogNotice("");
+    try {
+      await batchOrganizeOfflineEntries({
+        entryKeys: selectedEntryKeys,
+        updateCollection: batchCollectionId !== "keep",
+        collectionId: batchCollectionId && batchCollectionId !== "keep" ? Number(batchCollectionId) : null,
+        addTags: tagList(batchAddTags),
+        removeTags: tagList(batchRemoveTags),
+      });
+      batchAddTags = "";
+      batchRemoveTags = "";
+      showCatalogNotice(m.offline_batch_updated({ count: selectedEntryKeys.length }));
+      await refreshCatalog(false);
+    } catch (error) {
+      showCatalogNotice(describeDataFailure(error), true);
+    } finally {
+      catalogAction = "";
+    }
+  }
+
+  async function removeSelectedEntries() {
+    if (!batchConfirmDelete) {
+      batchConfirmDelete = true;
+      return;
+    }
+    if (catalogAction || selectedEntryKeys.length === 0) return;
+    catalogAction = "batch-delete";
+    try {
+      const removed = await batchRemoveOfflineEntries(selectedEntryKeys);
+      selectedEntryKeys = [];
+      batchConfirmDelete = false;
+      showCatalogNotice(m.offline_batch_deleted({ count: removed.length }));
+      await refreshLibrary(false);
+    } catch (error) {
+      showCatalogNotice(describeDataFailure(error), true);
+    } finally {
+      catalogAction = "";
+    }
+  }
+
+  async function scanDuplicates() {
+    if (duplicateStatus === "loading") return;
+    duplicateStatus = "loading";
+    showCatalogNotice("");
+    try {
+      duplicateGroups = await findOfflineDuplicates();
+      duplicateStatus = "ready";
+    } catch (error) {
+      duplicateStatus = "error";
+      showCatalogNotice(describeDataFailure(error), true);
+    }
   }
 
   function requestRemoval(key: string) {
@@ -597,6 +778,50 @@
           <label><span>{m.offline_sort()}</span><select bind:value={sortOrder}><option value="newest">{m.offline_sort_newest()}</option><option value="oldest">{m.offline_sort_oldest()}</option><option value="title">{m.offline_sort_title()}</option><option value="size">{m.offline_sort_size()}</option></select></label>
           <button type="button" onclick={resetLibraryFilters}>{m.common_reset()}</button>
         </div>
+        <details class="advanced-catalog">
+          <summary>{m.offline_advanced_filters()}</summary>
+          <div class="advanced-grid">
+            <label><span>{m.offline_stored_after()}</span><input bind:value={storedAfter} type="date" /></label>
+            <label><span>{m.offline_stored_before()}</span><input bind:value={storedBefore} type="date" /></label>
+            <label><span>{m.offline_min_size()}</span><input bind:value={minSizeBytes} type="number" min="0" step="1" /></label>
+            <label><span>{m.offline_max_size()}</span><input bind:value={maxSizeBytes} type="number" min="0" step="1" /></label>
+          </div>
+          <form class="saved-filter-form" onsubmit={saveCurrentFilter}>
+            <input bind:value={savedFilterName} maxlength="128" placeholder={m.offline_filter_name()} />
+            <button disabled={!!catalogAction || !savedFilterName.trim()}>{m.offline_save_filter()}</button>
+          </form>
+          {#if catalog.savedFilters.length}
+            <div class="saved-filters">
+              {#each catalog.savedFilters as filter (filter.id)}
+                <button type="button" onclick={() => applySavedFilter(filter)}>{filter.name}</button>
+                <button type="button" class="danger" aria-label={m.common_delete()} onclick={() => removeSavedFilter(filter.id)}>×</button>
+              {/each}
+            </div>
+          {/if}
+        </details>
+      {/if}
+
+      {#if entries.length > 0}
+        <details class="advanced-catalog batch-panel">
+          <summary>{m.offline_batch_title({ count: selectedEntryKeys.length })}</summary>
+          <div class="batch-toolbar">
+            <button type="button" onclick={selectVisibleEntries}>{m.offline_select_visible()}</button>
+            <select bind:value={batchCollectionId}><option value="keep">{m.offline_keep_collections()}</option><option value="">{m.offline_no_collection()}</option>{#each catalog.collections as collection (collection.id)}<option value={String(collection.id)}>{collection.name}</option>{/each}</select>
+            <input bind:value={batchAddTags} placeholder={m.offline_batch_add_tags()} />
+            <input bind:value={batchRemoveTags} placeholder={m.offline_batch_remove_tags()} />
+            <button type="button" disabled={!selectedEntryKeys.length || !!catalogAction} onclick={applyBatchOrganization}>{m.offline_apply_batch()}</button>
+            <button type="button" class:confirm={batchConfirmDelete} disabled={!selectedEntryKeys.length || !!catalogAction} onclick={removeSelectedEntries}>{batchConfirmDelete ? m.common_confirm_delete() : m.offline_delete_selected()}</button>
+          </div>
+          <div class="duplicate-tools">
+            <button type="button" disabled={duplicateStatus === "loading"} onclick={scanDuplicates}>{duplicateStatus === "loading" ? m.account_controls_loading() : m.offline_scan_duplicates()}</button>
+            <p>{m.offline_duplicate_report_only()}</p>
+            {#if duplicateStatus === "ready"}
+              {#each duplicateGroups as group (`${group.reason}-${group.signature}`)}
+                <div class="duplicate-group"><strong>{group.reason === "resource_id" ? m.offline_duplicate_resource() : m.offline_duplicate_hash()}</strong><span>{group.entryKeys.join(" · ")}</span></div>
+              {:else}<p>{m.offline_no_duplicates()}</p>{/each}
+            {/if}
+          </div>
+        </details>
       {/if}
 
       <details class="collection-manager">
@@ -651,6 +876,7 @@
           {#each filteredEntries as entry (entry.key)}
             {@const organization = organizationFor(entry.key)}
             <article class="entry-row">
+              <label class="entry-select"><input type="checkbox" checked={selectedEntryKeys.includes(entry.key)} onchange={() => toggleSelection(entry.key)} aria-label={m.offline_select_entry({ title: entry.title || entry.resourceId })} /></label>
               <a class="entry-main" href={entryHref(entry)}>
                 <span class="kind">{kindLabel(entry.kind)}</span>
                 <div class="entry-copy">
@@ -745,6 +971,15 @@
   .catalog-tools input:focus, .catalog-tools select:focus, .new-collection input:focus, .collection-row input:focus, .organize-editor input:focus, .organize-editor select:focus { border-color: var(--pixiv-blue); box-shadow: 0 0 0 2px rgba(0,150,250,.1); }
   .catalog-tools select:disabled { opacity: .55; }
   .catalog-tools > button, .filter-empty button { height: 34px; padding: 0 13px; color: #60727d; border: 1px solid #dce4ea; border-radius: 17px; background: white; cursor: pointer; font-size: 8px; }
+  .advanced-catalog { padding: 0 16px; border-bottom: 1px solid var(--line); background: #fbfdff; }
+  .advanced-catalog summary { padding: 12px 0; cursor: pointer; font-size: 9px; font-weight: 750; }
+  .advanced-grid { display: grid; grid-template-columns: repeat(4,minmax(110px,1fr)); gap: 9px; }
+  .advanced-grid label { display: grid; gap: 5px; color: var(--muted); font-size: 7px; font-weight: 700; }
+  .advanced-grid input,.saved-filter-form input,.batch-toolbar input,.batch-toolbar select { width: 100%; height: 34px; min-width: 0; padding: 0 10px; border: 1px solid #dce4ea; border-radius: 7px; background: white; font: inherit; font-size: 9px; }
+  .saved-filter-form { display: flex; gap: 8px; margin: 12px 0; }
+  .saved-filter-form button,.saved-filters button,.batch-toolbar button,.duplicate-tools button { min-height: 32px; padding: 0 13px; color: var(--pixiv-blue); border: 1px solid #cde8f9; border-radius: 16px; background: white; cursor: pointer; font-size: 8px; }
+  .saved-filters { display: flex; flex-wrap: wrap; gap: 5px; padding-bottom: 12px; }.saved-filters .danger{min-width:32px;color:#a24e5c;border-color:#eadbe0;margin-left:-5px}
+  .batch-panel { background: #f7fbfe; }.batch-toolbar { display:grid;grid-template-columns:auto minmax(110px,1fr) repeat(2,minmax(130px,1fr)) auto auto;gap:8px;padding-bottom:12px}.batch-toolbar button.confirm{color:white;background:#b24d5e;border-color:#b24d5e}.duplicate-tools{padding:12px 0;border-top:1px solid var(--line)}.duplicate-tools>p{color:var(--muted);font-size:8px}.duplicate-group{display:flex;gap:10px;padding:7px 0;font-size:8px}.duplicate-group strong{min-width:80px}.duplicate-group span{overflow-wrap:anywhere}.entry-select{display:grid;align-self:stretch;padding:18px 0 0 14px}.entry-select input{width:16px;height:16px;accent-color:var(--pixiv-blue)}
   .collection-manager { border-bottom: 1px solid var(--line); background: #fff; }
   .collection-manager summary { display: flex; min-height: 43px; gap: 9px; align-items: center; padding: 10px 16px; cursor: pointer; list-style-position: inside; }
   .collection-manager summary span { font-size: 9px; font-weight: 750; }
@@ -769,7 +1004,7 @@
   .collection-actions button.confirm { color: white; border-color: #b24d5e; background: #b24d5e; }
   .filter-summary { margin: 0; padding: 8px 16px; color: var(--muted); border-bottom: 1px solid var(--line); background: #fbfdff; font-size: 7px; text-align: right; }
   .entries { display: grid; }
-  .entry-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; border-bottom: 1px solid var(--line); }
+  .entry-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; border-bottom: 1px solid var(--line); }
   .entry-row:last-child { border-bottom: 0; }
   .entry-main { display: grid; grid-template-columns: 78px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 16px; color: var(--text); text-decoration: none; }
   .entry-copy { min-width: 0; }
@@ -853,7 +1088,9 @@
     .entry-main > b { display: none; }
     .entry-row h2 { font-size: 14px; }
     .entry-row p { font-size: 11px; line-height: 1.45; }
-    .entry-row { grid-template-columns: 1fr; }
+    .advanced-grid,.batch-toolbar { grid-template-columns: 1fr 1fr; }.saved-filter-form{align-items:stretch;flex-direction:column}.advanced-catalog{padding:0 12px}.batch-toolbar button,.batch-toolbar input,.batch-toolbar select{min-height:40px;font-size:11px}.duplicate-group{align-items:flex-start;flex-direction:column}
+    .entry-row { grid-template-columns: auto minmax(0,1fr); }
+    .entry-actions,.organize-editor { grid-column: 1 / -1; }
     .organization-badges { flex-wrap: wrap; }
     .organization-badges span { max-width: 150px; font-size: 9px; }
     .entry-actions { min-height: 48px; grid-template-columns: repeat(3,1fr); border-top: 1px solid var(--line); border-left: 0; }

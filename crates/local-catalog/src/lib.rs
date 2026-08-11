@@ -6,11 +6,13 @@ use std::fs;
 use std::path::PathBuf;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-const SCHEMA_VERSION: u32 = 1;
+const SCHEMA_VERSION: u32 = 2;
 const MAX_COLLECTION_NAME_BYTES: usize = 128;
 const MAX_TAG_NAME_BYTES: usize = 96;
 const MAX_TAGS_PER_ENTRY: usize = 16;
 const MAX_VISIBLE_ENTRIES: usize = 100_000;
+const MAX_BATCH_ENTRIES: usize = 1_000;
+const MAX_FILTER_QUERY_BYTES: usize = 512;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -33,6 +35,41 @@ pub struct EntryOrganization {
 pub struct CatalogSnapshot {
     pub collections: Vec<CatalogCollection>,
     pub entries: Vec<EntryOrganization>,
+    pub saved_filters: Vec<SavedCatalogFilter>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CatalogFilterDraft {
+    pub name: String,
+    pub query: String,
+    pub kind: Option<String>,
+    pub collection_id: Option<i64>,
+    pub tag: Option<String>,
+    pub sort_order: String,
+    pub stored_after: Option<u64>,
+    pub stored_before: Option<u64>,
+    pub min_size_bytes: Option<u64>,
+    pub max_size_bytes: Option<u64>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SavedCatalogFilter {
+    pub id: i64,
+    #[serde(flatten)]
+    pub filter: CatalogFilterDraft,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchOrganizationChange {
+    pub entry_keys: Vec<String>,
+    #[serde(default)]
+    pub update_collection: bool,
+    pub collection_id: Option<i64>,
+    pub add_tags: Vec<String>,
+    pub remove_tags: Vec<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -181,6 +218,7 @@ impl LocalCatalog {
         Ok(CatalogSnapshot {
             collections,
             entries: organizations.into_values().collect(),
+            saved_filters: read_saved_filters(&connection)?,
         })
     }
 
@@ -375,6 +413,239 @@ impl LocalCatalog {
         })
     }
 
+    pub fn batch_organize_entries(
+        &self,
+        change: &BatchOrganizationChange,
+    ) -> Result<Vec<EntryOrganization>, CatalogError> {
+        if change.entry_keys.is_empty() || change.entry_keys.len() > MAX_BATCH_ENTRIES {
+            return Err(CatalogError::InvalidInput);
+        }
+        let mut entry_keys = Vec::with_capacity(change.entry_keys.len());
+        let mut seen_entries = HashSet::with_capacity(change.entry_keys.len());
+        for entry_key in &change.entry_keys {
+            let entry_key = normalized_entry_key(entry_key)?;
+            if !seen_entries.insert(entry_key.clone()) {
+                return Err(CatalogError::InvalidInput);
+            }
+            entry_keys.push(entry_key);
+        }
+        if change.update_collection && change.collection_id.is_some_and(|id| id <= 0) {
+            return Err(CatalogError::InvalidInput);
+        }
+        let add_tags = normalized_tag_map(&change.add_tags)?;
+        let remove_tags = normalized_tag_map(&change.remove_tags)?;
+        if add_tags.keys().any(|key| remove_tags.contains_key(key)) {
+            return Err(CatalogError::InvalidInput);
+        }
+
+        let mut connection = self.connection()?;
+        let transaction = connection
+            .transaction_with_behavior(TransactionBehavior::Immediate)
+            .map_err(|_| CatalogError::Database)?;
+        if let Some(collection_id) = change.collection_id.filter(|_| change.update_collection) {
+            let exists = transaction
+                .query_row(
+                    "SELECT 1 FROM catalog_collections WHERE id = ?1",
+                    [collection_id],
+                    |_| Ok(()),
+                )
+                .optional()
+                .map_err(|_| CatalogError::Database)?
+                .is_some();
+            if !exists {
+                return Err(CatalogError::CollectionNotFound);
+            }
+        }
+
+        let mut changed = Vec::with_capacity(entry_keys.len());
+        for entry_key in entry_keys {
+            let collection_id = if change.update_collection {
+                change.collection_id
+            } else {
+                transaction
+                    .query_row(
+                        "SELECT collection_id FROM entry_organization WHERE entry_key = ?1",
+                        [&entry_key],
+                        |row| row.get::<_, Option<i64>>(0),
+                    )
+                    .optional()
+                    .map_err(|_| CatalogError::Database)?
+                    .flatten()
+            };
+            let mut tags = read_entry_tag_map(&transaction, &entry_key)?;
+            for key in remove_tags.keys() {
+                tags.remove(key);
+            }
+            for (key, name) in &add_tags {
+                tags.insert(key.clone(), name.clone());
+            }
+            if tags.len() > MAX_TAGS_PER_ENTRY {
+                return Err(CatalogError::InvalidInput);
+            }
+            write_entry_organization(&transaction, &entry_key, collection_id, &tags)?;
+            changed.push(EntryOrganization {
+                entry_key,
+                collection_id,
+                tags: tags.into_values().collect(),
+            });
+        }
+        remove_unused_tags(&transaction)?;
+        transaction.commit().map_err(|_| CatalogError::Database)?;
+        Ok(changed)
+    }
+
+    pub fn save_filter(
+        &self,
+        draft: &CatalogFilterDraft,
+    ) -> Result<SavedCatalogFilter, CatalogError> {
+        let filter = normalized_filter(draft)?;
+        let name_key = filter.name.to_lowercase();
+        let mut connection = self.connection()?;
+        let transaction = connection
+            .transaction_with_behavior(TransactionBehavior::Immediate)
+            .map_err(|_| CatalogError::Database)?;
+        if let Some(collection_id) = filter.collection_id {
+            let exists = transaction
+                .query_row(
+                    "SELECT 1 FROM catalog_collections WHERE id = ?1",
+                    [collection_id],
+                    |_| Ok(()),
+                )
+                .optional()
+                .map_err(|_| CatalogError::Database)?
+                .is_some();
+            if !exists {
+                return Err(CatalogError::CollectionNotFound);
+            }
+        }
+        transaction
+            .execute(
+                "INSERT INTO catalog_saved_filters (
+                   name, name_key, query, kind, collection_id, tag, sort_order,
+                   stored_after, stored_before, min_size_bytes, max_size_bytes, created_at, updated_at
+                 ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?12)",
+                params![
+                    filter.name,
+                    name_key,
+                    filter.query,
+                    filter.kind,
+                    filter.collection_id,
+                    filter.tag,
+                    filter.sort_order,
+                    filter.stored_after.map(to_sql_u64),
+                    filter.stored_before.map(to_sql_u64),
+                    filter.min_size_bytes.map(to_sql_u64),
+                    filter.max_size_bytes.map(to_sql_u64),
+                    to_sql_u64(unix_seconds()),
+                ],
+            )
+            .map_err(map_insert_error)?;
+        let id = transaction.last_insert_rowid();
+        transaction.commit().map_err(|_| CatalogError::Database)?;
+        Ok(SavedCatalogFilter { id, filter })
+    }
+
+    pub fn delete_filter(&self, filter_id: i64) -> Result<bool, CatalogError> {
+        if filter_id <= 0 {
+            return Err(CatalogError::InvalidInput);
+        }
+        Ok(self
+            .connection()?
+            .execute(
+                "DELETE FROM catalog_saved_filters WHERE id = ?1",
+                [filter_id],
+            )
+            .map_err(|_| CatalogError::Database)?
+            == 1)
+    }
+
+    pub fn remove_entries(&self, entry_keys: &[String]) -> Result<u32, CatalogError> {
+        if entry_keys.is_empty() || entry_keys.len() > MAX_BATCH_ENTRIES {
+            return Err(CatalogError::InvalidInput);
+        }
+        let mut keys = Vec::with_capacity(entry_keys.len());
+        let mut seen = HashSet::with_capacity(entry_keys.len());
+        for key in entry_keys {
+            let key = normalized_entry_key(key)?;
+            if !seen.insert(key.clone()) {
+                return Err(CatalogError::InvalidInput);
+            }
+            keys.push(key);
+        }
+        let mut connection = self.connection()?;
+        let transaction = connection
+            .transaction_with_behavior(TransactionBehavior::Immediate)
+            .map_err(|_| CatalogError::Database)?;
+        let mut removed = 0_u32;
+        for key in keys {
+            removed = removed
+                .checked_add(
+                    u32::try_from(
+                        transaction
+                            .execute(
+                                "DELETE FROM entry_organization WHERE entry_key = ?1",
+                                [&key],
+                            )
+                            .map_err(|_| CatalogError::Database)?,
+                    )
+                    .map_err(|_| CatalogError::Database)?,
+                )
+                .ok_or(CatalogError::Database)?;
+        }
+        remove_unused_tags(&transaction)?;
+        transaction.commit().map_err(|_| CatalogError::Database)?;
+        Ok(removed)
+    }
+
+    pub fn restore_entries(&self, entries: &[EntryOrganization]) -> Result<(), CatalogError> {
+        if entries.len() > MAX_BATCH_ENTRIES {
+            return Err(CatalogError::InvalidInput);
+        }
+        let mut normalized = Vec::with_capacity(entries.len());
+        let mut seen = HashSet::with_capacity(entries.len());
+        for entry in entries {
+            let entry_key = normalized_entry_key(&entry.entry_key)?;
+            if !seen.insert(entry_key.clone())
+                || entry
+                    .collection_id
+                    .is_some_and(|collection_id| collection_id <= 0)
+            {
+                return Err(CatalogError::InvalidInput);
+            }
+            normalized.push((
+                entry_key,
+                entry.collection_id,
+                normalized_tag_map(&entry.tags)?,
+            ));
+        }
+
+        let mut connection = self.connection()?;
+        let transaction = connection
+            .transaction_with_behavior(TransactionBehavior::Immediate)
+            .map_err(|_| CatalogError::Database)?;
+        for (_, collection_id, _) in &normalized {
+            if let Some(collection_id) = collection_id {
+                let exists = transaction
+                    .query_row(
+                        "SELECT 1 FROM catalog_collections WHERE id = ?1",
+                        [collection_id],
+                        |_| Ok(()),
+                    )
+                    .optional()
+                    .map_err(|_| CatalogError::Database)?
+                    .is_some();
+                if !exists {
+                    return Err(CatalogError::CollectionNotFound);
+                }
+            }
+        }
+        for (entry_key, collection_id, tags) in normalized {
+            write_entry_organization(&transaction, &entry_key, collection_id, &tags)?;
+        }
+        remove_unused_tags(&transaction)?;
+        transaction.commit().map_err(|_| CatalogError::Database)
+    }
+
     pub fn remove_entry(&self, entry_key: &str) -> Result<bool, CatalogError> {
         let entry_key = normalized_entry_key(entry_key)?;
         let mut connection = self.connection()?;
@@ -402,6 +673,7 @@ impl LocalCatalog {
         connection
             .execute_batch(
                 "BEGIN IMMEDIATE;
+                 DELETE FROM catalog_saved_filters;
                  DELETE FROM entry_tags;
                  DELETE FROM entry_organization;
                  DELETE FROM catalog_tags;
@@ -461,7 +733,52 @@ fn migrate(connection: &mut Connection) -> Result<(), CatalogError> {
                     tag_id INTEGER NOT NULL REFERENCES catalog_tags(id) ON DELETE CASCADE,
                     PRIMARY KEY(entry_key, tag_id)
                  );
-                 CREATE INDEX entry_tags_tag_idx ON entry_tags(tag_id, entry_key);",
+                 CREATE INDEX entry_tags_tag_idx ON entry_tags(tag_id, entry_key);
+                 CREATE TABLE catalog_saved_filters (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL CHECK(length(name) BETWEEN 1 AND 128),
+                    name_key TEXT NOT NULL UNIQUE CHECK(length(name_key) BETWEEN 1 AND 128),
+                    query TEXT NOT NULL CHECK(length(query) <= 512),
+                    kind TEXT CHECK(kind IN ('artwork', 'novel', 'ugoira')),
+                    collection_id INTEGER REFERENCES catalog_collections(id) ON DELETE SET NULL,
+                    tag TEXT CHECK(tag IS NULL OR length(tag) BETWEEN 1 AND 96),
+                    sort_order TEXT NOT NULL CHECK(sort_order IN ('newest', 'oldest', 'title', 'size')),
+                    stored_after INTEGER,
+                    stored_before INTEGER,
+                    min_size_bytes INTEGER,
+                    max_size_bytes INTEGER,
+                    created_at INTEGER NOT NULL,
+                    updated_at INTEGER NOT NULL
+                 );",
+            )
+            .map_err(|_| CatalogError::Database)?;
+        transaction
+            .pragma_update(None, "user_version", SCHEMA_VERSION)
+            .map_err(|_| CatalogError::Database)?;
+        transaction.commit().map_err(|_| CatalogError::Database)?;
+    }
+    if version == 1 {
+        let transaction = connection
+            .transaction_with_behavior(TransactionBehavior::Immediate)
+            .map_err(|_| CatalogError::Database)?;
+        transaction
+            .execute_batch(
+                "CREATE TABLE catalog_saved_filters (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL CHECK(length(name) BETWEEN 1 AND 128),
+                    name_key TEXT NOT NULL UNIQUE CHECK(length(name_key) BETWEEN 1 AND 128),
+                    query TEXT NOT NULL CHECK(length(query) <= 512),
+                    kind TEXT CHECK(kind IN ('artwork', 'novel', 'ugoira')),
+                    collection_id INTEGER REFERENCES catalog_collections(id) ON DELETE SET NULL,
+                    tag TEXT CHECK(tag IS NULL OR length(tag) BETWEEN 1 AND 96),
+                    sort_order TEXT NOT NULL CHECK(sort_order IN ('newest', 'oldest', 'title', 'size')),
+                    stored_after INTEGER,
+                    stored_before INTEGER,
+                    min_size_bytes INTEGER,
+                    max_size_bytes INTEGER,
+                    created_at INTEGER NOT NULL,
+                    updated_at INTEGER NOT NULL
+                 );",
             )
             .map_err(|_| CatalogError::Database)?;
         transaction
@@ -500,6 +817,177 @@ fn read_collections(connection: &Connection) -> Result<Vec<CatalogCollection>, C
         });
     }
     Ok(collections)
+}
+
+fn read_saved_filters(connection: &Connection) -> Result<Vec<SavedCatalogFilter>, CatalogError> {
+    let mut statement = connection
+        .prepare(
+            "SELECT id, name, query, kind, collection_id, tag, sort_order,
+                    stored_after, stored_before, min_size_bytes, max_size_bytes
+             FROM catalog_saved_filters ORDER BY name_key, id",
+        )
+        .map_err(|_| CatalogError::Database)?;
+    let rows = statement
+        .query_map([], |row| {
+            Ok((
+                row.get::<_, i64>(0)?,
+                CatalogFilterDraft {
+                    name: row.get(1)?,
+                    query: row.get(2)?,
+                    kind: row.get(3)?,
+                    collection_id: row.get(4)?,
+                    tag: row.get(5)?,
+                    sort_order: row.get(6)?,
+                    stored_after: optional_sql_u64(row.get(7)?)
+                        .map_err(|_| rusqlite::Error::InvalidQuery)?,
+                    stored_before: optional_sql_u64(row.get(8)?)
+                        .map_err(|_| rusqlite::Error::InvalidQuery)?,
+                    min_size_bytes: optional_sql_u64(row.get(9)?)
+                        .map_err(|_| rusqlite::Error::InvalidQuery)?,
+                    max_size_bytes: optional_sql_u64(row.get(10)?)
+                        .map_err(|_| rusqlite::Error::InvalidQuery)?,
+                },
+            ))
+        })
+        .map_err(|_| CatalogError::Database)?;
+    let mut filters = Vec::new();
+    for row in rows {
+        let (id, filter) = row.map_err(|_| CatalogError::InvalidDatabase)?;
+        if id <= 0 || normalized_filter(&filter).as_ref() != Ok(&filter) {
+            return Err(CatalogError::InvalidDatabase);
+        }
+        filters.push(SavedCatalogFilter { id, filter });
+    }
+    Ok(filters)
+}
+
+fn normalized_filter(draft: &CatalogFilterDraft) -> Result<CatalogFilterDraft, CatalogError> {
+    let name = normalized_name(&draft.name, MAX_COLLECTION_NAME_BYTES)?;
+    let query = draft.query.trim();
+    if query.len() > MAX_FILTER_QUERY_BYTES || query.chars().any(char::is_control) {
+        return Err(CatalogError::InvalidInput);
+    }
+    let kind = match draft.kind.as_deref() {
+        None => None,
+        Some(kind @ ("artwork" | "novel" | "ugoira")) => Some(kind.to_owned()),
+        _ => return Err(CatalogError::InvalidInput),
+    };
+    if draft.collection_id.is_some_and(|id| id <= 0) {
+        return Err(CatalogError::InvalidInput);
+    }
+    let tag = draft
+        .tag
+        .as_deref()
+        .map(|tag| normalized_name(tag, MAX_TAG_NAME_BYTES))
+        .transpose()?;
+    if !matches!(
+        draft.sort_order.as_str(),
+        "newest" | "oldest" | "title" | "size"
+    ) || matches!((draft.stored_after, draft.stored_before), (Some(after), Some(before)) if after > before)
+        || matches!((draft.min_size_bytes, draft.max_size_bytes), (Some(min), Some(max)) if min > max)
+    {
+        return Err(CatalogError::InvalidInput);
+    }
+    Ok(CatalogFilterDraft {
+        name,
+        query: query.to_owned(),
+        kind,
+        collection_id: draft.collection_id,
+        tag,
+        sort_order: draft.sort_order.clone(),
+        stored_after: draft.stored_after,
+        stored_before: draft.stored_before,
+        min_size_bytes: draft.min_size_bytes,
+        max_size_bytes: draft.max_size_bytes,
+    })
+}
+
+fn normalized_tag_map(tags: &[String]) -> Result<BTreeMap<String, String>, CatalogError> {
+    if tags.len() > MAX_TAGS_PER_ENTRY {
+        return Err(CatalogError::InvalidInput);
+    }
+    let mut normalized = BTreeMap::new();
+    for tag in tags {
+        let tag = normalized_name(tag, MAX_TAG_NAME_BYTES)?;
+        normalized.insert(tag.to_lowercase(), tag);
+    }
+    Ok(normalized)
+}
+
+fn read_entry_tag_map(
+    connection: &Connection,
+    entry_key: &str,
+) -> Result<BTreeMap<String, String>, CatalogError> {
+    let mut statement = connection
+        .prepare(
+            "SELECT t.name_key, t.name FROM entry_tags et
+             INNER JOIN catalog_tags t ON t.id = et.tag_id
+             WHERE et.entry_key = ?1 ORDER BY t.name_key, t.id",
+        )
+        .map_err(|_| CatalogError::Database)?;
+    let rows = statement
+        .query_map([entry_key], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+        })
+        .map_err(|_| CatalogError::Database)?;
+    let mut tags = BTreeMap::new();
+    for row in rows {
+        let (key, value) = row.map_err(|_| CatalogError::Database)?;
+        tags.insert(key, value);
+    }
+    Ok(tags)
+}
+
+fn write_entry_organization(
+    connection: &Connection,
+    entry_key: &str,
+    collection_id: Option<i64>,
+    tags: &BTreeMap<String, String>,
+) -> Result<(), CatalogError> {
+    connection
+        .execute("DELETE FROM entry_tags WHERE entry_key = ?1", [entry_key])
+        .map_err(|_| CatalogError::Database)?;
+    if collection_id.is_none() && tags.is_empty() {
+        connection
+            .execute(
+                "DELETE FROM entry_organization WHERE entry_key = ?1",
+                [entry_key],
+            )
+            .map_err(|_| CatalogError::Database)?;
+        return Ok(());
+    }
+    connection
+        .execute(
+            "INSERT INTO entry_organization (entry_key, collection_id, updated_at)
+             VALUES (?1, ?2, ?3)
+             ON CONFLICT(entry_key) DO UPDATE SET
+               collection_id = excluded.collection_id, updated_at = excluded.updated_at",
+            params![entry_key, collection_id, to_sql_u64(unix_seconds())],
+        )
+        .map_err(|_| CatalogError::Database)?;
+    for (name_key, name) in tags {
+        connection
+            .execute(
+                "INSERT INTO catalog_tags (name, name_key) VALUES (?1, ?2)
+                 ON CONFLICT(name_key) DO UPDATE SET name = excluded.name",
+                params![name, name_key],
+            )
+            .map_err(map_insert_error)?;
+        let tag_id = connection
+            .query_row(
+                "SELECT id FROM catalog_tags WHERE name_key = ?1",
+                [name_key],
+                |row| row.get::<_, i64>(0),
+            )
+            .map_err(|_| CatalogError::Database)?;
+        connection
+            .execute(
+                "INSERT INTO entry_tags (entry_key, tag_id) VALUES (?1, ?2)",
+                params![entry_key, tag_id],
+            )
+            .map_err(|_| CatalogError::Database)?;
+    }
+    Ok(())
 }
 
 fn ensure_collection_name_available(
@@ -603,6 +1091,12 @@ fn sql_u32(value: i64) -> Result<u32, CatalogError> {
     u32::try_from(value).map_err(|_| CatalogError::InvalidDatabase)
 }
 
+fn optional_sql_u64(value: Option<i64>) -> Result<Option<u64>, CatalogError> {
+    value
+        .map(|value| u64::try_from(value).map_err(|_| CatalogError::InvalidDatabase))
+        .transpose()
+}
+
 fn unix_seconds() -> u64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -616,7 +1110,9 @@ fn to_sql_u64(value: u64) -> i64 {
 
 #[cfg(test)]
 mod tests {
-    use super::{CatalogError, LocalCatalog, MAX_TAGS_PER_ENTRY};
+    use super::{
+        BatchOrganizationChange, CatalogError, CatalogFilterDraft, LocalCatalog, MAX_TAGS_PER_ENTRY,
+    };
     use rusqlite::Connection;
     use std::fs;
     use std::path::PathBuf;
@@ -640,7 +1136,7 @@ mod tests {
         let root = test_root("persistence");
         let path = root.join("catalog.sqlite3");
         let catalog = LocalCatalog::open(&path).unwrap();
-        assert_eq!(catalog.schema_version().unwrap(), 1);
+        assert_eq!(catalog.schema_version().unwrap(), 2);
         let collection = catalog.create_collection(" 稍后阅读 ").unwrap();
         let organization = catalog
             .organize_entry(
@@ -761,6 +1257,92 @@ mod tests {
             LocalCatalog::open(path),
             Err(CatalogError::InvalidDatabase)
         ));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn batch_organization_is_atomic_and_saved_filters_migrate() {
+        let root = test_root("batch-filter");
+        let catalog = LocalCatalog::open(root.join("catalog.sqlite3")).unwrap();
+        assert_eq!(catalog.schema_version().unwrap(), 2);
+        let collection = catalog.create_collection("Reference").unwrap();
+        catalog
+            .organize_entry("artwork-1", None, &["old".into()])
+            .unwrap();
+        catalog
+            .organize_entry("novel-2", None, &["old".into(), "keep".into()])
+            .unwrap();
+
+        let changed = catalog
+            .batch_organize_entries(&BatchOrganizationChange {
+                entry_keys: vec!["artwork-1".into(), "novel-2".into()],
+                update_collection: true,
+                collection_id: Some(collection.id),
+                add_tags: vec!["new".into()],
+                remove_tags: vec!["old".into()],
+            })
+            .unwrap();
+        assert_eq!(changed.len(), 2);
+        assert!(changed
+            .iter()
+            .all(|entry| entry.collection_id == Some(collection.id)));
+        assert!(changed
+            .iter()
+            .all(|entry| entry.tags.contains(&"new".to_owned())));
+        assert!(changed
+            .iter()
+            .all(|entry| !entry.tags.contains(&"old".to_owned())));
+
+        let saved = catalog
+            .save_filter(&CatalogFilterDraft {
+                name: "Large novels".into(),
+                query: "chapter".into(),
+                kind: Some("novel".into()),
+                collection_id: Some(collection.id),
+                tag: Some("keep".into()),
+                sort_order: "size".into(),
+                stored_after: Some(10),
+                stored_before: Some(20),
+                min_size_bytes: Some(1024),
+                max_size_bytes: Some(2048),
+            })
+            .unwrap();
+        let snapshot = catalog
+            .snapshot(&["artwork-1".into(), "novel-2".into()])
+            .unwrap();
+        assert_eq!(snapshot.saved_filters, std::slice::from_ref(&saved));
+        assert!(catalog.delete_filter(saved.id).unwrap());
+
+        let before = catalog
+            .snapshot(&["artwork-1".into(), "novel-2".into()])
+            .unwrap();
+        assert_eq!(
+            catalog.batch_organize_entries(&BatchOrganizationChange {
+                entry_keys: vec!["artwork-1".into(), "bad-key".into()],
+                update_collection: false,
+                collection_id: None,
+                add_tags: vec!["partial".into()],
+                remove_tags: vec![],
+            }),
+            Err(CatalogError::InvalidInput)
+        );
+        assert_eq!(
+            catalog
+                .snapshot(&["artwork-1".into(), "novel-2".into()])
+                .unwrap(),
+            before
+        );
+
+        let preserved = catalog
+            .batch_organize_entries(&BatchOrganizationChange {
+                entry_keys: vec!["artwork-1".into()],
+                update_collection: false,
+                collection_id: None,
+                add_tags: vec!["preserved".into()],
+                remove_tags: vec![],
+            })
+            .unwrap();
+        assert_eq!(preserved[0].collection_id, Some(collection.id));
         fs::remove_dir_all(root).unwrap();
     }
 }

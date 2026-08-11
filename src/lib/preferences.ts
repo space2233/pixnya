@@ -26,7 +26,7 @@ export function writePreferredConnectionMode(mode: ConnectionMode): void {
 
 export function readUnsafeConnectionWarningSuppressed(): boolean {
   if (typeof window === "undefined") return false;
-  return localStorage.getItem(UNSAFE_CONNECTION_WARNING_KEY) === "suppressed";
+  return localStorage.getItem(UNSAFE_CONNECTION_WARNING_KEY) !== "visible";
 }
 
 export function writeUnsafeConnectionWarningSuppressed(suppressed: boolean): void {
@@ -40,7 +40,7 @@ export function writeUnsafeConnectionWarningSuppressed(suppressed: boolean): voi
 
 export function readInsecureMediaWarningSuppressed(): boolean {
   if (typeof window === "undefined") return false;
-  return localStorage.getItem(INSECURE_MEDIA_WARNING_KEY) === "suppressed";
+  return localStorage.getItem(INSECURE_MEDIA_WARNING_KEY) !== "visible";
 }
 
 export function writeInsecureMediaWarningSuppressed(suppressed: boolean): void {

@@ -51,6 +51,8 @@ test("safe connection modes persist but compatibility mode remains temporary", (
 });
 
 test("unsafe connection warnings can be suppressed and restored without persisting compatible mode", () => {
+  assert.equal(preferences.readUnsafeConnectionWarningSuppressed(), true);
+  preferences.writeUnsafeConnectionWarningSuppressed(false);
   assert.equal(preferences.readUnsafeConnectionWarningSuppressed(), false);
   preferences.writeUnsafeConnectionWarningSuppressed(true);
   assert.equal(preferences.readUnsafeConnectionWarningSuppressed(), true);
@@ -71,6 +73,8 @@ test("unsafe connection warnings can be suppressed and restored without persisti
 });
 
 test("ECH media fallback warning stays suppressed across sessions and can be restored", () => {
+  assert.equal(preferences.readInsecureMediaWarningSuppressed(), true);
+  preferences.writeInsecureMediaWarningSuppressed(false);
   assert.equal(preferences.readInsecureMediaWarningSuppressed(), false);
   preferences.writeInsecureMediaWarningSuppressed(true);
   assert.equal(preferences.readInsecureMediaWarningSuppressed(), true);

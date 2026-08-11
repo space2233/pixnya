@@ -20,6 +20,8 @@
     replyHref,
     repliesHref,
     onopen,
+    canDelete = false,
+    ondelete,
   }: {
     comment: PixivComment;
     resourceKind: CommentResourceKind;
@@ -27,12 +29,17 @@
     replyHref?: string | null;
     repliesHref?: string | null;
     onopen?: () => void;
+    canDelete?: boolean;
+    ondelete?: () => Promise<boolean>;
   } = $props();
 
   let muted = $state(false);
   let menuOpen = $state(false);
   let reportOpen = $state(false);
   let selectedReason = $state<LocalReportReason>(LOCAL_REPORT_REASONS[0]);
+  let deleteOpen = $state(false);
+  let deleting = $state(false);
+  let deleteError = $state("");
   const reasonLabels: Record<LocalReportReason, () => string> = {
     sexual_or_vulgar: m.comment_reason_sexual,
     hate_speech: m.comment_reason_hate,
@@ -82,6 +89,18 @@
   function initial(): string {
     return Array.from(comment.user?.name || "P")[0] ?? "P";
   }
+
+  async function confirmDelete() {
+    if (!ondelete || deleting) return;
+    deleting = true;
+    deleteError = "";
+    try {
+      if (await ondelete()) deleteOpen = false;
+      else deleteError = m.common_retry();
+    } finally {
+      deleting = false;
+    }
+  }
 </script>
 
 {#if muted}
@@ -108,12 +127,27 @@
       </div>
       {#if menuOpen}
         <div class="moderation-menu">
+          {#if canDelete}<button class="danger" type="button" onclick={() => { menuOpen = false; deleteOpen = true; }}>{m.common_delete()}</button>{/if}
           <button type="button" onclick={mute}>{m.comment_mute_local()}</button>
           <button type="button" onclick={() => { menuOpen = false; reportOpen = true; }}>{m.comment_report_local()}</button>
         </div>
       {/if}
     </div>
   </article>
+{/if}
+
+{#if deleteOpen}
+  <div class="modal-backdrop" role="presentation" onclick={(event) => { if (event.target === event.currentTarget && !deleting) deleteOpen = false; }}>
+    <div class="delete-dialog" role="dialog" aria-modal="true" aria-labelledby={`delete-title-${comment.id}`}>
+      <h2 id={`delete-title-${comment.id}`}>{m.common_confirm_delete()}</h2>
+      <p>{m.comment_delete_confirm()}</p>
+      {#if deleteError}<p class="delete-error" role="alert">{deleteError}</p>{/if}
+      <div class="dialog-actions">
+        <button type="button" disabled={deleting} onclick={() => (deleteOpen = false)}>{m.common_cancel()}</button>
+        <button class="danger-action" type="button" disabled={deleting} onclick={confirmDelete}>{deleting ? m.comment_deleting() : m.common_delete()}</button>
+      </div>
+    </div>
+  </div>
 {/if}
 
 {#if reportOpen}
@@ -148,6 +182,7 @@
   .comment-actions a { color: var(--pixiv-blue); font-size: 9px; text-decoration: none; }
   .moderation-menu { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 9px; padding: 9px; border-radius: 7px; background: #f6f7f8; }
   .moderation-menu button { height: 29px; padding: 0 11px; color: #59636a; border: 1px solid var(--line); border-radius: 15px; background: white; cursor: pointer; font-size: 8px; }
+  .moderation-menu button.danger { color: #b24958; border-color: #f0c7ce; }
   .muted-card { display: flex; gap: 16px; align-items: center; justify-content: space-between; padding: 15px; color: var(--muted); background: #fafafa; }
   .muted-card strong { color: #697279; font-size: 9px; }
   .muted-card p { margin: 4px 0 0; font-size: 8px; }
@@ -162,6 +197,11 @@
   .dialog-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 17px; }
   .dialog-actions button { height: 38px; border: 1px solid var(--line); border-radius: 19px; background: white; cursor: pointer; font-size: 9px; font-weight: 700; }
   .dialog-actions .primary { color: white; border-color: var(--pixiv-blue); background: var(--pixiv-blue); }
+  .delete-dialog { box-sizing: border-box; width: min(420px, 100%); padding: 22px; border-radius: 16px; background: white; box-shadow: 0 18px 60px rgba(0,0,0,.2); }
+  .delete-dialog h2 { margin: 0; font-size: 18px; }
+  .delete-dialog > p { margin: 10px 0 0; color: var(--muted); font-size: 9px; line-height: 1.65; }
+  .delete-dialog .delete-error { color: #b24958; }
+  .dialog-actions .danger-action { color: white; border-color: #d55464; background: #d55464; }
   @media (max-width: 620px) {
     .comment-card { grid-template-columns: 34px minmax(0,1fr); padding: 12px; }
     .comment-avatar { width: 34px; height: 34px; }

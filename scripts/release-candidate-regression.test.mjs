@@ -21,32 +21,17 @@ const assetNames = [
   "SHA256SUMS.txt",
 ];
 
-const completeNotes = `## Unofficial status and platforms
-PixNya is an unofficial client. Windows x64, Linux x64, Android ARM64.
+const completeNotes = `# PixNya ${version}
 
-## API and OAuth boundary
-The non-public App API may change; OAuth build parameters are extractable.
+## 中文
 
-## Low-security connections
-Compatibility mode is off by default and carries man-in-the-middle risk.
+- 新增通知、评论管理和动图导出。
+- 支持 Windows x64、Linux x64、Android ARM64（Android 10+）。
 
-## Source, licenses, SBOM, and checksums
-Source commit: ${commitSha}
-GPL-3.0-only
-LICENSE.txt
-pixnya-${version}-source.tar.gz
-pixnya-${version}-third-party-licenses.tar.gz
-pixnya-${version}.spdx.json
-pixnya-${version}-android-runtime.spdx.json
-pixnya-${version}-verification.tar.gz
-SHA256SUMS.txt
+## English
 
-## Upgrade verification and limitations
-- Windows x64: 0.29.0 -> ${version}; Windows 11 24H2; PASS
-- Linux x64: 0.29.0 -> ${version}; Ubuntu 24.04; PASS
-- Android ARM64: 0.29.0 -> ${version}; Android 15 device; PASS
-Failure-path coverage: wrong signature, corrupted manifest, interrupted download, low space, cancelled install, retry
-Known limitations: Windows binaries are not Authenticode-signed.`;
+- Added notifications, comment management, and animation export.
+- Supports Windows x64, Linux x64, and Android ARM64 (Android 10+).`;
 
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 
@@ -149,10 +134,10 @@ test("a complete signed Draft candidate passes the strict publication boundary",
   }));
 });
 
-test("a Draft with pending upgrade evidence cannot cross the stable publication boundary", async (context) => {
+test("a Draft with unfinished release notes cannot cross the stable publication boundary", async (context) => {
   const candidate = await createCandidate();
   context.after(() => rm(candidate.assetsDir, { recursive: true, force: true }));
-  candidate.release.body = candidate.release.body.replaceAll("; PASS", "; PENDING after Draft artifacts");
+  candidate.release.body += "\nPENDING";
 
   assert.throws(
     () => validateReleaseCandidate({ ...candidate, version, commitSha, repository }),

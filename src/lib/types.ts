@@ -320,6 +320,38 @@ export interface EntryOrganization {
 export interface LocalCatalogSnapshot {
   collections: LocalCollection[];
   entries: EntryOrganization[];
+  savedFilters: SavedCatalogFilter[];
+}
+
+export interface CatalogFilterDraft {
+  name: string;
+  query: string;
+  kind?: OfflineKind | null;
+  collectionId?: number | null;
+  tag?: string | null;
+  sortOrder: "newest" | "oldest" | "title" | "size";
+  storedAfter?: number | null;
+  storedBefore?: number | null;
+  minSizeBytes?: number | null;
+  maxSizeBytes?: number | null;
+}
+
+export interface SavedCatalogFilter extends CatalogFilterDraft {
+  id: number;
+}
+
+export interface BatchOrganizationChange {
+  entryKeys: string[];
+  updateCollection: boolean;
+  collectionId?: number | null;
+  addTags: string[];
+  removeTags: string[];
+}
+
+export interface DuplicateGroup {
+  reason: "resource_id" | "file_hash";
+  signature: string;
+  entryKeys: string[];
 }
 
 export type HistoryKind = "artwork" | "novel" | "user";
@@ -493,6 +525,27 @@ export interface PreparedUgoira {
   frames: PreparedUgoiraFrame[];
 }
 
+export type UgoiraExportFormat = "gif" | "apng" | "webm";
+export type UgoiraExportPhase =
+  | "queued"
+  | "preparing"
+  | "encoding"
+  | "exporting"
+  | "completed"
+  | "failed"
+  | "cancelled";
+
+export interface UgoiraExportTask {
+  id: string;
+  illustrationId: string;
+  format: UgoiraExportFormat;
+  phase: UgoiraExportPhase;
+  completedUnits: number;
+  totalUnits: number;
+  destination?: string | null;
+  failure?: string | null;
+}
+
 export interface IllustrationImage {
   pageIndex: number;
   displayUrl?: string | null;
@@ -621,6 +674,67 @@ export interface CommentPage {
   nextCursor?: string | null;
   totalComments: number;
   commentAccessControl: number;
+}
+
+export interface NotificationContent {
+  text: string;
+  leftIcon?: string | null;
+  leftImage?: string | null;
+  rightIcon?: string | null;
+  rightImage?: string | null;
+}
+
+export interface NotificationViewMore {
+  title: string;
+  unreadExists: boolean;
+}
+
+export interface PixivNotification {
+  id: string;
+  typeId: number;
+  isRead: boolean;
+  createdDatetime: string;
+  targetUrl?: string | null;
+  content: NotificationContent;
+  viewMore?: NotificationViewMore | null;
+}
+
+export interface NotificationPage {
+  notifications: PixivNotification[];
+  nextCursor?: string | null;
+}
+
+export interface AccessBlockPage {
+  users: IllustrationAuthor[];
+  nextCursor?: string | null;
+}
+
+export interface MutedTag {
+  name: string;
+  translatedName?: string | null;
+  isPremiumSlot: boolean;
+}
+
+export interface MutedUser {
+  user: IllustrationAuthor;
+  isPremiumSlot: boolean;
+}
+
+export interface MuteTextLimits {
+  withoutPremium: number;
+  withPremium: number;
+}
+
+export interface MuteSettings {
+  tags: MutedTag[];
+  users: MutedUser[];
+  limitCount: number;
+  textLimits: MuteTextLimits;
+}
+
+export interface CommentSubmission {
+  text: string;
+  stampId?: string | null;
 }
 
 export interface CommandFailure {

@@ -64,3 +64,19 @@ export function recallCommentRoot(
 ): PixivComment | null {
   return roots.get(rootKey(kind, resourceId, commentId)) ?? null;
 }
+
+export function forgetComment(
+  kind: CommentResourceKind,
+  resourceId: string,
+  commentId: string,
+): void {
+  roots.delete(rootKey(kind, resourceId, commentId));
+  const key = threadKey(kind, resourceId);
+  const thread = threads.get(key);
+  if (!thread || !thread.comments.some((comment) => comment.id === commentId)) return;
+  threads.set(key, {
+    ...thread,
+    comments: thread.comments.filter((comment) => comment.id !== commentId),
+    totalComments: Math.max(0, thread.totalComments - 1),
+  });
+}
