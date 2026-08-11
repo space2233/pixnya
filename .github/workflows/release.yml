@@ -713,7 +713,12 @@ jobs:
           exact_one 'Android update manifest' dist/android-latest.json
           exact_one 'Android update manifest signature' dist/android-latest.json.minisig
           exact_one 'build provenance' dist/BUILD-PROVENANCE.txt
-          find dist -maxdepth 1 -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > dist/SHA256SUMS.txt
+          (
+            cd dist
+            find . -maxdepth 1 -type f ! -name SHA256SUMS.txt -printf '%f\0' |
+              sort -z |
+              xargs -0 sha256sum > SHA256SUMS.txt
+          )
           exact_one 'SHA-256 checksums' dist/SHA256SUMS.txt
           ACTUAL_FILE_COUNT="$(find dist -maxdepth 1 -type f | wc -l | tr -d '[:space:]')"
           test "$ACTUAL_FILE_COUNT" = 18 || {

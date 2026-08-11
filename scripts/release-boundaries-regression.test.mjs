@@ -102,6 +102,15 @@ test("formal releases are gated by main-branch full verification and signed arti
   );
   assert.match(workflow, /9a599b48ba6eb7b1e80f12f36b94ceca7c00b7a5173c95c3efc88d9822957e73/);
   assert.match(workflow, /sha256sum --check --strict/);
+  assert.match(
+    workflow,
+    /cd dist[\s\S]*find \. -maxdepth 1 -type f ! -name SHA256SUMS\.txt -printf '%f\\0'[\s\S]*xargs -0 sha256sum > SHA256SUMS\.txt/,
+  );
+  assert.doesNotMatch(
+    workflow,
+    /find dist[^\n]*sha256sum > dist\/SHA256SUMS\.txt/,
+    "release checksums must contain attachment basenames instead of dist/ paths",
+  );
   assert.doesNotMatch(workflow, /apt-get install[^\n]*minisign/);
   assert.match(workflow, /artifact_run_id:/);
   assert.match(workflow, /validate-release-artifact-run\.mjs/);
