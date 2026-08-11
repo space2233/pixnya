@@ -79,21 +79,51 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
           mkdir candidate
           gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/v${PIXNYA_RELEASE_VERSION}" > "$RUNNER_TEMP/candidate-tag.json"
-          gh api "repos/${GITHUB_REPOSITORY}/releases/tags/v${PIXNYA_RELEASE_VERSION}" > "$RUNNER_TEMP/candidate-release.json"
-          RELEASE_FILE="$RUNNER_TEMP/candidate-release.json" TAG_FILE="$RUNNER_TEMP/candidate-tag.json" node -e '
+          gh api --paginate --slurp "repos/${GITHUB_REPOSITORY}/releases?per_page=100" > "$RUNNER_TEMP/releases-pages.json"
+          RELEASES_FILE="$RUNNER_TEMP/releases-pages.json" RELEASE_FILE="$RUNNER_TEMP/candidate-release.json" \
+            ASSET_PLAN_FILE="$RUNNER_TEMP/candidate-assets.tsv" TAG_FILE="$RUNNER_TEMP/candidate-tag.json" node -e '
             const fs = require("node:fs");
-            const release = JSON.parse(fs.readFileSync(process.env.RELEASE_FILE, "utf8"));
+            const pages = JSON.parse(fs.readFileSync(process.env.RELEASES_FILE, "utf8"));
+            const matches = pages.flat().filter(
+              (release) => release.tag_name === `v${process.env.PIXNYA_RELEASE_VERSION}`,
+            );
+            if (matches.length !== 1) {
+              throw new Error(`Expected exactly one Release for the stable tag, found ${matches.length}`);
+            }
+            const [release] = matches;
             const tag = JSON.parse(fs.readFileSync(process.env.TAG_FILE, "utf8"));
             if (release.draft !== true) throw new Error("Only an existing Draft Release can be finalized");
             if (tag.object?.sha !== process.env.GITHUB_SHA) {
               throw new Error("The stable tag does not point to the selected main commit");
             }
+            if (!Number.isInteger(release.id) || release.id <= 0) {
+              throw new Error("The Draft Release has no stable ID");
+            }
+            const assets = release.assets ?? [];
+            if (assets.length !== 18) {
+              throw new Error(`Expected exactly 18 Draft assets, found ${assets.length}`);
+            }
+            const names = new Set();
+            const plan = assets.map((asset) => {
+              if (!Number.isInteger(asset.id) || asset.id <= 0) throw new Error("Draft asset ID is invalid");
+              if (!/^[A-Za-z0-9._+-]+$/.test(asset.name) || names.has(asset.name)) {
+                throw new Error(`Draft asset name is unsafe or duplicated: ${asset.name}`);
+              }
+              names.add(asset.name);
+              return `${asset.id}\t${asset.name}`;
+            });
+            fs.writeFileSync(process.env.RELEASE_FILE, `${JSON.stringify(release)}\n`);
+            fs.writeFileSync(process.env.ASSET_PLAN_FILE, `${plan.join("\n")}\n`);
+            fs.appendFileSync(process.env.GITHUB_ENV, `PIXNYA_DRAFT_RELEASE_ID=${release.id}\n`);
           '
-          gh release download "v${PIXNYA_RELEASE_VERSION}" \
-            --repo "$GITHUB_REPOSITORY" \
-            --dir candidate
+          while IFS=$'\t' read -r ASSET_ID ASSET_NAME; do
+            gh api \
+              -H "Accept: application/octet-stream" \
+              "repos/${GITHUB_REPOSITORY}/releases/assets/${ASSET_ID}" > "candidate/${ASSET_NAME}"
+          done < "$RUNNER_TEMP/candidate-assets.tsv"
       - name: Strictly validate release notes, assets, checksums, and provenance
         shell: bash
         run: |
@@ -164,7 +194,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/v${PIXNYA_RELEASE_VERSION}" > "$RUNNER_TEMP/final-tag.json"
-          gh api "repos/${GITHUB_REPOSITORY}/releases/tags/v${PIXNYA_RELEASE_VERSION}" > "$RUNNER_TEMP/final-release.json"
+          gh api "repos/${GITHUB_REPOSITORY}/releases/${PIXNYA_DRAFT_RELEASE_ID}" > "$RUNNER_TEMP/final-release.json"
           node scripts/validate-release-candidate.mjs \
             --release-json "$RUNNER_TEMP/final-release.json" \
             --tag-json "$RUNNER_TEMP/final-tag.json" \
@@ -178,9 +208,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          RELEASE_ID="$(node -p "JSON.parse(require('node:fs').readFileSync(process.env.RUNNER_TEMP + '/final-release.json', 'utf8')).id")"
-          test -n "$RELEASE_ID"
-          gh api --method PATCH "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}" \
+          test -n "$PIXNYA_DRAFT_RELEASE_ID"
+          gh api --method PATCH "repos/${GITHUB_REPOSITORY}/releases/${PIXNYA_DRAFT_RELEASE_ID}" \
             -F draft=false \
             -F prerelease=false \
             -f make_latest=true > "$RUNNER_TEMP/published-release.json"

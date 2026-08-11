@@ -1069,7 +1069,7 @@
             {/if}
             <div class="setting-row static-row">
               <div><strong>{m.settings_version()}</strong><small>{m.settings_app_nature()}</small></div>
-              <span class="row-value">PixNya {appStatus?.version ?? "0.29.0"}</span>
+              <span class="row-value">PixNya {appStatus?.version ?? "1.0.0"}</span>
             </div>
           </div>
         </section>

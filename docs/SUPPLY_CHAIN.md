@@ -56,8 +56,8 @@ node scripts/generate-supply-chain-artifacts.mjs
 ```powershell
 node scripts/generate-supply-chain-artifacts.mjs `
   --notices THIRD_PARTY_NOTICES.md `
-  --sbom artifacts/supply-chain/pixnya-0.29.0.spdx.json `
-  --licenses-dir artifacts/supply-chain/pixnya-0.29.0-third-party-licenses
+  --sbom artifacts/supply-chain/pixnya-1.0.0.spdx.json `
+  --licenses-dir artifacts/supply-chain/pixnya-1.0.0-third-party-licenses
 ```
 
 ## 离线检查

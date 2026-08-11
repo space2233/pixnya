@@ -17,7 +17,10 @@ const readGenerated = async (relativePath) => {
   }
 };
 
-test("all user-visible package versions agree on the 0.29.0 feature release", async () => {
+test("all user-visible package versions agree on the stable source version", async () => {
+  const expectedVersion = "1.0.0";
+  const [major, minor, patch] = expectedVersion.split(".").map(Number);
+  const expectedAndroidVersionCode = major * 1_000_000 + minor * 1_000 + patch;
   const [workspace, packageJson, packageLock, tauri, androidProperties, androidIgnore, settings, readme] = await Promise.all([
     read("Cargo.toml"),
     read("package.json"),
@@ -28,17 +31,17 @@ test("all user-visible package versions agree on the 0.29.0 feature release", as
     read("src/routes/settings/+page.svelte"),
     read("README.md"),
   ]);
-  assert.match(workspace, /version = "0\.29\.0"/);
-  assert.equal(JSON.parse(packageJson).version, "0.29.0");
-  assert.equal(JSON.parse(packageLock).version, "0.29.0");
-  assert.equal(JSON.parse(tauri).version, "0.29.0");
+  assert.ok(workspace.includes(`version = "${expectedVersion}"`));
+  assert.equal(JSON.parse(packageJson).version, expectedVersion);
+  assert.equal(JSON.parse(packageLock).version, expectedVersion);
+  assert.equal(JSON.parse(tauri).version, expectedVersion);
   assert.match(androidIgnore, /^\/tauri\.properties$/m);
   if (androidProperties !== null) {
-    assert.match(androidProperties, /tauri\.android\.versionName=0\.29\.0/);
-    assert.match(androidProperties, /tauri\.android\.versionCode=29000/);
+    assert.ok(androidProperties.includes(`tauri.android.versionName=${expectedVersion}`));
+    assert.ok(androidProperties.includes(`tauri.android.versionCode=${expectedAndroidVersionCode}`));
   }
-  assert.match(settings, /appStatus\?\.version \?\? "0\.29\.0"/);
-  assert.match(readme, /当前源码版本 `0\.29\.0` 是首个稳定版的候选基线/);
+  assert.ok(settings.includes(`appStatus?.version ?? "${expectedVersion}"`));
+  assert.ok(readme.includes(`当前源码版本 \`${expectedVersion}\``));
 });
 
 test("Android releases ARM64 while retaining ARMv7 as a deferred manual target", async () => {
@@ -391,6 +394,10 @@ test("stable publication revalidates the signed Draft instead of trusting the bu
   assert.match(workflow, /actions\/checkout@[0-9a-f]{40}/);
   assert.match(workflow, /persist-credentials: false/);
   assert.match(workflow, /metadata\.visibility !== "public"/);
+  assert.doesNotMatch(workflow, /releases\/tags/);
+  assert.match(workflow, /releases\?per_page=100/);
+  assert.match(workflow, /PIXNYA_DRAFT_RELEASE_ID/);
+  assert.match(workflow, /releases\/assets\/\$\{ASSET_ID\}/);
   assert.match(workflow, /release\.draft !== true/);
   assert.match(workflow, /tag\.object\?\.sha !== process\.env\.GITHUB_SHA/);
   assert.match(workflow, /validate-release-candidate\.mjs/);
