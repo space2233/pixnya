@@ -46,18 +46,18 @@
 
 ## 4. 平台与架构扩展
 
-- Windows ARM64、Linux ARM64。
-- Android `x86_64`、universal APK 和恢复 ARMv7 Release。
+- Linux ARM64。
+- Android `x86_64` 与 universal APK。
 - iOS 与 macOS；需独立评估 WebView、签名、分发和商店规则。
 - 更多 Linux 包格式；当前应用内安装路线仍为 AppImage。
-- 上述平台均无版本承诺；当前正式矩阵保持 Windows x64、Linux x64、Android ARM64/API 29+。
+- 上述平台均无版本承诺；当前正式矩阵为 Windows x64/ARM64、Linux x64、Android ARM64/ARM32（API 29+）。
 
 ## 5. 暂停的活体验证
 
 - Linux WebKitGTK 实机启动、登录窗口和自动更新活体测试。
 - 标准、ECH、兼容三条路线的真实测试账号低频闭环。
-- Android ARMv7 真实 32 位设备核心流程冒烟测试。
-- Windows/Linux 新架构与更多安装包矩阵。
+- Android ARMv7 真实 32 位设备核心流程补充冒烟测试。
+- Linux 新架构与更多安装包矩阵。
 
 ## 6. 永久边界
 

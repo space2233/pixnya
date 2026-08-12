@@ -5,13 +5,17 @@ const REQUIRED_JOBS = [
   "preflight",
   "rust-advisories",
   "windows",
+  "windows-arm64",
   "linux",
   "android (aarch64, aarch64-linux-android, arm64-v8a)",
+  "android (armv7, armv7-linux-androideabi, armeabi-v7a)",
 ];
 const REQUIRED_ARTIFACTS = [
   "android-arm64-v8a",
+  "android-armeabi-v7a",
   "linux-x64",
   "supply-chain",
+  "windows-arm64",
   "windows-x64",
 ];
 

@@ -33,7 +33,13 @@ export function validateStableReleaseNotes({ notes, version, commitSha }) {
   requireText(/[\u3400-\u9fff]/u.test(chinese), "Chinese release notes are missing Chinese text");
   requireText(/[A-Za-z]/.test(english), "English release notes are missing English text");
 
-  for (const platform of ["Windows x64", "Linux x64", "Android ARM64"]) {
+  for (const platform of [
+    "Windows x64",
+    "Windows ARM64",
+    "Linux x64",
+    "Android ARM64",
+    "Android ARM32",
+  ]) {
     requireText(notes.includes(platform), `supported platform is missing: ${platform}`);
   }
 }

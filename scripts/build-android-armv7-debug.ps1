@@ -10,9 +10,12 @@ $jdkRoot = Join-Path $toolchainRoot 'jdk-17'
 $tauri = Join-Path $projectRoot 'node_modules\.bin\tauri.cmd'
 $androidProject = Join-Path $projectRoot 'src-tauri\gen\android'
 $gradleWrapper = Join-Path $androidProject 'gradlew.bat'
+$jniRoot = Join-Path $androidProject 'app\src\main\jniLibs'
+$rustLoader = Join-Path $androidProject 'app\src\main\java\io\github\space2233\pixnya\generated\Rust.kt'
 
-# ARM32 is paused, but keep its manual build path from recreating large
-# incremental caches if it is explicitly used later.
+. (Join-Path $PSScriptRoot 'android-build-common.ps1')
+
+# Keep reusable dependencies without accumulating one-off incremental sessions.
 $env:CARGO_INCREMENTAL = '0'
 
 . (Join-Path $PSScriptRoot 'import-oauth-env.ps1')
@@ -27,6 +30,8 @@ if (-not (Test-Path -LiteralPath $tauri -PathType Leaf)) {
 if (-not (Test-Path -LiteralPath $gradleWrapper -PathType Leaf)) {
     throw 'The generated Android project was not found. Run tauri android init first.'
 }
+
+$expectedRustLibrary = Get-ActiveTauriAndroidLibrary -RustLoader $rustLoader
 
 if (Test-Path -LiteralPath $jdkRoot -PathType Container) {
     $env:JAVA_HOME = $jdkRoot
@@ -57,6 +62,11 @@ $env:CARGO_PROFILE_DEV_STRIP = 'debuginfo'
 
 Push-Location $projectRoot
 try {
+    Remove-StaleTauriNativeLibraryLinks `
+        -JniRoot $jniRoot `
+        -ExpectedLibrary $expectedRustLibrary `
+        -TargetRoot (Join-Path $projectRoot 'target')
+
     Push-Location $androidProject
     try {
         & $gradleWrapper clean --no-daemon
@@ -72,6 +82,11 @@ try {
     if ($LASTEXITCODE -ne 0) {
         exit $LASTEXITCODE
     }
+
+    & (Join-Path $PSScriptRoot 'check-android-apk.ps1') `
+        -ApkPath (Join-Path $androidProject 'app\build\outputs\apk\arm\debug\app-arm-debug.apk') `
+        -ExpectedAbi 'armeabi-v7a' `
+        -ExpectedRustLibrary $expectedRustLibrary
 
     & (Join-Path $PSScriptRoot 'collect-artifacts.ps1') -Kind Android
     if ($LASTEXITCODE -ne 0) {

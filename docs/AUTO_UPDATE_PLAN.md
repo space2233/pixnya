@@ -1,8 +1,8 @@
 # PixNya 自动检查更新与自动更新计划
 
-> 状态：客户端与 Draft Release 流程已实现，等待生产密钥和跨版本验收
+> 状态：生产签名更新流程已投入使用；`1.3.0` 扩展为双 Windows 架构与双 Android ABI
 > 日期：2026-08-03
-> 目标平台：Windows x64、Linux x64、Android ARM64（ARMv7 暂停）
+> 当前正式平台：Windows x64/ARM64、Linux x64、Android ARM64/ARM32
 
 首个正式版的逐项发布状态与人工验收记录见[首个正式版发布清单](FIRST_STABLE_RELEASE_CHECKLIST.md)。
 
@@ -22,9 +22,9 @@
 
 | 平台 | 检查与下载 | 安装 | 首个稳定版限制 |
 |---|---|---|---|
-| Windows x64 | Tauri updater + GitHub Releases `latest.json` | NSIS `passive`，应用内确认后执行 | 不再用裸 Debug EXE 作为更新产物 |
+| Windows x64/ARM64 | Tauri updater + GitHub Releases `latest.json` | NSIS `passive`，应用内确认后执行 | `latest.json` 按 `windows-x86_64` / `windows-aarch64` 选择独立安装包 |
 | Linux x64 | Tauri updater + 同一桌面清单 | AppImage 更新后重启 | deb/rpm 只提示前往发布页，暂不自更新 |
-| Android ARM64 | 项目自有签名清单 + ARM64 APK | Android `PackageInstaller`/安装 Intent | ARMv7 暂不发布；可能需要未知来源授权和系统确认 |
+| Android ARM64/ARM32 | 项目自有签名清单 + 两个 split APK | Android `PackageInstaller`/安装 Intent | 按 `arm64-v8a` / `armeabi-v7a` 选择；可能需要未知来源授权和系统确认 |
 
 Tauri 官方 updater 只支持桌面平台，并要求使用内置公钥验证更新签名；Android 需要独立 Adapter。Android 接受覆盖安装至少要求 application ID、签名证书一致，且 `versionCode` 不低于已安装版本。
 
@@ -74,10 +74,10 @@ pub trait UpdateManager {
 
 首个稳定版使用 GitHub Releases，不建设自有更新服务器。每个稳定版发布以下文件：
 
-- Windows NSIS 更新包及 Tauri `.sig`；
+- Windows x64/ARM64 NSIS 更新包及各自的 Tauri `.sig`；
 - Linux AppImage 及 Tauri `.sig`；
 - `latest.json`，供桌面 Tauri updater 使用；
-- ARM64 Release APK；ARMv7 构建入口保留，但当前不进入 Release；
+- ARM64 与 ARM32（`armeabi-v7a`）Release split APK；
 - `android-latest.json` 与其 Ed25519 签名；
 - `SHA256SUMS.txt`、发布说明和构建来源信息。
 

@@ -1,9 +1,9 @@
 # PixNya 跨平台客户端项目计划书
 
-> 状态：`1.2.1` 已完成连接切换一致性、文案精简与缓存说明修复
+> 状态：`1.3.0` 已完成 Windows ARM64 与 Android ARM32 正式发布支持
 > 日期：2026-08-12
-> 当前源码版本：`1.2.1`；最新公开稳定版：`1.2.1`；生产签名升级基线：`0.29.0`
-> 首个稳定版平台：Windows x64、Linux x64、Android ARM64（ARMv7 暂缓）
+> 当前源码版本：`1.3.0`；最新公开稳定版：`1.3.0`；生产签名升级基线：`0.29.0`
+> 当前发布平台：Windows x64/ARM64、Linux x64、Android ARM64/ARM32
 > 分发方式：个人使用、开源、侧载
 > 说明：本项目为非官方客户端，与 pixiv Inc. 无隶属或授权关系。
 > 历史发布流程：`1.0.0` 已完成从 `0.29.0` 的生产签名升级与三平台公开发布；后续功能版本继续复用同一签名和发布闸门。
@@ -52,7 +52,7 @@ PixNya 是由个人维护的开源、非官方、侧载客户端，不是 pixiv 
 - [x] Windows 与 Android 可以从应用内打开隔离的 Pixiv 官方登录页。
 - [x] 标准模式使用系统 WebView 网络；Android 系统 WebView 无法证明 ECH `Accepted`，因此 Android 的 ECH 登录明确失败关闭；只有兼容登录使用一次性低安全 TLS 桥连接固定 Pixiv IP。
 - [x] Android 等待 `ProxyController` 应用完成后才加载页面；只对当前会话 Pixiv 白名单和匹配的一次性证书指纹放行，其余证书错误取消。
-- [x] Windows x64 Debug 与 Android ARM64 Debug 构建通过并归档到 `artifacts/`；ARMv7 Debug 曾完成可行性构建，现已暂缓。
+- [x] Windows x64、Android ARM64/ARM32 均有独立构建入口；Windows ARM64 由原生 GitHub ARM64 runner 生成并验证应用 PE 架构。
 - Linux WebKitGTK 活体测试已暂停并移入[备选功能计划](docs/OPTIONAL_FEATURES_PLAN.md)。
 - [x] 接入私有登录表面的 callback、authorization code 交换与平台安全令牌存储。
 - [x] 设置中心支持连接诊断、媒体缓存管理、固定字段脱敏日志的本机导出/清除，以及强确认清除全部本机数据，并覆盖安全存储、Cookie、离线资料库和前端偏好边界测试。
@@ -142,20 +142,20 @@ Pixiv 面向现有客户端使用的 App API、Web AJAX 和 OAuth 行为并非�
 
 | 平台 | 首个稳定版支持范围 | 发布架构 | 备注 |
 |---|---|---|---|
-| Windows | Windows 10/11 | `x86_64` | 依赖 WebView2 Runtime；ARM64 后续评估 |
+| Windows | Windows 10/11 | `x86_64`、`aarch64` | 依赖 WebView2 Runtime；分别发布 x64 与 ARM64 NSIS 包 |
 | Linux | WebKitGTK 4.1 可用的主流发行版 | `x86_64` | 重点验证 Ubuntu LTS、Fedora；Wayland/X11 均测试 |
-| Android | Android 10–16，API 29–36 | `arm64-v8a` | ARMv7 正式发布暂缓；`x86_64` 仅用于模拟器/CI |
+| Android | Android 10–16，API 29–36 | `arm64-v8a`、`armeabi-v7a` | 分别发布 ARM64 与 ARM32 split APK；`x86_64` 仅用于模拟器/CI |
 
 Android 构建基线：
 
 - `minSdkVersion = 29`
 - `targetSdkVersion = 36`
 - `compileSdkVersion = 36`
-- 正式发布 ABI：`arm64-v8a`
-- 当前测试 ABI：`arm64-v8a`；`x86_64` 只用于模拟器/CI
-- 当前 Rust Android targets：`aarch64-linux-android`；`x86_64-linux-android` 按模拟器/CI 需要安装
-- 默认只生成 ARM64 APK，不生成 universal APK
-- `armeabi-v7a` 和 `armv7-linux-androideabi` 仅保留为暂缓的兼容性路线；未重新完成 32 位真机验收前，不得进入候选版或正式 Release
+- 正式发布 ABI：`arm64-v8a`、`armeabi-v7a`
+- 当前测试 ABI：`arm64-v8a`、`armeabi-v7a`；`x86_64` 只用于模拟器/CI
+- 当前 Rust Android targets：`aarch64-linux-android`、`armv7-linux-androideabi`；`x86_64-linux-android` 按模拟器/CI 需要安装
+- 默认生成两个独立 split APK，不生成 universal APK
+- 发布门要求 ARM64 与 ARMv7 Gradle runtime 图均存在且完全一致；若未来分叉则失败关闭并改为分别审计
 
 提高 Android 最低版本的主要原因是 WebView/Chromium 安全更新和登录兼容性，而不是单纯为了放弃 32 位设备。
 
@@ -177,7 +177,7 @@ Android 构建基线：
    rustup target add aarch64-linux-android x86_64-linux-android
    ```
 
-8. 用 Tauri 最小工程分别完成 Windows x64 调试构建和 Android ARM64 构建；Linux x64 由 Linux 环境或 CI 验证。
+8. 用 Tauri 最小工程完成 Windows x64/ARM64、Android ARM64/ARM32 构建；Linux x64 由 Linux 环境或 CI 验证。
 
 Android Studio 是本地调试、SDK 管理和模拟器的推荐方案，但不是命令行构建的硬性条件。如果开发机资源有限，可以只安装 Android Command-line Tools、SDK、NDK、JDK 并连接真实 Android 设备。项目在首次成功构建后固定 Rust toolchain、Android Gradle Plugin、SDK、Build-Tools 和 NDK 版本，避免后续使用“本机最新版本”导致不可复现。
 
@@ -500,7 +500,7 @@ pixiv-client/
 - 按第 4.1 节安装并验证 Rust、C++ Build Tools、Node.js 和 Android 工具链。
 - 建立 Tauri 2 的 Windows、Linux、Android 最小工程。
 - 在三个平台显示同一个页面并调用一个 Rust 命令。
-- （历史可行性验证）曾分别构建 Android `arm64-v8a` 和 `armeabi-v7a` 原生库/APK，用于识别 32 位依赖问题；当前候选范围只保留 ARM64。
+- 分别构建 Android `arm64-v8a` 和 `armeabi-v7a` 原生库/APK，并用 APK 内容检查拒绝 ABI 混入。
 - 验证官方登录页、PKCE callback 和 token 交换。
 - 确认不需要在仓库或发行包中复制受保护的官方凭据。
 - 验证 Android WebView 代理覆盖，验证 Windows/Linux WebView 代理可行性。
@@ -518,7 +518,7 @@ pixiv-client/
 验收：
 
 - `rustc`、`cargo`、Node.js、JDK、Android SDK、NDK 和 `adb` 版本检查通过并记录到开发文档；
-- Windows x64 调试包与 Android ARM64 调试包能成功构建；历史 ARMv7 结果仅作可行性记录；
+- Windows x64/ARM64 与 Android ARM64/ARM32 包均能由对应发布任务成功构建并验证架构；
 - 至少在一个真实测试账号上完成低频只读登录闭环；
 - 三个平台标准登录页可加载，兼容直连路径至少完成代理设置和 TLS 验证；
 - Rust ECH 测试连接能报告 `Accepted` 或提供明确失败原因；
@@ -630,7 +630,7 @@ pixiv-client/
 ## 15. CI、发布与更新
 
 - 使用 GitHub Actions 构建 Windows、Linux 和 Android。
-- 首个稳定版的 Android 正式发布只编译 `arm64-v8a` 签名 APK；ARMv7 手动调试入口保留，但已移入备选计划，`x86_64` 只用于模拟器/CI。
+- Android 正式发布分别编译 `arm64-v8a` 与 `armeabi-v7a` 签名 APK；`x86_64` 只用于模拟器/CI。
 - 固定 Cargo 与前端 lockfile，使用 Dependabot 或 Renovate 提交更新。
 - 执行格式化、静态检查、单元测试、许可证检查和依赖漏洞扫描。
 - 生成 SBOM、校验和与签名发布清单。
@@ -674,18 +674,18 @@ pixiv-client/
 - [x] 账号写入需确认并串行执行；只读通知不调用通知 POST、已读写回或后台轮询。
 - [x] 本地批量操作使用事务或可回滚文件操作；重复检测默认只报告。
 - [x] 完整前端、Node 回归、Rust workspace、格式和 Clippy 进入发布前验证。
-- [x] 正式发布仍只面向 Windows x64、Linux x64 和 Android ARM64，不恢复 ARMv7 Release。
+- [x] `1.3.0` 将发布矩阵扩展为 Windows x64/ARM64、Linux x64、Android ARM64/ARM32。
 
 ## 19. 已确认的发布决策
 
-- GitHub Releases 是公开更新源；Windows 使用 NSIS，Linux 使用 AppImage，Android 使用系统确认安装的 ARM64 APK。
+- GitHub Releases 是公开更新源；Windows 使用按架构选择的 NSIS，Linux 使用 AppImage，Android 使用系统确认安装的 ABI split APK。
 - 自动检查默认开启，自动下载默认关闭；更新不允许携带 Pixiv token/Cookie 或走低安全连接。
 - 投稿、个人资料编辑和通知写操作不做；多账号及新平台架构保持无排期。
 - 修复只增加第三位，新增功能增加第二位；`2.0.0` 只在不兼容数据、接口或架构迁移时使用。
 
 ## 20. 下一步
 
-`1.2.0` 已完成首次连接选择、统一连接模式、设置界面精简和大容量缓存档位；`1.2.1` 修复连接模式权威状态、并发请求协调、遗留说明文案与缓存文档。后续只处理已确认的缺陷与[备选功能计划](docs/OPTIONAL_FEATURES_PLAN.md)中重新排期的事项。
+`1.2.0` 已完成首次连接选择、统一连接模式、设置界面精简和大容量缓存档位；`1.2.1` 修复连接模式权威状态、并发请求协调、遗留说明文案与缓存文档；`1.3.0` 新增 Windows ARM64 与 Android ARM32 正式构建、更新和发布链。
 
 首个正式版的生产密钥、匿名更新源与三平台升级验收保留在[首个正式版发布清单](docs/FIRST_STABLE_RELEASE_CHECKLIST.md)作为历史发布记录；后续版本不得更换三套生产签名材料。
 
@@ -714,4 +714,4 @@ pixiv-client/
 
 2026-08-04 的最新只读审计显示，Rust `target/` 已增长到 138.464 GiB、241,707 个文件。本阶段只把 `target/` 作为清理范围；`artifacts/`、Android Gradle 输出、`node_modules/`、备份和其余项目目录全部暂时保留。
 
-清理采用“复用优先”原则：保留当前 Windows/ARM64 的依赖、构建脚本输出、Cargo 指纹和 PixNya 成品，优先移除暂停使用的 ARM32、测试临时目录，以及旧主应用名 `pixiv-client` / `pixiv_client_lib` 的精确残留，预计回收约 66.28 GiB。工作区内部仍使用的 `pixiv-client-api`、`pixiv-client-network` 等 crate 不属于旧品牌残留。详细边界、目录用途和可选的平衡空间方案见[项目目录空间清理计划](docs/STORAGE_CLEANUP_PLAN.md)；当前尚未删除任何文件。
+清理仍采用“复用优先”原则，但从 `1.3.0` 起 Android ARM32 与 Windows ARM64 已是正式构建目标，不再把它们的当前依赖和输出作为暂停架构缓存清除。旧统计保留在[项目目录空间清理计划](docs/STORAGE_CLEANUP_PLAN.md)作为历史记录。

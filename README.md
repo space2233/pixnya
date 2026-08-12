@@ -4,15 +4,17 @@
 
 ## 中文下载说明
 
-请前往 [PixNya v1.2.1 正式版](https://github.com/space2233/pixnya/releases/tag/v1.2.1)，按设备选择一个安装包：
+请前往 [PixNya v1.3.0 正式版](https://github.com/space2233/pixnya/releases/tag/v1.3.0)，按设备架构选择一个安装包：
 
-- Windows 64 位：`PixNya_1.2.1_x64-setup.exe`
-- Linux 64 位：`PixNya_1.2.1_amd64.AppImage`
-- Android 10 及以上、ARM64：`pixnya-1.2.1-android-arm64-v8a.apk`
+- Windows x64：`PixNya_1.3.0_x64-setup.exe`
+- Windows ARM64：`PixNya_1.3.0_arm64-setup.exe`
+- Linux x64：`PixNya_1.3.0_amd64.AppImage`
+- Android 10 及以上、ARM64：`pixnya-1.3.0-android-arm64-v8a.apk`
+- Android 10 及以上、ARM32：`pixnya-1.3.0-android-armeabi-v7a.apk`
 
 Release 中的 JSON 和签名文件供自动更新使用，普通用户无须下载。
 
-当前公开稳定版为 `1.2.1`；当前源码版本 `1.2.1`。
+当前公开稳定版为 `1.3.0`；当前源码版本为 `1.3.0`。
 
 ## 项目性质
 
@@ -38,11 +40,9 @@ PixNya 是个人维护的独立项目，与 pixiv Inc. 没有隶属、授权、�
 
 ## 支持平台
 
-- Windows x64
+- Windows x64、Windows ARM64
 - Linux x64
-- Android ARM64，Android 10 / API 29 及以上
-
-ARMv7 只保留手动兼容性调试入口，不提供正式 Release。
+- Android ARM64、Android ARM32（`armeabi-v7a`），Android 10 / API 29 及以上
 
 ## 界面语言
 
@@ -67,10 +67,11 @@ npm run build:desktop:debug
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\check-windows-standalone.ps1
 ```
 
-构建 Android ARM64 调试 APK：
+构建 Android ARM64 或 ARM32 调试 APK：
 
 ```powershell
 npm run build:android:arm64:debug
+npm run build:android:armv7:debug
 ```
 
 运行完整验证：

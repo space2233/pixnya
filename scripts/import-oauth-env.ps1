@@ -45,7 +45,12 @@ function Import-OAuthEnvironment {
 
     if ($RequireComplete) {
         $missing = @($allowedNames | Where-Object {
-            -not (Get-Item -Path "Env:$_" -ErrorAction SilentlyContinue).Value
+            [string]::IsNullOrWhiteSpace(
+                [Environment]::GetEnvironmentVariable(
+                    $_,
+                    [EnvironmentVariableTarget]::Process
+                )
+            )
         })
         if ($missing.Count -gt 0) {
             throw "OAuth compatibility configuration is incomplete. Copy .env.example to .env.oauth.local and fill: $($missing -join ', ')"

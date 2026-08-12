@@ -305,6 +305,79 @@ jobs:
             target/release/bundle/nsis/*.zip
             target/release/bundle/nsis/*.sig
 
+  windows-arm64:
+    needs: [preflight, rust-advisories]
+    runs-on: windows-11-arm
+    environment:
+      name: production-release
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+          cache: npm
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
+        with:
+          toolchain: 1.97.1
+          targets: aarch64-pc-windows-msvc
+      - name: Require protected build and updater secrets
+        shell: pwsh
+        env:
+          PIXIV_OAUTH_CLIENT_ID: ${{ secrets.PIXIV_OAUTH_CLIENT_ID }}
+          PIXIV_OAUTH_CLIENT_SECRET: ${{ secrets.PIXIV_OAUTH_CLIENT_SECRET }}
+          PIXIV_OAUTH_HASH_SALT: ${{ secrets.PIXIV_OAUTH_HASH_SALT }}
+          PIXNYA_UPDATER_PUBKEY: ${{ secrets.PIXNYA_UPDATER_PUBKEY }}
+          PIXNYA_ANDROID_UPDATE_PUBKEY: ${{ secrets.PIXNYA_ANDROID_UPDATE_PUBKEY }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          @(
+            'PIXIV_OAUTH_CLIENT_ID', 'PIXIV_OAUTH_CLIENT_SECRET', 'PIXIV_OAUTH_HASH_SALT',
+            'PIXNYA_UPDATER_PUBKEY', 'PIXNYA_ANDROID_UPDATE_PUBKEY',
+            'TAURI_SIGNING_PRIVATE_KEY', 'TAURI_SIGNING_PRIVATE_KEY_PASSWORD'
+          ) | ForEach-Object {
+            if ([string]::IsNullOrWhiteSpace((Get-Item "Env:$_").Value)) { throw "Missing $_" }
+          }
+      - run: npm ci
+      - name: Build signed native ARM64 NSIS updater artifacts
+        shell: pwsh
+        env:
+          PIXIV_OAUTH_CLIENT_ID: ${{ secrets.PIXIV_OAUTH_CLIENT_ID }}
+          PIXIV_OAUTH_CLIENT_SECRET: ${{ secrets.PIXIV_OAUTH_CLIENT_SECRET }}
+          PIXIV_OAUTH_HASH_SALT: ${{ secrets.PIXIV_OAUTH_HASH_SALT }}
+          PIXNYA_UPDATER_PUBKEY: ${{ secrets.PIXNYA_UPDATER_PUBKEY }}
+          PIXNYA_ANDROID_UPDATE_PUBKEY: ${{ secrets.PIXNYA_ANDROID_UPDATE_PUBKEY }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          $releaseConfig = Join-Path $env:RUNNER_TEMP 'tauri-release.conf.json'
+          node scripts/prepare-tauri-release-config.mjs --output $releaseConfig
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm run tauri -- build --config $releaseConfig --bundles nsis --target aarch64-pc-windows-msvc
+      - name: Verify the native ARM64 application payload
+        shell: pwsh
+        run: |
+          & ./scripts/check-windows-pe-architecture.ps1 `
+            -Executable target/aarch64-pc-windows-msvc/release/pixnya.exe `
+            -ExpectedArchitecture arm64
+          $installer = "target/aarch64-pc-windows-msvc/release/bundle/nsis/PixNya_$env:PIXNYA_RELEASE_VERSION`_arm64-setup.exe"
+          if (-not (Test-Path -LiteralPath $installer -PathType Leaf)) {
+            throw "Expected Windows ARM64 NSIS installer was not built: $installer"
+          }
+          if (-not (Test-Path -LiteralPath "$installer.sig" -PathType Leaf)) {
+            throw "Expected Windows ARM64 updater signature was not built: $installer.sig"
+          }
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: windows-arm64
+          if-no-files-found: error
+          path: |
+            target/aarch64-pc-windows-msvc/release/bundle/nsis/*.exe
+            target/aarch64-pc-windows-msvc/release/bundle/nsis/*.zip
+            target/aarch64-pc-windows-msvc/release/bundle/nsis/*.sig
+
   linux:
     needs: [preflight, rust-advisories]
     runs-on: ubuntu-22.04
@@ -378,6 +451,9 @@ jobs:
           - tauriTarget: aarch64
             rustTarget: aarch64-linux-android
             abi: arm64-v8a
+          - tauriTarget: armv7
+            rustTarget: armv7-linux-androideabi
+            abi: armeabi-v7a
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -447,7 +523,8 @@ jobs:
             exit 1
           }
           APK="${APKS[0]}"
-          pwsh -NoProfile -File scripts/check-android-arm64-apk.ps1 -ApkPath "$APK"
+          pwsh -NoProfile -File scripts/check-android-apk.ps1 \
+            -ApkPath "$APK" -ExpectedAbi ${{ matrix.abi }}
           AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt -print | sort -V | tail -n 1)"
           test -x "$AAPT"
           APK_BADGING="$("$AAPT" dump badging "$APK")"
@@ -494,7 +571,7 @@ jobs:
           fi
 
   draft-release:
-    needs: [preflight, rust-advisories, windows, linux, android]
+    needs: [preflight, rust-advisories, windows, windows-arm64, linux, android]
     if: >-
       ${{ always() && (
         (
@@ -502,6 +579,7 @@ jobs:
           needs.preflight.result == 'success' &&
           needs.rust-advisories.result == 'success' &&
           needs.windows.result == 'success' &&
+          needs.windows-arm64.result == 'success' &&
           needs.linux.result == 'success' &&
           needs.android.result == 'success'
         ) || (
@@ -509,6 +587,7 @@ jobs:
           needs.preflight.result == 'skipped' &&
           needs.rust-advisories.result == 'skipped' &&
           needs.windows.result == 'skipped' &&
+          needs.windows-arm64.result == 'skipped' &&
           needs.linux.result == 'skipped' &&
           needs.android.result == 'skipped'
         )
@@ -626,32 +705,31 @@ jobs:
           fi
           RELEASE_BASE="https://github.com/${PIXNYA_UPDATE_REPOSITORY}/releases/download/v${PIXNYA_RELEASE_VERSION}/"
 
-          mapfile -t WINDOWS_ARCHIVES < <(find dist -maxdepth 1 -type f -name '*.exe' -print | sort)
           mapfile -t LINUX_ARCHIVES < <(find dist -maxdepth 1 -type f -name '*.AppImage' -print | sort)
-          test "${#WINDOWS_ARCHIVES[@]}" -eq 1 || {
-            printf 'Expected exactly one signed Windows updater installer, found %s\n' \
-              "${#WINDOWS_ARCHIVES[@]}" >&2
-            find dist -maxdepth 1 -type f -print | sort >&2
-            exit 1
-          }
           test "${#LINUX_ARCHIVES[@]}" -eq 1 || {
             printf 'Expected exactly one signed Linux updater archive, found %s\n' \
               "${#LINUX_ARCHIVES[@]}" >&2
             find dist -maxdepth 1 -type f -print | sort >&2
             exit 1
           }
-          WINDOWS_ARCHIVE="${WINDOWS_ARCHIVES[0]}"
+          WINDOWS_X64_ARCHIVE="dist/PixNya_${PIXNYA_RELEASE_VERSION}_x64-setup.exe"
+          WINDOWS_ARM64_ARCHIVE="dist/PixNya_${PIXNYA_RELEASE_VERSION}_arm64-setup.exe"
           LINUX_ARCHIVE="${LINUX_ARCHIVES[0]}"
-          test -f "$WINDOWS_ARCHIVE" && test -f "${WINDOWS_ARCHIVE}.sig"
+          test -f "$WINDOWS_X64_ARCHIVE" && test -f "${WINDOWS_X64_ARCHIVE}.sig"
+          test -f "$WINDOWS_ARM64_ARCHIVE" && test -f "${WINDOWS_ARM64_ARCHIVE}.sig"
           test -f "$LINUX_ARCHIVE" && test -f "${LINUX_ARCHIVE}.sig"
           DESKTOP_PUBLIC_KEY="$RUNNER_TEMP/desktop-updater.pub"
           printf '%s' "$PIXNYA_UPDATER_PUBKEY" | base64 --decode > "$DESKTOP_PUBLIC_KEY"
-          base64 --decode "${WINDOWS_ARCHIVE}.sig" > "$RUNNER_TEMP/windows-updater.minisig"
+          base64 --decode "${WINDOWS_X64_ARCHIVE}.sig" > "$RUNNER_TEMP/windows-x64-updater.minisig"
+          base64 --decode "${WINDOWS_ARM64_ARCHIVE}.sig" > "$RUNNER_TEMP/windows-arm64-updater.minisig"
           base64 --decode "${LINUX_ARCHIVE}.sig" > "$RUNNER_TEMP/linux-updater.minisig"
-          minisign -Vm "$WINDOWS_ARCHIVE" -x "$RUNNER_TEMP/windows-updater.minisig" -p "$DESKTOP_PUBLIC_KEY"
+          minisign -Vm "$WINDOWS_X64_ARCHIVE" -x "$RUNNER_TEMP/windows-x64-updater.minisig" -p "$DESKTOP_PUBLIC_KEY"
+          minisign -Vm "$WINDOWS_ARM64_ARCHIVE" -x "$RUNNER_TEMP/windows-arm64-updater.minisig" -p "$DESKTOP_PUBLIC_KEY"
           minisign -Vm "$LINUX_ARCHIVE" -x "$RUNNER_TEMP/linux-updater.minisig" -p "$DESKTOP_PUBLIC_KEY"
           node scripts/generate-desktop-update-manifest.mjs \
-            --windows-archive "$WINDOWS_ARCHIVE" --windows-signature "${WINDOWS_ARCHIVE}.sig" \
+            --windows-archive "$WINDOWS_X64_ARCHIVE" --windows-signature "${WINDOWS_X64_ARCHIVE}.sig" \
+            --windows-arm64-archive "$WINDOWS_ARM64_ARCHIVE" \
+            --windows-arm64-signature "${WINDOWS_ARM64_ARCHIVE}.sig" \
             --linux-archive "$LINUX_ARCHIVE" --linux-signature "${LINUX_ARCHIVE}.sig" \
             --repository "$PIXNYA_UPDATE_REPOSITORY" \
             --base-url "$RELEASE_BASE" --notes-file "$MANIFEST_NOTES_FILE" \
@@ -665,6 +743,7 @@ jobs:
           test "${#CERTIFICATE_SHA256}" -eq 64
           node scripts/generate-android-update-manifest.mjs \
             --arm64 "dist/pixnya-${PIXNYA_RELEASE_VERSION}-android-arm64-v8a.apk" \
+            --armv7 "dist/pixnya-${PIXNYA_RELEASE_VERSION}-android-armeabi-v7a.apk" \
             --certificate-sha256 "$CERTIFICATE_SHA256" --base-url "$RELEASE_BASE" \
             --repository "$PIXNYA_UPDATE_REPOSITORY" \
             --notes-file "$MANIFEST_NOTES_FILE" --output dist/android-latest.json
@@ -698,11 +777,13 @@ jobs:
             }
           }
           shopt -s nullglob
-          exact_one 'Windows NSIS installer' dist/*.exe
+          exact_one 'Windows x64 NSIS installer' "$WINDOWS_X64_ARCHIVE"
+          exact_one 'Windows ARM64 NSIS installer' "$WINDOWS_ARM64_ARCHIVE"
           exact_one 'Linux AppImage installer' dist/*.AppImage
           exact_one 'Android ARM64 APK' dist/pixnya-${PIXNYA_RELEASE_VERSION}-android-arm64-v8a.apk
+          exact_one 'Android ARMv7 APK' dist/pixnya-${PIXNYA_RELEASE_VERSION}-android-armeabi-v7a.apk
           exact_one 'SPDX SBOM' dist/pixnya-${PIXNYA_RELEASE_VERSION}.spdx.json
-          exact_one 'Android ARM64 runtime SBOM' dist/pixnya-${PIXNYA_RELEASE_VERSION}-android-runtime.spdx.json
+          exact_one 'Android ARM runtime SBOM' dist/pixnya-${PIXNYA_RELEASE_VERSION}-android-runtime.spdx.json
           exact_one 'Android Gradle dependency inventory' dist/pixnya-${PIXNYA_RELEASE_VERSION}-android-gradle-dependencies.json
           exact_one 'Android build-tool OSV raw report' dist/pixnya-${PIXNYA_RELEASE_VERSION}-android-build-tools-osv.json
           exact_one 'third-party license archive' dist/pixnya-${PIXNYA_RELEASE_VERSION}-third-party-licenses.tar.gz
@@ -724,7 +805,8 @@ jobs:
             pixnya-${PIXNYA_RELEASE_VERSION}-third-party-licenses.tar.gz
             pixnya-${PIXNYA_RELEASE_VERSION}.spdx.json
             "$(basename "${LINUX_ARCHIVE}.sig")"
-            "$(basename "${WINDOWS_ARCHIVE}.sig")"
+            "$(basename "${WINDOWS_X64_ARCHIVE}.sig")"
+            "$(basename "${WINDOWS_ARM64_ARCHIVE}.sig")"
             THIRD_PARTY_NOTICES.md
           )
           tar -czf "$VERIFICATION_BUNDLE" -C dist "${VERIFICATION_MEMBERS[@]}"
@@ -739,9 +821,11 @@ jobs:
             rm -- "dist/$name"
           done
           exact_one 'verification bundle' "$VERIFICATION_BUNDLE"
-          exact_one 'Windows NSIS installer' dist/*.exe
+          exact_one 'Windows x64 NSIS installer' "$WINDOWS_X64_ARCHIVE"
+          exact_one 'Windows ARM64 NSIS installer' "$WINDOWS_ARM64_ARCHIVE"
           exact_one 'Linux AppImage installer' dist/*.AppImage
           exact_one 'Android ARM64 APK' dist/pixnya-${PIXNYA_RELEASE_VERSION}-android-arm64-v8a.apk
+          exact_one 'Android ARMv7 APK' dist/pixnya-${PIXNYA_RELEASE_VERSION}-android-armeabi-v7a.apk
           exact_one 'desktop update manifest' dist/latest.json
           exact_one 'Android update manifest' dist/android-latest.json
           exact_one 'Android update manifest signature' dist/android-latest.json.minisig
@@ -753,8 +837,8 @@ jobs:
           )
           exact_one 'SHA-256 checksums' dist/SHA256SUMS.txt
           ACTUAL_FILE_COUNT="$(find dist -maxdepth 1 -type f | wc -l | tr -d '[:space:]')"
-          test "$ACTUAL_FILE_COUNT" = 8 || {
-            echo "Expected exactly 8 public release files, found $ACTUAL_FILE_COUNT" >&2
+          test "$ACTUAL_FILE_COUNT" = 10 || {
+            echo "Expected exactly 10 public release files, found $ACTUAL_FILE_COUNT" >&2
             find dist -maxdepth 1 -type f -print | sort >&2
             exit 1
           }
@@ -766,7 +850,8 @@ jobs:
             "$RUNNER_TEMP/release-notes.md" \
             "$RUNNER_TEMP/update-manifest-notes.md" \
             "$RUNNER_TEMP/desktop-updater.pub" \
-            "$RUNNER_TEMP/windows-updater.minisig" \
+            "$RUNNER_TEMP/windows-x64-updater.minisig" \
+            "$RUNNER_TEMP/windows-arm64-updater.minisig" \
             "$RUNNER_TEMP/linux-updater.minisig" \
             "$RUNNER_TEMP/pixnya-release.jks" \
             "$RUNNER_TEMP/android-manifest.key" \
@@ -860,6 +945,7 @@ jobs:
             dist/*.exe
             dist/*.AppImage
             dist/pixnya-${{ inputs.version }}-android-arm64-v8a.apk
+            dist/pixnya-${{ inputs.version }}-android-armeabi-v7a.apk
             dist/pixnya-${{ inputs.version }}-verification.tar.gz
             dist/latest.json
             dist/android-latest.json

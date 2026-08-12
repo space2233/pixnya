@@ -20,9 +20,11 @@ const hashFile = (filePath) => createHash("sha256").update(readFileSync(filePath
 export const releaseAssetPatterns = (version) => {
   const escapedVersion = escapeRegExp(version);
   return [
-    ["Windows NSIS updater installer", /\.exe$/],
-    ["Linux AppImage updater", /\.AppImage$/],
+    ["Windows x64 NSIS updater installer", new RegExp(`^PixNya_${escapedVersion}_x64-setup\\.exe$`)],
+    ["Windows ARM64 NSIS updater installer", new RegExp(`^PixNya_${escapedVersion}_arm64-setup\\.exe$`)],
+    ["Linux x64 AppImage updater", new RegExp(`^PixNya_${escapedVersion}_amd64\\.AppImage$`)],
     ["Android ARM64 APK", new RegExp(`^pixnya-${escapedVersion}-android-arm64-v8a\\.apk$`)],
+    ["Android ARM32 APK", new RegExp(`^pixnya-${escapedVersion}-android-armeabi-v7a\\.apk$`)],
     ["verification bundle", new RegExp(`^pixnya-${escapedVersion}-verification\\.tar\\.gz$`)],
     ["desktop update manifest", /^latest\.json$/],
     ["Android update manifest", /^android-latest\.json$/],
@@ -90,8 +92,9 @@ const verifyUpdateManifests = (assetsDir, assetNames, version, repository) => {
   requireValue(!Number.isNaN(Date.parse(desktopManifest.pub_date)), "desktop update publication date is invalid");
   validateEmbeddedNotes(desktopManifest.notes, "desktop");
   const desktopTargets = [
-    ["windows-x86_64", assetNames.find((name) => name.endsWith(".exe"))],
-    ["linux-x86_64", assetNames.find((name) => name.endsWith(".AppImage"))],
+    ["windows-x86_64", `PixNya_${version}_x64-setup.exe`],
+    ["windows-aarch64", `PixNya_${version}_arm64-setup.exe`],
+    ["linux-x86_64", `PixNya_${version}_amd64.AppImage`],
   ];
   requireValue(
     JSON.stringify(Object.keys(desktopManifest.platforms ?? {}).sort()) ===
@@ -121,16 +124,33 @@ const verifyUpdateManifests = (assetsDir, assetNames, version, repository) => {
   requireValue(androidManifest.minSdk === 29, "Android update manifest minSdk does not match");
   requireValue(!Number.isNaN(Date.parse(androidManifest.publishedAt)), "Android update publication date is invalid");
   validateEmbeddedNotes(androidManifest.notes, "Android");
-  requireValue(Array.isArray(androidManifest.artifacts) && androidManifest.artifacts.length === 1, "Android update manifest must contain exactly one ARM64 artifact");
-  const artifact = androidManifest.artifacts[0];
-  const apkName = `pixnya-${version}-android-arm64-v8a.apk`;
-  const apkPath = path.join(assetsDir, apkName);
-  requireValue(artifact.abi === "arm64-v8a", "Android update manifest ABI is invalid");
-  requireValue(artifact.url === releaseAssetUrl(repository, version, apkName), "Android update URL does not match the verified Release asset");
-  requireValue(artifact.size === statSync(apkPath).size, "Android update manifest APK size does not match");
-  requireValue(artifact.sha256 === hashFile(apkPath), "Android update manifest APK digest does not match");
-  requireValue(artifact.packageName === "io.github.space2233.pixnya", "Android update package name does not match");
-  requireValue(/^[0-9a-f]{64}$/i.test(artifact.certificateSha256 ?? ""), "Android update certificate digest is invalid");
+  const androidTargets = new Map([
+    ["arm64-v8a", `pixnya-${version}-android-arm64-v8a.apk`],
+    ["armeabi-v7a", `pixnya-${version}-android-armeabi-v7a.apk`],
+  ]);
+  requireValue(
+    Array.isArray(androidManifest.artifacts) && androidManifest.artifacts.length === androidTargets.size,
+    "Android update manifest must contain exactly the two released ABI artifacts",
+  );
+  const artifactsByAbi = new Map();
+  for (const artifact of androidManifest.artifacts) {
+    requireValue(androidTargets.has(artifact?.abi), `Android update manifest ABI is invalid: ${artifact?.abi ?? "<missing>"}`);
+    requireValue(!artifactsByAbi.has(artifact.abi), `Android update manifest contains duplicate ABI: ${artifact.abi}`);
+    artifactsByAbi.set(artifact.abi, artifact);
+  }
+  for (const [abi, apkName] of androidTargets) {
+    const artifact = artifactsByAbi.get(abi);
+    requireValue(artifact, `Android update manifest is missing ABI: ${abi}`);
+    const apkPath = path.join(assetsDir, apkName);
+    requireValue(
+      artifact.url === releaseAssetUrl(repository, version, apkName),
+      `Android update manifest URL does not match the verified Release asset: ${abi}`,
+    );
+    requireValue(artifact.size === statSync(apkPath).size, `Android update manifest APK size does not match: ${abi}`);
+    requireValue(artifact.sha256 === hashFile(apkPath), `Android update manifest APK digest does not match: ${abi}`);
+    requireValue(artifact.packageName === "io.github.space2233.pixnya", `Android update package name does not match: ${abi}`);
+    requireValue(/^[0-9a-f]{64}$/i.test(artifact.certificateSha256 ?? ""), `Android update certificate digest is invalid: ${abi}`);
+  }
 };
 
 export const releaseCandidateSnapshot = (release) => {
@@ -147,9 +167,22 @@ export const releaseCandidateSnapshot = (release) => {
   return createHash("sha256").update(JSON.stringify(material)).digest("hex");
 };
 
-export function validateReleaseCandidate({ release, tag, assetsDir, version, commitSha, repository, provenanceText }) {
+export function validateReleaseCandidate({
+  release,
+  tag,
+  assetsDir,
+  version,
+  commitSha,
+  workflowCommitSha = commitSha,
+  repository,
+  provenanceText,
+}) {
   requireValue(/^[1-9][0-9]*\.[0-9]+\.[0-9]+$/.test(version), "stable candidate version is invalid");
   requireValue(/^[0-9a-f]{40}$/i.test(commitSha), "candidate commit must be a full Git SHA");
+  requireValue(
+    /^[0-9a-f]{40}$/i.test(workflowCommitSha),
+    "release workflow commit must be a full Git SHA",
+  );
   requireValue(/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository), "candidate repository is invalid");
   requireValue(release?.tag_name === `v${version}`, "Draft tag does not match the requested version");
   requireValue(release?.draft === true, "release candidate is not a Draft");
@@ -161,7 +194,11 @@ export function validateReleaseCandidate({ release, tag, assetsDir, version, com
   validateStableReleaseNotes({ notes: release.body ?? "", version, commitSha });
 
   requireValue(Array.isArray(release.assets), "Draft assets are missing");
-  requireValue(release.assets.length === 8, `expected exactly 8 Draft assets, found ${release.assets.length}`);
+  const expectedAssetCount = releaseAssetPatterns(version).length;
+  requireValue(
+    release.assets.length === expectedAssetCount,
+    `expected exactly ${expectedAssetCount} Draft assets, found ${release.assets.length}`,
+  );
   const remoteNames = release.assets.map((asset) => asset.name).sort();
   requireValue(new Set(remoteNames).size === remoteNames.length, "Draft contains duplicate asset names");
   for (const asset of release.assets) {
@@ -195,8 +232,8 @@ export function validateReleaseCandidate({ release, tag, assetsDir, version, com
   requireValue(provenance.get("source_repository") === `https://github.com/${repository}`, "build provenance repository does not match");
   requireValue(provenance.get("source_commit") === commitSha, "build provenance commit does not match");
   requireValue(
-    /^[0-9a-f]{40}$/i.test(provenance.get("release_workflow_commit") ?? ""),
-    "build provenance release workflow commit is invalid",
+    provenance.get("release_workflow_commit") === workflowCommitSha,
+    "build provenance release workflow commit does not match the selected main commit",
   );
 
   return { snapshot: releaseCandidateSnapshot(release) };
@@ -216,7 +253,16 @@ const parseArguments = (argv) => {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {
     const args = parseArguments(process.argv);
-    const required = ["--release-json", "--tag-json", "--assets-dir", "--version", "--commit", "--repository", "--provenance-file"];
+    const required = [
+      "--release-json",
+      "--tag-json",
+      "--assets-dir",
+      "--version",
+      "--commit",
+      "--workflow-commit",
+      "--repository",
+      "--provenance-file",
+    ];
     for (const name of required) requireValue(args.has(name), `missing argument: ${name}`);
     const release = JSON.parse(readFileSync(args.get("--release-json"), "utf8"));
     const tag = JSON.parse(readFileSync(args.get("--tag-json"), "utf8"));
@@ -226,6 +272,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       assetsDir: args.get("--assets-dir"),
       version: args.get("--version"),
       commitSha: args.get("--commit"),
+      workflowCommitSha: args.get("--workflow-commit"),
       repository: args.get("--repository"),
       provenanceText: readFileSync(args.get("--provenance-file"), "utf8"),
     });

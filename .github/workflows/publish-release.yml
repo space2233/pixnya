@@ -96,15 +96,15 @@ jobs:
             const [release] = matches;
             const tag = JSON.parse(fs.readFileSync(process.env.TAG_FILE, "utf8"));
             if (release.draft !== true) throw new Error("Only an existing Draft Release can be finalized");
-            if (tag.object?.sha !== process.env.GITHUB_SHA) {
-              throw new Error("The stable tag does not point to the selected main commit");
+            if (tag.object?.type !== "commit" || !/^[0-9a-f]{40}$/i.test(tag.object?.sha ?? "")) {
+              throw new Error("The stable tag does not point directly to a valid source commit");
             }
             if (!Number.isInteger(release.id) || release.id <= 0) {
               throw new Error("The Draft Release has no stable ID");
             }
             const assets = release.assets ?? [];
-            if (assets.length !== 8) {
-              throw new Error(`Expected exactly 8 Draft assets, found ${assets.length}`);
+            if (assets.length !== 10) {
+              throw new Error(`Expected exactly 10 Draft assets, found ${assets.length}`);
             }
             const names = new Set();
             const plan = assets.map((asset) => {
@@ -138,6 +138,7 @@ jobs:
             pixnya-${PIXNYA_RELEASE_VERSION}-third-party-licenses.tar.gz
             pixnya-${PIXNYA_RELEASE_VERSION}.spdx.json
             PixNya_${PIXNYA_RELEASE_VERSION}_amd64.AppImage.sig
+            PixNya_${PIXNYA_RELEASE_VERSION}_arm64-setup.exe.sig
             PixNya_${PIXNYA_RELEASE_VERSION}_x64-setup.exe.sig
             THIRD_PARTY_NOTICES.md
           )
@@ -148,12 +149,19 @@ jobs:
             exit 1
           }
           tar -xOf "$VERIFICATION_BUNDLE" BUILD-PROVENANCE.txt > "$RUNNER_TEMP/candidate-provenance.txt"
+          CANDIDATE_SOURCE_SHA="$(sed -n 's/^source_commit=//p' "$RUNNER_TEMP/candidate-provenance.txt")"
+          [[ "$CANDIDATE_SOURCE_SHA" =~ ^[0-9a-fA-F]{40}$ ]] || {
+            echo "The verified candidate provenance has no valid source commit" >&2
+            exit 1
+          }
+          echo "PIXNYA_RELEASE_SOURCE_SHA=${CANDIDATE_SOURCE_SHA,,}" >> "$GITHUB_ENV"
           node scripts/validate-release-candidate.mjs \
             --release-json "$RUNNER_TEMP/candidate-release.json" \
             --tag-json "$RUNNER_TEMP/candidate-tag.json" \
             --assets-dir candidate \
             --version "$PIXNYA_RELEASE_VERSION" \
-            --commit "$GITHUB_SHA" \
+            --commit "$CANDIDATE_SOURCE_SHA" \
+            --workflow-commit "$GITHUB_SHA" \
             --repository "$GITHUB_REPOSITORY" \
             --provenance-file "$RUNNER_TEMP/candidate-provenance.txt" \
             --snapshot-output "$RUNNER_TEMP/candidate-snapshot.txt"
@@ -189,15 +197,18 @@ jobs:
           printf '%s' "$PIXNYA_UPDATER_PUBKEY" | base64 --decode > "$DESKTOP_PUBLIC_KEY"
           printf '%s' "$PIXNYA_ANDROID_UPDATE_PUBKEY" | base64 --decode > "$ANDROID_PUBLIC_KEY"
 
-          WINDOWS_ARCHIVE="$(find candidate -maxdepth 1 -type f -name '*.exe' -print -quit)"
+          WINDOWS_X64_ARCHIVE="candidate/PixNya_${PIXNYA_RELEASE_VERSION}_x64-setup.exe"
+          WINDOWS_ARM64_ARCHIVE="candidate/PixNya_${PIXNYA_RELEASE_VERSION}_arm64-setup.exe"
           LINUX_ARCHIVE="$(find candidate -maxdepth 1 -type f -name '*.AppImage' -print -quit)"
-          test -n "$WINDOWS_ARCHIVE" && test -n "$LINUX_ARCHIVE"
-          WINDOWS_SIGNATURE_FILE="$RUNNER_TEMP/windows-updater.minisig" \
+          test -f "$WINDOWS_X64_ARCHIVE" && test -f "$WINDOWS_ARM64_ARCHIVE" && test -n "$LINUX_ARCHIVE"
+          WINDOWS_X64_SIGNATURE_FILE="$RUNNER_TEMP/windows-x64-updater.minisig" \
+            WINDOWS_ARM64_SIGNATURE_FILE="$RUNNER_TEMP/windows-arm64-updater.minisig" \
             LINUX_SIGNATURE_FILE="$RUNNER_TEMP/linux-updater.minisig" node -e '
               const fs = require("node:fs");
               const manifest = JSON.parse(fs.readFileSync("candidate/latest.json", "utf8"));
               for (const [target, output] of [
-                ["windows-x86_64", process.env.WINDOWS_SIGNATURE_FILE],
+                ["windows-x86_64", process.env.WINDOWS_X64_SIGNATURE_FILE],
+                ["windows-aarch64", process.env.WINDOWS_ARM64_SIGNATURE_FILE],
                 ["linux-x86_64", process.env.LINUX_SIGNATURE_FILE],
               ]) {
                 const encoded = manifest.platforms?.[target]?.signature;
@@ -211,21 +222,29 @@ jobs:
                 fs.writeFileSync(output, signature);
               }
             '
-          minisign -Vm "$WINDOWS_ARCHIVE" -x "$RUNNER_TEMP/windows-updater.minisig" -p "$DESKTOP_PUBLIC_KEY"
+          minisign -Vm "$WINDOWS_X64_ARCHIVE" -x "$RUNNER_TEMP/windows-x64-updater.minisig" -p "$DESKTOP_PUBLIC_KEY"
+          minisign -Vm "$WINDOWS_ARM64_ARCHIVE" -x "$RUNNER_TEMP/windows-arm64-updater.minisig" -p "$DESKTOP_PUBLIC_KEY"
           minisign -Vm "$LINUX_ARCHIVE" -x "$RUNNER_TEMP/linux-updater.minisig" -p "$DESKTOP_PUBLIC_KEY"
           minisign -Vm candidate/android-latest.json -x candidate/android-latest.json.minisig -p "$ANDROID_PUBLIC_KEY"
 
-          ANDROID_APK="candidate/pixnya-${PIXNYA_RELEASE_VERSION}-android-arm64-v8a.apk"
           APKSIGNER="$ANDROID_HOME/build-tools/36.0.0/apksigner"
-          APK_CERTIFICATE_SHA256="$("$APKSIGNER" verify --verbose --print-certs "$ANDROID_APK" \
-            | awk -F': ' '/Signer #1 certificate SHA-256 digest:/{gsub(":", "", $2); print tolower($2); exit}')"
-          MANIFEST_CERTIFICATE_SHA256="$(node -p \
-            "JSON.parse(require('node:fs').readFileSync('candidate/android-latest.json', 'utf8')).artifacts[0].certificateSha256.toLowerCase()")"
-          test "${#APK_CERTIFICATE_SHA256}" -eq 64
-          test "$APK_CERTIFICATE_SHA256" = "$MANIFEST_CERTIFICATE_SHA256" || {
-            echo "APK certificate does not match the signed Android update manifest" >&2
-            exit 1
-          }
+          for ABI in arm64-v8a armeabi-v7a; do
+            ANDROID_APK="candidate/pixnya-${PIXNYA_RELEASE_VERSION}-android-${ABI}.apk"
+            test -f "$ANDROID_APK"
+            APK_CERTIFICATE_SHA256="$("$APKSIGNER" verify --verbose --print-certs "$ANDROID_APK" \
+              | awk -F': ' '/Signer #1 certificate SHA-256 digest:/{gsub(":", "", $2); print tolower($2); exit}')"
+            MANIFEST_CERTIFICATE_SHA256="$(ABI="$ABI" node -p '
+              const manifest = JSON.parse(require("node:fs").readFileSync("candidate/android-latest.json", "utf8"));
+              const matches = manifest.artifacts.filter((artifact) => artifact.abi === process.env.ABI);
+              if (matches.length !== 1) throw new Error(`Expected exactly one Android manifest artifact for ${process.env.ABI}`);
+              matches[0].certificateSha256.toLowerCase();
+            ')"
+            test "${#APK_CERTIFICATE_SHA256}" -eq 64
+            test "$APK_CERTIFICATE_SHA256" = "$MANIFEST_CERTIFICATE_SHA256" || {
+              echo "$ABI APK certificate does not match the signed Android update manifest" >&2
+              exit 1
+            }
+          done
       - name: "Fail: The Draft changed while it was being verified"
         shell: bash
         env:
@@ -238,7 +257,8 @@ jobs:
             --tag-json "$RUNNER_TEMP/final-tag.json" \
             --assets-dir candidate \
             --version "$PIXNYA_RELEASE_VERSION" \
-            --commit "$GITHUB_SHA" \
+            --commit "$PIXNYA_RELEASE_SOURCE_SHA" \
+            --workflow-commit "$GITHUB_SHA" \
             --repository "$GITHUB_REPOSITORY" \
             --provenance-file "$RUNNER_TEMP/candidate-provenance.txt" \
             --expect-snapshot "$RUNNER_TEMP/candidate-snapshot.txt"
@@ -272,5 +292,6 @@ jobs:
             "$RUNNER_TEMP/desktop-updater.pub" \
             "$RUNNER_TEMP/android-update-manifest.pub" \
             "$RUNNER_TEMP/candidate-provenance.txt" \
-            "$RUNNER_TEMP/windows-updater.minisig" \
+            "$RUNNER_TEMP/windows-x64-updater.minisig" \
+            "$RUNNER_TEMP/windows-arm64-updater.minisig" \
             "$RUNNER_TEMP/linux-updater.minisig"

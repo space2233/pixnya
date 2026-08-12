@@ -94,6 +94,12 @@ async function main() {
       baseUrl,
       version,
     ),
+    "windows-aarch64": await platformEntry(
+      requireArgument(argumentsMap, "windows-arm64-archive"),
+      requireArgument(argumentsMap, "windows-arm64-signature"),
+      baseUrl,
+      version,
+    ),
     "linux-x86_64": await platformEntry(
       requireArgument(argumentsMap, "linux-archive"),
       requireArgument(argumentsMap, "linux-signature"),

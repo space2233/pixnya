@@ -150,11 +150,13 @@ tasks.register("resolveLockedDependencies") {
         val requiredReleaseConfigurations = setOf(
             "arm64ReleaseCompileClasspath",
             "arm64ReleaseRuntimeClasspath",
+            "armReleaseCompileClasspath",
+            "armReleaseRuntimeClasspath",
         )
         val missingReleaseLockState = requiredReleaseConfigurations - lockedConfigurationNames
         if (missingReleaseLockState.isNotEmpty()) {
             throw GradleException(
-                "The ARM64 release graph is missing reviewed lock state for: " +
+                "The Android ARM release graph is missing reviewed lock state for: " +
                     missingReleaseLockState.sorted().joinToString(", ")
             )
         }
@@ -185,10 +187,26 @@ tasks.register("resolveLockedDependencies") {
             return "$group:$name:$version"
         }
 
-        val releaseCompileLock = lockedCoordinatesByConfiguration
-            .getValue("arm64ReleaseCompileClasspath")
-        val releaseRuntimeLock = lockedCoordinatesByConfiguration
-            .getValue("arm64ReleaseRuntimeClasspath")
+        val releaseCompileConfigurations = listOf(
+            "arm64ReleaseCompileClasspath",
+            "armReleaseCompileClasspath",
+        )
+        val releaseRuntimeConfigurations = listOf(
+            "arm64ReleaseRuntimeClasspath",
+            "armReleaseRuntimeClasspath",
+        )
+        val releaseCompileLocks = releaseCompileConfigurations.map(
+            lockedCoordinatesByConfiguration::getValue
+        )
+        val releaseRuntimeLocks = releaseRuntimeConfigurations.map(
+            lockedCoordinatesByConfiguration::getValue
+        )
+        if (releaseCompileLocks.map { it.toSortedSet() }.distinct().size != 1) {
+            throw GradleException("Android ARM64 and ARMv7 release compile lock graphs differ")
+        }
+        if (releaseRuntimeLocks.map { it.toSortedSet() }.distinct().size != 1) {
+            throw GradleException("Android ARM64 and ARMv7 release runtime lock graphs differ")
+        }
         val reviewedMetadataConfiguration = "implementationDependenciesMetadata"
         var reviewedMetadataConfigurationObserved = false
         val unlockedExternalGraphs = mutableListOf<String>()
@@ -218,22 +236,23 @@ tasks.register("resolveLockedDependencies") {
                     .map { it.path }
                     .toSortedSet()
                 val reviewedCoordinates = modules + constraints
-                val coveredByBothReleaseGraphs = reviewedCoordinates.all {
-                    it in releaseCompileLock && it in releaseRuntimeLock
+                val coveredByAllReleaseGraphs = reviewedCoordinates.all { coordinate ->
+                    releaseCompileLocks.all { coordinate in it } &&
+                        releaseRuntimeLocks.all { coordinate in it }
                 }
                 if (
                     configuration.name == reviewedMetadataConfiguration &&
                     projectPaths == setOf(":tauri-android") &&
-                    coveredByBothReleaseGraphs
+                    coveredByAllReleaseGraphs
                 ) {
                     // Tauri's project dependency makes this Kotlin common-metadata
                     // configuration variant-ambiguous between debug and release.
-                    // Formal ARM64 variants are resolvable, so prove every external
-                    // declaration is covered by both reviewed release lock graphs
+                    // Formal ARM variants are resolvable, so prove every external
+                    // declaration is covered by all reviewed release lock graphs
                     // without attempting to resolve this invalid internal surface.
                     reviewedMetadataConfigurationObserved = true
                     logger.lifecycle(
-                        "Verified {} against both ARM64 release lock graphs without resolving it",
+                        "Verified {} against all Android ARM release lock graphs without resolving it",
                         reviewedMetadataConfiguration,
                     )
                 } else {
@@ -266,29 +285,31 @@ tasks.register("resolveLockedDependencies") {
             logger.lifecycle("Resolved locked configuration {} ({} components)", name, componentCount)
         }
 
-        val releaseRuntimeComponents = configurations
-            .getByName("arm64ReleaseRuntimeClasspath")
-            .incoming
-            .resolutionResult
-            .allComponents
-            .map { it.id }
-        val includesTauriAndroid = releaseRuntimeComponents.any {
-            it is ProjectComponentIdentifier && it.projectPath == ":tauri-android"
-        }
-        if (!includesTauriAndroid) {
-            throw GradleException("arm64ReleaseRuntimeClasspath does not contain project :tauri-android")
-        }
-        val includesReviewedJackson = releaseRuntimeComponents.any {
-            it is ModuleComponentIdentifier &&
-                it.group == "com.fasterxml.jackson.core" &&
-                it.module == "jackson-databind" &&
-                it.version == "2.22.1"
-        }
-        if (!includesReviewedJackson) {
-            throw GradleException(
-                "arm64ReleaseRuntimeClasspath does not contain " +
-                    "com.fasterxml.jackson.core:jackson-databind:2.22.1"
-            )
+        releaseRuntimeConfigurations.forEach { configurationName ->
+            val releaseRuntimeComponents = configurations
+                .getByName(configurationName)
+                .incoming
+                .resolutionResult
+                .allComponents
+                .map { it.id }
+            val includesTauriAndroid = releaseRuntimeComponents.any {
+                it is ProjectComponentIdentifier && it.projectPath == ":tauri-android"
+            }
+            if (!includesTauriAndroid) {
+                throw GradleException("$configurationName does not contain project :tauri-android")
+            }
+            val includesReviewedJackson = releaseRuntimeComponents.any {
+                it is ModuleComponentIdentifier &&
+                    it.group == "com.fasterxml.jackson.core" &&
+                    it.module == "jackson-databind" &&
+                    it.version == "2.22.1"
+            }
+            if (!includesReviewedJackson) {
+                throw GradleException(
+                    "$configurationName does not contain " +
+                        "com.fasterxml.jackson.core:jackson-databind:2.22.1"
+                )
+            }
         }
     }
 }

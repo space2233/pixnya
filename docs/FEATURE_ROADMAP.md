@@ -41,5 +41,5 @@
 
 - 自动化覆盖通知分页与链接安全、评论归属与删除恢复、贴图组合发表、Ugoira 任务/限制/取消清理、屏蔽与静音串行写入、本地批量事务、保存筛选器和重复报告。
 - 发布前仍需使用测试账号低频验证通知 GET、评论写接口、屏蔽/静音接口，以及用实际不同帧率/分辨率作品验证三种 Ugoira 格式。
-- 每个版本运行完整前端检查、Node 回归、Rust workspace 测试、格式和 Clippy；正式产物只构建 Windows x64、Linux x64、Android ARM64。
+- 每个版本运行完整前端检查、Node 回归、Rust workspace 测试、格式和 Clippy；正式产物构建 Windows x64/ARM64、Linux x64、Android ARM64/ARM32。
 - 投稿、个人资料编辑和通知写操作不做。多账号、新平台、私信、直播与云同步保留在[无排期备选计划](OPTIONAL_FEATURES_PLAN.md)。

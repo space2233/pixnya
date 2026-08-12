@@ -216,9 +216,14 @@ fn select_candidate(
     architecture: &str,
     runtime_sdk: u32,
 ) -> Result<Option<AndroidUpdateCandidate>, AndroidUpdateError> {
+    let mut manifest_abis = std::collections::HashSet::new();
     if manifest.schema_version != MANIFEST_SCHEMA_VERSION
         || manifest.min_sdk > runtime_sdk
         || manifest.artifacts.is_empty()
+        || manifest
+            .artifacts
+            .iter()
+            .any(|artifact| !manifest_abis.insert(artifact.abi.as_str()))
         || manifest
             .notes
             .as_ref()
@@ -458,16 +463,28 @@ mod tests {
             published_at: Some("2026-08-03T00:00:00Z".to_owned()),
             notes: Some("Update".to_owned()),
             min_sdk: 29,
-            artifacts: vec![AndroidUpdateArtifact {
-                abi: "arm64-v8a".to_owned(),
-                url:
-                    "https://github.com/space2233/pixnya/releases/download/v0.26.0/pixnya-arm64.apk"
-                        .to_owned(),
-                size: 123,
-                sha256: "a".repeat(64),
-                package_name: "io.github.space2233.pixnya".to_owned(),
-                certificate_sha256: "b".repeat(64),
-            }],
+            artifacts: vec![
+                AndroidUpdateArtifact {
+                    abi: "arm64-v8a".to_owned(),
+                    url:
+                        "https://github.com/space2233/pixnya/releases/download/v0.26.0/pixnya-arm64.apk"
+                            .to_owned(),
+                    size: 123,
+                    sha256: "a".repeat(64),
+                    package_name: "io.github.space2233.pixnya".to_owned(),
+                    certificate_sha256: "b".repeat(64),
+                },
+                AndroidUpdateArtifact {
+                    abi: "armeabi-v7a".to_owned(),
+                    url:
+                        "https://github.com/space2233/pixnya/releases/download/v0.26.0/pixnya-armv7.apk"
+                            .to_owned(),
+                    size: 122,
+                    sha256: "c".repeat(64),
+                    package_name: "io.github.space2233.pixnya".to_owned(),
+                    certificate_sha256: "b".repeat(64),
+                },
+            ],
         }
     }
 
@@ -478,6 +495,39 @@ mod tests {
             .unwrap();
         assert_eq!(candidate.abi, "arm64-v8a");
         assert_eq!(candidate.version_code, 26_000);
+
+        let armv7 = select_candidate(manifest(), "space2233/pixnya", "0.25.0", "arm", 29)
+            .unwrap()
+            .unwrap();
+        assert_eq!(armv7.abi, "armeabi-v7a");
+        assert!(armv7.url.path().ends_with("/pixnya-armv7.apk"));
+    }
+
+    #[test]
+    fn rejects_missing_or_duplicate_runtime_abi_artifacts() {
+        let mut missing = manifest();
+        missing
+            .artifacts
+            .retain(|artifact| artifact.abi != "armeabi-v7a");
+        assert_eq!(
+            select_candidate(missing, "space2233/pixnya", "0.25.0", "arm", 29),
+            Err(AndroidUpdateError::InvalidManifest)
+        );
+
+        let mut duplicate = manifest();
+        duplicate.artifacts.push(AndroidUpdateArtifact {
+            abi: "arm64-v8a".to_owned(),
+            url: "https://github.com/space2233/pixnya/releases/download/v0.26.0/duplicate.apk"
+                .to_owned(),
+            size: 1,
+            sha256: "d".repeat(64),
+            package_name: "io.github.space2233.pixnya".to_owned(),
+            certificate_sha256: "b".repeat(64),
+        });
+        assert_eq!(
+            select_candidate(duplicate, "space2233/pixnya", "0.25.0", "aarch64", 29),
+            Err(AndroidUpdateError::InvalidManifest)
+        );
     }
 
     #[test]

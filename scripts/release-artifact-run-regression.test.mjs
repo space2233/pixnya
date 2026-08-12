@@ -11,10 +11,19 @@ const requiredJobs = [
   "preflight",
   "rust-advisories",
   "windows",
+  "windows-arm64",
   "linux",
   "android (aarch64, aarch64-linux-android, arm64-v8a)",
+  "android (armv7, armv7-linux-androideabi, armeabi-v7a)",
 ];
-const requiredArtifacts = ["android-arm64-v8a", "linux-x64", "supply-chain", "windows-x64"];
+const requiredArtifacts = [
+  "android-arm64-v8a",
+  "android-armeabi-v7a",
+  "linux-x64",
+  "supply-chain",
+  "windows-arm64",
+  "windows-x64",
+];
 
 function fixture() {
   const run = {
@@ -60,16 +69,16 @@ test("a failed draft can reuse the exact successful signed artifacts without reb
   const candidate = fixture();
   assert.deepEqual(
     validateReleaseArtifactRun({ ...candidate, runId, repository }),
-    { artifactIds: [10, 11, 12, 13], sourceSha },
+    { artifactIds: [10, 11, 12, 13, 14, 15], sourceSha },
   );
 });
 
 test("artifact-run recovery rejects a failed platform job or a substituted artifact", () => {
   const failedJob = fixture();
-  failedJob.jobs.jobs.find((job) => job.name === "windows").conclusion = "failure";
+  failedJob.jobs.jobs.find((job) => job.name === "windows-arm64").conclusion = "failure";
   assert.throws(
     () => validateReleaseArtifactRun({ ...failedJob, runId, repository }),
-    /prior job did not succeed: windows/,
+    /prior job did not succeed: windows-arm64/,
   );
 
   const substitutedArtifact = fixture();

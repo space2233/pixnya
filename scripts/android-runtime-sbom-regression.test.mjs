@@ -3,11 +3,11 @@ import test from "node:test";
 
 import { inspectAndroidGradleSupplyChain } from "./check-android-gradle-supply-chain.mjs";
 import {
-  androidReleaseRuntimeConfiguration,
+  androidReleaseRuntimeConfigurations,
   createAndroidRuntimeSpdx,
 } from "./generate-android-runtime-sbom.mjs";
 
-test("Android runtime SBOM contains only the locked ARM64 release runtime graph", () => {
+test("Android runtime SBOM requires identical locked ARM64 and ARMv7 release graphs", () => {
   const inventory = inspectAndroidGradleSupplyChain();
   const sbom = createAndroidRuntimeSpdx(inventory, "2026-08-09T00:00:00Z");
   const purls = sbom.packages.map((entry) => entry.externalRefs[0].referenceLocator);
@@ -18,16 +18,18 @@ test("Android runtime SBOM contains only the locked ARM64 release runtime graph"
   assert.ok(!purls.some((value) => value.includes("io.netty")));
   assert.equal(new Set(purls).size, purls.length);
 
-  const selectedCoordinates = new Set(
+  const selectedGraphs = androidReleaseRuntimeConfigurations.map((configuration) => new Set(
     inventory.components
       .filter(
         (component) =>
           component.lockfiles.includes("app/gradle.lockfile") &&
-          component.configurations.includes(androidReleaseRuntimeConfiguration),
+          component.configurations.includes(configuration),
       )
       .map((component) => component.coordinate),
-  );
-  assert.equal(sbom.packages.length, selectedCoordinates.size);
+  ));
+  assert.deepEqual([...selectedGraphs[0]].sort(), [...selectedGraphs[1]].sort());
+  assert.equal(sbom.packages.length, selectedGraphs[0].size);
+  assert.equal(sbom.name, "PixNya Android ARM release runtime");
 });
 
 test("Android runtime SBOM output is deterministic for a fixed graph and epoch", () => {
@@ -42,5 +44,30 @@ test("Android runtime SBOM generation fails closed when the release graph is abs
   assert.throws(
     () => createAndroidRuntimeSpdx({ components: [] }, "2026-08-09T00:00:00Z"),
     /No components were locked/,
+  );
+});
+
+test("Android runtime SBOM generation fails closed when one ABI graph is missing or diverges", () => {
+  const inventory = inspectAndroidGradleSupplyChain();
+  const armv7Configuration = androidReleaseRuntimeConfigurations[1];
+  const missingArmv7 = {
+    ...inventory,
+    components: inventory.components.map((component) => ({
+      ...component,
+      configurations: component.configurations.filter((value) => value !== armv7Configuration),
+    })),
+  };
+  assert.throws(
+    () => createAndroidRuntimeSpdx(missingArmv7, "2026-08-09T00:00:00Z"),
+    /No components were locked/,
+  );
+
+  const divergent = structuredClone(inventory);
+  const component = divergent.components.find((entry) =>
+    entry.configurations.includes(armv7Configuration));
+  component.configurations = component.configurations.filter((value) => value !== armv7Configuration);
+  assert.throws(
+    () => createAndroidRuntimeSpdx(divergent, "2026-08-09T00:00:00Z"),
+    /release runtime graphs differ/,
   );
 });

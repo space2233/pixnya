@@ -11,11 +11,11 @@
 
 - {{主要新增功能}}
 - {{重要体验优化或修复}}
-- 支持 Windows x64、Linux x64、Android ARM64（Android 10+）。
+- 支持 Windows x64/ARM64、Linux x64、Android ARM64/ARM32（Android 10+）。
 
 ## English
 
 - {{Main new features}}
 - {{Important improvements or fixes}}
-- Supports Windows x64, Linux x64, and Android ARM64 (Android 10+).
+- Supports Windows x64/ARM64, Linux x64, and Android ARM64/ARM32 (Android 10+).
 ```

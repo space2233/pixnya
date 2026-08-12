@@ -7,7 +7,10 @@ import { inspectAndroidGradleSupplyChain } from "./check-android-gradle-supply-c
 
 const scriptPath = fileURLToPath(import.meta.url);
 const defaultProjectRoot = fileURLToPath(new URL("../", import.meta.url));
-export const androidReleaseRuntimeConfiguration = "arm64ReleaseRuntimeClasspath";
+export const androidReleaseRuntimeConfigurations = Object.freeze([
+  "arm64ReleaseRuntimeClasspath",
+  "armReleaseRuntimeClasspath",
+]);
 
 function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
@@ -33,14 +36,22 @@ function purl({ group, artifact, version }) {
 }
 
 export function createAndroidRuntimeSpdx(inventory, created = sourceDateEpoch()) {
-  const selected = inventory.components.filter(
+  const selectedGraphs = androidReleaseRuntimeConfigurations.map((configuration) => inventory.components.filter(
     (component) =>
       component.lockfiles.includes("app/gradle.lockfile") &&
-      component.configurations.includes(androidReleaseRuntimeConfiguration),
-  );
-  if (selected.length === 0) {
-    throw new Error(`No components were locked for ${androidReleaseRuntimeConfiguration}.`);
+      component.configurations.includes(configuration),
+  ));
+  for (let index = 0; index < selectedGraphs.length; index += 1) {
+    if (selectedGraphs[index].length === 0) {
+      throw new Error(`No components were locked for ${androidReleaseRuntimeConfigurations[index]}.`);
+    }
   }
+  const coordinateGraphs = selectedGraphs.map((components) =>
+    components.map((component) => component.coordinate).sort());
+  if (JSON.stringify(coordinateGraphs[0]) !== JSON.stringify(coordinateGraphs[1])) {
+    throw new Error("Android ARM64 and ARMv7 release runtime graphs differ; review them independently before publishing.");
+  }
+  const selected = selectedGraphs[0];
 
   const packages = selected.map((component) => {
     const coordinate = parseCoordinate(component.coordinate);
@@ -71,7 +82,7 @@ export function createAndroidRuntimeSpdx(inventory, created = sourceDateEpoch())
     spdxVersion: "SPDX-2.3",
     dataLicense: "CC0-1.0",
     SPDXID: "SPDXRef-DOCUMENT",
-    name: "PixNya Android ARM64 release runtime",
+    name: "PixNya Android ARM release runtime",
     documentNamespace: `https://github.com/space2233/pixnya/sbom/android-runtime/${graphFingerprint}`,
     creationInfo: {
       created,
@@ -111,7 +122,7 @@ function runCli() {
   mkdirSync(dirname(options.output), { recursive: true });
   writeFileSync(options.output, `${JSON.stringify(sbom, null, 2)}\n`, "utf8");
   console.log(
-    `Wrote ${options.output} with ${sbom.packages.length} ${androidReleaseRuntimeConfiguration} packages.`,
+    `Wrote ${options.output} with ${sbom.packages.length} packages shared by ${androidReleaseRuntimeConfigurations.join(" and ")}.`,
   );
 }
 

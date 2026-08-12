@@ -73,11 +73,11 @@ node --test scripts/supply-chain-regression.test.mjs
 
 ## Android 漏洞扫描边界
 
-正式发布的 OSV 阻断扫描使用 `scripts/generate-android-runtime-sbom.mjs` 从 `app/gradle.lockfile` 精确筛选 `arm64ReleaseRuntimeClasspath`。当前候选锁图为 79 个实际 APK runtime Maven 包；Release 工作流把该独立 SBOM 交给固定提交的 OSV Scanner 2.5.0，并在命中漏洞时失败。这个运行时 SBOM 用于判断“漏洞代码是否进入 ARM64 APK”，不能替代完整物料清单。
+正式发布的 OSV 阻断扫描使用 `scripts/generate-android-runtime-sbom.mjs` 从 `app/gradle.lockfile` 精确筛选 `arm64ReleaseRuntimeClasspath` 与 `armReleaseRuntimeClasspath`。当前两套锁图各含 79 个实际 APK runtime Maven 包且集合必须完全相同；缺少任一图或出现分叉都会失败关闭。Release 工作流把这份共同的 Android ARM runtime SBOM 交给固定版本的 OSV Scanner，并在命中漏洞时失败。它不能替代完整物料清单。
 
 AGP、Kotlin Gradle plugin、UTP、buildscript 和 buildSrc 等构建工具仍全部进入严格依赖锁、SHA-256 verification、`android-gradle-dependencies.json`、主 SPDX SBOM、`THIRD_PARTY_NOTICES.md` 与逐依赖许可证归档。它们通过直接插件升级审查和构建环境治理控制；不能把仅存在于 UTP/buildscript 的 advisory 误报成 APK runtime 漏洞，也不能因此从完整供应链记录中删除。
 
-构建工具扫描不使用全局忽略。当前提交的 `docs/android-gradle-osv-risk-baseline.json` 基于稳定锁图的重新扫描，精确列出 82 个仅限 build-only scope 的临时 `(GHSA、Maven 坐标、版本、scope)` 例外：其中 1 个 Critical 例外在 2026-08-23 到期，其余 81 个在 2026-09-08 到期。每条都记录 owner、上游依赖链、不可达理由、已知修复版本和跟踪编号；新增条目、坐标或版本变化、scope 进入 runtime、条目到期都会使检查失败。ARM64 APK runtime 继续保持零例外、零 ignore。
+构建工具扫描不使用全局忽略。当前提交的 `docs/android-gradle-osv-risk-baseline.json` 基于稳定锁图的重新扫描，精确列出 82 个仅限 build-only scope 的临时 `(GHSA、Maven 坐标、版本、scope)` 例外：其中 1 个 Critical 例外在 2026-08-23 到期，其余 81 个在 2026-09-08 到期。每条都记录 owner、上游依赖链、不可达理由、已知修复版本和跟踪编号；新增条目、坐标或版本变化、scope 进入任一 Android ARM runtime、条目到期都会使检查失败。ARM64 与 ARM32 APK runtime 继续保持零例外、零 ignore。
 
 每次候选 Release 都会重新扫描三套 Gradle 锁，并把未经裁剪的 `pixnya-<version>-android-build-tools-osv.json` 作为附件归档；独立的每周工作流也运行同一基线检查并保留原始报告。到期条目只能通过升级/移除依赖或经过新的人工风险审查后显式更新，不能自动续期。
 

@@ -153,6 +153,7 @@ test("release builds fail closed unless updater and Android signing are configur
   assert.match(androidManifestGenerator, /createHash\("sha256"\)/);
   assert.match(androidManifestGenerator, /from "\.\/release-url-policy\.mjs"/);
   assert.match(desktopManifestGenerator, /"windows-x86_64"/);
+  assert.match(desktopManifestGenerator, /"windows-aarch64"/);
   assert.match(desktopManifestGenerator, /"linux-x86_64"/);
   assert.match(desktopManifestGenerator, /Base64-encoded Tauri updater signature/);
   assert.match(desktopManifestGenerator, /from "\.\/release-url-policy\.mjs"/);
@@ -163,7 +164,7 @@ test("release builds fail closed unless updater and Android signing are configur
   assert.match(workflow, /draft:\s*true/);
   assert.match(workflow, /generate-android-update-manifest\.mjs/);
   assert.match(workflow, /generate-desktop-update-manifest\.mjs/);
-  assert.doesNotMatch(workflow, /tauriTarget:\s*armv7/);
+  assert.match(workflow, /tauriTarget:\s*armv7/);
   assert.doesNotMatch(workflow, /PIXNYA_GITHUB_TOKEN|PRIVATE_REPOSITORY_TOKEN/);
   assert.match(environmentExample, /Base64 of the complete minisign public-key file/);
 });
