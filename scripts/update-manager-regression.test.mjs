@@ -19,7 +19,7 @@ test("PixNya exposes one normalized update interface to the settings page", asyn
   const [backend, frontend, settings, types] = await Promise.all([
     read("src-tauri/src/updates.rs"),
     read("src/lib/updates.ts"),
-    read("src/routes/settings/+page.svelte"),
+    read("src/routes/settings/updates/+page.svelte"),
     read("src/lib/types.ts"),
   ]);
 
@@ -32,7 +32,7 @@ test("PixNya exposes one normalized update interface to the settings page", asyn
   assert.match(frontend, /invoke<UpdateSnapshot>\("download_update"/);
   assert.match(frontend, /invoke<UpdateSnapshot>\("install_update"/);
   assert.match(types, /export interface UpdateSnapshot/);
-  assert.match(settings, /<section id="updates"/);
+  assert.match(settings, /<section>/);
   assert.match(settings, /m\.settings_auto_check\(\)/);
   assert.match(settings, /m\.settings_auto_download\(\)/);
   assert.match(settings, /m\.settings_check_now\(\)/);
@@ -55,7 +55,7 @@ test("corrupt update state fails closed and full local-data clearing resets it",
   const [updates, application, settings, types] = await Promise.all([
     read("src-tauri/src/updates.rs"),
     read("src-tauri/src/lib.rs"),
-    read("src/routes/settings/+page.svelte"),
+    read("src/routes/settings/privacy/+page.svelte"),
     read("src/lib/types.ts"),
   ]);
 
@@ -65,8 +65,8 @@ test("corrupt update state fails closed and full local-data clearing resets it",
   assert.match(application, /updates::clear_update_state\(&app, update_manager\.inner\(\)\)/);
   assert.match(application, /LocalDataClearFailure::UpdateSettings/);
   assert.match(types, /\| "update_settings"/);
-  assert.match(settings, /update_settings: m\.settings_failure_updates\(\)/);
-  assert.match(settings, /loadUpdateSnapshot\(\)/);
+  assert.match(settings, /update_settings: m\.settings_failure_updates/);
+  assert.match(settings, /clearLocalData\("CLEAR_LOCAL_DATA"\)/);
 });
 
 test("desktop updates use Tauri signatures and Android delegates verified APKs to the system", async () => {

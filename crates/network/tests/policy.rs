@@ -144,32 +144,47 @@ fn compatible_pixiv_login_uses_the_platform_webview_proxy() {
 }
 
 #[test]
-fn android_non_standard_login_is_explicitly_modeled_as_an_insecure_bridge() {
-    let cases = [
-        (ConnectionMode::Ech, EchRequirement::PreflightOnly),
-        (ConnectionMode::Compatible, EchRequirement::NotApplicable),
-    ];
+fn android_ech_login_never_uses_the_insecure_bridge() {
+    let request = RouteRequest {
+        mode: ConnectionMode::Ech,
+        traffic: TrafficClass::LoginWebView,
+        host: "app-api.pixiv.net".into(),
+        capabilities: PlatformCapabilities {
+            rust_ech: true,
+            webview_proxy: true,
+            webview_insecure_bridge: true,
+            ..PlatformCapabilities::default()
+        },
+    };
 
-    for (mode, expected_ech_requirement) in cases {
-        let request = RouteRequest {
-            mode,
-            traffic: TrafficClass::LoginWebView,
-            host: "app-api.pixiv.net".into(),
-            capabilities: PlatformCapabilities {
-                rust_ech: true,
-                webview_proxy: true,
-                webview_insecure_bridge: true,
-                ..PlatformCapabilities::default()
-            },
-        };
+    let plan = ConnectionPolicy.evaluate(&request).unwrap();
 
-        let plan = ConnectionPolicy.evaluate(&request).unwrap();
+    assert_eq!(plan.transport, TransportRoute::WebViewSystem);
+    assert_eq!(plan.ech_requirement, EchRequirement::PlatformManaged);
+    assert_eq!(plan.security, TransportSecurity::SystemTls);
+    assert!(!plan.requires_user_acknowledgement);
+}
 
-        assert_eq!(plan.transport, TransportRoute::WebViewInsecureBridge);
-        assert_eq!(plan.ech_requirement, expected_ech_requirement);
-        assert_eq!(plan.security, TransportSecurity::Insecure);
-        assert!(plan.requires_user_acknowledgement);
-    }
+#[test]
+fn android_compatible_login_remains_an_explicit_insecure_bridge() {
+    let request = RouteRequest {
+        mode: ConnectionMode::Compatible,
+        traffic: TrafficClass::LoginWebView,
+        host: "app-api.pixiv.net".into(),
+        capabilities: PlatformCapabilities {
+            rust_ech: true,
+            webview_proxy: true,
+            webview_insecure_bridge: true,
+            ..PlatformCapabilities::default()
+        },
+    };
+
+    let plan = ConnectionPolicy.evaluate(&request).unwrap();
+
+    assert_eq!(plan.transport, TransportRoute::WebViewInsecureBridge);
+    assert_eq!(plan.ech_requirement, EchRequirement::NotApplicable);
+    assert_eq!(plan.security, TransportSecurity::Insecure);
+    assert!(plan.requires_user_acknowledgement);
 }
 
 #[test]

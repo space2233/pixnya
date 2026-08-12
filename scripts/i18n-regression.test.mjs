@@ -24,6 +24,11 @@ test("the message catalog exposes the same keys for all three supported locales"
   assert.deepEqual(messageKeys(catalogs[2]), messageKeys(catalogs[0]));
   assert.equal(catalogs[1].language_traditional_chinese, "繁體中文");
   assert.equal(catalogs[2].navigation_settings, "Settings");
+  for (const catalog of catalogs) {
+    assert.equal(Object.keys(catalog).some((key) => key.startsWith("media_risk_")), false);
+    assert.equal(Object.keys(catalog).some((key) => key.startsWith("network_media_warning_")), false);
+    assert.equal("network_restore_media_warning" in catalog, false);
+  }
 });
 
 test("application source keeps user-facing copy in the message catalogs", async () => {
@@ -46,9 +51,9 @@ test("native network probes return structured data instead of fixed-language sum
   assert.doesNotMatch(gateway, /[\u3400-\u9fff]/u);
   assert.doesNotMatch(gateway, /dns_source|tls_summary/);
   assert.doesNotMatch(types, /dnsSource|tlsSummary/);
-  assert.match(page, /m\.network_probe_tls_standard\(\)/);
-  assert.match(page, /m\.network_probe_tls_ech\(\)/);
-  assert.match(page, /m\.network_probe_tls_compatible\(\)/);
+  assert.match(page, /ConnectionModePicker/);
+  assert.match(page, /ConnectionDiagnosticReport/);
+  assert.doesNotMatch(page, /dnsSource|tlsSummary/);
 });
 
 test("system language mapping distinguishes Chinese scripts and defaults to English", async () => {
@@ -71,7 +76,7 @@ test("language preference is local-only and shared chrome consumes generated mes
     read("src/lib/navigation.ts"),
     read("src/lib/components/AppShell.svelte"),
     read("src/lib/components/ArtworkThumbnail.svelte"),
-    read("src/routes/settings/+page.svelte"),
+    read("src/routes/settings/interface/+page.svelte"),
   ]);
 
   assert.match(i18n, /pixiv-client\.interface-language/);
@@ -81,7 +86,7 @@ test("language preference is local-only and shared chrome consumes generated mes
   assert.match(navigation, /m\.navigation_home/);
   assert.match(shell, /m\.shell_search_placeholder\(\)/);
   assert.match(thumbnail, /m\.thumbnail_unavailable\(\)/);
-  assert.match(settings, /setLanguagePreference\(preference\)/);
+  assert.match(settings, /setLanguagePreference\(language\)/);
   assert.match(settings, /<option value="zh-TW">/);
 });
 

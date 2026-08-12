@@ -119,10 +119,10 @@ struct ActiveLoginProxy {
 #[derive(Clone)]
 struct AuthenticatedDataState {
     clients: Arc<Mutex<Vec<CachedTransportClient>>>,
+    request_gate: Arc<tokio::sync::RwLock<()>>,
     media_gate: Arc<tokio::sync::Semaphore>,
     mutation_gate: Arc<tokio::sync::Semaphore>,
     library_gate: Arc<tokio::sync::Semaphore>,
-    media_fallback_generation: Arc<AtomicU64>,
 }
 
 struct CachedTransportClient {
@@ -150,36 +150,15 @@ impl Default for AuthenticatedDataState {
     fn default() -> Self {
         Self {
             clients: Arc::new(Mutex::new(Vec::new())),
+            request_gate: Arc::new(tokio::sync::RwLock::new(())),
             media_gate: Arc::new(tokio::sync::Semaphore::new(MEDIA_REQUEST_CONCURRENCY)),
             mutation_gate: Arc::new(tokio::sync::Semaphore::new(1)),
             library_gate: Arc::new(tokio::sync::Semaphore::new(1)),
-            media_fallback_generation: Arc::new(AtomicU64::new(0)),
         }
     }
 }
 
 impl AuthenticatedDataState {
-    fn acknowledge_insecure_media_fallback(&self, generation: u64) {
-        self.media_fallback_generation
-            .store(generation, Ordering::Release);
-    }
-
-    fn media_mode_for(
-        &self,
-        session_mode: ConnectionMode,
-        generation: u64,
-    ) -> Result<ConnectionMode, ApiCommandError> {
-        match session_mode {
-            ConnectionMode::Ech
-                if self.media_fallback_generation.load(Ordering::Acquire) != generation =>
-            {
-                Err(ApiCommandError::UnsafeMediaAcknowledgementRequired)
-            }
-            ConnectionMode::Ech => Ok(ConnectionMode::Compatible),
-            mode => Ok(mode),
-        }
-    }
-
     fn client_for(
         &self,
         mode: ConnectionMode,
@@ -228,7 +207,6 @@ impl AuthenticatedDataState {
             .lock()
             .map_err(|_| ApiCommandError::StateUnavailable)?
             .clear();
-        self.media_fallback_generation.store(0, Ordering::Release);
         Ok(())
     }
 }
@@ -333,6 +311,7 @@ enum LoginLaunchError {
         host: String,
     },
     AttemptUnavailable,
+    AttemptConfigurationMismatch,
     AttemptNotPending,
     InvalidAuthorizationUrl,
     OAuthConfigurationUnavailable,
@@ -396,7 +375,6 @@ enum SessionCommandError {
 #[serde(tag = "kind", rename_all = "snake_case")]
 enum ApiCommandError {
     AuthenticationRequired,
-    UnsafeMediaAcknowledgementRequired,
     InvalidCursor,
     InvalidIdentifier,
     InvalidInput,
@@ -960,6 +938,7 @@ async fn open_interactive_login(
     if oauth_configuration().is_err() {
         return Err(LoginLaunchError::OAuthConfigurationUnavailable);
     }
+    ensure_login_surface_support(mode)?;
     let route = evaluate_login_route(
         mode,
         detected_capabilities(),
@@ -975,6 +954,7 @@ async fn open_interactive_login(
         let pending = pending
             .as_ref()
             .ok_or(LoginLaunchError::AttemptUnavailable)?;
+        validate_login_launch_binding(pending, mode, unsafe_acknowledged)?;
         build_authorization_url(&pending.attempt)?
     };
 
@@ -1007,6 +987,7 @@ async fn open_interactive_login(
         let pending = pending
             .as_mut()
             .ok_or(LoginLaunchError::AttemptUnavailable)?;
+        validate_login_launch_binding(pending, mode, unsafe_acknowledged)?;
         pending.active_launch_id = Some(launch_id);
         pending.prepared_oauth_client = Some(prepared_oauth_client);
     }
@@ -1057,6 +1038,34 @@ async fn open_interactive_login(
         ech_preflight,
         proxy_active,
     })
+}
+
+#[cfg(target_os = "android")]
+fn ensure_login_surface_support(mode: ConnectionMode) -> Result<(), LoginLaunchError> {
+    if mode == ConnectionMode::Ech {
+        Err(LoginLaunchError::EchUnavailable {
+            host: LOGIN_HOST.to_owned(),
+        })
+    } else {
+        Ok(())
+    }
+}
+
+#[cfg(not(target_os = "android"))]
+fn ensure_login_surface_support(_mode: ConnectionMode) -> Result<(), LoginLaunchError> {
+    Ok(())
+}
+
+fn validate_login_launch_binding(
+    pending: &PendingLogin,
+    mode: ConnectionMode,
+    unsafe_acknowledged: bool,
+) -> Result<(), LoginLaunchError> {
+    if pending.mode != mode || pending.unsafe_acknowledged != unsafe_acknowledged {
+        Err(LoginLaunchError::AttemptConfigurationMismatch)
+    } else {
+        Ok(())
+    }
 }
 
 fn safe_window_title(window_title: String) -> String {
@@ -1117,8 +1126,8 @@ fn configure_login_proxy(
 #[cfg(target_os = "android")]
 fn login_proxy_mode(mode: ConnectionMode) -> Option<LoginProxyMode> {
     match mode {
-        ConnectionMode::Standard => None,
-        ConnectionMode::Ech | ConnectionMode::Compatible => Some(LoginProxyMode::InsecureTlsBridge),
+        ConnectionMode::Compatible => Some(LoginProxyMode::InsecureTlsBridge),
+        ConnectionMode::Standard | ConnectionMode::Ech => None,
     }
 }
 
@@ -1645,6 +1654,65 @@ async fn logout(
     Ok(snapshot)
 }
 
+#[tauri::command]
+async fn switch_connection_mode(
+    mode: ConnectionMode,
+    app: tauri::AppHandle,
+    session_state: tauri::State<'_, SessionState>,
+    data_state: tauri::State<'_, AuthenticatedDataState>,
+) -> Result<SessionSnapshot, SessionCommandError> {
+    let _mutation = data_state
+        .mutation_gate
+        .clone()
+        .acquire_owned()
+        .await
+        .map_err(|_| SessionCommandError::SessionUnavailable)?;
+    let request_gate = data_state.request_gate.clone();
+    let _requests = request_gate.write().await;
+    let _operation = session_state.operation_guard().await;
+    let before = session_state
+        .snapshot()
+        .map_err(SessionCommandError::from)?;
+    let Some(old_mode) = before.connection_mode else {
+        return Ok(before);
+    };
+    if old_mode == mode {
+        return Ok(before);
+    }
+    let credential = load_refresh_token(&app)
+        .await
+        .map_err(|_| SessionCommandError::SecureStorageUnavailable)?
+        .ok_or(SessionCommandError::SecureStorageUnavailable)?;
+    if credential.connection_mode() != old_mode {
+        return Err(SessionCommandError::SessionUnavailable);
+    }
+    data_state
+        .clear_transport_state()
+        .map_err(|_| SessionCommandError::SessionUnavailable)?;
+    save_refresh_token(&app, credential.token(), mode)
+        .await
+        .map_err(|_| SessionCommandError::SecureStorageUnavailable)?;
+    let updated = match session_state.set_connection_mode(mode) {
+        Ok(Some(snapshot)) => snapshot,
+        Ok(None) | Err(_) => {
+            let rollback = save_refresh_token(&app, credential.token(), old_mode).await;
+            if rollback.is_err() {
+                let storage_cleared = delete_refresh_token(&app).await;
+                let cleared = session_state.clear();
+                if let Ok(snapshot) = &cleared {
+                    let _ = app.emit("pixiv-session-changed", snapshot.clone());
+                }
+                storage_cleared.map_err(|_| SessionCommandError::SecureStorageUnavailable)?;
+                cleared.map_err(SessionCommandError::from)?;
+                return Err(SessionCommandError::SecureStorageUnavailable);
+            }
+            return Err(SessionCommandError::SessionUnavailable);
+        }
+    };
+    let _ = app.emit("pixiv-session-changed", updated.clone());
+    Ok(updated)
+}
+
 async fn ensure_authenticated_context(
     app: &tauri::AppHandle,
     state: &SessionState,
@@ -1736,6 +1804,8 @@ where
         + Send
         + 'static,
 {
+    let request_gate = data_state.request_gate.clone();
+    let _requests = request_gate.read().await;
     let context = ensure_authenticated_context(app, session_state).await?;
     let rejected_generation = context.generation();
     let first_attempt =
@@ -1781,6 +1851,8 @@ where
         .acquire_owned()
         .await
         .map_err(|_| ApiCommandError::StateUnavailable)?;
+    let request_gate = data_state.request_gate.clone();
+    let _requests = request_gate.read().await;
     let prepared_context = ensure_authenticated_context(app, session_state).await?;
     if prepared_context.user_id() != expected_user_id {
         return Err(ApiCommandError::AuthenticationRequired);
@@ -2920,11 +2992,10 @@ async fn perform_artwork_download(
         )?;
         progress.update(0, total_items, 0)?;
     }
-    let (session_mode, generation) = session_state
+    let (mode, _) = session_state
         .connection_context()
         .map_err(ApiCommandError::from)?
         .ok_or(ApiCommandError::AuthenticationRequired)?;
-    let mode = data_state.media_mode_for(session_mode, generation)?;
     let permit = data_state
         .library_gate
         .clone()
@@ -3039,11 +3110,10 @@ async fn perform_novel_download(
         )?;
         progress.update(0, 1, 0)?;
     }
-    let (session_mode, generation) = session_state
+    let (mode, _) = session_state
         .connection_context()
         .map_err(ApiCommandError::from)?
         .ok_or(ApiCommandError::AuthenticationRequired)?;
-    let mode = data_state.media_mode_for(session_mode, generation)?;
     let permit = data_state
         .library_gate
         .clone()
@@ -3175,11 +3245,10 @@ async fn perform_ugoira_download(
         )?;
         progress.update(0, total_items, 0)?;
     }
-    let (session_mode, generation) = session_state
+    let (mode, _) = session_state
         .connection_context()
         .map_err(ApiCommandError::from)?
         .ok_or(ApiCommandError::AuthenticationRequired)?;
-    let mode = data_state.media_mode_for(session_mode, generation)?;
     let permit = data_state
         .library_gate
         .clone()
@@ -3408,11 +3477,10 @@ async fn fetch_pixiv_thumbnail(
     data_state: tauri::State<'_, AuthenticatedDataState>,
     cache_state: tauri::State<'_, MediaCacheState>,
 ) -> Result<tauri::ipc::Response, ApiCommandError> {
-    let (session_mode, generation) = session_state
+    let (mode, _) = session_state
         .connection_context()
         .map_err(ApiCommandError::from)?
         .ok_or(ApiCommandError::AuthenticationRequired)?;
-    let mode = data_state.media_mode_for(session_mode, generation)?;
     let cache_kind = cache_kind.unwrap_or(CacheKind::Thumbnail);
     let cache_scope = media_cache_scope(mode);
     let cache_source_key = media_cache_source_key(&url)?;
@@ -3545,7 +3613,7 @@ async fn get_storage_status(app: tauri::AppHandle) -> Result<StorageStatus, ApiC
 
 #[tauri::command]
 async fn set_media_cache_limit(
-    cache_limit_bytes: u64,
+    cache_limit_bytes: Option<u64>,
     app: tauri::AppHandle,
     cache_state: tauri::State<'_, MediaCacheState>,
 ) -> Result<StorageStatus, ApiCommandError> {
@@ -3554,8 +3622,12 @@ async fn set_media_cache_limit(
     let gate = cache_state.gate.clone();
     tauri::async_runtime::spawn_blocking(move || {
         let _guard = gate.lock().map_err(|_| ApiCommandError::StateUnavailable)?;
+        let previous_limit = manager.cache_limit_bytes()?;
         manager.set_cache_limit(cache_limit_bytes)?;
-        MediaCache::open(root, manager.cache_limit_bytes()?)?;
+        if let Err(error) = MediaCache::open(root, manager.cache_limit_bytes()?) {
+            let _ = manager.set_cache_limit(previous_limit);
+            return Err(ApiCommandError::from(error));
+        }
         manager.status().map_err(ApiCommandError::from)
     })
     .await
@@ -3670,7 +3742,7 @@ async fn clear_local_data(
     let cache_limit = storage
         .as_ref()
         .and_then(|manager| manager.cache_limit_bytes().ok())
-        .unwrap_or(DEFAULT_CACHE_LIMIT_BYTES);
+        .unwrap_or(Some(DEFAULT_CACHE_LIMIT_BYTES));
     let cache_root = media_cache_root(&app);
     let cache_gate = cache_state.gate.clone();
     let cache_result = match cache_root {
@@ -3782,22 +3854,6 @@ async fn clear_login_webview_data(app: &tauri::AppHandle) -> Result<(), ()> {
     })
     .await
     .map_err(|_| ())?
-}
-
-#[tauri::command]
-fn acknowledge_insecure_media_fallback(
-    session_state: tauri::State<'_, SessionState>,
-    data_state: tauri::State<'_, AuthenticatedDataState>,
-) -> Result<(), ApiCommandError> {
-    let (mode, generation) = session_state
-        .connection_context()
-        .map_err(ApiCommandError::from)?
-        .ok_or(ApiCommandError::AuthenticationRequired)?;
-    if mode != ConnectionMode::Ech {
-        return Err(ApiCommandError::StateUnavailable);
-    }
-    data_state.acknowledge_insecure_media_fallback(generation);
-    Ok(())
 }
 
 #[cfg(not(target_os = "android"))]
@@ -4182,6 +4238,7 @@ pub fn run() {
             cancel_interactive_login,
             get_session_status,
             restore_session,
+            switch_connection_mode,
             logout,
             get_recommended_illustrations,
             get_recommended_manga,
@@ -4272,8 +4329,7 @@ pub fn run() {
             read_offline_asset,
             read_offline_text,
             remove_offline_entry,
-            fetch_pixiv_thumbnail,
-            acknowledge_insecure_media_fallback
+            fetch_pixiv_thumbnail
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -4282,8 +4338,8 @@ pub fn run() {
 #[cfg(test)]
 mod tests {
     use super::{
-        build_authorization_url, create_login_attempt, oauth_configuration, ApiCommandError,
-        AuthenticatedDataState, LoginPreparationError,
+        build_authorization_url, create_login_attempt, oauth_configuration,
+        validate_login_launch_binding, LoginLaunchError, LoginPreparationError, PendingLogin,
     };
     use pixiv_client_auth::LoginStatus;
     use pixiv_client_domain::{
@@ -4354,6 +4410,41 @@ mod tests {
     }
 
     #[test]
+    fn prepared_login_rejects_a_different_launch_mode() {
+        let (_, attempt) =
+            create_login_attempt(ConnectionMode::Ech, PlatformCapabilities::default(), false)
+                .unwrap();
+        let pending = PendingLogin {
+            attempt,
+            active_launch_id: None,
+            mode: ConnectionMode::Ech,
+            unsafe_acknowledged: false,
+            prepared_oauth_client: None,
+        };
+
+        assert!(matches!(
+            validate_login_launch_binding(&pending, ConnectionMode::Compatible, true),
+            Err(LoginLaunchError::AttemptConfigurationMismatch)
+        ));
+    }
+
+    #[test]
+    fn prepared_login_accepts_the_same_launch_configuration() {
+        let (_, attempt) =
+            create_login_attempt(ConnectionMode::Ech, PlatformCapabilities::default(), false)
+                .unwrap();
+        let pending = PendingLogin {
+            attempt,
+            active_launch_id: None,
+            mode: ConnectionMode::Ech,
+            unsafe_acknowledged: false,
+            prepared_oauth_client: None,
+        };
+
+        assert!(validate_login_launch_binding(&pending, ConnectionMode::Ech, false).is_ok());
+    }
+
+    #[test]
     fn compatible_login_requires_acknowledgement_before_checking_the_webview_proxy() {
         let result = create_login_attempt(
             ConnectionMode::Compatible,
@@ -4403,33 +4494,6 @@ mod tests {
         assert_eq!(
             preparation.oauth_configuration_ready,
             oauth_configuration().is_ok()
-        );
-    }
-
-    #[test]
-    fn ech_media_fallback_acknowledgement_is_scoped_to_one_session_generation() {
-        let state = AuthenticatedDataState::default();
-
-        assert!(matches!(
-            state.media_mode_for(ConnectionMode::Ech, 7),
-            Err(ApiCommandError::UnsafeMediaAcknowledgementRequired)
-        ));
-        state.acknowledge_insecure_media_fallback(7);
-        assert_eq!(
-            state.media_mode_for(ConnectionMode::Ech, 7).unwrap(),
-            ConnectionMode::Compatible
-        );
-        assert!(matches!(
-            state.media_mode_for(ConnectionMode::Ech, 8),
-            Err(ApiCommandError::UnsafeMediaAcknowledgementRequired)
-        ));
-        assert_eq!(
-            state.media_mode_for(ConnectionMode::Standard, 8).unwrap(),
-            ConnectionMode::Standard
-        );
-        assert_eq!(
-            state.media_mode_for(ConnectionMode::Compatible, 8).unwrap(),
-            ConnectionMode::Compatible
         );
     }
 }

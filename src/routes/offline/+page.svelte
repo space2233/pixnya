@@ -700,14 +700,13 @@
     <header class="page-header">
       <div>
         <h1>{m.offline_title()}</h1>
-        <p>{m.offline_description()}</p>
       </div>
       <div class="stats"><strong>{stats.entryCount}</strong><span>{m.offline_stats({ size: formatBytes(stats.sizeBytes) })}</span></div>
     </header>
 
     <section class="content-section queue-section" aria-labelledby="queue-title">
       <div class="section-heading">
-        <div><span class="heading-icon"><Icon name="download" size={18} /></span><div><h2 id="queue-title">{m.offline_queue_title()}</h2><p>{m.offline_queue_description()}</p></div></div>
+        <div><span class="heading-icon"><Icon name="download" size={18} /></span><div><h2 id="queue-title">{m.offline_queue_title()}</h2></div></div>
         <button class="section-refresh" type="button" disabled={queueStatus === "loading"} onclick={() => refreshQueue(true)}>{m.common_refresh()}</button>
       </div>
 
@@ -757,7 +756,7 @@
 
     <section class="content-section library-section" aria-labelledby="library-title">
       <div class="section-heading">
-        <div><span class="heading-icon library"><Icon name="book" size={18} /></span><div><h2 id="library-title">{m.offline_library_title()}</h2><p>{m.offline_library_description()}</p></div></div>
+        <div><span class="heading-icon library"><Icon name="book" size={18} /></span><div><h2 id="library-title">{m.offline_library_title()}</h2></div></div>
         <button class="section-refresh" type="button" disabled={libraryStatus === "loading"} onclick={() => refreshLibrary(true)}>{m.common_refresh()}</button>
       </div>
 
@@ -925,7 +924,6 @@
   .offline-page { width: min(980px, 100%); margin: 0 auto; padding: 26px 28px 70px; }
   .page-header { display: flex; gap: 20px; align-items: center; justify-content: space-between; }
   .page-header h1 { margin: 0; font-size: 22px; }
-  .page-header p { margin: 7px 0 0; color: var(--muted); font-size: 10px; }
   .stats { min-width: 120px; padding: 12px 16px; border: 1px solid var(--line); border-radius: 10px; background: white; text-align: right; }
   .stats strong, .stats span { display: block; }
   .stats strong { font-size: 18px; }
@@ -933,9 +931,8 @@
   .content-section { overflow: hidden; margin-top: 22px; border: 1px solid var(--line); border-radius: 12px; background: white; }
   .section-heading { display: flex; min-height: 68px; gap: 14px; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--line); }
   .section-heading > div { display: flex; min-width: 0; gap: 11px; align-items: center; }
-  .section-heading h2, .section-heading p { margin: 0; }
+  .section-heading h2 { margin: 0; }
   .section-heading h2 { font-size: 14px; }
-  .section-heading p { margin-top: 4px; color: var(--muted); font-size: 8px; }
   .section-heading button, .compact-state button, .state button { padding: 8px 15px; color: var(--pixiv-blue); border: 1px solid #cde8f9; border-radius: 18px; background: #f5fbff; cursor: pointer; font-size: 8px; }
   .section-refresh { min-width: 68px; flex: 0 0 auto; white-space: nowrap; word-break: keep-all; }
   .section-heading button:disabled { cursor: default; opacity: .55; }
@@ -1047,12 +1044,10 @@
     .offline-page { padding: 18px 12px 90px; }
     .page-header { align-items: stretch; flex-direction: column; }
     .page-header h1 { font-size: 21px; }
-    .page-header p { font-size: 12px; line-height: 1.6; }
     .stats { text-align: left; }
     .stats span { font-size: 11px; }
     .section-heading { align-items: flex-start; }
     .section-heading h2 { font-size: 16px; }
-    .section-heading p { font-size: 11px; line-height: 1.5; }
     .section-heading button { margin-top: 3px; font-size: 11px; }
     .task-row { grid-template-columns: 58px minmax(0, 1fr); gap: 10px; padding: 14px 12px; }
     .task-kind { height: 42px; font-size: 10px; }

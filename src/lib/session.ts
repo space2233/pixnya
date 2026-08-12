@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { writable } from "svelte/store";
-import type { SessionSnapshot } from "$lib/types";
+import type { ConnectionMode, SessionSnapshot } from "$lib/types";
 
 const loggedOut: SessionSnapshot = { loggedIn: false };
 
@@ -43,6 +43,12 @@ export function applySessionSnapshot(snapshot: SessionSnapshot): void {
 
 export async function logoutSession(): Promise<SessionSnapshot> {
   const snapshot = await invoke<SessionSnapshot>("logout");
+  session.set(snapshot);
+  return snapshot;
+}
+
+export async function switchSessionConnectionMode(mode: ConnectionMode): Promise<SessionSnapshot> {
+  const snapshot = await invoke<SessionSnapshot>("switch_connection_mode", { mode });
   session.set(snapshot);
   return snapshot;
 }

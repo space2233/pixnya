@@ -6,13 +6,9 @@
   import AppShell from "$lib/components/AppShell.svelte";
   import ReturnLink from "$lib/components/ReturnLink.svelte";
   import { m } from "$lib/i18n";
-  import {
-    readUnsafeConnectionWarningSuppressed,
-    writeUnsafeConnectionWarningSuppressed,
-  } from "$lib/preferences";
+  import { readPreferredConnectionMode } from "$lib/preferences";
   import { applySessionSnapshot } from "$lib/session";
   import type {
-    AppStatus,
     ConnectionMode,
     LoginCompletionProgress,
     LoginCompletionResult,
@@ -38,43 +34,16 @@
     web_view_insecure_bridge: m.login_transport_insecure_bridge,
   };
 
-  function routeNoteTitle(connectionMode: ConnectionMode): string {
-    if (usesAndroidBridge && connectionMode === "ech") return m.login_route_android_ech_title();
-    if (usesAndroidBridge) return m.login_route_bridge_title();
-    if (connectionMode === "ech") return m.login_route_ech_title();
-    if (connectionMode === "compatible") return m.login_route_compatible_title();
-    return m.login_route_standard_title();
-  }
-
-  function routeNoteBody(connectionMode: ConnectionMode): string {
-    if (usesAndroidBridge) {
-      return connectionMode === "ech"
-        ? m.login_route_android_ech_body()
-        : m.login_route_bridge_body();
-    }
-    if (connectionMode === "ech") {
-      return m.login_route_ech_body();
-    }
-    if (connectionMode === "compatible") {
-      return m.login_route_compatible_body();
-    }
-    return m.login_route_standard_body();
-  }
-
   let mode = $state<ConnectionMode>("standard");
   let preparation = $state<LoginPreparation | null>(null);
   let errorMessage = $state<string | null>(null);
   let isPreparing = $state(true);
   let isOpening = $state(false);
   let isCompleting = $state(false);
-  let awaitingUnsafeAcknowledgement = $state(false);
-  let unsafeAcknowledged = $state(false);
-  let suppressFutureWarnings = $state(false);
   let launchResult = $state<LoginLaunchResult | null>(null);
   let activeMobileLaunchId: number | null = null;
   let mobileLaunchWasHidden = false;
   let ownsAttempt = false;
-  let usesAndroidBridge = $state(false);
   let loginFinished = false;
   let destroyed = false;
   let unlistenCompleted: UnlistenFn | null = null;
@@ -85,14 +54,7 @@
   >("callback_received");
 
   onMount(() => {
-    const requestedMode = new URLSearchParams(window.location.search).get("mode");
-    if (
-      requestedMode === "standard" ||
-      requestedMode === "ech" ||
-      requestedMode === "compatible"
-    ) {
-      mode = requestedMode;
-    }
+    mode = readPreferredConnectionMode() ?? "standard";
     void initializeForPlatform();
     void attachLoginListeners();
 
@@ -146,20 +108,7 @@
 
   async function initializeForPlatform() {
     try {
-      const status = await invoke<AppStatus>("get_app_status");
-      usesAndroidBridge = status.platform === "android" && mode !== "standard";
-
-      if (mode === "compatible" || usesAndroidBridge) {
-        if (readUnsafeConnectionWarningSuppressed()) {
-          unsafeAcknowledged = true;
-          await prepare(true);
-        } else {
-          isPreparing = false;
-          awaitingUnsafeAcknowledgement = true;
-        }
-      } else {
-        await prepare(false);
-      }
+      await prepare();
     } catch (error) {
       isPreparing = false;
       errorMessage = describeError(error);
@@ -170,18 +119,11 @@
     if (ownsAttempt) void invoke("cancel_interactive_login");
   });
 
-  function cancelUnsafeLogin() {
-    window.location.assign("/");
+  function unsafeAcknowledged(): boolean {
+    return mode === "compatible";
   }
 
-  function confirmUnsafeLogin() {
-    if (suppressFutureWarnings) writeUnsafeConnectionWarningSuppressed(true);
-    unsafeAcknowledged = true;
-    awaitingUnsafeAcknowledgement = false;
-    void prepare(true);
-  }
-
-  async function prepare(acknowledged = unsafeAcknowledged) {
+  async function prepare(acknowledged = unsafeAcknowledged()) {
     isPreparing = true;
     errorMessage = null;
     preparation = null;
@@ -208,7 +150,7 @@
     try {
       launchResult = await invoke<LoginLaunchResult>("open_interactive_login", {
         mode,
-        unsafeAcknowledged,
+        unsafeAcknowledged: unsafeAcknowledged(),
         windowTitle: m.login_head_title(),
       });
       if (launchResult.target === "android_login_activity") {
@@ -327,7 +269,6 @@
       <div class="pixiv-symbol"><span>p</span></div>
       <div>
         <h1>{m.login_heading()}</h1>
-        <p>{m.login_heading_description()}</p>
       </div>
     </header>
 
@@ -335,25 +276,6 @@
       <div class="session-summary">
         <span class="eyebrow">{m.login_session_eyebrow()}</span>
         <h2>{modeLabels[mode]()}</h2>
-        <p>{m.login_session_description()}</p>
-
-        <ol class="security-steps">
-          <li class:ready={preparation !== null}>
-            <b>{preparation ? "✓" : "1"}</b>
-            <span><strong>{m.login_step_generate_pkce()}</strong><small>{m.login_step_generate_pkce_detail()}</small></span>
-          </li>
-          <li class:ready={preparation !== null}>
-            <b>{preparation ? "✓" : "2"}</b>
-            <span><strong>{m.login_step_lock_callback()}</strong><small>{m.login_step_lock_callback_detail()}</small></span>
-          </li>
-          <li class:ready={launchResult !== null}>
-            <b>{launchResult ? "✓" : "3"}</b>
-            <span>
-              <strong>{m.login_step_load_page()}</strong>
-              <small>{launchResult ? m.login_step_page_started() : m.login_step_page_waiting()}</small>
-            </span>
-          </li>
-        </ol>
       </div>
 
       <div class="session-status">
@@ -361,32 +283,6 @@
           <div class="status-banner loading">
             <span></span>
             <div><small>{m.login_preparing()}</small><strong>{m.login_preparing_context()}</strong></div>
-          </div>
-        {:else if awaitingUnsafeAcknowledgement}
-          <div class="status-banner risky">
-            <b>!</b>
-            <div>
-              <small>{m.login_risk_required()}</small>
-              <strong>{usesAndroidBridge ? m.login_risk_bridge_summary() : m.login_risk_api_summary()}</strong>
-            </div>
-          </div>
-          <div class="login-risk-prompt">
-            <strong>{m.login_risk_why()}</strong>
-            {#if usesAndroidBridge}
-              <p>{mode === "ech" ? m.login_risk_bridge_ech() : m.login_risk_bridge_compatible()}</p>
-            {:else}
-              <p>{m.login_risk_desktop_compatible()}</p>
-            {/if}
-            <label class="suppress-warning-choice">
-              <input type="checkbox" bind:checked={suppressFutureWarnings} />
-              <span><b>{m.login_warning_suppress()}</b><small>{m.login_warning_restore()}</small></span>
-            </label>
-            <div class="risk-actions">
-              <button type="button" onclick={cancelUnsafeLogin}>{m.login_back_safe()}</button>
-              <button class="danger-button" type="button" onclick={confirmUnsafeLogin}>
-                {suppressFutureWarnings ? m.login_confirm_forever() : m.login_confirm_once()}
-              </button>
-            </div>
           </div>
         {:else if isCompleting}
           <div class="status-banner loading">
@@ -420,11 +316,6 @@
             <div><dt>{m.login_certificate_host()}</dt><dd>{preparation.route.certificateHost}</dd></div>
           </dl>
 
-          <div class:warning-note={mode === "ech" || mode === "compatible"} class="route-note">
-            <strong>{routeNoteTitle(mode)}</strong>
-            <p>{routeNoteBody(mode)}</p>
-          </div>
-
           <button
             class="official-button"
             type="button"
@@ -438,20 +329,10 @@
                 : m.login_open_official()}
           </button>
 
-          {#if launchResult}
-            <p class="launch-result">{m.login_launch_result({
-              transport: transportLabels[launchResult.route.transport](),
-              tokenRoute: mode === "compatible" ? m.login_token_route_insecure() : m.login_token_route_secure(),
-            })}</p>
-          {/if}
         {/if}
       </div>
     </section>
 
-    <div class="privacy-note">
-      <strong>{m.login_privacy_title()}</strong>
-      <span>{m.login_privacy_bridge({ tokenRoute: mode === "compatible" ? m.login_privacy_token_insecure() : m.login_privacy_token_secure() })}</span>
-    </div>
   </div>
 </AppShell>
 
@@ -493,13 +374,6 @@
     font-size: 23px;
   }
 
-  .login-heading p {
-    margin: 7px 0 0;
-    color: var(--muted);
-    font-size: 11px;
-    line-height: 1.6;
-  }
-
   .login-panel {
     display: grid;
     grid-template-columns: minmax(260px, 0.8fr) minmax(360px, 1.2fr);
@@ -528,60 +402,6 @@
   .session-summary h2 {
     margin: 7px 0 9px;
     font-size: 21px;
-  }
-
-  .session-summary > p {
-    margin: 0;
-    color: var(--muted);
-    font-size: 10px;
-    line-height: 1.7;
-  }
-
-  .security-steps {
-    display: grid;
-    gap: 14px;
-    margin: 26px 0 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .security-steps li {
-    display: flex;
-    gap: 11px;
-    align-items: center;
-  }
-
-  .security-steps b {
-    display: grid;
-    width: 28px;
-    height: 28px;
-    flex: 0 0 auto;
-    place-items: center;
-    color: #999;
-    border: 1px solid #d8d8d8;
-    border-radius: 50%;
-    font-size: 10px;
-  }
-
-  .security-steps li.ready b {
-    color: white;
-    border-color: var(--success);
-    background: var(--success);
-  }
-
-  .security-steps strong,
-  .security-steps small {
-    display: block;
-  }
-
-  .security-steps strong {
-    font-size: 11px;
-  }
-
-  .security-steps small {
-    margin-top: 3px;
-    color: var(--soft-muted);
-    font-size: 9px;
   }
 
   .status-banner {
@@ -623,15 +443,6 @@
   }
 
   .status-banner.failed > b {
-    background: #ffdce3;
-  }
-
-  .status-banner.risky {
-    color: #9e3b4e;
-    background: #fff1f4;
-  }
-
-  .status-banner.risky > b {
     background: #ffdce3;
   }
 
@@ -682,111 +493,6 @@
     white-space: nowrap;
   }
 
-  .route-note {
-    padding: 14px;
-    border-radius: 8px;
-    background: #f2f8fd;
-  }
-
-  .route-note.warning-note {
-    background: #fff8ea;
-  }
-
-  .route-note strong {
-    font-size: 11px;
-  }
-
-  .route-note p {
-    margin: 6px 0 0;
-    color: #637482;
-    font-size: 9px;
-    line-height: 1.65;
-  }
-
-  .route-note.warning-note p {
-    color: #806f50;
-  }
-
-  .login-risk-prompt {
-    margin-top: 14px;
-    padding: 15px;
-    border: 1px solid #ffd0da;
-    border-radius: 8px;
-    background: #fff8f9;
-  }
-
-  .login-risk-prompt strong {
-    color: #92394a;
-    font-size: 11px;
-  }
-
-  .login-risk-prompt p {
-    margin: 7px 0 0;
-    color: #7f6066;
-    font-size: 9px;
-    line-height: 1.7;
-  }
-
-  .risk-actions {
-    display: flex;
-    gap: 8px;
-    margin-top: 14px;
-  }
-
-  .login-risk-prompt .suppress-warning-choice {
-    display: flex;
-    gap: 9px;
-    align-items: flex-start;
-    margin-top: 13px;
-    padding: 10px;
-    border: 1px solid #eadde0;
-    border-radius: 7px;
-    background: white;
-    cursor: pointer;
-  }
-
-  .login-risk-prompt .suppress-warning-choice input {
-    width: 17px;
-    height: 17px;
-    flex: 0 0 auto;
-    margin: 0;
-    accent-color: #d94f68;
-  }
-
-  .login-risk-prompt .suppress-warning-choice b,
-  .login-risk-prompt .suppress-warning-choice small {
-    display: block;
-  }
-
-  .login-risk-prompt .suppress-warning-choice b {
-    color: #5c4147;
-    font-size: 9px;
-  }
-
-  .login-risk-prompt .suppress-warning-choice small {
-    margin-top: 2px;
-    color: #8d747a;
-    font-size: 8px;
-  }
-
-  .login-risk-prompt button {
-    min-height: 36px;
-    flex: 1;
-    padding: 0 12px;
-    border: 1px solid var(--line);
-    border-radius: 18px;
-    background: white;
-    cursor: pointer;
-    font-size: 9px;
-    font-weight: 700;
-  }
-
-  .login-risk-prompt .danger-button {
-    color: white;
-    border-color: #d94f68;
-    background: #d94f68;
-  }
-
   .official-button,
   .secondary-button {
     width: 100%;
@@ -809,32 +515,11 @@
     opacity: 0.5;
   }
 
-  .launch-result {
-    margin: 10px 4px 0;
-    color: var(--muted);
-    font-size: 9px;
-    line-height: 1.6;
-  }
-
   .secondary-button {
     color: var(--text);
     border: 1px solid var(--line);
     background: white;
     cursor: pointer;
-  }
-
-  .privacy-note {
-    display: flex;
-    gap: 8px 20px;
-    align-items: center;
-    justify-content: center;
-    margin-top: 18px;
-    color: var(--soft-muted);
-    font-size: 9px;
-  }
-
-  .privacy-note strong {
-    color: #777;
   }
 
   @media (max-width: 720px) {
@@ -864,14 +549,6 @@
       padding: 22px;
     }
 
-    .privacy-note {
-      align-items: flex-start;
-      flex-direction: column;
-    }
-
-    .risk-actions {
-      flex-direction: column;
-    }
   }
 
   @media (max-width: 420px) {

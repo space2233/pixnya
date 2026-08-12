@@ -164,11 +164,11 @@ Dart 侧 [`WeissPlugin`](https://github.com/Notsfsssf/pixez-flutter/blob/6388dd8
 1. Rust 代理只监听随机的 `127.0.0.1` 端口，只接受 HTTP `CONNECT`，只允许 `443`。
 2. 每次登录新生成一张自签名证书和私钥；证书与私钥只存在于本次 `LoginProxy` 生命周期的内存中。
 3. Rust 把叶证书 SHA-256 指纹随登录启动参数传给 Android。
-4. Android 只在 `ech`/`compatible` 模式、请求 URL 属于固定 Pixiv 白名单、证书指纹与本次会话完全一致时调用 `SslErrorHandler.proceed()`；标准模式及其他所有证书错误继续取消。
+4. Android 只在 `compatible` 模式、请求 URL 属于固定 Pixiv 白名单、证书指纹与本次会话完全一致时调用 `SslErrorHandler.proceed()`；标准与 ECH 模式及其他所有证书错误继续取消。
 5. 代理解开 WebView TLS 后，以固定 IP 建立第二段 rustls 连接；使用 IP 类型 `ServerName`、显式关闭 SNI，并跳过上游证书链验证，但仍验证 TLS 握手签名。
 6. 两段 TLS 之间仅用 `copy_bidirectional` 转发字节；不解析、不修改、不记录 HTTP 正文。尽管如此，登录数据仍以明文经过应用进程内存，不能称为端到端安全。
 7. 未命中固定 IP 表的第三方域名保持普通端到端 CONNECT 隧道，不继承低安全 TLS。
-8. ECH 模式会先用 Rust 对 API 目标做 `Accepted` 预检；Android 登录页面仍明确标成“ECH 仅预检 + 低安全登录桥”，不会冒充 WebView ECH。
+8. ECH 模式会用 Rust 对 API 目标做 `Accepted` 验证；Android 系统 WebView 无法把该验证绑定到页面自身的 TLS 连接，因此 Android 的 ECH 登录明确失败关闭，不映射到普通 TLS 或低安全桥。
 9. callback 后的 authorization code/token 交换不得经过该桥；接入时必须强制使用已验证的 Rust ECH 路线并单独测试。
 
 实时回归测试已经通过本地桥请求 `https://app-api.pixiv.net/web/v1/login`，用于证明“回环 CONNECT → 一次性本地 TLS → 固定 Pixiv IP → 无 SNI 上游 TLS”链路能够取得官方页面响应。此测试不包含账号、密码、二步验证码或 token。

@@ -137,7 +137,7 @@
     <ReturnLink fallback="/novels" label={m.novel_return_source()} />
 
     {#if !$sessionRestoring && !$session.loggedIn}
-      <section class="state-card"><Icon name="user" size={28} /><div><h1>{m.novel_series_login_title()}</h1><p>{m.novel_series_login_description()}</p></div><a href="/login?mode=standard">{m.common_go_to_login()}</a></section>
+<section class="state-card"><Icon name="user" size={28} /><div><h1>{m.novel_series_login_title()}</h1><p>{m.novel_series_login_description()}</p></div><a href="/login">{m.common_go_to_login()}</a></section>
     {:else if status === "loading"}
       <section class="state-card"><span class="spinner"></span><div><h1>{m.novel_series_loading_title()}</h1><p>{m.novel_series_loading_description()}</p></div></section>
     {:else if status === "error"}
@@ -161,7 +161,7 @@
       </section>
 
       <section class="contents">
-        <header><div><h2>{m.series_contents()}</h2><p>{m.novel_series_contents_description()}</p></div><strong>{novels.length} / {series.contentCount}</strong></header>
+        <header><div><h2>{m.series_contents()}</h2></div><strong>{novels.length} / {series.contentCount}</strong></header>
         {#if novels.length}
           <div class="novel-grid">{#each novels as novel (novel.id)}<NovelCard {novel} />{/each}</div>
         {:else}<p class="empty">{m.novel_series_empty()}</p>{/if}
@@ -193,7 +193,7 @@
   .start { display: inline-flex; min-height: 36px; align-items: center; margin-top: 18px; padding: 0 17px; color: white; border-radius: 18px; background: var(--pixiv-blue); font-size: 9px; font-weight: 750; text-decoration: none; }
   .contents { margin-top: 34px; }
   .contents header { display: flex; align-items: end; justify-content: space-between; gap: 16px; }
-  .contents h2 { margin: 0; font-size: 19px; } .contents header p { margin: 5px 0 0; color: var(--muted); font-size: 9px; } .contents header strong { color: var(--muted); font-size: 9px; }
+  .contents h2 { margin: 0; font-size: 19px; } .contents header strong { color: var(--muted); font-size: 9px; }
   .novel-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; margin-top: 16px; }
   .empty { padding: 36px; color: var(--muted); border: 1px dashed var(--line); border-radius: 10px; font-size: 10px; text-align: center; }
   .load-error { color: #a65865; font-size: 9px; text-align: center; }

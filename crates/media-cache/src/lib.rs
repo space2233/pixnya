@@ -55,7 +55,7 @@ pub struct CacheStats {
     pub thumbnail_bytes: u64,
     pub preview_bytes: u64,
     pub original_bytes: u64,
-    pub max_bytes: u64,
+    pub max_bytes: Option<u64>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -79,12 +79,12 @@ impl std::error::Error for CacheError {}
 
 pub struct MediaCache {
     root: PathBuf,
-    max_bytes: u64,
+    max_bytes: Option<u64>,
     index: StoredIndex,
 }
 
 impl MediaCache {
-    pub fn open(root: impl Into<PathBuf>, max_bytes: u64) -> Result<Self, CacheError> {
+    pub fn open(root: impl Into<PathBuf>, max_bytes: Option<u64>) -> Result<Self, CacheError> {
         let root = root.into();
         fs::create_dir_all(&root).map_err(|_| CacheError::Io)?;
         restore_interrupted_index(&root)?;
@@ -155,7 +155,11 @@ impl MediaCache {
         bytes: &[u8],
     ) -> Result<(), CacheError> {
         validate_source_key(source_key)?;
-        if bytes.is_empty() || bytes.len() as u64 > self.max_bytes {
+        if bytes.is_empty()
+            || self
+                .max_bytes
+                .is_some_and(|limit| bytes.len() as u64 > limit)
+        {
             return Err(CacheError::AssetTooLarge);
         }
 
@@ -265,7 +269,10 @@ impl MediaCache {
             .values()
             .map(|entry| entry.size_bytes)
             .sum();
-        if total <= self.max_bytes {
+        let Some(max_bytes) = self.max_bytes else {
+            return Ok(());
+        };
+        if total <= max_bytes {
             return Ok(());
         }
         let mut oldest: Vec<(String, StoredEntry)> = self
@@ -276,7 +283,7 @@ impl MediaCache {
             .collect();
         oldest.sort_by_key(|(_, entry)| entry.access_order);
         for (id, entry) in oldest {
-            if total <= self.max_bytes {
+            if total <= max_bytes {
                 break;
             }
             total = total.saturating_sub(entry.size_bytes);
@@ -414,7 +421,7 @@ mod tests {
     #[test]
     fn stores_entries_without_persisting_source_urls_and_separates_security_scopes() {
         let root = test_root("privacy");
-        let mut cache = MediaCache::open(&root, 64).unwrap();
+        let mut cache = MediaCache::open(&root, Some(64)).unwrap();
         let source = "i.pximg.net/img-master/42_p0_master1200.jpg";
 
         cache
@@ -447,7 +454,7 @@ mod tests {
     #[test]
     fn evicts_least_recently_used_entries_to_the_configured_capacity() {
         let root = test_root("lru");
-        let mut cache = MediaCache::open(&root, 6).unwrap();
+        let mut cache = MediaCache::open(&root, Some(6)).unwrap();
         cache
             .put(CacheScope::Verified, CacheKind::Thumbnail, "one", b"111")
             .unwrap();
@@ -475,13 +482,37 @@ mod tests {
     }
 
     #[test]
+    fn unlimited_cache_keeps_entries_without_capacity_eviction() {
+        let root = test_root("unlimited");
+        let mut cache = MediaCache::open(&root, None).unwrap();
+        cache
+            .put(CacheScope::Verified, CacheKind::Thumbnail, "one", b"1111")
+            .unwrap();
+        cache
+            .put(CacheScope::Verified, CacheKind::Thumbnail, "two", b"2222")
+            .unwrap();
+
+        let stats = cache.stats();
+        assert_eq!(stats.entry_count, 2);
+        assert_eq!(stats.size_bytes, 8);
+        assert_eq!(stats.max_bytes, None);
+        assert_eq!(
+            cache
+                .get(CacheScope::Verified, CacheKind::Thumbnail, "one", 8)
+                .unwrap(),
+            Some(b"1111".to_vec())
+        );
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
     fn clearing_cache_never_removes_the_adjacent_offline_library() {
         let parent = test_root("clear-boundary");
         let root = parent.join("media-cache");
         let offline = parent.join("offline-library");
         fs::create_dir_all(&offline).unwrap();
         fs::write(offline.join("keep.txt"), b"download").unwrap();
-        let mut cache = MediaCache::open(&root, 64).unwrap();
+        let mut cache = MediaCache::open(&root, Some(64)).unwrap();
         cache
             .put(CacheScope::Verified, CacheKind::Thumbnail, "one", b"cached")
             .unwrap();

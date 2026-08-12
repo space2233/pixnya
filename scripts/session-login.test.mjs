@@ -50,5 +50,13 @@ test("the selected connection mode follows OAuth exchange and persisted refresh 
   assert.match(rust, /build_client\(&ProbeRequest/);
   assert.match(rust, /save_refresh_token\(app, refresh_token\.as_str\(\), mode\)/);
   assert.match(plugin, /connectionMode/);
-  assert.match(login, /m\.login_risk_bridge_compatible\(\)/);
+  assert.match(login, /unsafeAcknowledged\(\): boolean/);
+  assert.match(login, /return mode === "compatible"/);
+  assert.doesNotMatch(login, /URLSearchParams\(window\.location\.search\)[\s\S]*?get\("mode"\)/);
+  assert.doesNotMatch(login, /login_risk_bridge_compatible|login_warning/);
+  assert.doesNotMatch(profile, /profile_compatible_refresh_risk|session-risk/);
+  assert.match(
+    rust,
+    /save_refresh_token\(&app, credential\.token\(\), old_mode\)[\s\S]*?if rollback\.is_err\(\)[\s\S]*?delete_refresh_token\(&app\)[\s\S]*?session_state\.clear\(\)/,
+  );
 });

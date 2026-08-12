@@ -162,7 +162,7 @@
       <section class="state">
         <Icon name="user" size={27} />
         <div><h1>{m.novel_reader_login_title()}</h1><p>{m.novel_reader_login_description()}</p></div>
-        <a href="/login?mode=standard">{m.common_go_to_login()}</a>
+<a href="/login">{m.common_go_to_login()}</a>
       </section>
     {:else if status === "loading"}
       <section class="state">

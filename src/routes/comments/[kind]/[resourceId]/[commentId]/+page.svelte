@@ -182,7 +182,7 @@
     <ReturnLink {fallback} label={m.reply_back()} />
 
     {#if !$sessionRestoring && !$session.loggedIn}
-      <section class="state-card"><h1>{m.reply_login_title()}</h1><p>{m.reply_login_description()}</p><a href="/login?mode=standard">{m.common_go_to_login()}</a></section>
+<section class="state-card"><h1>{m.reply_login_title()}</h1><p>{m.reply_login_description()}</p><a href="/login">{m.common_go_to_login()}</a></section>
     {:else if !kindValid || !/^\d+$/.test(resourceId) || !/^\d+$/.test(commentId)}
       <section class="state-card error"><h1>{m.reply_invalid_title()}</h1><p>{m.reply_invalid_description()}</p></section>
     {:else}

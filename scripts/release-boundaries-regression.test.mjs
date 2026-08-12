@@ -18,17 +18,16 @@ const readGenerated = async (relativePath) => {
 };
 
 test("all user-visible package versions agree on the stable source version", async () => {
-  const expectedVersion = "1.1.0";
+  const expectedVersion = "1.2.0";
   const [major, minor, patch] = expectedVersion.split(".").map(Number);
   const expectedAndroidVersionCode = major * 1_000_000 + minor * 1_000 + patch;
-  const [workspace, packageJson, packageLock, tauri, androidProperties, androidIgnore, settings, readme] = await Promise.all([
+  const [workspace, packageJson, packageLock, tauri, androidProperties, androidIgnore, readme] = await Promise.all([
     read("Cargo.toml"),
     read("package.json"),
     read("package-lock.json"),
     read("src-tauri/tauri.conf.json"),
     readGenerated("src-tauri/gen/android/app/tauri.properties"),
     read("src-tauri/gen/android/app/.gitignore"),
-    read("src/routes/settings/+page.svelte"),
     read("README.md"),
   ]);
   assert.ok(workspace.includes(`version = "${expectedVersion}"`));
@@ -40,7 +39,6 @@ test("all user-visible package versions agree on the stable source version", asy
     assert.ok(androidProperties.includes(`tauri.android.versionName=${expectedVersion}`));
     assert.ok(androidProperties.includes(`tauri.android.versionCode=${expectedAndroidVersionCode}`));
   }
-  assert.ok(settings.includes(`appStatus?.version ?? "${expectedVersion}"`));
   assert.ok(readme.includes(`当前源码版本 \`${expectedVersion}\``));
 });
 
@@ -435,7 +433,6 @@ test("notifications remain read-only while unsupported posting stays non-interac
     read("src/lib/components/AppShell.svelte"),
   ]);
   assert.match(notifications, /getNotifications/);
-  assert.match(notifications, /m\.notifications_read_only\(\)/);
   assert.doesNotMatch(notifications, /markNotification|notification.*(?:post|write)/i);
   assert.match(shell, /class="text-action" type="button" disabled/);
   assert.match(shell, /m\.shell_post_unavailable\(\)/);

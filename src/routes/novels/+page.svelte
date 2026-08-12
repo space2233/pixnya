@@ -131,14 +131,14 @@
 <AppShell title={m.novels_title()}>
   <ContentTabs />
   <main class="novel-page">
-    <header><div><h1>{m.novels_title()}</h1><p>{m.novels_description()}</p></div></header>
+    <header><div><h1>{m.novels_title()}</h1></div></header>
     <div class="novel-toolbar">
       <nav aria-label={m.novels_content_type()}>{#each sections as section}<button type="button" class:active={selectedSection === section} onclick={() => (selectedSection = section)}>{sectionLabels[section]()}</button>{/each}</nav>
       {#if selectedSection === "ranking"}<select bind:value={rankingMode} aria-label={m.novels_ranking_period()}><option value="day">{m.novels_today()}</option><option value="week">{m.novels_this_week()}</option><option value="month">{m.novels_this_month()}</option></select>{/if}
       {#if selectedSection === "bookmarks"}<select bind:value={bookmarkRestrict} aria-label={m.novels_bookmark_scope()}><option value="public">{m.common_public_bookmarks()}</option><option value="private">{m.common_private_bookmarks()}</option></select>{/if}
     </div>
     {#if !$sessionRestoring && !$session.loggedIn}
-      <section class="state"><Icon name="user" size={27} /><div><h2>{m.novels_sign_in_title()}</h2><p>{m.novels_sign_in_description()}</p></div><a href="/login?mode=standard">{m.search_go_to_login()}</a></section>
+<section class="state"><Icon name="user" size={27} /><div><h2>{m.novels_sign_in_title()}</h2><p>{m.novels_sign_in_description()}</p></div><a href="/login">{m.search_go_to_login()}</a></section>
     {:else if status === "loading"}
       <section class="state"><span class="spinner"></span><div><h2>{m.novels_loading_title({ section: sectionLabels[selectedSection]() })}</h2><p>{m.novels_loading_description()}</p></div></section>
     {:else if status === "error"}
@@ -154,7 +154,6 @@
 <style>
   .novel-page { width: min(1060px,100%); margin: 0 auto; padding: 26px 28px 64px; }
   header h1 { margin: 0; font-size: 22px; }
-  header p { margin: 7px 0 0; color: var(--muted); font-size: 10px; }
   .novel-toolbar { display: flex; gap: 10px; align-items: center; justify-content: space-between; margin-top: 18px; } .novel-toolbar nav { display: flex; gap: 4px; padding: 4px; border-radius: 21px; background: #f3f3f3; } .novel-toolbar button { min-width: 58px; height: 31px; color: #777; border: 0; border-radius: 16px; background: transparent; cursor: pointer; font-size: 9px; font-weight: 700; } .novel-toolbar button.active { color: #333; background: white; box-shadow: 0 1px 4px rgba(0,0,0,.08); } .novel-toolbar select { height: 34px; padding: 0 11px; border: 1px solid var(--line); border-radius: 17px; background: white; font-size: 9px; }
   .novel-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; margin-top: 22px; }
   .state { display: grid; grid-template-columns: 44px minmax(0,1fr) auto; gap: 14px; align-items: center; margin-top: 22px; padding: 20px; border: 1px solid var(--line); border-radius: 11px; background: white; }

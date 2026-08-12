@@ -1,11 +1,5 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
-  import { onMount } from "svelte";
-  import {
-    commandFailureKind,
-    MEDIA_RETRY_EVENT,
-    requestInsecureMediaFallback,
-  } from "$lib/media";
   import type { MediaCacheKind } from "$lib/types";
 
   type LoadStatus = "loading" | "ready" | "error";
@@ -25,19 +19,8 @@
   } = $props();
 
   let source = $state<string | null>(null);
-  let retryGeneration = $state(0);
-
-  onMount(() => {
-    const retry = () => {
-      retryGeneration += 1;
-    };
-    window.addEventListener(MEDIA_RETRY_EVENT, retry);
-    return () => window.removeEventListener(MEDIA_RETRY_EVENT, retry);
-  });
-
   $effect(() => {
     const requestedUrl = url;
-    retryGeneration;
     source = null;
     if (!requestedUrl) {
       onstatus?.("error");
@@ -63,10 +46,7 @@
         source = objectUrl;
         onstatus?.("ready");
       })
-      .catch((error) => {
-        if (commandFailureKind(error) === "unsafe_media_acknowledgement_required") {
-          requestInsecureMediaFallback();
-        }
+      .catch(() => {
         if (!disposed) onstatus?.("error");
       });
 

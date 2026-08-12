@@ -332,7 +332,7 @@
       <section class="state-card">
         <Icon name="user" size={28} />
         <div><h1>{m.artwork_login_title()}</h1><p>{m.artwork_login_description()}</p></div>
-        <a href="/login?mode=standard">{m.common_go_to_login()}</a>
+<a href="/login">{m.common_go_to_login()}</a>
       </section>
     {:else if status === "loading"}
       <section class="state-card loading" aria-live="polite">
@@ -455,7 +455,7 @@
       <ArtworkComments illustrationId={detail.illustration.id} initialCount={detail.totalComments} />
 
       <section class="related-section">
-        <header><div><h2>{m.artwork_related()}</h2><p>{m.artwork_related_description()}</p></div></header>
+        <header><div><h2>{m.artwork_related()}</h2></div></header>
         {#if related.length > 0}
           <div class="related-grid">
             {#each related as illustration, index (illustration.id)}
@@ -552,7 +552,6 @@
 
   .related-section { margin-top: 42px; }
   .related-section header h2 { margin: 0; font-size: 18px; }
-  .related-section header p { margin: 5px 0 0; color: var(--muted); font-size: 9px; }
   .related-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 22px 14px; margin-top: 16px; }
   .empty { padding: 36px; color: var(--muted); border: 1px dashed var(--line); border-radius: 9px; font-size: 10px; text-align: center; }
   .related-error { color: #a65865; font-size: 9px; text-align: center; }

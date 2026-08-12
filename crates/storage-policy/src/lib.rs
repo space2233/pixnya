@@ -13,7 +13,8 @@ const GIB: u64 = 1024 * MIB;
 pub const DEFAULT_CACHE_LIMIT_BYTES: u64 = 256 * MIB;
 pub const STORAGE_RESERVE_BYTES: u64 = 512 * MIB;
 pub const STORAGE_WARNING_BYTES: u64 = 2 * GIB;
-pub const ALLOWED_CACHE_LIMIT_BYTES: [u64; 4] = [128 * MIB, 256 * MIB, 512 * MIB, GIB];
+pub const ALLOWED_CACHE_LIMIT_BYTES: [u64; 6] =
+    [128 * MIB, 256 * MIB, 512 * MIB, GIB, 5 * GIB, 10 * GIB];
 const MAX_SCANNED_ENTRIES: usize = 1_000_000;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -35,8 +36,8 @@ pub struct StorageStatus {
     pub writable_download_bytes: u64,
     pub offline_bytes: u64,
     pub cache_bytes: u64,
-    pub cache_limit_bytes: u64,
-    pub cache_remaining_quota_bytes: u64,
+    pub cache_limit_bytes: Option<u64>,
+    pub cache_remaining_quota_bytes: Option<u64>,
     pub reserve_bytes: u64,
     pub warning_bytes: u64,
 }
@@ -73,14 +74,14 @@ impl std::error::Error for StorageError {}
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 struct StoredSettings {
     format_version: u8,
-    cache_limit_bytes: u64,
+    cache_limit_bytes: Option<u64>,
 }
 
 impl Default for StoredSettings {
     fn default() -> Self {
         Self {
             format_version: FORMAT_VERSION,
-            cache_limit_bytes: DEFAULT_CACHE_LIMIT_BYTES,
+            cache_limit_bytes: Some(DEFAULT_CACHE_LIMIT_BYTES),
         }
     }
 }
@@ -116,15 +117,15 @@ impl StorageManager {
         })
     }
 
-    pub fn cache_limit_bytes(&self) -> Result<u64, StorageError> {
+    pub fn cache_limit_bytes(&self) -> Result<Option<u64>, StorageError> {
         self.settings
             .lock()
             .map(|settings| settings.cache_limit_bytes)
             .map_err(|_| StorageError::StateUnavailable)
     }
 
-    pub fn set_cache_limit(&self, cache_limit_bytes: u64) -> Result<(), StorageError> {
-        if !ALLOWED_CACHE_LIMIT_BYTES.contains(&cache_limit_bytes) {
+    pub fn set_cache_limit(&self, cache_limit_bytes: Option<u64>) -> Result<(), StorageError> {
+        if cache_limit_bytes.is_some_and(|limit| !ALLOWED_CACHE_LIMIT_BYTES.contains(&limit)) {
             return Err(StorageError::InvalidCacheLimit);
         }
         let mut settings = self
@@ -184,7 +185,7 @@ fn evaluate_status(
     cache: VolumeSpace,
     offline_bytes: u64,
     cache_bytes: u64,
-    cache_limit_bytes: u64,
+    cache_limit_bytes: Option<u64>,
 ) -> StorageStatus {
     let least_available = data.available_bytes.min(cache.available_bytes);
     let health = if least_available <= STORAGE_RESERVE_BYTES {
@@ -204,7 +205,8 @@ fn evaluate_status(
         offline_bytes,
         cache_bytes,
         cache_limit_bytes,
-        cache_remaining_quota_bytes: cache_limit_bytes.saturating_sub(cache_bytes),
+        cache_remaining_quota_bytes: cache_limit_bytes
+            .map(|limit| limit.saturating_sub(cache_bytes)),
         reserve_bytes: STORAGE_RESERVE_BYTES,
         warning_bytes: STORAGE_WARNING_BYTES,
     }
@@ -233,7 +235,9 @@ fn load_settings(root: &Path) -> Option<StoredSettings> {
     }
     let settings: StoredSettings = serde_json::from_slice(&bytes).ok()?;
     (settings.format_version == FORMAT_VERSION
-        && ALLOWED_CACHE_LIMIT_BYTES.contains(&settings.cache_limit_bytes))
+        && settings
+            .cache_limit_bytes
+            .is_none_or(|limit| ALLOWED_CACHE_LIMIT_BYTES.contains(&limit)))
     .then_some(settings)
 }
 
@@ -354,8 +358,8 @@ fn volume_space(_path: &Path) -> Result<VolumeSpace, StorageError> {
 mod tests {
     use super::{
         ensure_write_capacity, evaluate_status, StorageError, StorageHealth, StorageManager,
-        VolumeSpace, ALLOWED_CACHE_LIMIT_BYTES, DEFAULT_CACHE_LIMIT_BYTES, STORAGE_RESERVE_BYTES,
-        STORAGE_WARNING_BYTES,
+        VolumeSpace, ALLOWED_CACHE_LIMIT_BYTES, DEFAULT_CACHE_LIMIT_BYTES, GIB,
+        STORAGE_RESERVE_BYTES, STORAGE_WARNING_BYTES,
     };
     use std::fs;
     use std::time::{SystemTime, UNIX_EPOCH};
@@ -374,17 +378,17 @@ mod tests {
         let manager = StorageManager::open(root.join("data"), root.join("cache")).unwrap();
         assert_eq!(
             manager.cache_limit_bytes().unwrap(),
-            DEFAULT_CACHE_LIMIT_BYTES
+            Some(DEFAULT_CACHE_LIMIT_BYTES)
         );
         manager
-            .set_cache_limit(ALLOWED_CACHE_LIMIT_BYTES[2])
+            .set_cache_limit(Some(ALLOWED_CACHE_LIMIT_BYTES[2]))
             .unwrap();
         assert_eq!(
             manager.cache_limit_bytes().unwrap(),
-            ALLOWED_CACHE_LIMIT_BYTES[2]
+            Some(ALLOWED_CACHE_LIMIT_BYTES[2])
         );
         assert_eq!(
-            manager.set_cache_limit(123),
+            manager.set_cache_limit(Some(123)),
             Err(StorageError::InvalidCacheLimit)
         );
         drop(manager);
@@ -392,14 +396,38 @@ mod tests {
         let reopened = StorageManager::open(root.join("data"), root.join("cache")).unwrap();
         assert_eq!(
             reopened.cache_limit_bytes().unwrap(),
-            ALLOWED_CACHE_LIMIT_BYTES[2]
+            Some(ALLOWED_CACHE_LIMIT_BYTES[2])
         );
         reopened.reset_settings().unwrap();
         assert_eq!(
             reopened.cache_limit_bytes().unwrap(),
-            DEFAULT_CACHE_LIMIT_BYTES
+            Some(DEFAULT_CACHE_LIMIT_BYTES)
         );
         fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn unlimited_cache_preserves_disk_reserve_without_reporting_a_quota() {
+        let status = evaluate_status(
+            VolumeSpace {
+                total_bytes: 20 * GIB,
+                available_bytes: 10 * GIB,
+            },
+            VolumeSpace {
+                total_bytes: 20 * GIB,
+                available_bytes: 10 * GIB,
+            },
+            0,
+            12 * GIB,
+            None,
+        );
+
+        assert_eq!(status.cache_limit_bytes, None);
+        assert_eq!(status.cache_remaining_quota_bytes, None);
+        assert_eq!(
+            status.writable_download_bytes,
+            10 * GIB - STORAGE_RESERVE_BYTES
+        );
     }
 
     #[test]
@@ -411,7 +439,7 @@ mod tests {
         let manager = StorageManager::open(&data, root.join("cache")).unwrap();
         assert_eq!(
             manager.cache_limit_bytes().unwrap(),
-            DEFAULT_CACHE_LIMIT_BYTES
+            Some(DEFAULT_CACHE_LIMIT_BYTES)
         );
         let persisted = fs::read_to_string(data.join("storage-settings-v1.json")).unwrap();
         assert!(persisted.contains(&DEFAULT_CACHE_LIMIT_BYTES.to_string()));
@@ -431,14 +459,14 @@ mod tests {
             },
             42,
             17,
-            128,
+            Some(128),
         );
         assert_eq!(status.health, StorageHealth::Low);
         assert_eq!(
             status.writable_download_bytes,
             STORAGE_WARNING_BYTES + 1 - STORAGE_RESERVE_BYTES
         );
-        assert_eq!(status.cache_remaining_quota_bytes, 111);
+        assert_eq!(status.cache_remaining_quota_bytes, Some(111));
 
         let critical = evaluate_status(
             VolumeSpace {
@@ -451,7 +479,7 @@ mod tests {
             },
             0,
             0,
-            128,
+            Some(128),
         );
         assert_eq!(critical.health, StorageHealth::Critical);
     }

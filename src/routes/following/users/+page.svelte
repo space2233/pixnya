@@ -122,7 +122,7 @@
   <main class="following-users-page">
     <FollowingTabs />
     <header class="page-heading">
-      <div><span>FOLLOWING</span><h1>{m.following_users_title()}</h1><p>{m.following_users_description()}</p></div>
+      <div><h1>{m.following_users_title()}</h1></div>
       <nav aria-label={m.following_scope()}>
         <button type="button" class:active={restrict === "public"} aria-pressed={restrict === "public"} onclick={() => (restrict = "public")}>{m.following_public()}</button>
         <button type="button" class:active={restrict === "private"} aria-pressed={restrict === "private"} onclick={() => (restrict = "private")}>{m.following_private()}</button>
@@ -135,7 +135,7 @@
       <section class="state-card">
         <Icon name="user" size={25} />
         <div><h2>{m.following_sign_in_title()}</h2><p>{m.following_sign_in_description()}</p></div>
-        <a href="/login?mode=standard">{m.search_go_to_login()}</a>
+<a href="/login">{m.search_go_to_login()}</a>
       </section>
     {:else if status === "loading"}
       <section class="state-card"><span class="spinner"></span><div><h2>{m.following_loading()}</h2><p>{m.following_loading_description()}</p></div></section>
@@ -161,9 +161,7 @@
 <style>
   .following-users-page { width: min(1120px, 100%); margin: 0 auto; padding: 0 28px 70px; }
   .page-heading { display: flex; gap: 24px; align-items: end; justify-content: space-between; padding: 27px 0 22px; }
-  .page-heading span { color: var(--pixiv-blue); font-size: 8px; font-weight: 800; letter-spacing: .14em; }
   .page-heading h1 { margin: 5px 0 0; font-size: 22px; }
-  .page-heading p { margin: 7px 0 0; color: var(--muted); font-size: 9px; }
   .page-heading nav { display: flex; gap: 5px; padding: 4px; border-radius: 20px; background: #eef1f3; }
   .page-heading button { padding: 8px 14px; color: #6d767c; border: 0; border-radius: 16px; background: transparent; cursor: pointer; font-size: 8px; font-weight: 700; }
   .page-heading button.active { color: white; background: var(--pixiv-blue); }

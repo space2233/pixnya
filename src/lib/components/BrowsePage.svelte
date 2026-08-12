@@ -415,7 +415,7 @@
         </div>
         <div class="callout-actions">
           <a class="secondary-link" href="/settings/network">{m.browse_check_connection()}</a>
-          <a class="primary-link" href="/login?mode=standard">{m.browse_go_to_login()}</a>
+<a class="primary-link" href="/login">{m.browse_go_to_login()}</a>
         </div>
       </section>
     {:else if supportsContent && dataStatus === "error"}

@@ -12,7 +12,8 @@ const artworkThumbnail = source("../src/lib/components/ArtworkThumbnail.svelte")
 const thumbnailSkeleton = source("../src/lib/components/ThumbnailSkeleton.svelte");
 const browsePage = source("../src/lib/components/BrowsePage.svelte");
 const pixivImage = source("../src/lib/components/PixivImage.svelte");
-const mediaState = source("../src/lib/media.ts");
+const ugoiraPlayer = source("../src/lib/components/UgoiraPlayer.svelte");
+const preferences = source("../src/lib/preferences.ts");
 const rustCommands = source("../src-tauri/src/lib.rs");
 
 test("all remote Pixiv images cross the Rust media pipeline", () => {
@@ -26,7 +27,7 @@ test("all remote Pixiv images cross the Rust media pipeline", () => {
 test("Android IPC media bytes are normalized before Blob decoding", () => {
   assert.match(pixivImage, /new Uint8Array\(buffer\)/);
   assert.match(pixivImage, /fetch_pixiv_thumbnail/);
-  assert.match(pixivImage, /requestInsecureMediaFallback/);
+  assert.doesNotMatch(pixivImage, /requestInsecureMediaFallback|MEDIA_RETRY_EVENT/);
 });
 
 test("artwork thumbnails use the selected neutral skeleton placeholder", () => {
@@ -45,10 +46,12 @@ test("the animated thumbnail skeleton starts on the first browse render", () => 
   assert.doesNotMatch(browsePage, /<div class="work-cover tone-/);
 });
 
-test("ECH media fallback requires a session-scoped acknowledgement", () => {
-  assert.match(rustCommands, /UnsafeMediaAcknowledgementRequired/);
-  assert.match(rustCommands, /acknowledge_insecure_media_fallback/);
-  assert.match(rustCommands, /media_fallback_generation/);
-  assert.match(mediaState, /MEDIA_FALLBACK_REQUIRED_EVENT/);
-  assert.match(mediaState, /MEDIA_RETRY_EVENT/);
+test("media requests keep the selected global connection mode and never prompt for a fallback", () => {
+  assert.doesNotMatch(rustCommands, /UnsafeMediaAcknowledgementRequired/);
+  assert.doesNotMatch(rustCommands, /acknowledge_insecure_media_fallback/);
+  assert.doesNotMatch(rustCommands, /media_fallback_generation|media_mode_for/);
+  assert.doesNotMatch(appShell, /mediaRisk|media_risk_|InsecureMediaWarning|MEDIA_FALLBACK/);
+  assert.doesNotMatch(pixivImage, /unsafe_media_acknowledgement_required|requestInsecureMediaFallback/);
+  assert.doesNotMatch(ugoiraPlayer, /unsafe_media_acknowledgement_required|requestInsecureMediaFallback/);
+  assert.doesNotMatch(preferences, /insecure-media-warning|InsecureMediaWarning/);
 });

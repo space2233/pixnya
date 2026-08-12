@@ -39,14 +39,14 @@ try {
   try {
     await cdp.navigate(new URL("/series/artworks/77", target.url).href);
     await waitFor(
-      () => cdp.evaluate(`location.pathname === '/series/artworks/77' && document.body.innerText.includes('登录后查看作品系列') && document.querySelector('a[href="/login?mode=standard"]') !== null`),
+      () => cdp.evaluate(`location.pathname === '/series/artworks/77' && document.body.innerText.includes('登录后查看作品系列') && document.querySelector('a[href="/login"]') !== null`),
       10_000,
       "artwork series route",
     );
 
     await cdp.navigate(new URL("/series/novels/88", target.url).href);
     await waitFor(
-      () => cdp.evaluate(`location.pathname === '/series/novels/88' && document.body.innerText.includes('登录后查看小说系列') && document.querySelector('a[href="/login?mode=standard"]') !== null`),
+      () => cdp.evaluate(`location.pathname === '/series/novels/88' && document.body.innerText.includes('登录后查看小说系列') && document.querySelector('a[href="/login"]') !== null`),
       10_000,
       "novel series route",
     );

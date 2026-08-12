@@ -42,7 +42,7 @@
   });
 
   onMount(() => {
-    preferredConnectionMode = readPreferredConnectionMode();
+    preferredConnectionMode = readPreferredConnectionMode() ?? "standard";
     void loadOfflineStats();
     void initializeSession().catch((error) => {
       sessionError = describeSessionError(error);
@@ -167,7 +167,6 @@
             {#if accountComment}<p class="profile-comment">{accountComment}</p>{/if}
           {:else}
             <h1>{m.profile_not_signed_in()}</h1>
-            <p>{m.profile_signed_out_description()}</p>
           {/if}
         </div>
         {#if !$sessionRestoring}
@@ -201,21 +200,20 @@
 
     <div class="profile-columns">
       <section class="quick-section">
-        <header><h2>{m.profile_quick_links()}</h2><p>{m.profile_quick_links_description()}</p></header>
+        <header><h2>{m.profile_quick_links()}</h2></header>
         <nav>
           {#if $session.loggedIn && $session.user}
-            <a href={`/users/${$session.user.id}`}><span><Icon name="image" size={20} /></span><b>{m.profile_public_works()}</b><small>{m.profile_public_works_description()}</small><i>›</i></a>
+            <a href={`/users/${$session.user.id}`}><span><Icon name="image" size={20} /></span><b>{m.profile_public_works()}</b><i>›</i></a>
           {/if}
-          <a href="/bookmarks"><span><Icon name="heart" size={20} /></span><b>{m.profile_bookmarks()}</b><small>{m.profile_bookmarks_description()}</small><i>›</i></a>
-          <a href="/following"><span><Icon name="user" size={20} /></span><b>{m.profile_following_new()}</b><small>{m.profile_following_new_description()}</small><i>›</i></a>
-          <a href="/settings"><span><Icon name="settings" size={20} /></span><b>{m.profile_settings()}</b><small>{m.profile_settings_description()}</small><i>›</i></a>
+          <a href="/bookmarks"><span><Icon name="heart" size={20} /></span><b>{m.profile_bookmarks()}</b><i>›</i></a>
+          <a href="/following"><span><Icon name="user" size={20} /></span><b>{m.profile_following_new()}</b><i>›</i></a>
+          <a href="/settings"><span><Icon name="settings" size={20} /></span><b>{m.profile_settings()}</b><i>›</i></a>
         </nav>
       </section>
 
       <aside class="local-card">
         <span><Icon name="shield" size={22} /></span>
-        <div><small>{m.profile_local_privacy()}</small><h2>{m.profile_credentials_title()}</h2></div>
-        <p>{m.profile_credentials_description()}</p>
+        <div><h2>{m.profile_credentials_title()}</h2></div>
         <dl>
           <div><dt>{m.profile_offline_space()}</dt><dd>{offlineStats ? formatBytes(offlineStats.sizeBytes) : "—"}</dd></div>
           <div><dt>{m.profile_offline_content()}</dt><dd>{offlineStats?.entryCount ?? "—"}</dd></div>
@@ -228,9 +226,6 @@
             </dd>
           </div>
         </dl>
-        {#if $session.connectionMode === "compatible"}
-          <p class="session-risk">{m.profile_compatible_refresh_risk()}</p>
-        {/if}
       </aside>
     </div>
   </div>
@@ -443,12 +438,6 @@
     font-size: 15px;
   }
 
-  .quick-section header p {
-    margin: 5px 0 0;
-    color: var(--muted);
-    font-size: 8px;
-  }
-
   .quick-section nav {
     display: grid;
   }
@@ -457,7 +446,7 @@
     display: grid;
     min-height: 68px;
     grid-template-columns: 38px minmax(0, 1fr) 16px;
-    grid-template-rows: 1fr 1fr;
+    grid-template-rows: 1fr;
     gap: 0 11px;
     align-items: center;
     padding: 12px 17px;
@@ -485,20 +474,9 @@
     min-width: 0;
     grid-column: 2;
     grid-row: 1;
-    align-self: end;
+    align-self: center;
     font-size: 10px;
     line-height: 1.35;
-  }
-
-  .quick-section small {
-    min-width: 0;
-    grid-column: 2;
-    grid-row: 2;
-    align-self: start;
-    margin-top: 3px;
-    color: var(--muted);
-    font-size: 8px;
-    line-height: 1.4;
   }
 
   .quick-section i {
@@ -529,21 +507,8 @@
     margin-top: 15px;
   }
 
-  .local-card small {
-    color: #4d9871;
-    font-size: 8px;
-    font-weight: 700;
-  }
-
   .local-card h2 {
     margin-top: 4px;
-  }
-
-  .local-card > p {
-    margin: 8px 0 17px;
-    color: var(--muted);
-    font-size: 8px;
-    line-height: 1.65;
   }
 
   .local-card dl {
@@ -565,11 +530,6 @@
 
   .local-card dd {
     margin: 0;
-    font-weight: 700;
-  }
-
-  .session-risk {
-    color: #a43e52 !important;
     font-weight: 700;
   }
 
@@ -613,9 +573,6 @@
       font-size: 12px;
     }
 
-    .quick-section small {
-      font-size: 10px;
-    }
   }
 
   @media (max-width: 420px) {

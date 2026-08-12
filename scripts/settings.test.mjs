@@ -41,60 +41,46 @@ globalThis.document = { documentElement: { dataset: {} } };
 const preferences = await import("../src/lib/preferences.ts");
 const localData = await import("../src/lib/local-data.ts");
 
-test("safe connection modes persist but compatibility mode remains temporary", () => {
+test("connection choice is explicit and all three modes persist", () => {
+  assert.equal(preferences.readPreferredConnectionMode(), null);
+  preferences.writePreferredConnectionMode("standard");
   assert.equal(preferences.readPreferredConnectionMode(), "standard");
   preferences.writePreferredConnectionMode("ech");
   assert.equal(preferences.readPreferredConnectionMode(), "ech");
 
   preferences.writePreferredConnectionMode("compatible");
-  assert.equal(preferences.readPreferredConnectionMode(), "ech");
+  assert.equal(preferences.readPreferredConnectionMode(), "compatible");
+  localStorage.setItem("pixiv-client.connection-mode", "invalid");
+  assert.equal(preferences.readPreferredConnectionMode(), null);
 });
 
-test("unsafe connection warnings can be suppressed and restored without persisting compatible mode", () => {
-  assert.equal(preferences.readUnsafeConnectionWarningSuppressed(), true);
-  preferences.writeUnsafeConnectionWarningSuppressed(false);
-  assert.equal(preferences.readUnsafeConnectionWarningSuppressed(), false);
-  preferences.writeUnsafeConnectionWarningSuppressed(true);
-  assert.equal(preferences.readUnsafeConnectionWarningSuppressed(), true);
-  assert.equal(preferences.readPreferredConnectionMode(), "ech");
-  preferences.writeUnsafeConnectionWarningSuppressed(false);
-  assert.equal(preferences.readUnsafeConnectionWarningSuppressed(), false);
+test("compatible mode is persisted and never renders a warning flow", () => {
+  assert.equal(preferences.readPreferredConnectionMode(), null);
 
   const networkSettings = readFileSync(
     new URL("../src/routes/settings/network/+page.svelte", import.meta.url),
     "utf8",
   );
   const login = readFileSync(new URL("../src/routes/login/+page.svelte", import.meta.url), "utf8");
-  assert.match(networkSettings, /m\.login_warning_suppress\(\)/);
-  assert.match(networkSettings, /m\.network_restore_warning\(\)/);
-  assert.match(networkSettings, /readUnsafeConnectionWarningSuppressed/);
-  assert.match(login, /m\.login_warning_suppress\(\)/);
-  assert.match(login, /readUnsafeConnectionWarningSuppressed/);
+  assert.match(networkSettings, /unsafeAcknowledged:\s*true/);
+  assert.doesNotMatch(networkSettings, /warning|risk-dialog/i);
+  assert.match(login, /function unsafeAcknowledged\(\): boolean \{\s*return mode === "compatible"/);
+  assert.doesNotMatch(login, /unsafeAcknowledged = \$state\(true\)/);
+  assert.doesNotMatch(login, /login_warning_suppress|awaitingUnsafeAcknowledgement/);
+  assert.doesNotMatch(readFileSync(new URL("../src/lib/preferences.ts", import.meta.url), "utf8"), /UnsafeConnectionWarning/);
 });
 
-test("ECH media fallback warning stays suppressed across sessions and can be restored", () => {
-  assert.equal(preferences.readInsecureMediaWarningSuppressed(), true);
-  preferences.writeInsecureMediaWarningSuppressed(false);
-  assert.equal(preferences.readInsecureMediaWarningSuppressed(), false);
-  preferences.writeInsecureMediaWarningSuppressed(true);
-  assert.equal(preferences.readInsecureMediaWarningSuppressed(), true);
-
+test("settings contain no media-only fallback warning preference or controls", () => {
   const appShell = readFileSync(
     new URL("../src/lib/components/AppShell.svelte", import.meta.url),
     "utf8",
   );
-  const networkSettings = readFileSync(
-    new URL("../src/routes/settings/network/+page.svelte", import.meta.url),
+  const preferenceSource = readFileSync(
+    new URL("../src/lib/preferences.ts", import.meta.url),
     "utf8",
   );
-  assert.match(appShell, /m\.media_risk_suppress\(\)/);
-  assert.match(appShell, /readInsecureMediaWarningSuppressed/);
-  assert.match(appShell, /confirmInsecureMediaFallback\(false, true\)/);
-  assert.match(networkSettings, /m\.network_restore_media_warning\(\)/);
-  assert.match(networkSettings, /writeInsecureMediaWarningSuppressed\(false\)/);
-
-  preferences.writeInsecureMediaWarningSuppressed(false);
-  assert.equal(preferences.readInsecureMediaWarningSuppressed(), false);
+  assert.doesNotMatch(appShell, /mediaRisk|media_risk_|InsecureMediaWarning|MEDIA_FALLBACK/);
+  assert.doesNotMatch(preferenceSource, /insecure-media-warning|InsecureMediaWarning/);
 });
 
 test("interface settings persist and reduced motion applies immediately", () => {
@@ -113,7 +99,7 @@ test("R18 visibility is opt-in, persists locally, and controls every restricted-
   preferences.writeR18DefaultVisible(true);
   assert.equal(preferences.readR18DefaultVisible(), true);
 
-  const settings = readFileSync(new URL("../src/routes/settings/+page.svelte", import.meta.url), "utf8");
+  const settings = readFileSync(new URL("../src/routes/settings/interface/+page.svelte", import.meta.url), "utf8");
   const artworkCard = readFileSync(new URL("../src/lib/components/ArtworkCard.svelte", import.meta.url), "utf8");
   const artworkDetail = readFileSync(new URL("../src/routes/artworks/[id]/+page.svelte", import.meta.url), "utf8");
   const novelCard = readFileSync(new URL("../src/lib/components/NovelCard.svelte", import.meta.url), "utf8");
@@ -149,9 +135,9 @@ test("settings center owns the connection entry and uses the corrected cog", () 
   const page = readFileSync(new URL("../src/routes/settings/+page.svelte", import.meta.url), "utf8");
   const icon = readFileSync(new URL("../src/lib/components/Icon.svelte", import.meta.url), "utf8");
 
-  assert.match(page, /href="\/settings\/network"/);
-  assert.match(page, /m\.settings_account\(\)/);
-  assert.match(page, /m\.settings_storage\(\)/);
+  assert.match(page, /"\/settings\/network"/);
+  assert.match(page, /m\.settings_account/);
+  assert.match(page, /m\.settings_storage/);
   assert.match(icon, /settings:\s*\[\s*"M12\.22 2h-/);
   assert.doesNotMatch(icon, /M19\.4 15a1\.7/);
 });
@@ -164,16 +150,15 @@ test("connection settings expose redacted three-target diagnostics", () => {
   const backend = readFileSync(new URL("../src-tauri/src/lib.rs", import.meta.url), "utf8");
 
   assert.match(page, /run_connection_diagnostics/);
-  assert.match(page, /m\.network_diagnostic_title\(\)/);
-  assert.match(page, /navigator\.clipboard\.writeText\(formatDiagnosticReport\(diagnosticReport\)\)/);
-  assert.match(page, /JSON\.stringify\(report, null, 2\)/);
-  assert.match(page, /m\.network_report_privacy\(\)/);
+  assert.match(page, /m\.connection_advanced_diagnostics\(\)/);
+  assert.match(page, /navigator\.clipboard\.writeText\(report\)/);
+  assert.match(page, /JSON\.stringify\(diagnosticReport, null, 2\)/);
   assert.match(backend, /async fn run_connection_diagnostics/);
   assert.match(backend, /run_connection_diagnostics,/);
 });
 
 test("storage settings expose isolated media-cache statistics and confirmed clearing", () => {
-  const page = readFileSync(new URL("../src/routes/settings/+page.svelte", import.meta.url), "utf8");
+  const page = readFileSync(new URL("../src/routes/settings/storage/+page.svelte", import.meta.url), "utf8");
   const api = readFileSync(new URL("../src/lib/pixiv-api.ts", import.meta.url), "utf8");
   const backend = readFileSync(new URL("../src-tauri/src/lib.rs", import.meta.url), "utf8");
   const cache = readFileSync(
@@ -182,7 +167,6 @@ test("storage settings expose isolated media-cache statistics and confirmed clea
   );
 
   assert.match(page, /m\.settings_media_cache\(\)/);
-  assert.match(page, /m\.settings_media_cache_summary\(/);
   assert.match(page, /m\.settings_cache_dialog_description\(\)/);
   assert.match(api, /invoke<MediaCacheStats>\("clear_media_cache", \{ confirmed: true \}\)/);
   assert.match(backend, /async fn get_media_cache_stats/);
@@ -194,14 +178,15 @@ test("storage settings expose isolated media-cache statistics and confirmed clea
 });
 
 test("privacy settings require typed confirmation and clear every owned data layer", () => {
-  const page = readFileSync(new URL("../src/routes/settings/+page.svelte", import.meta.url), "utf8");
+  const page = readFileSync(new URL("../src/routes/settings/privacy/+page.svelte", import.meta.url), "utf8");
   const api = readFileSync(new URL("../src/lib/pixiv-api.ts", import.meta.url), "utf8");
   const backend = readFileSync(new URL("../src-tauri/src/lib.rs", import.meta.url), "utf8");
   const android = readFileSync(androidPackagePath("LoginWebViewPlugin.kt"), "utf8");
 
   assert.match(page, /m\.settings_clear_all\(\)/);
-  assert.match(page, /localDataConfirmation !== m\.settings_clear_confirmation_word\(\)/);
-  assert.match(page, /clearLocalData\(LOCAL_DATA_CLEAR_PROTOCOL\)/);
+  assert.match(page, /confirmation!==m\.settings_clear_confirmation_word\(\)/);
+  assert.match(page, /clearLocalData\("CLEAR_LOCAL_DATA"\)/);
+  assert.match(page, /if\s*\(!report\.complete\)[\s\S]*?return;[\s\S]*?goto\("\/setup\/connection"/);
   assert.match(api, /invoke<LocalDataClearReport>\("clear_local_data"/);
   assert.match(backend, /if request\.confirmation != "CLEAR_LOCAL_DATA"/);
   assert.match(backend, /delete_refresh_token\(&app\)/);
@@ -211,4 +196,17 @@ test("privacy settings require typed confirmation and clear every owned data lay
   assert.match(android, /removeAllCookies/);
   assert.match(android, /clearCache\(true\)/);
   assert.match(android, /deleteEntry\(KEY_ALIAS\)/);
+});
+
+test("the documented connection policy matches the warning-free 1.2 interface", () => {
+  const security = readFileSync(new URL("../SECURITY.md", import.meta.url), "utf8");
+  const privacy = readFileSync(new URL("../PRIVACY.md", import.meta.url), "utf8");
+  const plan = readFileSync(new URL("../PROJECT_PLAN.md", import.meta.url), "utf8");
+
+  assert.match(security, /1\.2[\s\S]*?不显示风险标签、确认弹窗或重复警告/);
+  assert.match(privacy, /1\.2[\s\S]*?不显示风险标签、确认弹窗或重复警告/);
+  assert.match(plan, /1\.2[\s\S]*?不显示风险标签、确认弹窗或重复警告/);
+  assert.doesNotMatch(security, /设置页始终标明风险并允许恢复弹窗/);
+  assert.doesNotMatch(privacy, /可在设置中恢复/);
+  assert.doesNotMatch(plan, /设置页必须披露|设置页持续说明|恢复重复提醒|恢复弹窗/);
 });

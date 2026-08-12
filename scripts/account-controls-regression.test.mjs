@@ -40,8 +40,8 @@ test("account control writes are serialized and stale session results are reject
   assert.match(mutation, /request_authenticated_data\(context, data_state, request\)\.await/);
   assert.doesNotMatch(mutation, /execute_authenticated_data_request/);
   assert.ok(
-    backend.indexOf("let expected_user_id = ensure_authenticated_context")
-      < backend.indexOf(".mutation_gate"),
+    mutation.indexOf("let expected_user_id = ensure_authenticated_context")
+      < mutation.indexOf(".mutation_gate"),
     "the account must be captured before a queued mutation waits for the write gate",
   );
   assert.match(page, /requestedSession !== sessionKey/);

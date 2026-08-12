@@ -30,17 +30,35 @@ test("closing the login activity never paints an about:blank frame", () => {
   assert.doesNotMatch(onDestroy, /loadUrl\("about:blank"\)/);
 });
 
-test("Android ECH and compatible login both use the explicit low-security bridge", () => {
-  assert.doesNotMatch(rust, /AndroidWebViewEchUnavailable/);
-  assert.doesNotMatch(rust, /AndroidWebViewDirectUnavailable/);
+test("Android ECH login fails closed while compatible alone uses the bridge", () => {
+  const launchStart = rust.indexOf("async fn open_interactive_login(");
+  const launchEnd = rust.indexOf("fn build_authorization_url", launchStart);
+  const launch = rust.slice(launchStart, launchEnd);
+  const proxyModeStart = rust.indexOf("fn login_proxy_mode(mode: ConnectionMode)");
+  const proxyModeEnd = rust.indexOf("fn cleanup_login_proxy", proxyModeStart);
+  const proxyMode = rust.slice(proxyModeStart, proxyModeEnd);
+  assert.match(launch, /ensure_login_surface_support\(mode\)\?/);
   assert.match(
     rust,
+    /#\[cfg\(target_os = "android"\)\][\s\S]*?fn ensure_login_surface_support[\s\S]*?ConnectionMode::Ech[\s\S]*?LoginLaunchError::EchUnavailable/,
+  );
+  assert.doesNotMatch(rust, /AndroidWebViewDirectUnavailable/);
+  assert.match(
+    proxyMode,
+    /ConnectionMode::Compatible\s*=>\s*Some\(LoginProxyMode::InsecureTlsBridge\)/,
+  );
+  assert.match(proxyMode, /ConnectionMode::Standard\s*\|\s*ConnectionMode::Ech\s*=>\s*None/);
+  assert.doesNotMatch(
+    proxyMode,
     /ConnectionMode::Ech\s*\|\s*ConnectionMode::Compatible[\s\S]*?LoginProxyMode::InsecureTlsBridge/,
   );
   assert.match(
     activity,
-    /mode == MODE_ECH \|\| mode == MODE_COMPATIBLE[\s\S]*?setProxyOverride/,
+    /if \(isBridgeMode\(\)\)[\s\S]*?setProxyOverride/,
   );
+  assert.match(activity, /private fun isBridgeMode\(\): Boolean = mode == MODE_COMPATIBLE/);
+  assert.doesNotMatch(activity, /mode == MODE_ECH \|\| mode == MODE_COMPATIBLE/);
+  assert.match(plugin, /val usesBridge = mode == "compatible"/);
 });
 
 test("the bridge is loopback-only, Pixiv-only, and disables upstream SNI verification", () => {

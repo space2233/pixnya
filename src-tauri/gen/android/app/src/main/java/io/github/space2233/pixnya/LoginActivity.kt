@@ -163,7 +163,7 @@ class LoginActivity : AppCompatActivity() {
     }
 
     val controller = ProxyController.getInstance()
-    if (mode == MODE_ECH || mode == MODE_COMPATIBLE) {
+    if (isBridgeMode()) {
       val port = intent.getIntExtra(EXTRA_PROXY_PORT, 0)
       if (port !in 1..65535) {
         showError(getString(R.string.login_error_bridge_unavailable))
@@ -227,7 +227,7 @@ class LoginActivity : AppCompatActivity() {
     else -> getString(R.string.login_mode_standard)
   }
 
-  private fun isBridgeMode(): Boolean = mode == MODE_ECH || mode == MODE_COMPATIBLE
+  private fun isBridgeMode(): Boolean = mode == MODE_COMPATIBLE
 
   private fun isAllowedBridgeUrl(url: String?): Boolean {
     if (url == null) return false

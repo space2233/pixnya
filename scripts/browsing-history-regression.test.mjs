@@ -61,7 +61,7 @@ test("history page, shared navigation, and settings operate on the same backend 
   const [page, navigation, settings, api, types] = await Promise.all([
     read("src/routes/history/+page.svelte"),
     read("src/lib/navigation.ts"),
-    read("src/routes/settings/+page.svelte"),
+    read("src/routes/settings/privacy/+page.svelte"),
     read("src/lib/pixiv-api.ts"),
     read("src/lib/types.ts"),
   ]);
@@ -69,10 +69,10 @@ test("history page, shared navigation, and settings operate on the same backend 
   assert.match(page, /setBrowsingHistoryEnabled\(!snapshot\.enabled\)/);
   assert.match(page, /removeBrowsingHistoryEntry\(entry\.kind, entry\.resourceId\)/);
   assert.match(page, /clearBrowsingHistory\(\)/);
-  assert.match(page, /m\.history_description\(\{ limit: snapshot\?\.limit \?\? 500 \}\)/);
+  assert.doesNotMatch(page, /m\.history_description/);
   assert.match(navigation, /href: "\/history"/);
-  assert.match(settings, /setBrowsingHistoryEnabled\(!browsingHistory\.enabled\)/);
-  assert.match(settings, /report\.browsingHistoryEntriesRemoved/);
+  assert.match(settings, /setBrowsingHistoryEnabled\(!history!\.enabled\)/);
+  assert.match(settings, /browsing_history: m\.settings_failure_history/);
   assert.match(settings, /href="\/history"/);
   assert.match(api, /invoke<HistorySnapshot>\("get_browsing_history"\)/);
   assert.match(types, /export type HistoryKind = "artwork" \| "novel" \| "user"/);

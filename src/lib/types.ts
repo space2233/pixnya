@@ -420,7 +420,7 @@ export interface MediaCacheStats {
   thumbnailBytes: number;
   previewBytes: number;
   originalBytes: number;
-  maxBytes: number;
+  maxBytes: number | null;
 }
 
 export type StorageHealth = "healthy" | "low" | "critical";
@@ -434,8 +434,8 @@ export interface StorageStatus {
   writableDownloadBytes: number;
   offlineBytes: number;
   cacheBytes: number;
-  cacheLimitBytes: number;
-  cacheRemainingQuotaBytes: number;
+  cacheLimitBytes: number | null;
+  cacheRemainingQuotaBytes: number | null;
   reserveBytes: number;
   warningBytes: number;
 }

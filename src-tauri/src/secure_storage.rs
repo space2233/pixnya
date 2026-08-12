@@ -20,6 +20,14 @@ pub(crate) struct StoredCredential {
 }
 
 impl StoredCredential {
+    pub(crate) fn token(&self) -> &str {
+        self.refresh_token.as_str()
+    }
+
+    pub(crate) fn connection_mode(&self) -> ConnectionMode {
+        self.connection_mode
+    }
+
     pub(crate) fn into_parts(self) -> (Zeroizing<String>, ConnectionMode) {
         (self.refresh_token, self.connection_mode)
     }

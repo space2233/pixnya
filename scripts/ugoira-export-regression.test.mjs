@@ -14,10 +14,17 @@ test("Ugoira export is a cancellable background task with strict budgets and cle
   assert.match(rust, /MAX_EXPORT_FRAMES/);
   assert.match(rust, /MAX_DECODED_MEMORY_BYTES/);
   assert.match(rust, /cache_available_bytes/);
+  const prepareStart = rust.indexOf("fn prepare_and_encode(");
+  const prepareEnd = rust.indexOf("fn load_prepared_ugoira(", prepareStart);
+  const prepare = rust.slice(prepareStart, prepareEnd);
   assert.ok(
-    rust.indexOf("cache_available_bytes") < rust.indexOf("for (index, frame) in prepared.frames.iter().enumerate().skip(1)"),
+    prepare.indexOf("cache_available_bytes") < prepare.indexOf("for (index, frame) in prepared.frames.iter().enumerate()"),
     "space and decoded-memory budgets must be checked before staging the full frame set",
   );
+  assert.match(prepare, /validate_all_frame_dimensions\(&frame_paths, cancelled\)/);
+  assert.match(rust, /FRAME_PROBE_TIMEOUT/);
+  assert.match(rust, /FRAME_VALIDATION_TIMEOUT/);
+  assert.match(rust, /MAX_ENCODING_TIMEOUT/);
   assert.match(runtime, /cancelled\.as_deref\(\)/);
   assert.match(rust, /AtomicBool/);
   assert.match(rust, /spawn_blocking/);

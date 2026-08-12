@@ -95,6 +95,25 @@ impl SessionState {
         Ok(SessionSnapshot::logged_out())
     }
 
+    pub(crate) fn set_connection_mode(
+        &self,
+        connection_mode: ConnectionMode,
+    ) -> Result<Option<SessionSnapshot>, SessionStateError> {
+        let mut current = self
+            .current
+            .lock()
+            .map_err(|_| SessionStateError::Unavailable)?;
+        let Some(session) = current.as_mut() else {
+            return Ok(None);
+        };
+        session.connection_mode = connection_mode;
+        session.generation = self
+            .next_generation
+            .fetch_add(1, Ordering::Relaxed)
+            .wrapping_add(1);
+        snapshot_from(current.as_ref()).map(Some)
+    }
+
     pub(crate) fn authenticated_context(
         &self,
         minimum_remaining_seconds: u64,
@@ -245,5 +264,39 @@ mod tests {
         assert_eq!(context.generation(), 1);
         assert_eq!(state.generation().unwrap(), Some(1));
         assert!(state.authenticated_context(120).unwrap().is_none());
+    }
+
+    #[test]
+    fn changing_connection_mode_preserves_the_session_and_advances_its_generation() {
+        let state = SessionState::default();
+        state
+            .install(
+                Zeroizing::new("access-secret".to_owned()),
+                AuthenticatedUser {
+                    id: "42".into(),
+                    name: "Alice".into(),
+                    account: "alice".into(),
+                    avatar_url: None,
+                    is_premium: false,
+                },
+                3600,
+                pixiv_client_domain::ConnectionMode::Standard,
+            )
+            .unwrap();
+
+        let snapshot = state
+            .set_connection_mode(pixiv_client_domain::ConnectionMode::Compatible)
+            .unwrap()
+            .unwrap();
+        let context = state.authenticated_context(0).unwrap().unwrap();
+
+        assert!(snapshot.logged_in);
+        assert_eq!(snapshot.user.unwrap().id, "42");
+        assert_eq!(
+            snapshot.connection_mode,
+            Some(pixiv_client_domain::ConnectionMode::Compatible)
+        );
+        assert_eq!(context.access_token(), "access-secret");
+        assert_eq!(context.generation(), 2);
     }
 }

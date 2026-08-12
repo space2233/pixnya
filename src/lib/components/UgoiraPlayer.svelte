@@ -3,7 +3,6 @@
   import Icon from "$lib/components/Icon.svelte";
   import PixivImage from "$lib/components/PixivImage.svelte";
   import { m } from "$lib/i18n";
-  import { commandFailureKind, requestInsecureMediaFallback } from "$lib/media";
   import { describeDataFailure, prepareUgoira, readOfflineAsset } from "$lib/pixiv-api";
   import type { PreparedUgoiraFrame } from "$lib/types";
 
@@ -65,9 +64,6 @@
       playing = true;
     } catch (error) {
       for (const source of nextSources) URL.revokeObjectURL(source);
-      if (commandFailureKind(error) === "unsafe_media_acknowledgement_required") {
-        requestInsecureMediaFallback();
-      }
       errorMessage = describeDataFailure(error);
       status = "error";
     }

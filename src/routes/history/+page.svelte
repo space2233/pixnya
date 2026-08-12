@@ -128,7 +128,7 @@
 <AppShell title={m.history_title()}>
   <main class="history-page">
     <header class="page-heading">
-      <div><span>{m.history_local_only()}</span><h1>{m.history_title()}</h1><p>{m.history_description({ limit: snapshot?.limit ?? 500 })}</p></div>
+      <div><h1>{m.history_title()}</h1></div>
       {#if snapshot}
         <button class:disabled={!snapshot.enabled} type="button" disabled={savingPreference} onclick={toggleHistory}>
           <Icon name="history" size={18} />{savingPreference ? m.history_saving() : snapshot.enabled ? m.history_recording() : m.history_recording_stopped()}
@@ -188,9 +188,7 @@
 <style>
   .history-page { width: min(980px, 100%); margin: 0 auto; padding: 26px 28px 70px; }
   .page-heading { display: flex; gap: 24px; align-items: flex-end; justify-content: space-between; }
-  .page-heading span { color: var(--pixiv-blue); font-size: 9px; font-weight: 750; }
   .page-heading h1 { margin: 7px 0 0; font-size: 25px; }
-  .page-heading p { margin: 7px 0 0; color: var(--muted); font-size: 10px; }
   .page-heading > button { display: flex; min-width: 110px; height: 38px; gap: 7px; align-items: center; justify-content: center; color: white; border: 0; border-radius: 19px; background: #27ae72; cursor: pointer; font-size: 9px; font-weight: 700; }
   .page-heading > button.disabled { color: #6f7579; background: #e7e9eb; }
   .state { display: grid; min-height: 220px; margin-top: 22px; place-items: center; color: var(--muted); border: 1px dashed var(--line); border-radius: 12px; background: white; font-size: 10px; }

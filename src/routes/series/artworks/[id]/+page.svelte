@@ -133,7 +133,7 @@
       <section class="state-card">
         <Icon name="user" size={28} />
         <div><h1>{m.artwork_series_login_title()}</h1><p>{m.artwork_series_login_description()}</p></div>
-        <a href="/login?mode=standard">{m.common_go_to_login()}</a>
+<a href="/login">{m.common_go_to_login()}</a>
       </section>
     {:else if status === "loading"}
       <section class="state-card"><span class="spinner"></span><div><h1>{m.artwork_series_loading_title()}</h1><p>{m.artwork_series_loading_description()}</p></div></section>
@@ -156,7 +156,7 @@
       </section>
 
       <section class="contents">
-        <header><div><h2>{m.series_contents()}</h2><p>{m.artwork_series_contents_description()}</p></div><strong>{illustrations.length} / {series.workCount}</strong></header>
+        <header><div><h2>{m.series_contents()}</h2></div><strong>{illustrations.length} / {series.workCount}</strong></header>
         {#if illustrations.length}
           <div class="artwork-grid">
             {#each illustrations as illustration, index (illustration.id)}
@@ -192,7 +192,7 @@
   .start { display: inline-flex; min-height: 36px; align-items: center; margin-top: 18px; padding: 0 17px; color: white; border-radius: 18px; background: var(--pixiv-blue); font-size: 9px; font-weight: 750; text-decoration: none; }
   .contents { margin-top: 34px; }
   .contents header { display: flex; align-items: end; justify-content: space-between; gap: 16px; }
-  .contents h2 { margin: 0; font-size: 19px; } .contents header p { margin: 5px 0 0; color: var(--muted); font-size: 9px; }
+  .contents h2 { margin: 0; font-size: 19px; }
   .contents header strong { color: var(--muted); font-size: 9px; }
   .artwork-grid { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 23px 14px; margin-top: 16px; }
   .empty { padding: 36px; color: var(--muted); border: 1px dashed var(--line); border-radius: 10px; font-size: 10px; text-align: center; }

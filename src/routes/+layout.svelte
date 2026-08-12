@@ -1,9 +1,13 @@
 <script lang="ts">
-  import { afterNavigate } from "$app/navigation";
+  import { afterNavigate, goto } from "$app/navigation";
+  import { page } from "$app/state";
+  import { invoke } from "@tauri-apps/api/core";
   import { onMount } from "svelte";
   import "../app.css";
   import { initializeI18n } from "$lib/i18n";
   import { applyReducedMotionPreference } from "$lib/preferences";
+  import { readPreferredConnectionMode } from "$lib/preferences";
+  import { connectionSetupUrl } from "$lib/connection-onboarding";
   import {
     captureReturnNavigation,
     restorePendingReturnPosition,
@@ -11,6 +15,7 @@
   } from "$lib/return-navigation-browser";
 
   let { children } = $props();
+  let routeReady = $state(false);
 
   afterNavigate((navigation) => {
     const restored = restorePendingReturnPosition();
@@ -25,10 +30,22 @@
   onMount(() => {
     initializeI18n();
     applyReducedMotionPreference();
+    void invoke("mark_frontend_ready").catch(() => {});
     document.addEventListener("click", captureReturnNavigation, true);
     restorePendingReturnPosition();
-    return () => document.removeEventListener("click", captureReturnNavigation, true);
+    let active = true;
+    void (async () => {
+      if (readPreferredConnectionMode() === null && page.url.pathname !== "/setup/connection") {
+        const target = `${page.url.pathname}${page.url.search}${page.url.hash}`;
+        await goto(connectionSetupUrl(target), { replaceState: true });
+      }
+      if (active) routeReady = true;
+    })();
+    return () => {
+      active = false;
+      document.removeEventListener("click", captureReturnNavigation, true);
+    };
   });
 </script>
 
-{@render children()}
+{#if routeReady}{@render children()}{/if}

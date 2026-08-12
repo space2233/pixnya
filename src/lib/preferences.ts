@@ -5,50 +5,21 @@ const CONNECTION_MODE_KEY = "pixiv-client.connection-mode";
 const SIDEBAR_KEY = "pixiv-client.sidebar";
 const REDUCED_MOTION_KEY = "pixiv-client.reduced-motion";
 const R18_DEFAULT_VISIBLE_KEY = "pixiv-client.r18-default-visible";
-const UNSAFE_CONNECTION_WARNING_KEY = "pixiv-client.unsafe-connection-warning";
-const INSECURE_MEDIA_WARNING_KEY = "pixiv-client.insecure-media-warning";
 
 export const PREFERENCES_CHANGED_EVENT = "pixiv-client:preferences-changed";
 export const r18DefaultVisible = writable<boolean>(false);
 
-export type PreferredConnectionMode = Exclude<ConnectionMode, "compatible">;
+export type PreferredConnectionMode = ConnectionMode;
 
-export function readPreferredConnectionMode(): PreferredConnectionMode {
-  if (typeof window === "undefined") return "standard";
-  return localStorage.getItem(CONNECTION_MODE_KEY) === "ech" ? "ech" : "standard";
+export function readPreferredConnectionMode(): PreferredConnectionMode | null {
+  if (typeof window === "undefined") return null;
+  const mode = localStorage.getItem(CONNECTION_MODE_KEY);
+  return mode === "standard" || mode === "ech" || mode === "compatible" ? mode : null;
 }
 
 export function writePreferredConnectionMode(mode: ConnectionMode): void {
-  if (typeof window === "undefined" || mode === "compatible") return;
+  if (typeof window === "undefined") return;
   localStorage.setItem(CONNECTION_MODE_KEY, mode);
-  notifyPreferencesChanged();
-}
-
-export function readUnsafeConnectionWarningSuppressed(): boolean {
-  if (typeof window === "undefined") return false;
-  return localStorage.getItem(UNSAFE_CONNECTION_WARNING_KEY) !== "visible";
-}
-
-export function writeUnsafeConnectionWarningSuppressed(suppressed: boolean): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(
-    UNSAFE_CONNECTION_WARNING_KEY,
-    suppressed ? "suppressed" : "visible",
-  );
-  notifyPreferencesChanged();
-}
-
-export function readInsecureMediaWarningSuppressed(): boolean {
-  if (typeof window === "undefined") return false;
-  return localStorage.getItem(INSECURE_MEDIA_WARNING_KEY) !== "visible";
-}
-
-export function writeInsecureMediaWarningSuppressed(suppressed: boolean): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(
-    INSECURE_MEDIA_WARNING_KEY,
-    suppressed ? "suppressed" : "visible",
-  );
   notifyPreferencesChanged();
 }
 

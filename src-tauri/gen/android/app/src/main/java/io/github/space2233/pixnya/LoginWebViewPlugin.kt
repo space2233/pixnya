@@ -162,7 +162,7 @@ class LoginWebViewPlugin(private val activity: Activity) : Plugin(activity) {
       return invoke.reject("Unknown connection mode", "invalid_connection_mode")
     }
     val proxyPort = args.proxyPort
-    val usesBridge = mode == "ech" || mode == "compatible"
+    val usesBridge = mode == "compatible"
     if (usesBridge && (proxyPort == null || proxyPort !in 1..65535)) {
       return invoke.reject("Missing login bridge proxy", "proxy_unavailable")
     }

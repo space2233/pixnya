@@ -37,29 +37,13 @@ impl ConnectionPolicy {
                 security: TransportSecurity::SystemTls,
                 requires_user_acknowledgement: false,
             }),
-            ConnectionMode::Ech if request.traffic == TrafficClass::LoginWebView => {
-                let uses_insecure_bridge =
-                    request.capabilities.webview_insecure_bridge && is_pixiv_host(&request.host);
-                Ok(RoutePlan {
-                    transport: if uses_insecure_bridge {
-                        TransportRoute::WebViewInsecureBridge
-                    } else {
-                        TransportRoute::WebViewSystem
-                    },
-                    certificate_host: request.host.clone(),
-                    ech_requirement: if uses_insecure_bridge {
-                        EchRequirement::PreflightOnly
-                    } else {
-                        EchRequirement::PlatformManaged
-                    },
-                    security: if uses_insecure_bridge {
-                        TransportSecurity::Insecure
-                    } else {
-                        TransportSecurity::SystemTls
-                    },
-                    requires_user_acknowledgement: uses_insecure_bridge,
-                })
-            }
+            ConnectionMode::Ech if request.traffic == TrafficClass::LoginWebView => Ok(RoutePlan {
+                transport: TransportRoute::WebViewSystem,
+                certificate_host: request.host.clone(),
+                ech_requirement: EchRequirement::PlatformManaged,
+                security: TransportSecurity::SystemTls,
+                requires_user_acknowledgement: false,
+            }),
             ConnectionMode::Ech
                 if request.traffic != TrafficClass::LoginWebView
                     && request.capabilities.rust_ech =>

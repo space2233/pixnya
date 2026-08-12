@@ -60,7 +60,7 @@ test("download worker exports before completion and settings expose manual recov
     read("src-tauri/src/downloads.rs"),
     read("src/lib/types.ts"),
     read("src/lib/pixiv-api.ts"),
-    read("src/routes/settings/+page.svelte"),
+    read("src/routes/settings/storage/+page.svelte"),
     read("src/routes/offline/+page.svelte"),
   ]);
   assert.match(downloads, /auto_export_offline_entry\(&app, &entry_key\)[\s\S]*?mark_completed/);
@@ -80,11 +80,11 @@ test("clearing local data revokes export authorization without deleting user exp
   const [application, exports, settings] = await Promise.all([
     read("src-tauri/src/lib.rs"),
     read("src-tauri/src/exports.rs"),
-    read("src/routes/settings/+page.svelte"),
+    read("src/routes/settings/storage/+page.svelte"),
   ]);
   assert.match(application, /clear_all_export_settings\(&app\)\.await/);
   assert.match(application, /LocalDataClearFailure::ExportSettings/);
   assert.match(exports, /clear_platform_destination\(app\)\.await/);
   assert.match(exports, /manager\.clear_settings\(\)/);
-  assert.match(settings, /m\.settings_export_removed\(\)/);
+  assert.match(settings, /clearExportDestination\(\)/);
 });

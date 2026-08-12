@@ -46,16 +46,19 @@ test("settings exposes storage health, safe headroom, and supported cache limits
   const [types, api, settings] = await Promise.all([
     read("src/lib/types.ts"),
     read("src/lib/pixiv-api.ts"),
-    read("src/routes/settings/+page.svelte"),
+    read("src/routes/settings/storage/+page.svelte"),
   ]);
   assert.match(types, /export interface StorageStatus/);
   assert.match(types, /export type StorageHealth = "healthy" \| "low" \| "critical"/);
   assert.match(api, /invoke<StorageStatus>\("get_storage_status"\)/);
   assert.match(api, /invoke<StorageStatus>\("set_media_cache_limit"/);
-  assert.match(settings, /m\.settings_storage_critical\(\)/);
-  assert.match(settings, /storageStatus\.writableDownloadBytes/);
+  assert.match(settings, /storage\.dataAvailableBytes/);
   assert.match(settings, /m\.settings_cache_limit\(\)/);
-  for (const label of ["128 MiB", "256 MiB", "512 MiB", "1 GiB"]) {
+  assert.match(types, /cacheLimitBytes: number \| null/);
+  assert.match(types, /cacheRemainingQuotaBytes: number \| null/);
+  assert.match(api, /setMediaCacheLimit\(cacheLimitBytes: number \| null\)/);
+  for (const label of ["128 MiB", "256 MiB", "512 MiB", "1 GiB", "5 GiB", "10 GiB"]) {
     assert.match(settings, new RegExp(label));
   }
+  assert.match(settings, /value === "unlimited" \? null/);
 });

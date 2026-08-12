@@ -310,7 +310,7 @@ export function getStorageStatus(): Promise<StorageStatus> {
   return invoke<StorageStatus>("get_storage_status");
 }
 
-export function setMediaCacheLimit(cacheLimitBytes: number): Promise<StorageStatus> {
+export function setMediaCacheLimit(cacheLimitBytes: number | null): Promise<StorageStatus> {
   return invoke<StorageStatus>("set_media_cache_limit", { cacheLimitBytes });
 }
 

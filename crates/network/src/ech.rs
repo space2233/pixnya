@@ -147,6 +147,13 @@ fn probe_with_bundle(
 }
 
 fn client_config(encoded_config: &[u8]) -> Result<ClientConfig, ProbeError> {
+    client_config_with_roots(encoded_config, root_store())
+}
+
+fn client_config_with_roots(
+    encoded_config: &[u8],
+    roots: RootCertStore,
+) -> Result<ClientConfig, ProbeError> {
     let ech_config = EchConfig::new(
         EchConfigListBytes::from(encoded_config.to_vec()),
         aws_lc_rs::hpke::ALL_SUPPORTED_SUITES,
@@ -160,7 +167,7 @@ fn client_config(encoded_config: &[u8]) -> Result<ClientConfig, ProbeError> {
             .map_err(|_| ProbeError::EchConfigUnavailable {
                 host: ECH_BOOTSTRAP_HOST.into(),
             })?
-            .with_root_certificates(root_store())
+            .with_root_certificates(roots)
             .with_no_client_auth(),
     )
 }
@@ -273,8 +280,24 @@ fn parse_http_status(response: &[u8]) -> Option<u16> {
 
 #[cfg(test)]
 mod tests {
-    use super::{parse_dns_response, parse_http_status, DnsAnswer, DnsJsonResponse};
-    use std::net::{IpAddr, Ipv4Addr};
+    use super::{
+        client_config_with_roots, parse_dns_response, parse_http_status, DnsAnswer,
+        DnsJsonResponse, ECH_BOOTSTRAP_HOST,
+    };
+    use base64::Engine;
+    use rcgen::{generate_simple_self_signed, CertifiedKey};
+    use rustls::crypto::aws_lc_rs;
+    use rustls::pki_types::{PrivateKeyDer, PrivatePkcs8KeyDer, ServerName};
+    use rustls::{RootCertStore, ServerConfig, ServerConnection, StreamOwned};
+    use std::io::Read;
+    use std::net::{IpAddr, Ipv4Addr, TcpListener};
+    use std::sync::Arc;
+    use std::thread;
+    use std::time::Duration;
+    use tokio::runtime::Builder;
+    use tokio_rustls::TlsConnector;
+
+    const ECH_CONFIG_BASE64: &str = "AEX+DQBBxwAgACD64SRg36XkWhRQbHIp4lBdtTDCX31oTlf8ZtXx4X7sZwAEAAEAAQASY2xvdWRmbGFyZS1lY2guY29tAAA=";
 
     #[test]
     fn parses_ech_config_and_cloudflare_ipv4_hints() {
@@ -283,7 +306,9 @@ mod tests {
             answers: vec![DnsAnswer {
                 ttl: 221,
                 record_type: 65,
-                data: "1 . alpn=\"h3,h2\" ipv4hint=\"104.18.10.118,104.18.11.118\" ech=\"AEX+DQBBxwAgACD64SRg36XkWhRQbHIp4lBdtTDCX31oTlf8ZtXx4X7sZwAEAAEAAQASY2xvdWRmbGFyZS1lY2guY29tAAA=\"".into(),
+                data: format!(
+                    "1 . alpn=\"h3,h2\" ipv4hint=\"104.18.10.118,104.18.11.118\" ech=\"{ECH_CONFIG_BASE64}\""
+                ),
             }],
         };
 
@@ -305,5 +330,84 @@ mod tests {
     fn parses_http_status_line_only() {
         assert_eq!(parse_http_status(b"HTTP/1.1 404 Not Found\r\n"), Some(404));
         assert_eq!(parse_http_status(b"not http"), None);
+    }
+
+    #[test]
+    fn mandatory_ech_rejects_a_non_ech_server_before_application_traffic() {
+        let CertifiedKey { cert, signing_key } = generate_simple_self_signed(vec![
+            ECH_BOOTSTRAP_HOST.to_owned(),
+            "app-api.pixiv.net".to_owned(),
+        ])
+        .unwrap();
+        let certificate = cert.der().clone();
+        let private_key =
+            PrivateKeyDer::Pkcs8(PrivatePkcs8KeyDer::from(signing_key.serialize_der()));
+
+        let mut roots = RootCertStore::empty();
+        roots.add(certificate.clone()).unwrap();
+        let ech_config = base64::engine::general_purpose::STANDARD
+            .decode(ECH_CONFIG_BASE64)
+            .unwrap();
+        let client_config = Arc::new(client_config_with_roots(&ech_config, roots).unwrap());
+
+        // A regular TLS server can finish the outer handshake but cannot confirm ECH.
+        // rustls must reject that connection before the connector exposes a traffic stream.
+        let server_config =
+            ServerConfig::builder_with_provider(Arc::new(aws_lc_rs::default_provider()))
+                .with_safe_default_protocol_versions()
+                .unwrap()
+                .with_no_client_auth()
+                .with_single_cert(vec![certificate], private_key)
+                .unwrap();
+        let listener = TcpListener::bind((Ipv4Addr::LOCALHOST, 0)).unwrap();
+        let address = listener.local_addr().unwrap();
+        let server = thread::spawn(move || {
+            let (socket, _) = listener.accept().unwrap();
+            socket
+                .set_read_timeout(Some(Duration::from_secs(5)))
+                .unwrap();
+            socket
+                .set_write_timeout(Some(Duration::from_secs(5)))
+                .unwrap();
+            let connection = ServerConnection::new(Arc::new(server_config)).unwrap();
+            let mut stream = StreamOwned::new(connection, socket);
+            let mut application_data = Vec::new();
+            let _ = stream.read_to_end(&mut application_data);
+            application_data
+        });
+
+        let runtime = Builder::new_current_thread()
+            .enable_io()
+            .enable_time()
+            .build()
+            .unwrap();
+        let handshake = runtime.block_on(async {
+            let socket = tokio::net::TcpStream::connect(address).await.unwrap();
+            let server_name = ServerName::try_from("app-api.pixiv.net").unwrap();
+            tokio::time::timeout(
+                Duration::from_secs(5),
+                TlsConnector::from(client_config).connect(server_name, socket),
+            )
+            .await
+            .unwrap()
+        });
+
+        let error = handshake.expect_err("a rejected ECH offer must fail closed");
+        let tls_error = error
+            .get_ref()
+            .and_then(|source| source.downcast_ref::<rustls::Error>());
+        assert!(
+            matches!(
+                tls_error,
+                Some(rustls::Error::PeerIncompatible(
+                    rustls::PeerIncompatible::ServerRejectedEncryptedClientHello(_)
+                ))
+            ),
+            "unexpected handshake error: {error:?}"
+        );
+        assert!(
+            server.join().unwrap().is_empty(),
+            "application data reached a server that did not accept ECH"
+        );
     }
 }

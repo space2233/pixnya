@@ -257,7 +257,7 @@
       <section class="state-card">
         <Icon name="user" size={28} />
         <div><h1>{m.user_login_title()}</h1><p>{m.user_login_description()}</p></div>
-        <a href="/login?mode=standard">{m.common_go_to_login()}</a>
+<a href="/login">{m.common_go_to_login()}</a>
       </section>
     {:else if profileStatus === "loading"}
       <section class="state-card"><span class="spinner"></span><div><h1>{m.user_loading_title()}</h1><p>{m.user_loading_description()}</p></div></section>
@@ -316,7 +316,7 @@
 
       <section class="works-section">
         <header>
-          <div><h2>{m.user_public_works()}</h2><p>{m.user_public_works_description()}</p></div>
+          <div><h2>{m.user_public_works()}</h2></div>
           <nav aria-label={m.user_work_type()}>
             <button type="button" class:active={workKind === "illust"} onclick={() => (workKind = "illust")}>{m.common_illustrations()}</button>
             <button type="button" class:active={workKind === "manga"} onclick={() => (workKind = "manga")}>{m.common_manga()}</button>
@@ -388,7 +388,6 @@
   .works-section { margin-top: 36px; }
   .works-section > header { display: flex; gap: 18px; align-items: flex-end; justify-content: space-between; margin-bottom: 16px; }
   .works-section h2 { margin: 0; font-size: 18px; }
-  .works-section header p { margin: 5px 0 0; color: var(--muted); font-size: 9px; }
   .works-section nav { display: flex; gap: 4px; padding: 4px; border-radius: 20px; background: #f3f3f3; }
   .works-section nav button { min-width: 62px; height: 31px; color: #777; border: 0; border-radius: 16px; background: transparent; cursor: pointer; font-size: 10px; }
   .works-section nav button.active { color: #333; background: white; box-shadow: 0 1px 4px rgba(0,0,0,.08); font-weight: 700; }

@@ -1,7 +1,6 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
-  import { invoke } from "@tauri-apps/api/core";
   import { onMount } from "svelte";
   import type { Snippet } from "svelte";
   import {
@@ -13,16 +12,9 @@
   import {
     PREFERENCES_CHANGED_EVENT,
     readDesktopSidebarExpanded,
-    readInsecureMediaWarningSuppressed,
     syncR18DefaultVisible,
     writeDesktopSidebarExpanded,
-    writeInsecureMediaWarningSuppressed,
   } from "$lib/preferences";
-  import {
-    MEDIA_FALLBACK_REQUIRED_EVENT,
-    resetMediaFallbackPrompt,
-    retryPixivMedia,
-  } from "$lib/media";
   import { initializeSession, session, sessionRestoring } from "$lib/session";
   import { m } from "$lib/i18n";
   import Icon from "./Icon.svelte";
@@ -35,11 +27,6 @@
   let drawerOpen = $state(false);
   let searchQuery = $state("");
   let avatarStatus = $state<"loading" | "ready" | "error">("loading");
-  let mediaRiskOpen = $state(false);
-  let mediaRiskSubmitting = $state(false);
-  let mediaRiskError = $state("");
-  let suppressFutureMediaWarnings = $state(false);
-  let mediaSessionKey = $state("");
   let activeKey = $derived(navigationKeyForPath(page.url.pathname));
   let activeItem = $derived(activeKey ? getNavigationItem(activeKey) : null);
   let mobileTitle = $derived(
@@ -57,21 +44,7 @@
     }
   });
 
-  $effect(() => {
-    const nextKey = $session.loggedIn
-      ? `${$session.user?.id ?? "unknown"}:${$session.connectionMode ?? "standard"}`
-      : "logged-out";
-    if (nextKey !== mediaSessionKey) {
-      mediaSessionKey = nextKey;
-      mediaRiskOpen = false;
-      mediaRiskError = "";
-      suppressFutureMediaWarnings = false;
-      resetMediaFallbackPrompt();
-    }
-  });
-
   onMount(() => {
-    void invoke("mark_frontend_ready").catch(() => {});
     void initializeSession().catch(() => {});
     const desktopMedia = window.matchMedia("(min-width: 960px)");
     const syncSidebarPreference = () => {
@@ -88,22 +61,9 @@
     syncViewport();
     desktopMedia.addEventListener("change", syncViewport);
     window.addEventListener(PREFERENCES_CHANGED_EVENT, syncSidebarPreference);
-    const requestMediaFallback = () => {
-      if ($session.connectionMode === "ech") {
-        mediaRiskError = "";
-        if (readInsecureMediaWarningSuppressed()) {
-          void confirmInsecureMediaFallback(false, true);
-          return;
-        }
-        suppressFutureMediaWarnings = false;
-        mediaRiskOpen = true;
-      }
-    };
-    window.addEventListener(MEDIA_FALLBACK_REQUIRED_EVENT, requestMediaFallback);
     return () => {
       desktopMedia.removeEventListener("change", syncViewport);
       window.removeEventListener(PREFERENCES_CHANGED_EVENT, syncSidebarPreference);
-      window.removeEventListener(MEDIA_FALLBACK_REQUIRED_EVENT, requestMediaFallback);
     };
   });
 
@@ -131,33 +91,6 @@
     return Array.from(name.trim())[0]?.toUpperCase() ?? "P";
   }
 
-  async function confirmInsecureMediaFallback(
-    suppressFutureWarning = suppressFutureMediaWarnings,
-    automatic = false,
-  ) {
-    if (mediaRiskSubmitting) return;
-    mediaRiskSubmitting = true;
-    mediaRiskError = "";
-    try {
-      await invoke("acknowledge_insecure_media_fallback");
-      if (suppressFutureWarning) {
-        writeInsecureMediaWarningSuppressed(true);
-      }
-      suppressFutureMediaWarnings = false;
-      mediaRiskOpen = false;
-      retryPixivMedia();
-    } catch {
-      if (automatic) {
-        writeInsecureMediaWarningSuppressed(false);
-      }
-      mediaRiskOpen = true;
-      mediaRiskError = automatic
-        ? m.media_risk_auto_failed()
-        : m.media_risk_failed();
-    } finally {
-      mediaRiskSubmitting = false;
-    }
-  }
 </script>
 
 <div
@@ -201,7 +134,6 @@
       >
         <Icon name={settingsItem.icon} size={20} /><span>{settingsItem.label}</span>
       </a>
-      <p>{m.shell_account_password_notice()}</p>
     </div>
   </aside>
 
@@ -273,35 +205,4 @@
     {/each}
   </nav>
 
-  {#if mediaRiskOpen}
-    <div class="media-risk-backdrop" role="presentation">
-      <div class="media-risk-dialog" role="alertdialog" aria-modal="true" aria-labelledby="media-risk-title">
-        <span class="media-risk-icon"><Icon name="shield" size={24} /></span>
-        <div>
-          <small>{m.media_risk_eyebrow()}</small>
-          <h2 id="media-risk-title">{m.media_risk_title()}</h2>
-          <p>{m.media_risk_description()}</p>
-          <p class="media-risk-warning">{m.media_risk_warning()}</p>
-          {#if mediaRiskError}<p class="media-risk-error" role="alert">{mediaRiskError}</p>{/if}
-          <label class="media-risk-suppress">
-            <input type="checkbox" bind:checked={suppressFutureMediaWarnings} disabled={mediaRiskSubmitting} />
-            <span><b>{m.media_risk_suppress()}</b><small>{m.media_risk_suppress_description()}</small></span>
-          </label>
-          <div class="media-risk-actions">
-            <button type="button" class="secondary" disabled={mediaRiskSubmitting} onclick={() => {
-              suppressFutureMediaWarnings = false;
-              mediaRiskOpen = false;
-            }}>{m.media_risk_cancel()}</button>
-            <button type="button" class="primary" disabled={mediaRiskSubmitting} onclick={() => void confirmInsecureMediaFallback()}>
-              {mediaRiskSubmitting
-                ? m.media_risk_enabling()
-                : suppressFutureMediaWarnings
-                  ? m.media_risk_accept_forever()
-                  : m.media_risk_accept_once()}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  {/if}
 </div>

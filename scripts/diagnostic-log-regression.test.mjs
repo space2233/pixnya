@@ -36,14 +36,14 @@ test("application runtime has no direct logging bypass", async () => {
 
 test("settings and Tauri expose local-only export and confirmed clearing", async () => {
   const [settings, api, backend, android] = await Promise.all([
-    read("src/routes/settings/+page.svelte"),
+    read("src/routes/settings/privacy/+page.svelte"),
     read("src/lib/pixiv-api.ts"),
     read("src-tauri/src/lib.rs"),
     readFile(androidPackagePath("LoginWebViewPlugin.kt"), "utf8"),
   ]);
 
   assert.match(settings, /m\.settings_diagnostic_log\(\)/);
-  assert.match(settings, /m\.settings_diagnostic_exclusions\(\)/);
+  assert.doesNotMatch(settings, /settings_diagnostic_exclusions/);
   assert.match(api, /invoke<DiagnosticLogExportResult>\("export_diagnostic_logs"\)/);
   assert.match(api, /invoke<DiagnosticLogSummary>\("clear_diagnostic_logs", \{ confirmed: true \}\)/);
   assert.match(backend, /\.manage\(DiagnosticLogState::default\(\)\)/);

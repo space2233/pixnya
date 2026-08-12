@@ -424,8 +424,7 @@ fn failure_for(error: &ApiCommandError) -> DownloadFailure {
         | ApiCommandError::TokenRefreshFailed => DownloadFailure::Authentication,
         ApiCommandError::TransportUnavailable
         | ApiCommandError::RequestFailed
-        | ApiCommandError::UpstreamRejected { .. }
-        | ApiCommandError::UnsafeMediaAcknowledgementRequired => DownloadFailure::Network,
+        | ApiCommandError::UpstreamRejected { .. } => DownloadFailure::Network,
         ApiCommandError::InvalidResponse
         | ApiCommandError::InvalidInput
         | ApiCommandError::InvalidIdentifier

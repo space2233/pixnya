@@ -142,12 +142,12 @@
 <AppShell title={m.notifications_title()}>
   <main class="notification-page">
     <header>
-      <div><small>{m.notifications_read_only()}</small><h1>{m.notifications_title()}</h1><p>{m.notifications_read_only_description()}</p></div>
+      <div><h1>{m.notifications_title()}</h1></div>
       <button type="button" disabled={status === "loading"} onclick={() => loadInitial()}>{m.common_refresh()}</button>
     </header>
 
     {#if !$sessionRestoring && !$session.loggedIn}
-      <section class="state"><Icon name="user" size={28} /><div><h2>{m.notifications_login_title()}</h2><p>{m.notifications_login_description()}</p></div><a href="/login?mode=standard">{m.common_go_to_login()}</a></section>
+<section class="state"><Icon name="user" size={28} /><div><h2>{m.notifications_login_title()}</h2><p>{m.notifications_login_description()}</p></div><a href="/login">{m.common_go_to_login()}</a></section>
     {:else if status === "loading"}
       <section class="state"><span class="spinner"></span><p>{m.notifications_loading()}</p></section>
     {:else if status === "error" && notifications.length === 0}
@@ -179,8 +179,7 @@
 <style>
   .notification-page { box-sizing: border-box; width: min(840px,100%); margin: 0 auto; padding: 28px 24px 100px; }
   header { display: flex; gap: 20px; align-items: end; justify-content: space-between; margin-bottom: 20px; }
-  header small { color: var(--pixiv-blue); font-size: 8px; font-weight: 800; }
-  h1 { margin: 6px 0 0; font-size: 24px; } header p { margin: 7px 0 0; color: var(--muted); font-size: 9px; }
+  h1 { margin: 6px 0 0; font-size: 24px; }
   header button, .load-more, .state button { height: 36px; padding: 0 16px; border: 1px solid var(--line); border-radius: 18px; background: white; cursor: pointer; }
   .notification-list { overflow: hidden; border: 1px solid var(--line); border-radius: 13px; background: white; }
   article { display: grid; grid-template-columns: 52px minmax(0,1fr); gap: 13px; padding: 16px; }

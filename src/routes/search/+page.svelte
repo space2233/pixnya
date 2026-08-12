@@ -290,7 +290,6 @@
   <main class="search-page">
     <header>
       <h1>{m.search_title()}</h1>
-      <p>{m.search_description()}</p>
     </header>
 
     <form class="large-search" role="search" onsubmit={submitSearch}>
@@ -301,7 +300,7 @@
 
     {#if history.length > 0}
       <section class="history-card" aria-label={m.search_recent()}>
-        <div class="history-heading"><Icon name="search" size={18} /><span><strong>{m.search_recent()}</strong><small>{m.search_local_only()}</small></span><button type="button" onclick={clearHistory}>{m.search_clear()}</button></div>
+        <div class="history-heading"><Icon name="search" size={18} /><span><strong>{m.search_recent()}</strong></span><button type="button" onclick={clearHistory}>{m.search_clear()}</button></div>
         <div class="history-list">{#each history as item}<a href={`/search?q=${encodeURIComponent(item)}`}>{item}</a>{/each}</div>
       </section>
     {/if}
@@ -319,7 +318,7 @@
         </div>
 
         {#if !$sessionRestoring && !$session.loggedIn}
-          <div class="state-card"><Icon name="user" size={24} /><p>{m.search_sign_in_description()}</p><a href="/login?mode=standard">{m.search_go_to_login()}</a></div>
+<div class="state-card"><Icon name="user" size={24} /><p>{m.search_sign_in_description()}</p><a href="/login">{m.search_go_to_login()}</a></div>
         {:else if resultStatus === "loading"}
           <div class="state-card"><span class="spinner"></span><p>{m.search_searching()}</p></div>
         {:else if resultStatus === "error"}
@@ -373,7 +372,6 @@
 <style>
   .search-page { width: min(1040px, 100%); margin: 0 auto; padding: 34px 28px 52px; }
   header h1 { margin: 0; font-size: 24px; }
-  header p { margin: 7px 0 0; color: var(--muted); font-size: 11px; }
   .large-search { display: grid; height: 54px; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 11px; align-items: center; margin-top: 22px; padding: 0 6px 0 17px; color: #8b8b8b; border: 1px solid #dedede; border-radius: 10px; background: white; box-shadow: 0 5px 18px rgba(0,0,0,.04); }
   .large-search:focus-within { border-color: var(--pixiv-blue); box-shadow: 0 0 0 3px rgba(0,150,250,.1); }
   .large-search input { min-width: 0; border: 0; outline: 0; background: transparent; font-size: 13px; }
@@ -409,9 +407,8 @@
   .history-card { margin-top: 10px; padding: 13px 16px; border-radius: 9px; background: #f7f7f7; }
   .history-heading { display: flex; gap: 10px; align-items: center; color: #777; }
   .history-heading span { min-width: 0; flex: 1; }
-  .history-heading strong, .history-heading small { display: block; }
+  .history-heading strong { display: block; }
   .history-heading strong { color: var(--text); font-size: 10px; }
-  .history-heading small { margin-top: 3px; color: var(--soft-muted); font-size: 8px; }
   .history-heading button { color: var(--muted); border: 0; background: transparent; cursor: pointer; font-size: 9px; }
   .history-list { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 13px; }
   .history-list a { padding: 6px 10px; color: #65717a; border-radius: 14px; background: white; font-size: 9px; text-decoration: none; }
@@ -421,7 +418,6 @@
   @media (max-width: 760px) {
     .search-page { padding: 26px 16px 42px; }
     .search-page > header h1 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-    .search-page > header p { margin-top: 0; }
     .tag-grid, .result-grid, .user-grid, .novel-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
   @media (max-width: 520px) { .tag-grid, .user-grid, .novel-grid { grid-template-columns: 1fr; } }
