@@ -77,9 +77,11 @@ private object SecureRefreshTokenStore {
   private const val IV_KEY = "refresh-token-iv"
   private const val CIPHERTEXT_KEY = "refresh-token-ciphertext"
   private const val CONNECTION_MODE_KEY = "connection-mode"
+  private const val INVALIDATED_KEY = "refresh-token-invalid"
   private const val TRANSFORMATION = "AES/GCM/NoPadding"
 
   fun save(context: Context, refreshToken: String, connectionMode: String) {
+    invalidate(context)
     val cipher = Cipher.getInstance(TRANSFORMATION)
     cipher.init(Cipher.ENCRYPT_MODE, getOrCreateKey())
     val ciphertext = cipher.doFinal(refreshToken.toByteArray(StandardCharsets.UTF_8))
@@ -90,9 +92,19 @@ private object SecureRefreshTokenStore {
       .putString(CONNECTION_MODE_KEY, connectionMode)
       .commit()
     check(saved) { "Secure session storage did not commit" }
+    clearInvalidation(context)
   }
 
   fun load(context: Context): String? {
+    if (isInvalidated(context)) {
+      try {
+        deleteCredential(context)
+        clearInvalidation(context)
+      } catch (_: Exception) {
+        // Keep the marker so later restores continue to fail closed.
+      }
+      return null
+    }
     val preferences = context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
     val encodedIv = preferences.getString(IV_KEY, null) ?: return null
     val encodedCiphertext = preferences.getString(CIPHERTEXT_KEY, null) ?: return null
@@ -111,6 +123,32 @@ private object SecureRefreshTokenStore {
       .getString(CONNECTION_MODE_KEY, "standard") ?: "standard"
 
   fun delete(context: Context) {
+    invalidate(context)
+    deleteCredential(context)
+    clearInvalidation(context)
+  }
+
+  private fun invalidate(context: Context) {
+    val saved = context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
+      .edit()
+      .putBoolean(INVALIDATED_KEY, true)
+      .commit()
+    check(saved) { "Secure session invalidation did not commit" }
+  }
+
+  private fun isInvalidated(context: Context): Boolean =
+    context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
+      .getBoolean(INVALIDATED_KEY, false)
+
+  private fun clearInvalidation(context: Context) {
+    val saved = context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
+      .edit()
+      .remove(INVALIDATED_KEY)
+      .commit()
+    check(saved) { "Secure session invalidation did not clear" }
+  }
+
+  private fun deleteCredential(context: Context) {
     val deleted = context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
       .edit()
       .remove(IV_KEY)

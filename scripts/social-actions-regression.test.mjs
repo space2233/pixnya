@@ -52,8 +52,8 @@ test("Tauri keeps authenticated mutations in Rust and serializes writes", async 
     assert.match(backend, new RegExp(`\\n\\s+${command},`));
   }
 
-  assert.match(backend, /mutation_gate: Arc<tokio::sync::Semaphore>/);
-  assert.match(backend, /mutation_gate: Arc::new\(tokio::sync::Semaphore::new\(1\)\)/);
+  assert.match(backend, /session_switch: SessionSwitchCoordinator/);
+  assert.match(backend, /session_switch\s*\.\s*mutation_guard\(\)/);
   assert.match(backend, /async fn execute_authenticated_mutation/);
   assert.doesNotMatch(backend, /access_token:\s*String/);
 });

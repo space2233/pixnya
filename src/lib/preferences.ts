@@ -1,4 +1,4 @@
-import type { ConnectionMode } from "$lib/types";
+import type { ConnectionMode, SessionSnapshot } from "$lib/types";
 import { writable } from "svelte/store";
 
 const CONNECTION_MODE_KEY = "pixiv-client.connection-mode";
@@ -21,6 +21,16 @@ export function writePreferredConnectionMode(mode: ConnectionMode): void {
   if (typeof window === "undefined") return;
   localStorage.setItem(CONNECTION_MODE_KEY, mode);
   notifyPreferencesChanged();
+}
+
+export function reconcilePreferredConnectionMode(
+  snapshot: SessionSnapshot,
+): PreferredConnectionMode | null {
+  const preferred = readPreferredConnectionMode();
+  const sessionMode = snapshot.loggedIn ? snapshot.connectionMode : null;
+  if (!sessionMode) return preferred;
+  if (preferred !== sessionMode) writePreferredConnectionMode(sessionMode);
+  return sessionMode;
 }
 
 export function readDesktopSidebarExpanded(): boolean {

@@ -41,6 +41,53 @@ test("application source keeps user-facing copy in the message catalogs", async 
   assert.deepEqual(hardcoded, []);
 });
 
+test("compact primary pages omit permanent explanatory copy", async () => {
+  const [browse, login, offline, ...catalogSources] = await Promise.all([
+    read("src/lib/components/BrowsePage.svelte"),
+    read("src/routes/login/+page.svelte"),
+    read("src/routes/offline/+page.svelte"),
+    read("messages/zh-CN.json"),
+    read("messages/zh-TW.json"),
+    read("messages/en-US.json"),
+  ]);
+  const catalogs = catalogSources.map(JSON.parse);
+  const removedKeys = [
+    "browse_home_subtitle",
+    "browse_home_hint",
+    "browse_artworks_subtitle",
+    "browse_artworks_hint",
+    "browse_manga_subtitle",
+    "browse_manga_hint",
+    "browse_novels_subtitle",
+    "browse_novels_hint",
+    "browse_following_subtitle",
+    "browse_following_hint",
+    "browse_discover_subtitle",
+    "browse_discover_hint",
+    "browse_ranking_subtitle",
+    "browse_ranking_hint",
+    "browse_bookmarks_subtitle",
+    "browse_bookmarks_hint",
+    "browse_featured_hint",
+    "login_transport_system",
+    "login_transport_compatible",
+    "login_transport_webview_system",
+    "login_transport_webview_proxy",
+    "login_transport_insecure_bridge",
+    "login_route_label",
+    "login_certificate_host",
+    "offline_tags_hint",
+  ];
+
+  assert.doesNotMatch(browse, /definition\.subtitle|definition\.sectionHint|m\.browse_featured_hint/);
+  assert.match(browse, /m\.browse_token_notice\(\)/);
+  assert.doesNotMatch(login, /class="login-details"|m\.login_route_label|m\.login_certificate_host/);
+  assert.doesNotMatch(offline, /m\.offline_tags_hint/);
+  for (const catalog of catalogs) {
+    for (const key of removedKeys) assert.equal(key in catalog, false, key);
+  }
+});
+
 test("native network probes return structured data instead of fixed-language summaries", async () => {
   const [gateway, types, page] = await Promise.all([
     read("crates/network/src/gateway.rs"),

@@ -906,7 +906,6 @@
                   <div class="tag-editor">
                     <label for={`tags-${entry.key}`}>{m.offline_local_tags()}</label>
                     <input id={`tags-${entry.key}`} bind:value={organizationTags} maxlength="768" placeholder={m.offline_tags_placeholder()} />
-                    <small>{m.offline_tags_hint()}</small>
                   </div>
                   <div class="organize-actions"><button type="button" disabled={!!catalogAction} onclick={closeOrganizationEditor}>{m.common_cancel()}</button><button type="submit" disabled={!!catalogAction}>{catalogAction === `organize-${entry.key}` ? m.common_saving() : m.offline_save_organization()}</button></div>
                 </form>
@@ -1021,7 +1020,6 @@
   .organize-editor { display: grid; grid-column: 1 / -1; grid-template-columns: minmax(150px,.7fr) minmax(260px,1.6fr) auto; gap: 12px; align-items: end; padding: 14px 16px; border-top: 1px solid var(--line); background: #f8fbfd; }
   .organize-editor > div { display: grid; min-width: 0; gap: 5px; }
   .organize-editor label { color: #53656f; font-size: 8px; font-weight: 700; }
-  .organize-editor small { color: var(--muted); font-size: 7px; }
   .organize-actions { display: flex !important; gap: 7px !important; }
   .organize-actions button:last-child { color: white; border-color: var(--pixiv-blue); background: var(--pixiv-blue); }
   .export-guidance, .export-notice { margin: 0; padding: 10px 16px; color: #7a6542; border-bottom: 1px solid #f0e5cf; background: #fffaf1; font-size: 8px; line-height: 1.55; }
@@ -1093,7 +1091,6 @@
     .organize-editor { grid-template-columns: 1fr; padding: 14px 12px; }
     .organize-editor label { font-size: 11px; }
     .organize-editor input, .organize-editor select { height: 42px; font-size: 12px; }
-    .organize-editor small { font-size: 10px; line-height: 1.45; }
     .organize-actions { justify-content: flex-end; }
     .organize-actions button { height: 40px; font-size: 11px; }
     .export-guidance, .export-notice { padding: 12px; font-size: 11px; }

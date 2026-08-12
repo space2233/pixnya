@@ -10,6 +10,7 @@ mod login_route;
 mod paths;
 mod secure_storage;
 mod session;
+mod session_switch;
 mod ugoira_export;
 mod update_http;
 mod updates;
@@ -66,6 +67,10 @@ use pixiv_client_storage_policy::{
 use secure_storage::{delete_refresh_token, load_refresh_token, save_refresh_token};
 use serde::{Deserialize, Serialize};
 use session::{AuthenticatedContext, SessionSnapshot, SessionState, SessionStateError};
+use session_switch::{
+    SessionCredentialStore, SessionSwitchCoordinator, SessionSwitchCredential, SessionSwitchError,
+    SessionTransportCache,
+};
 use std::io::{Cursor, Read};
 use std::sync::{
     atomic::{AtomicBool, AtomicU64, Ordering},
@@ -119,9 +124,8 @@ struct ActiveLoginProxy {
 #[derive(Clone)]
 struct AuthenticatedDataState {
     clients: Arc<Mutex<Vec<CachedTransportClient>>>,
-    request_gate: Arc<tokio::sync::RwLock<()>>,
+    session_switch: SessionSwitchCoordinator,
     media_gate: Arc<tokio::sync::Semaphore>,
-    mutation_gate: Arc<tokio::sync::Semaphore>,
     library_gate: Arc<tokio::sync::Semaphore>,
 }
 
@@ -150,11 +154,51 @@ impl Default for AuthenticatedDataState {
     fn default() -> Self {
         Self {
             clients: Arc::new(Mutex::new(Vec::new())),
-            request_gate: Arc::new(tokio::sync::RwLock::new(())),
+            session_switch: SessionSwitchCoordinator::default(),
             media_gate: Arc::new(tokio::sync::Semaphore::new(MEDIA_REQUEST_CONCURRENCY)),
-            mutation_gate: Arc::new(tokio::sync::Semaphore::new(1)),
             library_gate: Arc::new(tokio::sync::Semaphore::new(1)),
         }
+    }
+}
+
+impl SessionTransportCache for AuthenticatedDataState {
+    fn clear(&self) -> Result<(), SessionSwitchError> {
+        self.clear_transport_state()
+            .map_err(|_| SessionSwitchError::SessionUnavailable)
+    }
+}
+
+struct AppCredentialStore<'app> {
+    app: &'app tauri::AppHandle,
+}
+
+impl SessionCredentialStore for AppCredentialStore<'_> {
+    async fn load(&self) -> Result<Option<SessionSwitchCredential>, SessionSwitchError> {
+        load_refresh_token(self.app)
+            .await
+            .map_err(|_| SessionSwitchError::SecureStorageUnavailable)
+            .map(|credential| {
+                credential.map(|credential| {
+                    let (refresh_token, connection_mode) = credential.into_parts();
+                    SessionSwitchCredential::new(refresh_token, connection_mode)
+                })
+            })
+    }
+
+    async fn save(
+        &self,
+        refresh_token: &str,
+        connection_mode: ConnectionMode,
+    ) -> Result<(), SessionSwitchError> {
+        save_refresh_token(self.app, refresh_token, connection_mode)
+            .await
+            .map_err(|_| SessionSwitchError::SecureStorageUnavailable)
+    }
+
+    async fn delete(&self) -> Result<(), SessionSwitchError> {
+        delete_refresh_token(self.app)
+            .await
+            .map_err(|_| SessionSwitchError::SecureStorageUnavailable)
     }
 }
 
@@ -1661,56 +1705,30 @@ async fn switch_connection_mode(
     session_state: tauri::State<'_, SessionState>,
     data_state: tauri::State<'_, AuthenticatedDataState>,
 ) -> Result<SessionSnapshot, SessionCommandError> {
-    let _mutation = data_state
-        .mutation_gate
-        .clone()
-        .acquire_owned()
+    let result = data_state
+        .session_switch
+        .switch(
+            mode,
+            session_state.inner(),
+            &AppCredentialStore { app: &app },
+            data_state.inner(),
+        )
         .await
-        .map_err(|_| SessionCommandError::SessionUnavailable)?;
-    let request_gate = data_state.request_gate.clone();
-    let _requests = request_gate.write().await;
-    let _operation = session_state.operation_guard().await;
-    let before = session_state
-        .snapshot()
-        .map_err(SessionCommandError::from)?;
-    let Some(old_mode) = before.connection_mode else {
-        return Ok(before);
-    };
-    if old_mode == mode {
-        return Ok(before);
-    }
-    let credential = load_refresh_token(&app)
-        .await
-        .map_err(|_| SessionCommandError::SecureStorageUnavailable)?
-        .ok_or(SessionCommandError::SecureStorageUnavailable)?;
-    if credential.connection_mode() != old_mode {
-        return Err(SessionCommandError::SessionUnavailable);
-    }
-    data_state
-        .clear_transport_state()
-        .map_err(|_| SessionCommandError::SessionUnavailable)?;
-    save_refresh_token(&app, credential.token(), mode)
-        .await
-        .map_err(|_| SessionCommandError::SecureStorageUnavailable)?;
-    let updated = match session_state.set_connection_mode(mode) {
-        Ok(Some(snapshot)) => snapshot,
-        Ok(None) | Err(_) => {
-            let rollback = save_refresh_token(&app, credential.token(), old_mode).await;
-            if rollback.is_err() {
-                let storage_cleared = delete_refresh_token(&app).await;
-                let cleared = session_state.clear();
-                if let Ok(snapshot) = &cleared {
-                    let _ = app.emit("pixiv-session-changed", snapshot.clone());
-                }
-                storage_cleared.map_err(|_| SessionCommandError::SecureStorageUnavailable)?;
-                cleared.map_err(SessionCommandError::from)?;
-                return Err(SessionCommandError::SecureStorageUnavailable);
-            }
-            return Err(SessionCommandError::SessionUnavailable);
+        .map_err(SessionCommandError::from);
+    match result {
+        Ok(updated) => {
+            let _ = app.emit("pixiv-session-changed", updated.clone());
+            Ok(updated)
         }
-    };
-    let _ = app.emit("pixiv-session-changed", updated.clone());
-    Ok(updated)
+        Err(error) => {
+            if let Ok(snapshot) = session_state.snapshot() {
+                if !snapshot.logged_in {
+                    let _ = app.emit("pixiv-session-changed", snapshot);
+                }
+            }
+            Err(error)
+        }
+    }
 }
 
 async fn ensure_authenticated_context(
@@ -1804,8 +1822,7 @@ where
         + Send
         + 'static,
 {
-    let request_gate = data_state.request_gate.clone();
-    let _requests = request_gate.read().await;
+    let _requests = data_state.session_switch.request_guard().await;
     let context = ensure_authenticated_context(app, session_state).await?;
     let rejected_generation = context.generation();
     let first_attempt =
@@ -1846,13 +1863,11 @@ where
         .user_id()
         .to_owned();
     let _permit = data_state
-        .mutation_gate
-        .clone()
-        .acquire_owned()
+        .session_switch
+        .mutation_guard()
         .await
         .map_err(|_| ApiCommandError::StateUnavailable)?;
-    let request_gate = data_state.request_gate.clone();
-    let _requests = request_gate.read().await;
+    let _requests = data_state.session_switch.request_guard().await;
     let prepared_context = ensure_authenticated_context(app, session_state).await?;
     if prepared_context.user_id() != expected_user_id {
         return Err(ApiCommandError::AuthenticationRequired);
@@ -2992,10 +3007,13 @@ async fn perform_artwork_download(
         )?;
         progress.update(0, total_items, 0)?;
     }
-    let (mode, _) = session_state
-        .connection_context()
-        .map_err(ApiCommandError::from)?
+    let media_route = data_state
+        .session_switch
+        .media_route(session_state)
+        .await
+        .map_err(|_| ApiCommandError::StateUnavailable)?
         .ok_or(ApiCommandError::AuthenticationRequired)?;
+    let mode = media_route.connection_mode();
     let permit = data_state
         .library_gate
         .clone()
@@ -3004,6 +3022,7 @@ async fn perform_artwork_download(
         .map_err(|_| ApiCommandError::StateUnavailable)?;
     let library = offline_library(app)?;
     tauri::async_runtime::spawn_blocking(move || {
+        let _media_route = media_route;
         let _permit = permit;
         let metadata =
             serde_json::to_vec_pretty(&detail).map_err(|_| ApiCommandError::InvalidResponse)?;
@@ -3110,10 +3129,13 @@ async fn perform_novel_download(
         )?;
         progress.update(0, 1, 0)?;
     }
-    let (mode, _) = session_state
-        .connection_context()
-        .map_err(ApiCommandError::from)?
+    let media_route = data_state
+        .session_switch
+        .media_route(session_state)
+        .await
+        .map_err(|_| ApiCommandError::StateUnavailable)?
         .ok_or(ApiCommandError::AuthenticationRequired)?;
+    let mode = media_route.connection_mode();
     let permit = data_state
         .library_gate
         .clone()
@@ -3122,6 +3144,7 @@ async fn perform_novel_download(
         .map_err(|_| ApiCommandError::StateUnavailable)?;
     let library = offline_library(app)?;
     tauri::async_runtime::spawn_blocking(move || {
+        let _media_route = media_route;
         let _permit = permit;
         if let Some(progress) = &progress {
             progress
@@ -3245,10 +3268,13 @@ async fn perform_ugoira_download(
         )?;
         progress.update(0, total_items, 0)?;
     }
-    let (mode, _) = session_state
-        .connection_context()
-        .map_err(ApiCommandError::from)?
+    let media_route = data_state
+        .session_switch
+        .media_route(session_state)
+        .await
+        .map_err(|_| ApiCommandError::StateUnavailable)?
         .ok_or(ApiCommandError::AuthenticationRequired)?;
+    let mode = media_route.connection_mode();
     let permit = data_state
         .library_gate
         .clone()
@@ -3257,6 +3283,7 @@ async fn perform_ugoira_download(
         .map_err(|_| ApiCommandError::StateUnavailable)?;
     let library = offline_library(app)?;
     tauri::async_runtime::spawn_blocking(move || {
+        let _media_route = media_route;
         let _permit = permit;
         if let Some(progress) = &progress {
             progress.checkpoint()?;
@@ -3477,10 +3504,13 @@ async fn fetch_pixiv_thumbnail(
     data_state: tauri::State<'_, AuthenticatedDataState>,
     cache_state: tauri::State<'_, MediaCacheState>,
 ) -> Result<tauri::ipc::Response, ApiCommandError> {
-    let (mode, _) = session_state
-        .connection_context()
-        .map_err(ApiCommandError::from)?
+    let media_route = data_state
+        .session_switch
+        .media_route(&session_state)
+        .await
+        .map_err(|_| ApiCommandError::StateUnavailable)?
         .ok_or(ApiCommandError::AuthenticationRequired)?;
+    let mode = media_route.connection_mode();
     let cache_kind = cache_kind.unwrap_or(CacheKind::Thumbnail);
     let cache_scope = media_cache_scope(mode);
     let cache_source_key = media_cache_source_key(&url)?;
@@ -3517,6 +3547,7 @@ async fn fetch_pixiv_thumbnail(
     let data_state = data_state.inner().clone();
 
     let media = tauri::async_runtime::spawn_blocking(move || {
+        let _media_route = media_route;
         let _permit = permit;
         download_media_blocking(
             &data_state,
@@ -4060,6 +4091,15 @@ impl From<OAuthError> for SessionCommandError {
 impl From<SessionStateError> for SessionCommandError {
     fn from(_: SessionStateError) -> Self {
         Self::SessionUnavailable
+    }
+}
+
+impl From<SessionSwitchError> for SessionCommandError {
+    fn from(value: SessionSwitchError) -> Self {
+        match value {
+            SessionSwitchError::SecureStorageUnavailable => Self::SecureStorageUnavailable,
+            SessionSwitchError::SessionUnavailable => Self::SessionUnavailable,
+        }
     }
 }
 

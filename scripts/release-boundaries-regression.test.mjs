@@ -18,7 +18,7 @@ const readGenerated = async (relativePath) => {
 };
 
 test("all user-visible package versions agree on the stable source version", async () => {
-  const expectedVersion = "1.2.0";
+  const expectedVersion = "1.2.1";
   const [major, minor, patch] = expectedVersion.split(".").map(Number);
   const expectedAndroidVersionCode = major * 1_000_000 + minor * 1_000 + patch;
   const [workspace, packageJson, packageLock, tauri, androidProperties, androidIgnore, readme] = await Promise.all([

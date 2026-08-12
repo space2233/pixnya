@@ -15,7 +15,6 @@
     LoginLaunchResult,
     LoginPreparation,
     PolicyFailure,
-    RoutePlan,
     SessionSnapshot,
   } from "$lib/types";
 
@@ -23,15 +22,6 @@
     standard: m.login_mode_standard,
     ech: m.login_mode_ech,
     compatible: m.login_mode_compatible,
-  };
-
-  const transportLabels: Record<RoutePlan["transport"], () => string> = {
-    system: m.login_transport_system,
-    ech: () => "TLS 1.3 + ECH",
-    compatible_direct: m.login_transport_compatible,
-    web_view_system: m.login_transport_webview_system,
-    web_view_proxy: m.login_transport_webview_proxy,
-    web_view_insecure_bridge: m.login_transport_insecure_bridge,
   };
 
   let mode = $state<ConnectionMode>("standard");
@@ -309,13 +299,6 @@
             <div><small>{m.login_context_ready()}</small><strong>{m.login_context_ready_detail()}</strong></div>
           </div>
 
-          <dl class="login-details">
-            <div><dt>{m.login_route_label()}</dt><dd>{transportLabels[preparation.route.transport]()}</dd></div>
-            <div><dt>PKCE</dt><dd>{preparation.pkceMethod}</dd></div>
-            <div><dt>Callback</dt><dd>{preparation.callbackTarget}</dd></div>
-            <div><dt>{m.login_certificate_host()}</dt><dd>{preparation.route.certificateHost}</dd></div>
-          </dl>
-
           <button
             class="official-button"
             type="button"
@@ -462,37 +445,6 @@
     line-height: 1.45;
   }
 
-  .login-details {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1px;
-    margin: 16px 0;
-    overflow: hidden;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    background: var(--line);
-  }
-
-  .login-details div {
-    min-width: 0;
-    padding: 12px;
-    background: white;
-  }
-
-  .login-details dt {
-    margin-bottom: 5px;
-    color: var(--soft-muted);
-    font-size: 9px;
-  }
-
-  .login-details dd {
-    margin: 0;
-    overflow: hidden;
-    font-size: 10px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
   .official-button,
   .secondary-button {
     width: 100%;
@@ -563,8 +515,5 @@
       font-size: 27px;
     }
 
-    .login-details {
-      grid-template-columns: 1fr;
-    }
   }
 </style>

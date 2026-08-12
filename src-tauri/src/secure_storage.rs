@@ -8,6 +8,8 @@ use zeroize::Zeroizing;
 const SERVICE: &str = "io.github.space2233.pixnya";
 #[cfg(not(target_os = "android"))]
 const ACCOUNT: &str = "pixiv-refresh-token";
+#[cfg(not(target_os = "android"))]
+const INVALIDATION_ACCOUNT: &str = "pixiv-refresh-token-invalid";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum SecureStorageError {
@@ -20,14 +22,6 @@ pub(crate) struct StoredCredential {
 }
 
 impl StoredCredential {
-    pub(crate) fn token(&self) -> &str {
-        self.refresh_token.as_str()
-    }
-
-    pub(crate) fn connection_mode(&self) -> ConnectionMode {
-        self.connection_mode
-    }
-
     pub(crate) fn into_parts(self) -> (Zeroizing<String>, ConnectionMode) {
         (self.refresh_token, self.connection_mode)
     }
@@ -128,11 +122,13 @@ pub(crate) async fn save_refresh_token(
         .map_err(|_| SecureStorageError::Unavailable)?,
     );
     tauri::async_runtime::spawn_blocking(move || {
+        mark_desktop_credentials_invalid()?;
         let entry =
             keyring::Entry::new(SERVICE, ACCOUNT).map_err(|_| SecureStorageError::Unavailable)?;
         entry
             .set_password(credential.as_str())
-            .map_err(|_| SecureStorageError::Unavailable)
+            .map_err(|_| SecureStorageError::Unavailable)?;
+        clear_desktop_invalidation_marker()
     })
     .await
     .map_err(|_| SecureStorageError::Unavailable)?
@@ -143,6 +139,12 @@ pub(crate) async fn load_refresh_token(
     _app: &tauri::AppHandle,
 ) -> Result<Option<StoredCredential>, SecureStorageError> {
     tauri::async_runtime::spawn_blocking(move || {
+        if desktop_credentials_invalidated()? {
+            if delete_desktop_credential().is_ok() {
+                let _ = clear_desktop_invalidation_marker();
+            }
+            return Ok(None);
+        }
         let entry =
             keyring::Entry::new(SERVICE, ACCOUNT).map_err(|_| SecureStorageError::Unavailable)?;
         match entry.get_password() {
@@ -168,13 +170,50 @@ pub(crate) async fn delete_refresh_token(
     _app: &tauri::AppHandle,
 ) -> Result<(), SecureStorageError> {
     tauri::async_runtime::spawn_blocking(move || {
-        let entry =
-            keyring::Entry::new(SERVICE, ACCOUNT).map_err(|_| SecureStorageError::Unavailable)?;
-        match entry.delete_credential() {
-            Ok(()) | Err(keyring::Error::NoEntry) => Ok(()),
-            Err(_) => Err(SecureStorageError::Unavailable),
-        }
+        mark_desktop_credentials_invalid()?;
+        delete_desktop_credential()?;
+        clear_desktop_invalidation_marker()
     })
     .await
     .map_err(|_| SecureStorageError::Unavailable)?
+}
+
+#[cfg(not(target_os = "android"))]
+fn mark_desktop_credentials_invalid() -> Result<(), SecureStorageError> {
+    let entry = keyring::Entry::new(SERVICE, INVALIDATION_ACCOUNT)
+        .map_err(|_| SecureStorageError::Unavailable)?;
+    entry
+        .set_password("invalid")
+        .map_err(|_| SecureStorageError::Unavailable)
+}
+
+#[cfg(not(target_os = "android"))]
+fn desktop_credentials_invalidated() -> Result<bool, SecureStorageError> {
+    let entry = keyring::Entry::new(SERVICE, INVALIDATION_ACCOUNT)
+        .map_err(|_| SecureStorageError::Unavailable)?;
+    match entry.get_password() {
+        Ok(_) => Ok(true),
+        Err(keyring::Error::NoEntry) => Ok(false),
+        Err(_) => Err(SecureStorageError::Unavailable),
+    }
+}
+
+#[cfg(not(target_os = "android"))]
+fn clear_desktop_invalidation_marker() -> Result<(), SecureStorageError> {
+    let entry = keyring::Entry::new(SERVICE, INVALIDATION_ACCOUNT)
+        .map_err(|_| SecureStorageError::Unavailable)?;
+    match entry.delete_credential() {
+        Ok(()) | Err(keyring::Error::NoEntry) => Ok(()),
+        Err(_) => Err(SecureStorageError::Unavailable),
+    }
+}
+
+#[cfg(not(target_os = "android"))]
+fn delete_desktop_credential() -> Result<(), SecureStorageError> {
+    let entry =
+        keyring::Entry::new(SERVICE, ACCOUNT).map_err(|_| SecureStorageError::Unavailable)?;
+    match entry.delete_credential() {
+        Ok(()) | Err(keyring::Error::NoEntry) => Ok(()),
+        Err(_) => Err(SecureStorageError::Unavailable),
+    }
 }

@@ -33,7 +33,7 @@ test("account control writes are serialized and stale session results are reject
     read("src-tauri/src/lib.rs"),
     read("src/routes/settings/account-controls/+page.svelte"),
   ]);
-  assert.match(backend, /mutation_gate[\s\S]*acquire_owned\(\)/);
+  assert.match(backend, /session_switch\s*\.\s*mutation_guard\(\)/);
   const mutation = backend.match(/async fn execute_authenticated_mutation[\s\S]*?\n}\n\nasync fn refresh_context_after_rejection/)?.[0] ?? "";
   assert.match(mutation, /expected_user_id[\s\S]*prepared_context/);
   assert.match(mutation, /operation_guard\(\)\.await[\s\S]*authenticated_context\(0\)/);
@@ -41,7 +41,7 @@ test("account control writes are serialized and stale session results are reject
   assert.doesNotMatch(mutation, /execute_authenticated_data_request/);
   assert.ok(
     mutation.indexOf("let expected_user_id = ensure_authenticated_context")
-      < mutation.indexOf(".mutation_gate"),
+      < mutation.indexOf(".mutation_guard"),
     "the account must be captured before a queued mutation waits for the write gate",
   );
   assert.match(page, /requestedSession !== sessionKey/);

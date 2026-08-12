@@ -4,14 +4,20 @@
   import AppShell from "$lib/components/AppShell.svelte";
   import ConnectionModePicker from "$lib/components/ConnectionModePicker.svelte";
   import ReturnLink from "$lib/components/ReturnLink.svelte";
+  import { sameConnectionModeAuthority } from "$lib/connection-mode-authority";
   import { m } from "$lib/i18n";
-  import { readPreferredConnectionMode, writePreferredConnectionMode } from "$lib/preferences";
-  import { initializeSession, switchSessionConnectionMode } from "$lib/session";
+  import {
+    readPreferredConnectionMode,
+    reconcilePreferredConnectionMode,
+    writePreferredConnectionMode,
+  } from "$lib/preferences";
+  import { initializeSession, session, switchSessionConnectionMode } from "$lib/session";
   import type {
     ConnectionDiagnosticReport,
     ConnectionMode,
     ConnectionProbe,
     PolicyFailure,
+    SessionSnapshot,
   } from "$lib/types";
 
   let selected = $state<ConnectionMode | null>(null);
@@ -23,18 +29,26 @@
   let reportTextArea = $state<HTMLTextAreaElement>();
   let probeSequence = 0;
 
+  $effect(() => {
+    const sessionMode = $session.loggedIn ? $session.connectionMode : null;
+    if (sessionMode && probeState !== "checking") selected = sessionMode;
+  });
+
   onMount(() => {
     void initialize();
   });
 
   async function initialize() {
     const snapshot = await initializeSession().catch(() => null);
-    const initialMode = readPreferredConnectionMode() ?? snapshot?.connectionMode ?? "standard";
+    const initialMode = snapshot
+      ? (reconcilePreferredConnectionMode(snapshot) ?? "standard")
+      : (readPreferredConnectionMode() ?? "standard");
     selected = initialMode;
     await testMode(initialMode, false);
   }
 
   async function testMode(mode: ConnectionMode, saveOnSuccess = true) {
+    const sessionAtProbeStart = $session;
     selected = mode;
     const sequence = ++probeSequence;
     probeState = "checking";
@@ -49,12 +63,24 @@
         unsafeAcknowledged: true,
       });
       if (sequence !== probeSequence || selected !== mode) return;
+      const currentSession = $session;
+      if (!sameConnectionModeAuthority(sessionAtProbeStart, currentSession)) {
+        restoreAuthoritativeSelection(currentSession);
+        return;
+      }
       if (saveOnSuccess) {
-        const snapshot = await initializeSession().catch(() => null);
-        if (snapshot?.loggedIn && snapshot.connectionMode !== mode) {
+        if (currentSession.loggedIn && currentSession.connectionMode !== mode) {
           await switchSessionConnectionMode(mode);
+          const expectedSession = { ...sessionAtProbeStart, connectionMode: mode };
+          if (!sameConnectionModeAuthority(expectedSession, $session)) {
+            restoreAuthoritativeSelection($session);
+            return;
+          }
+        } else if (currentSession.loggedIn) {
+          reconcilePreferredConnectionMode(currentSession);
+        } else {
+          writePreferredConnectionMode(mode);
         }
-        writePreferredConnectionMode(mode);
       }
       probeState = "available";
       probeMessage = `${report.latencyMs} ms`;
@@ -62,8 +88,18 @@
       if (sequence !== probeSequence || selected !== mode) return;
       probeState = "failed";
       probeMessage = describeError(error);
-      if (saveOnSuccess) selected = readPreferredConnectionMode() ?? "standard";
+      if (saveOnSuccess) restoreAuthoritativeSelection($session, false);
     }
+  }
+
+  function restoreAuthoritativeSelection(snapshot: SessionSnapshot, resetStatus = true) {
+    if (resetStatus) {
+      probeState = "idle";
+      probeMessage = "";
+    }
+    selected = snapshot.loggedIn
+      ? (snapshot.connectionMode ?? "standard")
+      : (readPreferredConnectionMode() ?? "standard");
   }
 
   async function runDiagnostics() {

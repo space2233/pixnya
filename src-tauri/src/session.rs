@@ -28,6 +28,11 @@ pub(crate) struct AuthenticatedContext {
     generation: u64,
 }
 
+pub(crate) struct SessionTransaction<'state> {
+    state: &'state SessionState,
+    _operation: tokio::sync::MutexGuard<'state, ()>,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct SessionSnapshot {
@@ -45,6 +50,13 @@ pub(crate) enum SessionStateError {
 impl SessionState {
     pub(crate) async fn operation_guard(&self) -> tokio::sync::MutexGuard<'_, ()> {
         self.operation_gate.lock().await
+    }
+
+    pub(crate) async fn transaction(&self) -> SessionTransaction<'_> {
+        SessionTransaction {
+            state: self,
+            _operation: self.operation_gate.lock().await,
+        }
     }
 
     pub(crate) fn install(
@@ -155,6 +167,23 @@ impl SessionState {
             .lock()
             .map_err(|_| SessionStateError::Unavailable)
             .map(|current| current.as_ref().map(|session| session.generation))
+    }
+}
+
+impl SessionTransaction<'_> {
+    pub(crate) fn snapshot(&self) -> Result<SessionSnapshot, SessionStateError> {
+        self.state.snapshot()
+    }
+
+    pub(crate) fn set_connection_mode(
+        &mut self,
+        connection_mode: ConnectionMode,
+    ) -> Result<Option<SessionSnapshot>, SessionStateError> {
+        self.state.set_connection_mode(connection_mode)
+    }
+
+    pub(crate) fn clear(&mut self) -> Result<SessionSnapshot, SessionStateError> {
+        self.state.clear()
     }
 }
 

@@ -3,14 +3,27 @@
   import AppShell from "$lib/components/AppShell.svelte";
   import Icon from "$lib/components/Icon.svelte";
   import { m } from "$lib/i18n";
-  import { readPreferredConnectionMode } from "$lib/preferences";
+  import {
+    readPreferredConnectionMode,
+    reconcilePreferredConnectionMode,
+  } from "$lib/preferences";
   import { initializeSession, session } from "$lib/session";
   import type { ConnectionMode } from "$lib/types";
 
-  let connectionMode = $state<ConnectionMode>("standard");
+  let preferredConnectionMode = $state<ConnectionMode>("standard");
+  let connectionMode = $derived<ConnectionMode>(
+    $session.loggedIn && $session.connectionMode
+      ? $session.connectionMode
+      : preferredConnectionMode,
+  );
   onMount(() => {
-    connectionMode = readPreferredConnectionMode() ?? "standard";
-    void initializeSession().catch(() => {});
+    preferredConnectionMode = readPreferredConnectionMode() ?? "standard";
+    void initializeSession()
+      .then((snapshot) => {
+        preferredConnectionMode =
+          reconcilePreferredConnectionMode(snapshot) ?? preferredConnectionMode;
+      })
+      .catch(() => {});
   });
 
   const connectionLabels: Record<ConnectionMode, () => string> = {

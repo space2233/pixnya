@@ -51,9 +51,7 @@
   type Definition = {
     title: () => string;
     heading: () => string;
-    subtitle: () => string;
     sectionTitle: () => string;
-    sectionHint: () => string;
     filters: readonly BrowseFilter[];
     tabs: boolean;
     layout: "artwork" | "portrait" | "novel";
@@ -92,9 +90,7 @@
     home: {
       title: m.navigation_home,
       heading: m.browse_home_heading,
-      subtitle: m.browse_home_subtitle,
       sectionTitle: m.browse_home_section,
-      sectionHint: m.browse_home_hint,
       filters: ["recommended", "following", "popular"],
       tabs: true,
       layout: "artwork",
@@ -102,9 +98,7 @@
     artworks: {
       title: m.navigation_artworks,
       heading: m.navigation_artworks,
-      subtitle: m.browse_artworks_subtitle,
       sectionTitle: m.browse_artworks_section,
-      sectionHint: m.browse_artworks_hint,
       filters: ["recommended", "following"],
       tabs: true,
       layout: "artwork",
@@ -112,9 +106,7 @@
     manga: {
       title: m.navigation_manga,
       heading: m.navigation_manga,
-      subtitle: m.browse_manga_subtitle,
       sectionTitle: m.browse_manga_section,
-      sectionHint: m.browse_manga_hint,
       filters: [],
       tabs: true,
       layout: "portrait",
@@ -122,9 +114,7 @@
     novels: {
       title: m.navigation_novels,
       heading: m.navigation_novels,
-      subtitle: m.browse_novels_subtitle,
       sectionTitle: m.browse_novels_section,
-      sectionHint: m.browse_novels_hint,
       filters: ["recommended", "series", "short"],
       tabs: true,
       layout: "novel",
@@ -132,9 +122,7 @@
     following: {
       title: m.navigation_following,
       heading: m.navigation_following,
-      subtitle: m.browse_following_subtitle,
       sectionTitle: m.browse_following_section,
-      sectionHint: m.browse_following_hint,
       filters: [],
       tabs: false,
       layout: "artwork",
@@ -142,9 +130,7 @@
     discover: {
       title: m.navigation_discover,
       heading: m.navigation_discover,
-      subtitle: m.browse_discover_subtitle,
       sectionTitle: m.browse_discover_section,
-      sectionHint: m.browse_discover_hint,
       filters: ["for_you", "trending_tags"],
       tabs: false,
       layout: "artwork",
@@ -152,9 +138,7 @@
     ranking: {
       title: m.navigation_ranking,
       heading: m.navigation_ranking,
-      subtitle: m.browse_ranking_subtitle,
       sectionTitle: m.browse_ranking_section,
-      sectionHint: m.browse_ranking_hint,
       filters: ["today", "week", "month"],
       tabs: false,
       layout: "artwork",
@@ -162,9 +146,7 @@
     bookmarks: {
       title: m.navigation_bookmarks,
       heading: m.navigation_bookmarks,
-      subtitle: m.browse_bookmarks_subtitle,
       sectionTitle: m.browse_bookmarks_section,
-      sectionHint: m.browse_bookmarks_hint,
       filters: ["public", "private"],
       tabs: false,
       layout: "artwork",
@@ -389,7 +371,6 @@
       {#if section !== "home" || (!$sessionRestoring && !$session.loggedIn)}
         <div>
           <h1>{definition.heading()}</h1>
-          <p>{definition.subtitle()}</p>
         </div>
       {/if}
       {#if definition.filters.length > 0}
@@ -428,7 +409,7 @@
     {#if section === "home"}
       <section class="content-section featured-section" aria-labelledby="featured-title">
         <header class="section-heading">
-          <div><h2 id="featured-title">{m.browse_featured_title()}</h2><p>{m.browse_featured_hint()}</p></div>
+          <div><h2 id="featured-title">{m.browse_featured_title()}</h2></div>
           <a href="/following">{m.browse_view_new()} <span aria-hidden="true">›</span></a>
         </header>
         <div class="featured-grid" aria-label={showContent ? m.browse_featured_title() : m.browse_featured_loading()}>
@@ -453,7 +434,6 @@
       <header class="section-heading">
         <div>
           <h2 id="collection-title">{definition.sectionTitle()}</h2>
-          <p>{selectedFilter ? `${filterLabels[selectedFilter]()} · ` : ""}{definition.sectionHint()}</p>
         </div>
         {#if section === "bookmarks"}
           <span class="local-state"><Icon name="shield" size={14} /> {m.browse_local_state({ state: $sessionRestoring ? m.session_restoring() : $session.loggedIn ? m.session_signed_in() : m.session_signed_out() })}</span>
@@ -572,12 +552,6 @@
     margin: 0;
     font-size: 24px;
     letter-spacing: -0.02em;
-  }
-
-  .browse-heading p {
-    margin: 7px 0 0;
-    color: var(--muted);
-    font-size: 11px;
   }
 
   .filter-tabs {
@@ -715,12 +689,6 @@
   .section-heading h2 {
     margin: 0;
     font-size: 18px;
-  }
-
-  .section-heading p {
-    margin: 5px 0 0;
-    color: var(--muted);
-    font-size: 9px;
   }
 
   .section-heading > a {
@@ -900,10 +868,6 @@
       overflow: hidden;
       clip-path: inset(50%);
       white-space: nowrap;
-    }
-
-    .browse-heading.repeated-title p {
-      margin-top: 0;
     }
 
     .featured-grid {

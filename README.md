@@ -4,15 +4,15 @@
 
 ## 中文下载说明
 
-请前往 [PixNya v1.2.0 正式版](https://github.com/space2233/pixnya/releases/tag/v1.2.0)，按设备选择一个安装包：
+请前往 [PixNya v1.2.1 正式版](https://github.com/space2233/pixnya/releases/tag/v1.2.1)，按设备选择一个安装包：
 
-- Windows 64 位：`PixNya_1.2.0_x64-setup.exe`
-- Linux 64 位：`PixNya_1.2.0_amd64.AppImage`
-- Android 10 及以上、ARM64：`pixnya-1.2.0-android-arm64-v8a.apk`
+- Windows 64 位：`PixNya_1.2.1_x64-setup.exe`
+- Linux 64 位：`PixNya_1.2.1_amd64.AppImage`
+- Android 10 及以上、ARM64：`pixnya-1.2.1-android-arm64-v8a.apk`
 
 Release 中的 JSON 和签名文件供自动更新使用，普通用户无须下载。
 
-当前公开稳定版为 `1.2.0`；当前源码版本 `1.2.0`。
+当前公开稳定版为 `1.2.1`；当前源码版本 `1.2.1`。
 
 ## 项目性质
 
