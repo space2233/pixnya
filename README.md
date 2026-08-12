@@ -52,6 +52,11 @@ Pixiv 返回的作品标题、作者名、标签、评论和小说正文保持�
 
 ## 本地开发
 
+项目文件与目录说明：
+
+- [本地工作区、缓存与构建产物](docs/LOCAL_PROJECT_STRUCTURE.md)
+- [GitHub 源码仓库与 Release 文件](docs/GITHUB_PROJECT_STRUCTURE.md)
+
 安装依赖并启动开发环境：
 
 ```powershell

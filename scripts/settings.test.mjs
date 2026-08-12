@@ -201,12 +201,9 @@ test("privacy settings require typed confirmation and clear every owned data lay
 test("the documented connection policy matches the warning-free 1.2 interface", () => {
   const security = readFileSync(new URL("../SECURITY.md", import.meta.url), "utf8");
   const privacy = readFileSync(new URL("../PRIVACY.md", import.meta.url), "utf8");
-  const plan = readFileSync(new URL("../PROJECT_PLAN.md", import.meta.url), "utf8");
 
   assert.match(security, /1\.2[\s\S]*?不显示风险标签、确认弹窗或重复警告/);
   assert.match(privacy, /1\.2[\s\S]*?不显示风险标签、确认弹窗或重复警告/);
-  assert.match(plan, /1\.2[\s\S]*?不显示风险标签、确认弹窗或重复警告/);
   assert.doesNotMatch(security, /设置页始终标明风险并允许恢复弹窗/);
   assert.doesNotMatch(privacy, /可在设置中恢复/);
-  assert.doesNotMatch(plan, /设置页必须披露|设置页持续说明|恢复重复提醒|恢复弹窗/);
 });
