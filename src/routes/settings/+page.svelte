@@ -45,6 +45,7 @@
       rows: [
         ["/settings/interface", "settings", m.settings_interface, () => ""],
         ["/settings/storage", "download", m.settings_storage, () => ""],
+        ["/settings/data", "history", m.settings_data_backup, () => ""],
         ["/settings/updates", "download", m.settings_updates, () => ""],
         ["/settings/privacy", "shield", m.settings_privacy, () => ""],
       ],

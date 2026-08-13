@@ -6,6 +6,11 @@ import type {
   IllustrationPage,
   IllustrationSeriesPage,
   BookmarkRestrict,
+  BookmarkContentKind,
+  BookmarkDetail,
+  BookmarkTagPage,
+  BookmarkUpdate,
+  BookmarkUpdateResult,
   CommentPage,
   RankingMode,
   SearchTarget,
@@ -50,12 +55,52 @@ import type {
   CatalogFilterDraft,
   DuplicateGroup,
   SavedCatalogFilter,
+  BackupExportResult,
+  BackupSelectionResult,
+  BackupRestoreStartResult,
+  BackupRestoreStrategy,
+  FrontendBackupRecovery,
 } from "$lib/types";
+import type { FrontendBackupState } from "$lib/local-backup";
 
 export function getRecommendedIllustrations(cursor?: string): Promise<IllustrationPage> {
   return invoke<IllustrationPage>("get_recommended_illustrations", {
     cursor: cursor ?? null,
   });
+}
+
+export function createLocalBackup(
+  frontend: FrontendBackupState,
+  includeOffline: boolean,
+): Promise<BackupExportResult> {
+  return invoke<BackupExportResult>("create_local_backup", { frontend, includeOffline });
+}
+
+export function selectLocalBackup(): Promise<BackupSelectionResult> {
+  return invoke<BackupSelectionResult>("select_local_backup");
+}
+
+export function startLocalBackupRestore(
+  strategy: BackupRestoreStrategy,
+  previousFrontend: FrontendBackupState,
+): Promise<BackupRestoreStartResult> {
+  return invoke<BackupRestoreStartResult>("start_local_backup_restore", { strategy, previousFrontend });
+}
+
+export function getLocalBackupFrontendRecovery(): Promise<FrontendBackupRecovery | null> {
+  return invoke<FrontendBackupRecovery | null>("get_local_backup_frontend_recovery");
+}
+
+export function acknowledgeLocalBackupFrontendRecovery(transactionId: number): Promise<void> {
+  return invoke<void>("acknowledge_local_backup_frontend_recovery", { transactionId });
+}
+
+export function commitLocalBackupRestore(transactionId: number): Promise<void> {
+  return invoke<void>("commit_local_backup_restore", { transactionId });
+}
+
+export function rollbackLocalBackupRestore(transactionId: number): Promise<void> {
+  return invoke<void>("rollback_local_backup_restore", { transactionId });
 }
 
 export function getRecommendedManga(cursor?: string): Promise<IllustrationPage> {
@@ -104,8 +149,9 @@ export function getFollowedNovels(cursor?: string): Promise<NovelPage> {
 export function getBookmarkedNovels(
   restrict: BookmarkRestrict,
   cursor?: string,
+  tag?: string,
 ): Promise<NovelPage> {
-  return invoke<NovelPage>("get_bookmarked_novels", { restrict, cursor: cursor ?? null });
+  return invoke<NovelPage>("get_bookmarked_novels", { restrict, tag: tag || null, cursor: cursor ?? null });
 }
 
 export function getRankingNovels(
@@ -453,11 +499,43 @@ export function getFollowedIllustrations(cursor?: string): Promise<IllustrationP
 export function getBookmarkedIllustrations(
   restrict: BookmarkRestrict,
   cursor?: string,
+  tag?: string,
 ): Promise<IllustrationPage> {
   return invoke<IllustrationPage>("get_bookmarked_illustrations", {
     restrict,
+    tag: tag || null,
     cursor: cursor ?? null,
   });
+}
+
+export function getBookmarkDetail(
+  kind: BookmarkContentKind,
+  resourceId: string,
+): Promise<BookmarkDetail> {
+  return invoke<BookmarkDetail>("get_bookmark_detail", { kind, resourceId });
+}
+
+export function getBookmarkTags(
+  kind: BookmarkContentKind,
+  restrict: BookmarkRestrict,
+  cursor?: string,
+): Promise<BookmarkTagPage> {
+  return invoke<BookmarkTagPage>("get_bookmark_tags", {
+    kind,
+    restrict,
+    cursor: cursor ?? null,
+  });
+}
+
+export function updateBookmark(update: BookmarkUpdate): Promise<void> {
+  return invoke<void>("update_bookmark", { update });
+}
+
+export function batchUpdateBookmarks(
+  updates: BookmarkUpdate[],
+  expectedUserId: string,
+): Promise<BookmarkUpdateResult[]> {
+  return invoke<BookmarkUpdateResult[]>("batch_update_bookmarks", { updates, expectedUserId });
 }
 
 export function setIllustrationBookmark(
@@ -602,6 +680,23 @@ export function describeDataFailure(error: unknown): string {
       return m.data_error_storage();
     case "export_destination_unavailable":
       return m.data_error_export_destination();
+    case "backup_invalid":
+      return m.data_error_backup_invalid();
+    case "backup_unsupported":
+      return m.data_error_backup_unsupported();
+    case "backup_integrity":
+      return m.data_error_backup_integrity();
+    case "backup_capacity_exceeded":
+      return m.data_error_backup_capacity();
+    case "backup_transaction_pending":
+      return m.data_error_backup_pending();
+    case "backup_rollback_failed":
+      return m.data_error_backup_rollback();
+    case "backup_conflict":
+      return m.data_error_backup_conflict();
+    case "backup_unavailable":
+    case "backup_transaction_unavailable":
+      return m.data_error_backup_unavailable();
     default:
       return m.data_error_default();
   }

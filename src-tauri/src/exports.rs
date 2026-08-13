@@ -13,6 +13,7 @@ const SETTINGS_BACKUP_FILE: &str = ".export-settings-v1.backup";
 const SETTINGS_VERSION: u8 = 1;
 #[cfg(target_os = "android")]
 const ANDROID_STAGING_DIRECTORY: &str = "export-staging-v1";
+pub(crate) const BACKUP_STAGING_DIRECTORY: &str = "backup-staging-v1";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -331,6 +332,137 @@ pub(crate) async fn export_generated_file(
     }
 }
 
+pub(crate) async fn export_backup_file(
+    app: &tauri::AppHandle,
+    source: &Path,
+    file_name: &str,
+) -> Result<String, ApiCommandError> {
+    if !valid_backup_file_name(file_name) || !source.is_file() {
+        return Err(ApiCommandError::InvalidInput);
+    }
+    export_staged_file(app, source, file_name).await
+}
+
+pub(crate) async fn select_backup_file(
+    app: &tauri::AppHandle,
+) -> Result<Option<(PathBuf, String)>, ApiCommandError> {
+    #[cfg(not(target_os = "android"))]
+    {
+        use tauri_plugin_dialog::DialogExt;
+        let picker_app = app.clone();
+        let picked = tauri::async_runtime::spawn_blocking(move || {
+            picker_app
+                .dialog()
+                .file()
+                .set_title("Select PixNya backup")
+                .add_filter("PixNya backup", &["pixnyabackup"])
+                .blocking_pick_file()
+        })
+        .await
+        .map_err(|_| ApiCommandError::BackupUnavailable)?;
+        let Some(picked) = picked else {
+            return Ok(None);
+        };
+        let path = picked
+            .into_path()
+            .map_err(|_| ApiCommandError::BackupUnavailable)?;
+        let label = path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or("PixNya backup")
+            .to_owned();
+        Ok(Some((path, label)))
+    }
+
+    #[cfg(target_os = "android")]
+    {
+        let selected = app
+            .state::<AndroidExportPlugin>()
+            .0
+            .clone()
+            .run_mobile_plugin_async::<AndroidBackupSelection>(
+                "selectBackupFile",
+                EmptyMobilePayload {},
+            )
+            .await
+            .map_err(|_| ApiCommandError::BackupUnavailable)?;
+        if selected.cancelled {
+            return Ok(None);
+        }
+        let path = selected
+            .source_file
+            .map(PathBuf::from)
+            .ok_or(ApiCommandError::BackupUnavailable)?;
+        Ok(Some((
+            path,
+            selected.label.unwrap_or_else(|| "PixNya backup".into()),
+        )))
+    }
+}
+
+async fn export_staged_file(
+    app: &tauri::AppHandle,
+    source: &Path,
+    file_name: &str,
+) -> Result<String, ApiCommandError> {
+    let size = fs::metadata(source)
+        .map_err(|_| ApiCommandError::ExportUnavailable)?
+        .len();
+    if size == 0 {
+        return Err(ApiCommandError::ExportUnavailable);
+    }
+    if !platform_status(app).await?.configured {
+        return Err(ApiCommandError::ExportDestinationUnavailable);
+    }
+
+    #[cfg(not(target_os = "android"))]
+    {
+        let destination_root = export_manager(app)?
+            .desktop_directory()?
+            .ok_or(ApiCommandError::ExportDestinationUnavailable)?;
+        let destination = destination_root.join(file_name);
+        if destination.exists() {
+            return Err(ApiCommandError::ExportUnavailable);
+        }
+        let staging = destination_root.join(format!(".{file_name}.part"));
+        let result = (|| {
+            if staging.exists() {
+                fs::remove_file(&staging).map_err(|_| ApiCommandError::ExportUnavailable)?;
+            }
+            let copied =
+                fs::copy(source, &staging).map_err(|_| ApiCommandError::ExportUnavailable)?;
+            if copied != size {
+                return Err(ApiCommandError::ExportUnavailable);
+            }
+            fs::rename(&staging, &destination).map_err(|_| ApiCommandError::ExportUnavailable)?;
+            Ok(destination.to_string_lossy().into_owned())
+        })();
+        if result.is_err() {
+            let _ = fs::remove_file(staging);
+        }
+        result
+    }
+
+    #[cfg(target_os = "android")]
+    {
+        let result = app
+            .state::<AndroidExportPlugin>()
+            .0
+            .clone()
+            .run_mobile_plugin_async::<AndroidExportResult>(
+                "exportFile",
+                AndroidGeneratedFilePayload {
+                    source_file: source.to_string_lossy().into_owned(),
+                    file_name: file_name.to_owned(),
+                    expected_size_bytes: size,
+                },
+            )
+            .await
+            .map_err(|_| ApiCommandError::ExportUnavailable)?;
+        Ok(result.destination)
+    }
+}
+
 fn valid_generated_file_name(value: &str) -> bool {
     !value.is_empty()
         && value.len() <= 128
@@ -339,6 +471,15 @@ fn valid_generated_file_name(value: &str) -> bool {
             .bytes()
             .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b'_' | b'-'))
         && matches!(value.rsplit('.').next(), Some("gif" | "png" | "webm"))
+}
+
+fn valid_backup_file_name(value: &str) -> bool {
+    value.len() <= 128
+        && value.starts_with("pixnya-backup-")
+        && value.ends_with(".pixnyabackup")
+        && value
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b'_' | b'-'))
 }
 
 pub(crate) async fn clear_all_export_settings(app: &tauri::AppHandle) -> Result<(), ()> {
@@ -547,6 +688,15 @@ struct AndroidGeneratedFilePayload {
 #[derive(Deserialize)]
 struct AndroidExportResult {
     destination: String,
+}
+
+#[cfg(target_os = "android")]
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct AndroidBackupSelection {
+    cancelled: bool,
+    source_file: Option<String>,
+    label: Option<String>,
 }
 
 #[cfg(target_os = "android")]

@@ -630,6 +630,49 @@ export type SearchTarget =
   | "exact_match_for_tags"
   | "title_and_caption";
 export type BookmarkRestrict = "public" | "private";
+export type BookmarkContentKind = "illustration" | "novel";
+
+export interface BookmarkTagStatus {
+  name: string;
+  isRegistered: boolean;
+}
+
+export interface BookmarkDetail {
+  restrict: BookmarkRestrict;
+  tags: BookmarkTagStatus[];
+}
+
+export interface BookmarkTag {
+  name: string;
+  count: number;
+}
+
+export interface BookmarkTagPage {
+  tags: BookmarkTag[];
+  nextCursor?: string | null;
+}
+
+export interface BookmarkUpdate {
+  kind: BookmarkContentKind;
+  resourceId: string;
+  bookmarked: boolean;
+  restrict: BookmarkRestrict;
+  tags: string[];
+}
+
+export type BookmarkUpdateFailure =
+  | "authentication_required"
+  | "invalid_input"
+  | "request_failed"
+  | "rejected"
+  | "invalid_response";
+
+export interface BookmarkUpdateResult {
+  kind: BookmarkContentKind;
+  resourceId: string;
+  succeeded: boolean;
+  failure?: BookmarkUpdateFailure | null;
+}
 
 export interface TrendingTag {
   name: string;
@@ -744,3 +787,37 @@ export interface CommandFailure {
   requiredBytes?: number;
   reserveBytes?: number;
 }
+
+export interface BackupSummary {
+  formatVersion: number;
+  applicationVersion: string;
+  componentCount: number;
+  offlineFileCount: number;
+  offlineIncluded: boolean;
+  totalBytes: number;
+  containsCredentials: boolean;
+}
+
+export interface BackupSelectionResult {
+  cancelled: boolean;
+  label?: string | null;
+  preview?: BackupSummary | null;
+}
+
+export interface BackupExportResult {
+  destination: string;
+  summary: BackupSummary;
+}
+
+export interface BackupRestoreStartResult {
+  transactionId: number;
+  frontend: import("$lib/local-backup").FrontendBackupState;
+  summary: BackupSummary;
+}
+
+export interface FrontendBackupRecovery {
+  transactionId: number;
+  frontend: import("$lib/local-backup").FrontendBackupState;
+}
+
+export type BackupRestoreStrategy = "merge" | "replace";

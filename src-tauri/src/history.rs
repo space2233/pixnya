@@ -6,10 +6,10 @@ use tauri::Manager;
 
 #[derive(Default)]
 pub(crate) struct HistoryState {
-    operation: tokio::sync::Mutex<()>,
+    pub(crate) operation: tokio::sync::Mutex<()>,
 }
 
-fn open_history(app: &tauri::AppHandle) -> Result<LocalHistory, ApiCommandError> {
+pub(crate) fn open_history(app: &tauri::AppHandle) -> Result<LocalHistory, ApiCommandError> {
     let path = crate::paths::app_data_dir(app)
         .map_err(|_| ApiCommandError::BrowsingHistoryUnavailable)?
         .join("browsing-history-v1.sqlite3");

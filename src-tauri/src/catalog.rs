@@ -9,7 +9,7 @@ use tauri::Manager;
 
 #[derive(Default)]
 pub(crate) struct CatalogState {
-    operation: tokio::sync::Mutex<()>,
+    pub(crate) operation: tokio::sync::Mutex<()>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

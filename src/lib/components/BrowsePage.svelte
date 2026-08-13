@@ -6,10 +6,16 @@
   import Icon from "$lib/components/Icon.svelte";
   import ThumbnailSkeleton from "$lib/components/ThumbnailSkeleton.svelte";
   import { m } from "$lib/i18n";
+  import { buildBookmarkBatchUpdate, type BookmarkBatchAction } from "$lib/bookmark-batch";
+  import { loadAllBookmarkTags } from "$lib/bookmark-tags";
   import { loadHomeTagCache, saveHomeTagCache } from "$lib/home-tag-cache";
+  import { publishIllustrationBookmarkState } from "$lib/illustration-bookmark-state";
   import {
     describeDataFailure,
     getBookmarkedIllustrations,
+    getBookmarkDetail,
+    getBookmarkTags,
+    batchUpdateBookmarks,
     getFollowedIllustrations,
     getRankingIllustrations,
     getRecommendedIllustrations,
@@ -19,6 +25,8 @@
   import { session, sessionRestoring } from "$lib/session";
   import type {
     BookmarkRestrict,
+    BookmarkTag,
+    BookmarkUpdate,
     IllustrationPage,
     IllustrationSummary,
     RankingMode,
@@ -46,6 +54,7 @@
     paginationError: string;
     requestedKey: string;
     trendingSession: string;
+    selectedBookmarkTag?: string;
   };
 
   type Definition = {
@@ -164,6 +173,14 @@
   let nextCursor = $state<string | null>(null);
   let loadingMore = $state(false);
   let paginationError = $state("");
+  let bookmarkTags = $state<BookmarkTag[]>([]);
+  let bookmarkTagsRevision = $state(0);
+  let selectedBookmarkTag = $state("");
+  let selectionMode = $state(false);
+  let selectedBookmarkIds = $state<string[]>([]);
+  let batchTag = $state("");
+  let batchBusy = $state(false);
+  let batchStatus = $state("");
   let requestedKey = $state("");
   let trendingSession = $state("");
   let requestSequence = 0;
@@ -191,7 +208,7 @@
 
   $effect(() => {
     const sessionKey = $session.loggedIn ? ($session.user?.id ?? "logged-in") : "";
-    const key = sessionKey && supportsContent ? `${sessionKey}:${section}:${selectedFilter}` : "";
+    const key = sessionKey && supportsContent ? `${sessionKey}:${section}:${selectedFilter}:${section === "bookmarks" ? selectedBookmarkTag : ""}` : "";
     if (!key) {
       requestSequence += 1;
       requestedKey = "";
@@ -207,6 +224,22 @@
       requestedKey = key;
       void loadContent(key);
     }
+  });
+
+  $effect(() => {
+    bookmarkTagsRevision;
+    const sessionKey = $session.loggedIn ? ($session.user?.id ?? "logged-in") : "";
+    const restrict: BookmarkRestrict = selectedFilter === "private" ? "private" : "public";
+    if (section !== "bookmarks" || !sessionKey) {
+      bookmarkTags = [];
+      selectedBookmarkTag = "";
+      return;
+    }
+    let active = true;
+    loadAllBookmarkTags((cursor) => getBookmarkTags("illustration", restrict, cursor))
+      .then((tags) => { if (active) bookmarkTags = tags; })
+      .catch(() => { if (active) bookmarkTags = []; });
+    return () => { active = false; };
   });
 
   $effect(() => {
@@ -237,7 +270,7 @@
     }
     if (section === "bookmarks") {
       const restrict: BookmarkRestrict = selectedFilter === "private" ? "private" : "public";
-      return getBookmarkedIllustrations(restrict, cursor);
+      return getBookmarkedIllustrations(restrict, cursor, selectedBookmarkTag || undefined);
     }
     if (section === "discover" && selectedFilter === "trending_tags") {
       const tags = await getTrendingTags();
@@ -245,6 +278,65 @@
       return { illustrations: tags.map((tag) => tag.illustration), nextCursor: null };
     }
     return getRecommendedIllustrations(cursor);
+  }
+
+  function toggleBookmarkSelection(id: string, selected: boolean) {
+    const values = new Set(selectedBookmarkIds);
+    if (selected) values.add(id); else values.delete(id);
+    selectedBookmarkIds = [...values].slice(0, 100);
+  }
+
+  function selectFilter(filter: BrowseFilter) {
+    if (selectedFilter === filter) return;
+    selectedFilter = filter;
+    if (section === "bookmarks") {
+      selectedBookmarkTag = "";
+      selectedBookmarkIds = [];
+      batchStatus = "";
+    }
+  }
+
+  async function buildBookmarkUpdates(action: BookmarkBatchAction): Promise<BookmarkUpdate[]> {
+    const tag = batchTag.trim();
+    if ((action === "add_tag" || action === "remove_tag") && !tag) throw { kind: "invalid_input" };
+    const details: Array<{ resourceId: string; detail: Awaited<ReturnType<typeof getBookmarkDetail>> }> = [];
+    for (const resourceId of selectedBookmarkIds) {
+      details.push({ resourceId, detail: await getBookmarkDetail("illustration", resourceId) });
+    }
+    return details.map(({ resourceId, detail }) => buildBookmarkBatchUpdate("illustration", resourceId, detail, action, tag));
+  }
+
+  async function applyBookmarkBatch(action: BookmarkBatchAction) {
+    if (batchBusy || selectedBookmarkIds.length === 0) return;
+    if (action === "remove" && !window.confirm(m.bookmark_remove_confirm({ count: selectedBookmarkIds.length }))) return;
+    batchBusy = true;
+    batchStatus = "";
+    try {
+      const expectedUserId = $session.user?.id;
+      if (!expectedUserId) throw { kind: "authentication_required" };
+      const results = await batchUpdateBookmarks(await buildBookmarkUpdates(action), expectedUserId);
+      const succeeded = new Set(results.filter((item) => item.succeeded).map((item) => item.resourceId));
+      if (action === "remove") {
+        const account = $session.user?.id ?? "logged-in";
+        for (const resourceId of succeeded) publishIllustrationBookmarkState(account, resourceId, false);
+      }
+      const currentRestrict: BookmarkRestrict = selectedFilter === "private" ? "private" : "public";
+      if (action === "remove" || ((action === "public" || action === "private") && action !== currentRestrict)) {
+        illustrations = illustrations.filter((item) => !succeeded.has(item.id));
+      }
+      selectedBookmarkIds = selectedBookmarkIds.filter((id) => !succeeded.has(id));
+      const failedCount = results.length - succeeded.size;
+      batchStatus = failedCount ? m.bookmark_batch_partial({ success: succeeded.size, failed: failedCount }) : m.bookmark_batch_success({ count: succeeded.size });
+      if (succeeded.size > 0) bookmarkTagsRevision += 1;
+      if (action === "add_tag" || action === "remove_tag") {
+        selectedBookmarkIds = [];
+        requestedKey = "";
+      }
+    } catch (error) {
+      batchStatus = describeDataFailure(error);
+    } finally {
+      batchBusy = false;
+    }
   }
 
   async function loadContent(key: string) {
@@ -322,6 +414,7 @@
       paginationError,
       requestedKey,
       trendingSession,
+      selectedBookmarkTag,
     };
   }
 
@@ -340,6 +433,7 @@
     paginationError = snapshot.paginationError;
     requestedKey = snapshot.dataStatus === "loading" ? "" : snapshot.requestedKey;
     trendingSession = snapshot.trendingSession;
+    selectedBookmarkTag = snapshot.selectedBookmarkTag ?? "";
     loadingMore = false;
   }
 </script>
@@ -380,7 +474,7 @@
               type="button"
               class:active={selectedFilter === filter}
               aria-pressed={selectedFilter === filter}
-              onclick={() => (selectedFilter = filter)}
+              onclick={() => selectFilter(filter)}
             >{filterLabels[filter]()}</button>
           {/each}
         </nav>
@@ -436,9 +530,30 @@
           <h2 id="collection-title">{definition.sectionTitle()}</h2>
         </div>
         {#if section === "bookmarks"}
-          <span class="local-state"><Icon name="shield" size={14} /> {m.browse_local_state({ state: $sessionRestoring ? m.session_restoring() : $session.loggedIn ? m.session_signed_in() : m.session_signed_out() })}</span>
+          <button class="manage-bookmarks" type="button" onclick={() => { selectionMode = !selectionMode; selectedBookmarkIds = []; batchStatus = ""; }}>{selectionMode ? m.common_cancel() : m.bookmark_manage()}</button>
         {/if}
       </header>
+
+      {#if section === "bookmarks" && showContent}
+        <div class="bookmark-tools">
+          <label><span>{m.bookmark_filter_tag()}</span><select bind:value={selectedBookmarkTag} disabled={batchBusy}><option value="">{m.bookmark_all_tags()}</option>{#each bookmarkTags as tag}<option value={tag.name}>{tag.name} ({tag.count})</option>{/each}</select></label>
+          {#if selectionMode}
+            <button type="button" onclick={() => (selectedBookmarkIds = collectionIllustrations.slice(0, 100).map((item) => item.id))}>{m.bookmark_select_visible()}</button>
+            <span>{m.bookmark_selected_count({ count: selectedBookmarkIds.length })}</span>
+          {/if}
+        </div>
+        {#if selectionMode && selectedBookmarkIds.length > 0}
+          <div class="batch-toolbar">
+            <button disabled={batchBusy} onclick={() => applyBookmarkBatch("public")}>{m.filter_public()}</button>
+            <button disabled={batchBusy} onclick={() => applyBookmarkBatch("private")}>{m.filter_private()}</button>
+            <input bind:value={batchTag} maxlength="100" placeholder={m.bookmark_tag_name()} />
+            <button disabled={batchBusy || !batchTag.trim()} onclick={() => applyBookmarkBatch("add_tag")}>{m.bookmark_add_tag()}</button>
+            <button disabled={batchBusy || !batchTag.trim()} onclick={() => applyBookmarkBatch("remove_tag")}>{m.bookmark_remove_tag()}</button>
+            <button class="danger" disabled={batchBusy} onclick={() => applyBookmarkBatch("remove")}>{m.bookmark_remove_selected()}</button>
+          </div>
+        {/if}
+        {#if batchStatus}<p class="batch-status" role="status">{batchStatus}</p>{/if}
+      {/if}
 
       <div
         class="collection-grid"
@@ -452,6 +567,9 @@
               {illustration}
               tone={((index + 2) % 6) + 1}
               rank={section === "ranking" ? index + 1 : undefined}
+              selectable={section === "bookmarks" && selectionMode}
+              selected={selectedBookmarkIds.includes(illustration.id)}
+              onSelect={(selected) => toggleBookmarkSelection(illustration.id, selected)}
             />
           {/each}
         {:else if showContent}
@@ -580,6 +698,7 @@
     background: white;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   }
+  .manage-bookmarks{padding:8px 14px;border:1px solid #cde7f8;border-radius:18px;background:white;color:var(--pixiv-blue);cursor:pointer}.bookmark-tools,.batch-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin:14px 0;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:white}.bookmark-tools label{display:flex;align-items:center;gap:8px}.bookmark-tools select,.batch-toolbar input{padding:8px;border:1px solid var(--line);border-radius:9px;background:white}.bookmark-tools button,.batch-toolbar button{padding:8px 12px;border:1px solid #cde7f8;border-radius:16px;background:white;color:var(--pixiv-blue);cursor:pointer}.batch-toolbar .danger{color:var(--danger)}.batch-status{margin:8px 0;color:var(--muted);font-size:12px}
 
   .account-callout {
     display: grid;
@@ -699,14 +818,6 @@
 
   .section-heading > a:hover {
     color: var(--pixiv-blue);
-  }
-
-  .local-state {
-    display: flex;
-    gap: 5px;
-    align-items: center;
-    color: var(--muted);
-    font-size: 9px;
   }
 
   .featured-grid,

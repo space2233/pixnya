@@ -48,7 +48,7 @@ pub struct HistoryRecord {
     pub thumbnail_url: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct HistoryEntry {
     pub kind: HistoryKind,
@@ -59,7 +59,7 @@ pub struct HistoryEntry {
     pub viewed_at_unix_seconds: u64,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct HistorySnapshot {
     pub enabled: bool,
@@ -238,6 +238,83 @@ impl LocalHistory {
         Ok(HistoryClearStats {
             entries_removed: count,
         })
+    }
+
+    pub fn restore_snapshot(
+        &self,
+        snapshot: &HistorySnapshot,
+        replace: bool,
+    ) -> Result<HistorySnapshot, HistoryError> {
+        if snapshot.limit != HISTORY_LIMIT as u32 || snapshot.entries.len() > HISTORY_LIMIT {
+            return Err(HistoryError::InvalidInput);
+        }
+        let mut normalized = Vec::with_capacity(snapshot.entries.len());
+        for entry in &snapshot.entries {
+            let record = normalize_record(HistoryRecord {
+                kind: entry.kind,
+                resource_id: entry.resource_id.clone(),
+                title: entry.title.clone(),
+                subtitle: entry.subtitle.clone(),
+                thumbnail_url: entry.thumbnail_url.clone(),
+            })?;
+            if entry.viewed_at_unix_seconds > i64::MAX as u64 {
+                return Err(HistoryError::InvalidInput);
+            }
+            normalized.push((record, entry.viewed_at_unix_seconds));
+        }
+        normalized.sort_by_key(|(_, viewed_at)| *viewed_at);
+
+        let mut connection = self.connection()?;
+        let transaction = connection
+            .transaction_with_behavior(TransactionBehavior::Immediate)
+            .map_err(|_| HistoryError::Database)?;
+        if replace {
+            transaction
+                .execute("DELETE FROM history_entries", [])
+                .map_err(|_| HistoryError::Database)?;
+        }
+        transaction
+            .execute(
+                "UPDATE history_settings SET enabled = ?1 WHERE id = 1",
+                [i64::from(snapshot.enabled)],
+            )
+            .map_err(|_| HistoryError::Database)?;
+        for (order, (record, viewed_at)) in normalized.into_iter().enumerate() {
+            let view_order = i64::try_from(order + 1).map_err(|_| HistoryError::InvalidInput)?;
+            transaction
+                .execute(
+                    "INSERT INTO history_entries (
+                       kind, resource_id, title, subtitle, thumbnail_url, viewed_at, view_order
+                     ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+                     ON CONFLICT(kind, resource_id) DO UPDATE SET
+                       title = CASE WHEN excluded.viewed_at >= history_entries.viewed_at THEN excluded.title ELSE history_entries.title END,
+                       subtitle = CASE WHEN excluded.viewed_at >= history_entries.viewed_at THEN excluded.subtitle ELSE history_entries.subtitle END,
+                       thumbnail_url = CASE WHEN excluded.viewed_at >= history_entries.viewed_at THEN excluded.thumbnail_url ELSE history_entries.thumbnail_url END,
+                       viewed_at = MAX(history_entries.viewed_at, excluded.viewed_at),
+                       view_order = CASE WHEN excluded.viewed_at >= history_entries.viewed_at THEN excluded.view_order ELSE history_entries.view_order END",
+                    params![
+                        record.kind.code(),
+                        record.resource_id,
+                        record.title,
+                        record.subtitle,
+                        record.thumbnail_url,
+                        i64::try_from(viewed_at).map_err(|_| HistoryError::InvalidInput)?,
+                        view_order,
+                    ],
+                )
+                .map_err(|_| HistoryError::Database)?;
+        }
+        transaction
+            .execute(
+                "DELETE FROM history_entries WHERE rowid IN (
+                   SELECT rowid FROM history_entries ORDER BY viewed_at DESC, view_order DESC
+                   LIMIT -1 OFFSET ?1
+                 )",
+                [HISTORY_LIMIT as u32],
+            )
+            .map_err(|_| HistoryError::Database)?;
+        transaction.commit().map_err(|_| HistoryError::Database)?;
+        self.snapshot()
     }
 
     fn connection(&self) -> Result<Connection, HistoryError> {
@@ -462,5 +539,39 @@ mod tests {
         assert!(!snapshot.enabled);
         assert!(snapshot.entries.is_empty());
         fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn restores_a_portable_snapshot_and_keeps_newer_merge_entries() {
+        let (_root, history) = test_history("portable-restore");
+        history
+            .record(HistoryRecord {
+                kind: HistoryKind::Artwork,
+                resource_id: "42".into(),
+                title: "Current".into(),
+                subtitle: "Current author".into(),
+                thumbnail_url: None,
+            })
+            .unwrap();
+        let current = history.snapshot().unwrap().entries[0].viewed_at_unix_seconds;
+        let imported = super::HistorySnapshot {
+            enabled: false,
+            limit: super::HISTORY_LIMIT as u32,
+            entries: vec![super::HistoryEntry {
+                kind: HistoryKind::Artwork,
+                resource_id: "42".into(),
+                title: "Older".into(),
+                subtitle: "Older author".into(),
+                thumbnail_url: None,
+                viewed_at_unix_seconds: current.saturating_sub(1),
+            }],
+        };
+
+        let restored = history.restore_snapshot(&imported, false).unwrap();
+        assert!(!restored.enabled);
+        assert_eq!(restored.entries[0].title, "Current");
+
+        let replaced = history.restore_snapshot(&imported, true).unwrap();
+        assert_eq!(replaced.entries[0].title, "Older");
     }
 }

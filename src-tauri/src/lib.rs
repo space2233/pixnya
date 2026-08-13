@@ -6,6 +6,7 @@ mod desktop_update;
 mod downloads;
 mod exports;
 mod history;
+mod local_backup;
 mod login_route;
 mod paths;
 mod secure_storage;
@@ -33,9 +34,11 @@ use history::{
     clear_browsing_history, get_browsing_history, record_browsing_history,
     remove_browsing_history_entry, set_browsing_history_enabled, HistoryState,
 };
+use local_backup::LocalBackupState;
 use login_route::{evaluate_login_route, LoginRouteError};
 use pixiv_client_api::{
-    validated_media_url, AccessBlockPage, ApiError, Comment, CommentPage, CommentStamp,
+    validated_media_url, AccessBlockPage, ApiError, BookmarkContentKind, BookmarkDetail,
+    BookmarkTagPage, BookmarkUpdate, BookmarkUpdateResult, Comment, CommentPage, CommentStamp,
     IllustrationDetail, IllustrationPage, IllustrationSeriesPage, MuteSettings, NotificationPage,
     NovelContent, NovelDetail, NovelPage, NovelSeriesPage, PixivApiClient, TrendingTag,
     UgoiraMetadata, UserDetail, UserPreviewPage, API_HOST, MEDIA_REFERER, MEDIA_USER_AGENT,
@@ -448,6 +451,15 @@ enum ApiCommandError {
     LocalCollectionNotFound,
     LocalCollectionConflict,
     BrowsingHistoryUnavailable,
+    BackupUnavailable,
+    BackupInvalid,
+    BackupUnsupported,
+    BackupIntegrity,
+    BackupCapacityExceeded,
+    BackupTransactionPending,
+    BackupTransactionUnavailable,
+    BackupRollbackFailed,
+    BackupConflict,
     StorageUnavailable,
     StorageCapacityExceeded {
         available_bytes: u64,
@@ -1858,10 +1870,33 @@ where
         + Send
         + 'static,
 {
+    execute_authenticated_mutation_for_user(app, session_state, data_state, None, request).await
+}
+
+async fn execute_authenticated_mutation_for_user<T, F>(
+    app: &tauri::AppHandle,
+    session_state: &SessionState,
+    data_state: AuthenticatedDataState,
+    requested_user_id: Option<String>,
+    request: F,
+) -> Result<T, ApiCommandError>
+where
+    T: Send + 'static,
+    F: Fn(&PixivApiClient, &str, &ClientRequestSignature, &str) -> Result<T, ApiError>
+        + Clone
+        + Send
+        + 'static,
+{
     let expected_user_id = ensure_authenticated_context(app, session_state)
         .await?
         .user_id()
         .to_owned();
+    if requested_user_id
+        .as_deref()
+        .is_some_and(|requested| requested != expected_user_id)
+    {
+        return Err(ApiCommandError::AuthenticationRequired);
+    }
     let _permit = data_state
         .session_switch
         .mutation_guard()
@@ -2075,6 +2110,7 @@ async fn get_followed_novels(
 #[tauri::command]
 async fn get_bookmarked_novels(
     restrict: String,
+    tag: Option<String>,
     cursor: Option<String>,
     app: tauri::AppHandle,
     session_state: tauri::State<'_, SessionState>,
@@ -2085,7 +2121,14 @@ async fn get_bookmarked_novels(
         &session_state,
         data_state.inner().clone(),
         move |api, token, signature, user_id| {
-            api.bookmarked_novels(token, user_id, &restrict, cursor.as_deref(), signature)
+            api.bookmarked_novels(
+                token,
+                user_id,
+                &restrict,
+                tag.as_deref(),
+                cursor.as_deref(),
+                signature,
+            )
         },
     )
     .await
@@ -2335,6 +2378,7 @@ async fn get_followed_illustrations(
 #[tauri::command]
 async fn get_bookmarked_illustrations(
     restrict: String,
+    tag: Option<String>,
     cursor: Option<String>,
     app: tauri::AppHandle,
     session_state: tauri::State<'_, SessionState>,
@@ -2345,7 +2389,96 @@ async fn get_bookmarked_illustrations(
         &session_state,
         data_state.inner().clone(),
         move |api, token, signature, user_id| {
-            api.bookmarked_illustrations(token, user_id, &restrict, cursor.as_deref(), signature)
+            api.bookmarked_illustrations(
+                token,
+                user_id,
+                &restrict,
+                tag.as_deref(),
+                cursor.as_deref(),
+                signature,
+            )
+        },
+    )
+    .await
+}
+
+#[tauri::command]
+async fn get_bookmark_detail(
+    kind: BookmarkContentKind,
+    resource_id: String,
+    app: tauri::AppHandle,
+    session_state: tauri::State<'_, SessionState>,
+    data_state: tauri::State<'_, AuthenticatedDataState>,
+) -> Result<BookmarkDetail, ApiCommandError> {
+    execute_authenticated_data_request(
+        &app,
+        &session_state,
+        data_state.inner().clone(),
+        move |api, token, signature, _user_id| {
+            api.bookmark_detail(token, kind, &resource_id, signature)
+        },
+    )
+    .await
+}
+
+#[tauri::command]
+async fn get_bookmark_tags(
+    kind: BookmarkContentKind,
+    restrict: String,
+    cursor: Option<String>,
+    app: tauri::AppHandle,
+    session_state: tauri::State<'_, SessionState>,
+    data_state: tauri::State<'_, AuthenticatedDataState>,
+) -> Result<BookmarkTagPage, ApiCommandError> {
+    execute_authenticated_data_request(
+        &app,
+        &session_state,
+        data_state.inner().clone(),
+        move |api, token, signature, user_id| {
+            api.bookmark_tags(
+                token,
+                user_id,
+                kind,
+                &restrict,
+                cursor.as_deref(),
+                signature,
+            )
+        },
+    )
+    .await
+}
+
+#[tauri::command]
+async fn update_bookmark(
+    update: BookmarkUpdate,
+    app: tauri::AppHandle,
+    session_state: tauri::State<'_, SessionState>,
+    data_state: tauri::State<'_, AuthenticatedDataState>,
+) -> Result<(), ApiCommandError> {
+    execute_authenticated_mutation(
+        &app,
+        &session_state,
+        data_state.inner().clone(),
+        move |api, token, signature, _user_id| api.update_bookmark(token, &update, signature),
+    )
+    .await
+}
+
+#[tauri::command]
+async fn batch_update_bookmarks(
+    updates: Vec<BookmarkUpdate>,
+    expected_user_id: String,
+    app: tauri::AppHandle,
+    session_state: tauri::State<'_, SessionState>,
+    data_state: tauri::State<'_, AuthenticatedDataState>,
+) -> Result<Vec<BookmarkUpdateResult>, ApiCommandError> {
+    execute_authenticated_mutation_for_user(
+        &app,
+        &session_state,
+        data_state.inner().clone(),
+        Some(expected_user_id),
+        move |api, token, signature, _user_id| {
+            api.batch_update_bookmarks(token, &updates, signature)
         },
     )
     .await
@@ -4246,7 +4379,11 @@ pub fn run() {
         .manage(HistoryState::default())
         .manage(UpdateManagerState::default())
         .manage(UgoiraExportState::default())
+        .manage(LocalBackupState::default())
         .setup(|app| {
+            local_backup::recover_interrupted_restore(app.handle()).map_err(|_| {
+                std::io::Error::other("unable to recover an interrupted local backup restore")
+            })?;
             record_diagnostic_event(
                 app.handle(),
                 DiagnosticEntry::now(
@@ -4261,6 +4398,13 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             get_app_status,
+            local_backup::create_local_backup,
+            local_backup::select_local_backup,
+            local_backup::start_local_backup_restore,
+            local_backup::commit_local_backup_restore,
+            local_backup::rollback_local_backup_restore,
+            local_backup::get_local_backup_frontend_recovery,
+            local_backup::acknowledge_local_backup_frontend_recovery,
             updates::get_update_snapshot,
             updates::set_update_preferences,
             updates::check_for_updates,
@@ -4304,6 +4448,10 @@ pub fn run() {
             get_followed_users,
             get_followed_illustrations,
             get_bookmarked_illustrations,
+            get_bookmark_detail,
+            get_bookmark_tags,
+            update_bookmark,
+            batch_update_bookmarks,
             set_illustration_bookmark,
             set_novel_bookmark,
             set_user_follow,

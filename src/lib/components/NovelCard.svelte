@@ -7,7 +7,7 @@
   import { r18DefaultVisible } from "$lib/preferences";
   import type { NovelSummary } from "$lib/types";
 
-  let { novel }: { novel: NovelSummary } = $props();
+  let { novel, selectable = false, selected = false, onSelect }: { novel: NovelSummary; selectable?: boolean; selected?: boolean; onSelect?: (selected: boolean) => void } = $props();
   let caption = $derived(plainPixivText(novel.caption));
   let bookmarked = $state(false);
   let bookmarkPending = $state(false);
@@ -46,6 +46,7 @@
     <a class="cover-link" href={`/novels/${novel.id}`} aria-label={m.novel_read({ title: novel.title || m.common_untitled() })}></a>
     <PixivImage url={novel.coverUrl} alt="" />
     <span>{m.novel_pages({ count: novel.pageCount })}</span>
+    {#if selectable}<button class="select-toggle" type="button" class:selected aria-pressed={selected} aria-label={m.bookmark_select_work({ title: novel.title || m.common_untitled() })} onclick={() => onSelect?.(!selected)}>{selected ? "✓" : ""}</button>{/if}
     {#if restricted && !$r18DefaultVisible && !revealRestricted}
       <button class="reveal" type="button" onclick={() => (revealRestricted = true)}>R-18 · {m.restricted_reveal()}</button>
     {/if}
@@ -73,6 +74,7 @@
   .cover :global(img) { position: absolute; inset: 0; }
   .cover > span { position: absolute; z-index: 2; right: 7px; bottom: 7px; padding: 4px 7px; color: white; border-radius: 10px; background: rgba(30,34,38,.7); font-size: 8px; }
   .reveal { position: absolute; z-index: 3; inset: 0; width: 100%; color: white; border: 0; background: rgba(20,24,28,.38); cursor: pointer; font-size: 9px; font-weight: 700; }
+  .select-toggle { position:absolute;z-index:4;top:8px;right:8px;width:28px;height:28px;border:2px solid white;border-radius:50%;background:#20283299;color:white;font-weight:800;cursor:pointer }.select-toggle.selected{border-color:var(--pixiv-blue);background:var(--pixiv-blue)}
   .copy { min-width: 0; padding: 14px; }
   .badges { display: flex; min-height: 22px; gap: 5px; align-items: center; }
   .badges span { padding: 3px 6px; color: #55778b; border-radius: 3px; background: #eef7fc; font-size: 7px; font-weight: 700; }

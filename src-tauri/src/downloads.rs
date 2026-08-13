@@ -409,7 +409,7 @@ pub(crate) async fn remove_download_task(
     Ok(removed)
 }
 
-fn download_queue(app: &tauri::AppHandle) -> Result<DownloadQueue, ApiCommandError> {
+pub(crate) fn download_queue(app: &tauri::AppHandle) -> Result<DownloadQueue, ApiCommandError> {
     let path = crate::paths::app_data_dir(app)
         .map_err(|_| ApiCommandError::DownloadQueueUnavailable)?
         .join("download-queue-v1.sqlite3");

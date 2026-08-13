@@ -40,7 +40,7 @@ test("Tauri registers discovery commands and derives bookmark owner from the Rus
   }
   assert.match(
     backend,
-    /api\.bookmarked_illustrations\(token, user_id, &restrict, cursor\.as_deref\(\), signature\)/,
+    /api\.bookmarked_illustrations\([\s\S]*token,[\s\S]*user_id,[\s\S]*&restrict,[\s\S]*tag\.as_deref\(\),[\s\S]*cursor\.as_deref\(\),[\s\S]*signature/,
   );
 });
 

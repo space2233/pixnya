@@ -47,6 +47,16 @@ pub enum DownloadState {
 }
 
 impl DownloadState {
+    fn code(self) -> &'static str {
+        match self {
+            Self::Queued => "queued",
+            Self::Running => "running",
+            Self::Paused => "paused",
+            Self::Failed => "failed",
+            Self::Completed => "completed",
+        }
+    }
+
     fn parse(value: &str) -> Result<Self, QueueError> {
         match value {
             "queued" => Ok(Self::Queued),
@@ -116,6 +126,23 @@ pub struct DownloadTask {
     pub failure: Option<DownloadFailure>,
     pub created_at_unix_seconds: u64,
     pub updated_at_unix_seconds: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PortableDownloadTask {
+    pub kind: DownloadKind,
+    pub resource_id: String,
+    pub title: Option<String>,
+    pub author: Option<String>,
+    pub state: DownloadState,
+    pub failure: Option<DownloadFailure>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DownloadQueueSnapshot {
+    pub tasks: Vec<PortableDownloadTask>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -264,6 +291,112 @@ impl DownloadQueue {
             .map_err(|_| QueueError::Database)?;
         rows.map(|row| row.map_err(|_| QueueError::InvalidDatabase))
             .collect()
+    }
+
+    pub fn portable_snapshot(&self) -> Result<DownloadQueueSnapshot, QueueError> {
+        let tasks = self
+            .list()?
+            .into_iter()
+            .filter(|task| task.state != DownloadState::Completed)
+            .map(|task| PortableDownloadTask {
+                kind: task.kind,
+                resource_id: task.resource_id,
+                title: task.title,
+                author: task.author,
+                state: if matches!(task.state, DownloadState::Queued | DownloadState::Running) {
+                    DownloadState::Paused
+                } else {
+                    task.state
+                },
+                failure: task.failure,
+            })
+            .collect();
+        Ok(DownloadQueueSnapshot { tasks })
+    }
+
+    pub fn restore_snapshot(
+        &self,
+        snapshot: &DownloadQueueSnapshot,
+        replace: bool,
+    ) -> Result<DownloadQueueSnapshot, QueueError> {
+        if snapshot.tasks.len() > 10_000 {
+            return Err(QueueError::InvalidInput);
+        }
+        let mut normalized = Vec::with_capacity(snapshot.tasks.len());
+        for task in &snapshot.tasks {
+            if task.state == DownloadState::Completed {
+                return Err(QueueError::InvalidInput);
+            }
+            let resource_id = normalized_resource_id(&task.resource_id)?;
+            let title = normalized_optional_text(task.title.clone(), MAX_TITLE_BYTES)?;
+            let author = normalized_optional_text(task.author.clone(), MAX_AUTHOR_BYTES)?;
+            let state = if matches!(task.state, DownloadState::Queued | DownloadState::Running) {
+                DownloadState::Paused
+            } else {
+                task.state
+            };
+            if (state == DownloadState::Failed) != task.failure.is_some() {
+                return Err(QueueError::InvalidInput);
+            }
+            normalized.push(PortableDownloadTask {
+                kind: task.kind,
+                resource_id,
+                title,
+                author,
+                state,
+                failure: task.failure,
+            });
+        }
+        let mut seen = std::collections::HashSet::new();
+        if normalized
+            .iter()
+            .any(|task| !seen.insert((task.kind.code(), task.resource_id.clone())))
+        {
+            return Err(QueueError::InvalidInput);
+        }
+
+        let now = to_sql_u64(unix_seconds());
+        let mut connection = self.connection()?;
+        let transaction = connection
+            .transaction_with_behavior(TransactionBehavior::Immediate)
+            .map_err(|_| QueueError::Database)?;
+        if replace {
+            transaction
+                .execute("DELETE FROM download_tasks", [])
+                .map_err(|_| QueueError::Database)?;
+        }
+        for task in normalized {
+            let existing = transaction
+                .query_row(
+                    "SELECT id FROM download_tasks WHERE kind = ?1 AND resource_id = ?2",
+                    params![task.kind.code(), task.resource_id],
+                    |row| row.get::<_, i64>(0),
+                )
+                .optional()
+                .map_err(|_| QueueError::Database)?;
+            if existing.is_some() {
+                continue;
+            }
+            transaction
+                .execute(
+                    "INSERT INTO download_tasks
+                     (kind, resource_id, title, author, state, completed_items, total_items,
+                      downloaded_bytes, attempt_count, failure, created_at, updated_at)
+                     VALUES (?1, ?2, ?3, ?4, ?5, 0, 0, 0, 0, ?6, ?7, ?7)",
+                    params![
+                        task.kind.code(),
+                        task.resource_id,
+                        task.title,
+                        task.author,
+                        task.state.code(),
+                        task.failure.map(DownloadFailure::code),
+                        now,
+                    ],
+                )
+                .map_err(|_| QueueError::Database)?;
+        }
+        transaction.commit().map_err(|_| QueueError::Database)?;
+        self.portable_snapshot()
     }
 
     pub fn get(&self, id: i64) -> Result<DownloadTask, QueueError> {
@@ -835,5 +968,40 @@ mod tests {
         assert!(queue.list().unwrap().is_empty());
         assert_eq!(fs::read(&adjacent).unwrap(), b"keep");
         fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn portable_snapshot_omits_completed_and_pauses_running_tasks() {
+        let root = test_root("portable");
+        let queue = DownloadQueue::open(root.join("queue.sqlite3")).unwrap();
+        let running = queue
+            .enqueue(NewDownloadTask {
+                kind: DownloadKind::Artwork,
+                resource_id: "42".into(),
+                title: Some("Artwork".into()),
+                author: Some("Alice".into()),
+            })
+            .unwrap();
+        let claimed = queue.claim_next().unwrap().unwrap();
+        assert_eq!(claimed.id, running.id);
+        let completed = queue
+            .enqueue(NewDownloadTask {
+                kind: DownloadKind::Novel,
+                resource_id: "77".into(),
+                title: Some("Novel".into()),
+                author: None,
+            })
+            .unwrap();
+        let claimed_completed = queue.claim_next().unwrap().unwrap();
+        assert_eq!(claimed_completed.id, completed.id);
+        queue.mark_completed(completed.id, 1, 1024).unwrap();
+
+        let snapshot = queue.portable_snapshot().unwrap();
+        assert_eq!(snapshot.tasks.len(), 1);
+        assert_eq!(snapshot.tasks[0].state, DownloadState::Paused);
+
+        let target = DownloadQueue::open(root.join("target.sqlite3")).unwrap();
+        let restored = target.restore_snapshot(&snapshot, true).unwrap();
+        assert_eq!(restored, snapshot);
     }
 }

@@ -222,6 +222,204 @@ impl LocalCatalog {
         })
     }
 
+    pub fn portable_snapshot(&self) -> Result<CatalogSnapshot, CatalogError> {
+        let connection = self.connection()?;
+        let mut statement = connection
+            .prepare("SELECT entry_key FROM entry_organization ORDER BY entry_key")
+            .map_err(|_| CatalogError::Database)?;
+        let keys = statement
+            .query_map([], |row| row.get::<_, String>(0))
+            .map_err(|_| CatalogError::Database)?
+            .map(|row| row.map_err(|_| CatalogError::InvalidDatabase))
+            .collect::<Result<Vec<_>, _>>()?;
+        drop(statement);
+        drop(connection);
+        self.snapshot(&keys)
+    }
+
+    pub fn restore_snapshot(
+        &self,
+        snapshot: &CatalogSnapshot,
+        replace: bool,
+    ) -> Result<CatalogSnapshot, CatalogError> {
+        if snapshot.collections.len() > MAX_VISIBLE_ENTRIES
+            || snapshot.entries.len() > MAX_VISIBLE_ENTRIES
+            || snapshot.saved_filters.len() > MAX_VISIBLE_ENTRIES
+        {
+            return Err(CatalogError::InvalidInput);
+        }
+        let mut source_collection_names = BTreeMap::new();
+        for collection in &snapshot.collections {
+            if collection.id <= 0 {
+                return Err(CatalogError::InvalidInput);
+            }
+            let name = normalized_name(&collection.name, MAX_COLLECTION_NAME_BYTES)?;
+            if source_collection_names
+                .insert(collection.id, name)
+                .is_some()
+            {
+                return Err(CatalogError::InvalidInput);
+            }
+        }
+        let mut normalized_entries = Vec::with_capacity(snapshot.entries.len());
+        for entry in &snapshot.entries {
+            let entry_key = normalized_entry_key(&entry.entry_key)?;
+            if entry
+                .collection_id
+                .is_some_and(|id| !source_collection_names.contains_key(&id))
+            {
+                return Err(CatalogError::InvalidInput);
+            }
+            normalized_entries.push((
+                entry_key,
+                entry.collection_id,
+                normalized_tag_map(&entry.tags)?,
+            ));
+        }
+        let mut normalized_filters = Vec::with_capacity(snapshot.saved_filters.len());
+        for saved in &snapshot.saved_filters {
+            if saved.id <= 0
+                || saved
+                    .filter
+                    .collection_id
+                    .is_some_and(|id| !source_collection_names.contains_key(&id))
+            {
+                return Err(CatalogError::InvalidInput);
+            }
+            normalized_filters.push(normalized_filter(&saved.filter)?);
+        }
+
+        let now = to_sql_u64(unix_seconds());
+        let mut connection = self.connection()?;
+        let transaction = connection
+            .transaction_with_behavior(TransactionBehavior::Immediate)
+            .map_err(|_| CatalogError::Database)?;
+        if replace {
+            transaction
+                .execute_batch(
+                    "DELETE FROM catalog_saved_filters;
+                     DELETE FROM entry_tags;
+                     DELETE FROM entry_organization;
+                     DELETE FROM catalog_tags;
+                     DELETE FROM catalog_collections;",
+                )
+                .map_err(|_| CatalogError::Database)?;
+        }
+
+        let mut collection_id_map = HashMap::new();
+        for (source_id, name) in source_collection_names {
+            let name_key = name.to_lowercase();
+            let existing = transaction
+                .query_row(
+                    "SELECT id, name FROM catalog_collections WHERE name_key = ?1",
+                    [&name_key],
+                    |row| Ok((row.get::<_, i64>(0)?, row.get::<_, String>(1)?)),
+                )
+                .optional()
+                .map_err(|_| CatalogError::Database)?;
+            let target_id = if let Some((id, existing_name)) = existing {
+                if existing_name != name {
+                    return Err(CatalogError::Conflict);
+                }
+                id
+            } else {
+                transaction
+                    .execute(
+                        "INSERT INTO catalog_collections (name, name_key, created_at, updated_at)
+                         VALUES (?1, ?2, ?3, ?3)",
+                        params![name, name_key, now],
+                    )
+                    .map_err(map_insert_error)?;
+                transaction.last_insert_rowid()
+            };
+            collection_id_map.insert(source_id, target_id);
+        }
+
+        for (entry_key, source_collection_id, mut source_tags) in normalized_entries {
+            let mapped_collection_id = source_collection_id
+                .map(|id| {
+                    collection_id_map
+                        .get(&id)
+                        .copied()
+                        .ok_or(CatalogError::InvalidInput)
+                })
+                .transpose()?;
+            let (collection_id, tags) = if replace {
+                (mapped_collection_id, source_tags)
+            } else {
+                let existing_collection = transaction
+                    .query_row(
+                        "SELECT collection_id FROM entry_organization WHERE entry_key = ?1",
+                        [&entry_key],
+                        |row| row.get::<_, Option<i64>>(0),
+                    )
+                    .optional()
+                    .map_err(|_| CatalogError::Database)?
+                    .flatten();
+                let existing_tags = read_entry_tag_map(&transaction, &entry_key)?;
+                source_tags.extend(existing_tags);
+                if source_tags.len() > MAX_TAGS_PER_ENTRY {
+                    return Err(CatalogError::Conflict);
+                }
+                (existing_collection.or(mapped_collection_id), source_tags)
+            };
+            write_entry_organization(&transaction, &entry_key, collection_id, &tags)?;
+        }
+
+        for mut filter in normalized_filters {
+            filter.collection_id = filter
+                .collection_id
+                .map(|id| {
+                    collection_id_map
+                        .get(&id)
+                        .copied()
+                        .ok_or(CatalogError::InvalidInput)
+                })
+                .transpose()?;
+            let name_key = filter.name.to_lowercase();
+            let existing = transaction
+                .query_row(
+                    "SELECT id FROM catalog_saved_filters WHERE name_key = ?1",
+                    [&name_key],
+                    |row| row.get::<_, i64>(0),
+                )
+                .optional()
+                .map_err(|_| CatalogError::Database)?;
+            if existing.is_some() {
+                if replace {
+                    return Err(CatalogError::InvalidDatabase);
+                }
+                continue;
+            }
+            transaction
+                .execute(
+                    "INSERT INTO catalog_saved_filters (
+                       name, name_key, query, kind, collection_id, tag, sort_order,
+                       stored_after, stored_before, min_size_bytes, max_size_bytes, created_at, updated_at
+                     ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?12)",
+                    params![
+                        filter.name,
+                        name_key,
+                        filter.query,
+                        filter.kind,
+                        filter.collection_id,
+                        filter.tag,
+                        filter.sort_order,
+                        filter.stored_after.map(to_sql_u64),
+                        filter.stored_before.map(to_sql_u64),
+                        filter.min_size_bytes.map(to_sql_u64),
+                        filter.max_size_bytes.map(to_sql_u64),
+                        now,
+                    ],
+                )
+                .map_err(map_insert_error)?;
+        }
+        remove_empty_organizations(&transaction)?;
+        remove_unused_tags(&transaction)?;
+        transaction.commit().map_err(|_| CatalogError::Database)?;
+        self.portable_snapshot()
+    }
+
     pub fn create_collection(&self, name: &str) -> Result<CatalogCollection, CatalogError> {
         let name = normalized_name(name, MAX_COLLECTION_NAME_BYTES)?;
         let name_key = name.to_lowercase();
@@ -1156,6 +1354,51 @@ mod tests {
         assert_eq!(snapshot.collections[0].entry_count, 1);
         assert_eq!(snapshot.entries, [organization]);
         fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn portable_snapshot_restores_with_collection_id_remapping() {
+        let source_root = test_root("portable-source");
+        let source = LocalCatalog::open(source_root.join("catalog.sqlite3")).unwrap();
+        let collection = source.create_collection("Reference").unwrap();
+        source
+            .organize_entry("artwork-42", Some(collection.id), &["blue".into()])
+            .unwrap();
+        source
+            .save_filter(&CatalogFilterDraft {
+                name: "Blue references".into(),
+                query: String::new(),
+                kind: Some("artwork".into()),
+                collection_id: Some(collection.id),
+                tag: Some("blue".into()),
+                sort_order: "newest".into(),
+                stored_after: None,
+                stored_before: None,
+                min_size_bytes: None,
+                max_size_bytes: None,
+            })
+            .unwrap();
+        let portable = source.portable_snapshot().unwrap();
+
+        let target_root = test_root("portable-target");
+        let target = LocalCatalog::open(target_root.join("catalog.sqlite3")).unwrap();
+        target.create_collection("Existing").unwrap();
+        let restored = target.restore_snapshot(&portable, false).unwrap();
+        let restored_collection = restored
+            .collections
+            .iter()
+            .find(|value| value.name == "Reference")
+            .unwrap();
+        assert_ne!(restored_collection.id, collection.id);
+        assert_eq!(
+            restored.entries[0].collection_id,
+            Some(restored_collection.id)
+        );
+        assert_eq!(
+            restored.saved_filters[0].filter.collection_id,
+            Some(restored_collection.id)
+        );
+        assert_eq!(restored.entries[0].tags, ["blue"]);
     }
 
     #[test]

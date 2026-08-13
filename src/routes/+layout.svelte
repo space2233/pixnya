@@ -8,6 +8,8 @@
   import { applyReducedMotionPreference } from "$lib/preferences";
   import { readPreferredConnectionMode } from "$lib/preferences";
   import { connectionSetupUrl } from "$lib/connection-onboarding";
+  import { acknowledgeLocalBackupFrontendRecovery, getLocalBackupFrontendRecovery } from "$lib/pixiv-api";
+  import { restoreFrontendBackupState } from "$lib/local-backup";
   import {
     captureReturnNavigation,
     restorePendingReturnPosition,
@@ -35,6 +37,17 @@
     restorePendingReturnPosition();
     let active = true;
     void (async () => {
+      try {
+        const recovery = await getLocalBackupFrontendRecovery();
+        if (recovery) {
+          restoreFrontendBackupState(recovery.frontend);
+          applyReducedMotionPreference();
+          await acknowledgeLocalBackupFrontendRecovery(recovery.transactionId);
+        }
+      } catch {
+        // Keep the recovery record for a later retry, but never hold the
+        // entire application behind an unavailable browser storage backend.
+      }
       if (readPreferredConnectionMode() === null && page.url.pathname !== "/setup/connection") {
         const target = `${page.url.pathname}${page.url.search}${page.url.hash}`;
         await goto(connectionSetupUrl(target), { replaceState: true });

@@ -28,6 +28,7 @@ pixiv-client-download-queue = { path = "../crates/download-queue" }
 pixiv-client-library = { path = "../crates/library" }
 pixiv-client-local-catalog = { path = "../crates/local-catalog" }
 pixiv-client-local-history = { path = "../crates/local-history" }
+pixiv-client-local-backup = { path = "../crates/local-backup" }
 pixiv-client-media-cache = { path = "../crates/media-cache" }
 pixiv-client-network = { path = "../crates/network" }
 pixiv-client-storage-policy = { path = "../crates/storage-policy" }

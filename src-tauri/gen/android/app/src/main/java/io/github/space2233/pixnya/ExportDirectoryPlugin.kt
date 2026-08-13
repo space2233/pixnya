@@ -48,12 +48,15 @@ class ExportDirectoryPlugin(private val activity: Activity) : Plugin(activity) {
     private const val LABEL_KEY = "tree-label"
     private const val EXPORT_STAGING_DIRECTORY = "export-staging-v1"
     private const val UGOIRA_EXPORT_STAGING_DIRECTORY = "ugoira-export-v1"
+    private const val BACKUP_STAGING_DIRECTORY = "backup-staging-v1"
+    private const val MAX_BACKUP_BYTES = 20L * 1024L * 1024L * 1024L
     private const val EXPORT_MARKER_FILE = "pixiv-client-entry.json"
     private const val MAX_EXPORT_FILES = 4096
     private const val MAX_MARKER_BYTES = 1024 * 1024
     private val DIRECTORY_NAME = Regex("(?:artwork|novel|ugoira)-[1-9][0-9]{0,19}")
     private val FILE_NAME = Regex("[A-Za-z0-9][A-Za-z0-9._-]{0,127}")
     private val GENERATED_FILE_NAME = Regex("ugoira-[1-9][0-9]{0,19}\\.(?:gif|png|webm)")
+    private val BACKUP_FILE_NAME = Regex("pixnya-backup-[A-Za-z0-9._-]{1,96}\\.pixnyabackup")
   }
 
   @Command
@@ -208,7 +211,8 @@ class ExportDirectoryPlugin(private val activity: Activity) : Plugin(activity) {
     val args = invoke.parseArgs(ExportFileArgs::class.java)
     val sourceValue = args.sourceFile
     val fileName = args.fileName
-    if (sourceValue.isNullOrBlank() || fileName == null || !GENERATED_FILE_NAME.matches(fileName) || args.expectedSizeBytes <= 0) {
+    val supportedName = fileName != null && (GENERATED_FILE_NAME.matches(fileName) || BACKUP_FILE_NAME.matches(fileName))
+    if (sourceValue.isNullOrBlank() || !supportedName || args.expectedSizeBytes <= 0) {
       invoke.reject("Invalid generated export request", "invalid_export")
       return
     }
@@ -221,7 +225,8 @@ class ExportDirectoryPlugin(private val activity: Activity) : Plugin(activity) {
         return
       }
       val source = File(sourceValue).canonicalFile
-      val allowedRoot = File(activity.cacheDir, UGOIRA_EXPORT_STAGING_DIRECTORY).canonicalFile
+      val isBackup = BACKUP_FILE_NAME.matches(fileName!!)
+      val allowedRoot = File(activity.cacheDir, if (isBackup) BACKUP_STAGING_DIRECTORY else UGOIRA_EXPORT_STAGING_DIRECTORY).canonicalFile
       if (!source.isFile || source.length() != args.expectedSizeBytes || !source.toPath().startsWith(allowedRoot.toPath())) {
         invoke.reject("Invalid generated export source", "invalid_export")
         return
@@ -234,6 +239,7 @@ class ExportDirectoryPlugin(private val activity: Activity) : Plugin(activity) {
         "gif" -> "image/gif"
         "png" -> "image/apng"
         "webm" -> "video/webm"
+        "pixnyabackup" -> "application/zip"
         else -> throw IllegalArgumentException("Unsupported generated export type")
       }
       val existing = findChild(treeUri, rootDocument, fileName)
@@ -259,6 +265,80 @@ class ExportDirectoryPlugin(private val activity: Activity) : Plugin(activity) {
     } catch (error: Exception) {
       invoke.reject("Unable to export generated media", "export_unavailable", error)
     }
+  }
+
+  @Command
+  fun selectBackupFile(invoke: Invoke) {
+    activity.runOnUiThread {
+      try {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+          addCategory(Intent.CATEGORY_OPENABLE)
+          type = "application/*"
+          addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        startActivityForResult(invoke, intent, "onBackupFileSelected")
+      } catch (error: Exception) {
+        invoke.reject("Unable to open the backup picker", "backup_unavailable", error)
+      }
+    }
+  }
+
+  @ActivityCallback
+  private fun onBackupFileSelected(invoke: Invoke, result: ActivityResult) {
+    if (result.resultCode != Activity.RESULT_OK) {
+      invoke.resolve(JSObject().apply { put("cancelled", true) })
+      return
+    }
+    val uri = result.data?.data
+      ?: return invoke.reject("No backup file was selected", "backup_unavailable")
+    try {
+      val label = queryDisplayName(uri)
+      check(label.endsWith(".pixnyabackup", ignoreCase = true)) { "Unsupported backup file" }
+      val root = File(activity.cacheDir, BACKUP_STAGING_DIRECTORY).canonicalFile
+      root.mkdirs()
+      check(root.isDirectory) { "Backup staging is unavailable" }
+      root.listFiles()?.forEach { if (it.isFile) it.delete() }
+      val target = File(root, "selected-${System.currentTimeMillis()}.pixnyabackup").canonicalFile
+      check(target.parentFile == root) { "Invalid backup staging path" }
+      var copied = 0L
+      activity.contentResolver.openInputStream(uri)?.use { input ->
+        target.outputStream().use { output ->
+          val buffer = ByteArray(128 * 1024)
+          while (true) {
+            val read = input.read(buffer)
+            if (read < 0) break
+            copied = Math.addExact(copied, read.toLong())
+            check(copied <= MAX_BACKUP_BYTES) { "Backup is too large" }
+            output.write(buffer, 0, read)
+          }
+        }
+      } ?: error("Unable to read the selected backup")
+      check(copied > 0L) { "Backup is empty" }
+      invoke.resolve(JSObject().apply {
+        put("cancelled", false)
+        put("sourceFile", target.absolutePath)
+        put("label", label.take(128))
+      })
+    } catch (error: Exception) {
+      try {
+        File(activity.cacheDir, BACKUP_STAGING_DIRECTORY)
+          .canonicalFile
+          .listFiles()
+          ?.forEach { if (it.isFile) it.delete() }
+      } catch (_: Exception) {
+        // The original import error remains authoritative.
+      }
+      invoke.reject("Unable to import the selected backup", "backup_unavailable", error)
+    }
+  }
+
+  private fun queryDisplayName(uri: Uri): String {
+    activity.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
+      if (cursor.moveToFirst()) {
+        cursor.getString(0)?.trim()?.takeIf { it.isNotEmpty() }?.let { return it }
+      }
+    }
+    return "PixNya backup.pixnyabackup"
   }
 
   private fun statusObject(): JSObject {

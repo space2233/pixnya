@@ -16,10 +16,16 @@
     illustration,
     tone = 1,
     rank,
+    selectable = false,
+    selected = false,
+    onSelect,
   }: {
     illustration: IllustrationSummary;
     tone?: number;
     rank?: number;
+    selectable?: boolean;
+    selected?: boolean;
+    onSelect?: (selected: boolean) => void;
   } = $props();
 
   let revealRestricted = $state(false);
@@ -83,6 +89,16 @@
       <span class="page-count">▣ {illustration.pageCount}</span>
     {/if}
     {#if illustration.aiType === 2}<span class="ai-label">AI</span>{/if}
+    {#if selectable}
+      <button
+        type="button"
+        class="select-toggle"
+        class:selected
+        aria-pressed={selected}
+        aria-label={m.bookmark_select_work({ title: illustration.title || m.common_untitled() })}
+        onclick={(event) => { event.preventDefault(); event.stopPropagation(); onSelect?.(!selected); }}
+      >{selected ? "✓" : ""}</button>
+    {/if}
     <button
       type="button"
       class="bookmark"
@@ -177,6 +193,10 @@
     background: rgba(255, 255, 255, 0.9);
     cursor: pointer;
   }
+
+  .select-toggle { position:absolute;z-index:4;top:8px;right:8px;width:28px;height:28px;border:2px solid white;border-radius:50%;background:#20283299;color:white;font-weight:800;box-shadow:0 1px 5px #0004;cursor:pointer }
+  .select-toggle.selected { border-color:var(--pixiv-blue);background:var(--pixiv-blue) }
+  .select-toggle + .bookmark { display:none }
 
   .bookmark.active { color: #ff4060; }
   .bookmark.active :global(svg) { fill: currentColor; }

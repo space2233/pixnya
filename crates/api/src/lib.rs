@@ -23,6 +23,8 @@ const SEARCH_USERS_PATH: &str = "/v1/search/user";
 const USER_FOLLOWING_PATH: &str = "/v1/user/following";
 const FOLLOWED_ILLUSTRATIONS_PATH: &str = "/v2/illust/follow";
 const BOOKMARKED_ILLUSTRATIONS_PATH: &str = "/v1/user/bookmarks/illust";
+const ILLUSTRATION_BOOKMARK_DETAIL_PATH: &str = "/v2/illust/bookmark/detail";
+const ILLUSTRATION_BOOKMARK_TAGS_PATH: &str = "/v1/user/bookmark-tags/illust";
 const BOOKMARK_ADD_PATH: &str = "/v2/illust/bookmark/add";
 const BOOKMARK_DELETE_PATH: &str = "/v1/illust/bookmark/delete";
 const FOLLOW_ADD_PATH: &str = "/v1/user/follow/add";
@@ -49,6 +51,8 @@ const SEARCH_NOVELS_PATH: &str = "/v1/search/novel";
 const USER_NOVELS_PATH: &str = "/v1/user/novels";
 const FOLLOWED_NOVELS_PATH: &str = "/v1/novel/follow";
 const BOOKMARKED_NOVELS_PATH: &str = "/v1/user/bookmarks/novel";
+const NOVEL_BOOKMARK_DETAIL_PATH: &str = "/v2/novel/bookmark/detail";
+const NOVEL_BOOKMARK_TAGS_PATH: &str = "/v1/user/bookmark-tags/novel";
 const NOVEL_RANKING_PATH: &str = "/v1/novel/ranking";
 const NOVEL_BOOKMARK_ADD_PATH: &str = "/v2/novel/bookmark/add";
 const NOVEL_BOOKMARK_DELETE_PATH: &str = "/v1/novel/bookmark/delete";
@@ -62,9 +66,75 @@ const USER_AGENT: &str = "PixivAndroidApp/5.0.166 (Android 13; PixivClient)";
 const MAX_CURSOR_BYTES: usize = 4096;
 const MAX_ERROR_BODY_BYTES: usize = 64 * 1024;
 const MAX_NOVEL_HTML_BYTES: usize = 32 * 1024 * 1024;
+const MAX_BOOKMARK_TAGS: usize = 10;
+const MAX_BOOKMARK_TAG_BYTES: usize = 300;
 
 pub struct PixivApiClient {
     http: Client,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum BookmarkContentKind {
+    Illustration,
+    Novel,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BookmarkTagStatus {
+    pub name: String,
+    pub is_registered: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BookmarkDetail {
+    pub restrict: String,
+    pub tags: Vec<BookmarkTagStatus>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BookmarkTag {
+    pub name: String,
+    pub count: u32,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BookmarkTagPage {
+    pub tags: Vec<BookmarkTag>,
+    pub next_cursor: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BookmarkUpdate {
+    pub kind: BookmarkContentKind,
+    pub resource_id: String,
+    pub bookmarked: bool,
+    pub restrict: String,
+    pub tags: Vec<String>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum BookmarkUpdateFailure {
+    AuthenticationRequired,
+    InvalidInput,
+    RequestFailed,
+    Rejected,
+    InvalidResponse,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BookmarkUpdateResult {
+    pub kind: BookmarkContentKind,
+    pub resource_id: String,
+    pub succeeded: bool,
+    pub failure: Option<BookmarkUpdateFailure>,
 }
 
 impl PixivApiClient {
@@ -368,25 +438,116 @@ impl PixivApiClient {
         access_token: &str,
         user_id: &str,
         restrict: &str,
+        tag: Option<&str>,
         cursor: Option<&str>,
         signature: &ClientRequestSignature,
     ) -> Result<NovelPage, ApiError> {
         let user_id = normalized_resource_id(user_id)?;
         let restrict = normalized_bookmark_restrict(restrict)?;
-        let bindings = [("user_id", user_id.as_str()), ("restrict", restrict)];
+        let tag = tag
+            .map(|tag| normalized_bookmark_tags(&[tag.to_owned()]))
+            .transpose()?
+            .and_then(|tags| tags.into_iter().next());
+        let mut bindings = vec![("user_id", user_id.as_str()), ("restrict", restrict)];
+        if let Some(tag) = tag.as_deref() {
+            bindings.push(("tag", tag));
+        }
         let url = match cursor {
             Some(cursor) => decode_cursor(cursor, BOOKMARKED_NOVELS_PATH, &bindings)?,
-            None => endpoint_url(
-                BOOKMARKED_NOVELS_PATH,
-                &[
-                    ("user_id", user_id.as_str()),
-                    ("restrict", restrict),
-                    ("filter", "for_ios"),
-                ],
-            )?,
+            None => endpoint_url(BOOKMARKED_NOVELS_PATH, &{
+                let mut query = bindings.clone();
+                query.push(("filter", "for_ios"));
+                query
+            })?,
         };
         let envelope: NovelListEnvelope = self.get_json(access_token, url, signature)?;
         novel_page_from_envelope(envelope, BOOKMARKED_NOVELS_PATH, &bindings)
+    }
+
+    pub fn bookmark_detail(
+        &self,
+        access_token: &str,
+        kind: BookmarkContentKind,
+        resource_id: &str,
+        signature: &ClientRequestSignature,
+    ) -> Result<BookmarkDetail, ApiError> {
+        let resource_id = normalized_resource_id(resource_id)?;
+        let (path, parameter) = match kind {
+            BookmarkContentKind::Illustration => (ILLUSTRATION_BOOKMARK_DETAIL_PATH, "illust_id"),
+            BookmarkContentKind::Novel => (NOVEL_BOOKMARK_DETAIL_PATH, "novel_id"),
+        };
+        let url = endpoint_url(path, &[(parameter, resource_id.as_str())])?;
+        let envelope: BookmarkDetailEnvelope = self.get_json(access_token, url, signature)?;
+        bookmark_detail_from_envelope(envelope)
+    }
+
+    pub fn bookmark_tags(
+        &self,
+        access_token: &str,
+        user_id: &str,
+        kind: BookmarkContentKind,
+        restrict: &str,
+        cursor: Option<&str>,
+        signature: &ClientRequestSignature,
+    ) -> Result<BookmarkTagPage, ApiError> {
+        let user_id = normalized_resource_id(user_id)?;
+        let restrict = normalized_bookmark_restrict(restrict)?;
+        let path = match kind {
+            BookmarkContentKind::Illustration => ILLUSTRATION_BOOKMARK_TAGS_PATH,
+            BookmarkContentKind::Novel => NOVEL_BOOKMARK_TAGS_PATH,
+        };
+        let bindings = [("user_id", user_id.as_str()), ("restrict", restrict)];
+        let url = match cursor {
+            Some(cursor) => decode_cursor(cursor, path, &bindings)?,
+            None => endpoint_url(path, &bindings)?,
+        };
+        let envelope: BookmarkTagsEnvelope = self.get_json(access_token, url, signature)?;
+        bookmark_tag_page_from_envelope(envelope, path, &bindings)
+    }
+
+    pub fn update_bookmark(
+        &self,
+        access_token: &str,
+        update: &BookmarkUpdate,
+        signature: &ClientRequestSignature,
+    ) -> Result<(), ApiError> {
+        if !update.bookmarked {
+            return match update.kind {
+                BookmarkContentKind::Illustration => {
+                    self.delete_illustration_bookmark(access_token, &update.resource_id, signature)
+                }
+                BookmarkContentKind::Novel => {
+                    self.delete_novel_bookmark(access_token, &update.resource_id, signature)
+                }
+            };
+        }
+        let (path, parameter, resource_id, restrict, tags) = bookmark_update_parts(update)?;
+        let url = endpoint_url(path, &[])?;
+        let mut form = vec![(parameter, resource_id.as_str()), ("restrict", restrict)];
+        form.extend(tags.iter().map(|tag| ("tags[]", tag.as_str())));
+        self.post_form_unit(access_token, url, &form, signature)
+    }
+
+    pub fn batch_update_bookmarks(
+        &self,
+        access_token: &str,
+        updates: &[BookmarkUpdate],
+        signature: &ClientRequestSignature,
+    ) -> Result<Vec<BookmarkUpdateResult>, ApiError> {
+        if updates.is_empty() || updates.len() > 100 {
+            return Err(ApiError::InvalidInput);
+        }
+        let mut results = Vec::with_capacity(updates.len());
+        for update in updates {
+            let result = self.update_bookmark(access_token, update, signature);
+            results.push(BookmarkUpdateResult {
+                kind: update.kind,
+                resource_id: update.resource_id.clone(),
+                succeeded: result.is_ok(),
+                failure: result.err().map(bookmark_update_failure),
+            });
+        }
+        Ok(results)
     }
 
     pub fn ranking_novels(
@@ -416,13 +577,15 @@ impl PixivApiClient {
         restrict: &str,
         signature: &ClientRequestSignature,
     ) -> Result<(), ApiError> {
-        let novel_id = normalized_resource_id(novel_id)?;
-        let restrict = normalized_bookmark_restrict(restrict)?;
-        let url = endpoint_url(NOVEL_BOOKMARK_ADD_PATH, &[])?;
-        self.post_form_unit(
+        self.update_bookmark(
             access_token,
-            url,
-            &[("novel_id", novel_id.as_str()), ("restrict", restrict)],
+            &BookmarkUpdate {
+                kind: BookmarkContentKind::Novel,
+                resource_id: novel_id.to_owned(),
+                bookmarked: true,
+                restrict: restrict.to_owned(),
+                tags: Vec::new(),
+            },
             signature,
         )
     }
@@ -766,22 +929,27 @@ impl PixivApiClient {
         access_token: &str,
         user_id: &str,
         restrict: &str,
+        tag: Option<&str>,
         cursor: Option<&str>,
         signature: &ClientRequestSignature,
     ) -> Result<IllustrationPage, ApiError> {
         let user_id = normalized_resource_id(user_id)?;
         let restrict = normalized_bookmark_restrict(restrict)?;
-        let bindings = [("user_id", user_id.as_str()), ("restrict", restrict)];
+        let tag = tag
+            .map(|tag| normalized_bookmark_tags(&[tag.to_owned()]))
+            .transpose()?
+            .and_then(|tags| tags.into_iter().next());
+        let mut bindings = vec![("user_id", user_id.as_str()), ("restrict", restrict)];
+        if let Some(tag) = tag.as_deref() {
+            bindings.push(("tag", tag));
+        }
         let url = match cursor {
             Some(cursor) => decode_cursor(cursor, BOOKMARKED_ILLUSTRATIONS_PATH, &bindings)?,
-            None => endpoint_url(
-                BOOKMARKED_ILLUSTRATIONS_PATH,
-                &[
-                    ("user_id", user_id.as_str()),
-                    ("restrict", restrict),
-                    ("filter", "for_ios"),
-                ],
-            )?,
+            None => endpoint_url(BOOKMARKED_ILLUSTRATIONS_PATH, &{
+                let mut query = bindings.clone();
+                query.push(("filter", "for_ios"));
+                query
+            })?,
         };
         let envelope: IllustrationListEnvelope = self.get_json(access_token, url, signature)?;
         page_from_envelope(envelope, BOOKMARKED_ILLUSTRATIONS_PATH, &bindings)
@@ -794,16 +962,15 @@ impl PixivApiClient {
         restrict: &str,
         signature: &ClientRequestSignature,
     ) -> Result<(), ApiError> {
-        let illustration_id = normalized_resource_id(illustration_id)?;
-        let restrict = normalized_bookmark_restrict(restrict)?;
-        let url = endpoint_url(BOOKMARK_ADD_PATH, &[])?;
-        self.post_form_unit(
+        self.update_bookmark(
             access_token,
-            url,
-            &[
-                ("illust_id", illustration_id.as_str()),
-                ("restrict", restrict),
-            ],
+            &BookmarkUpdate {
+                kind: BookmarkContentKind::Illustration,
+                resource_id: illustration_id.to_owned(),
+                bookmarked: true,
+                restrict: restrict.to_owned(),
+                tags: Vec::new(),
+            },
             signature,
         )
     }
@@ -1603,6 +1770,113 @@ fn normalized_bookmark_restrict(candidate: &str) -> Result<&'static str, ApiErro
         "private" => Ok("private"),
         _ => Err(ApiError::InvalidIdentifier),
     }
+}
+
+fn normalized_bookmark_tags(candidates: &[String]) -> Result<Vec<String>, ApiError> {
+    if candidates.len() > MAX_BOOKMARK_TAGS {
+        return Err(ApiError::InvalidInput);
+    }
+    let mut tags = Vec::with_capacity(candidates.len());
+    let mut seen = std::collections::HashSet::new();
+    for candidate in candidates {
+        let tag = candidate.trim();
+        if tag.is_empty()
+            || tag.len() > MAX_BOOKMARK_TAG_BYTES
+            || tag.chars().count() > 100
+            || tag.chars().any(char::is_control)
+        {
+            return Err(ApiError::InvalidInput);
+        }
+        let key = tag.to_lowercase();
+        if seen.insert(key) {
+            tags.push(tag.to_owned());
+        }
+    }
+    Ok(tags)
+}
+
+fn bookmark_update_parts(
+    update: &BookmarkUpdate,
+) -> Result<
+    (
+        &'static str,
+        &'static str,
+        String,
+        &'static str,
+        Vec<String>,
+    ),
+    ApiError,
+> {
+    let resource_id = normalized_resource_id(&update.resource_id)?;
+    let restrict = normalized_bookmark_restrict(&update.restrict)?;
+    let tags = normalized_bookmark_tags(&update.tags)?;
+    let (path, parameter) = match update.kind {
+        BookmarkContentKind::Illustration => (BOOKMARK_ADD_PATH, "illust_id"),
+        BookmarkContentKind::Novel => (NOVEL_BOOKMARK_ADD_PATH, "novel_id"),
+    };
+    Ok((path, parameter, resource_id, restrict, tags))
+}
+
+fn bookmark_update_failure(error: ApiError) -> BookmarkUpdateFailure {
+    match error {
+        ApiError::AuthenticationRequired => BookmarkUpdateFailure::AuthenticationRequired,
+        ApiError::InvalidCursor
+        | ApiError::InvalidIdentifier
+        | ApiError::InvalidInput
+        | ApiError::InvalidMediaUrl => BookmarkUpdateFailure::InvalidInput,
+        ApiError::RequestFailed => BookmarkUpdateFailure::RequestFailed,
+        ApiError::Rejected { .. } => BookmarkUpdateFailure::Rejected,
+        ApiError::InvalidResponse => BookmarkUpdateFailure::InvalidResponse,
+    }
+}
+
+fn bookmark_detail_from_envelope(
+    envelope: BookmarkDetailEnvelope,
+) -> Result<BookmarkDetail, ApiError> {
+    let restrict = normalized_bookmark_restrict(&envelope.bookmark_detail.restrict)?.to_owned();
+    let mut tags = Vec::with_capacity(envelope.bookmark_detail.tags.len());
+    if envelope.bookmark_detail.tags.len() > MAX_BOOKMARK_TAGS {
+        return Err(ApiError::InvalidResponse);
+    }
+    for tag in envelope.bookmark_detail.tags {
+        let name = normalized_bookmark_tags(&[tag.name])?
+            .into_iter()
+            .next()
+            .ok_or(ApiError::InvalidResponse)?;
+        tags.push(BookmarkTagStatus {
+            name,
+            is_registered: tag.is_registered,
+        });
+    }
+    Ok(BookmarkDetail { restrict, tags })
+}
+
+fn bookmark_tag_page_from_envelope(
+    envelope: BookmarkTagsEnvelope,
+    path: &str,
+    bindings: &[(&str, &str)],
+) -> Result<BookmarkTagPage, ApiError> {
+    if envelope.bookmark_tags.len() > 10_000 {
+        return Err(ApiError::InvalidResponse);
+    }
+    let mut tags = Vec::with_capacity(envelope.bookmark_tags.len());
+    for tag in envelope.bookmark_tags {
+        let name = normalized_bookmark_tags(&[tag.name])?
+            .into_iter()
+            .next()
+            .ok_or(ApiError::InvalidResponse)?;
+        tags.push(BookmarkTag {
+            name,
+            count: tag.count,
+        });
+    }
+    let next_cursor = envelope
+        .next_url
+        .filter(|value| !value.is_empty())
+        .map(|next| validate_api_url(&next, path, bindings).map(|url| encode_cursor(&url)))
+        .transpose()
+        .map_err(|_| ApiError::InvalidResponse)?;
+    Ok(BookmarkTagPage { tags, next_cursor })
 }
 
 fn classify_rejection(http_status: u16, response_body: &str) -> ApiError {
@@ -2480,6 +2754,36 @@ struct IllustrationListEnvelope {
     next_url: Option<String>,
 }
 
+#[derive(Debug, Deserialize)]
+struct BookmarkDetailEnvelope {
+    bookmark_detail: BookmarkDetailPayload,
+}
+
+#[derive(Debug, Deserialize)]
+struct BookmarkDetailPayload {
+    restrict: String,
+    tags: Vec<BookmarkTagStatusPayload>,
+}
+
+#[derive(Debug, Deserialize)]
+struct BookmarkTagStatusPayload {
+    name: String,
+    is_registered: bool,
+}
+
+#[derive(Debug, Deserialize)]
+struct BookmarkTagsEnvelope {
+    bookmark_tags: Vec<BookmarkTagPayload>,
+    #[serde(default)]
+    next_url: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct BookmarkTagPayload {
+    name: String,
+    count: u32,
+}
+
 #[derive(Deserialize)]
 struct IllustrationDetailEnvelope {
     illust: IllustrationPayload,
@@ -3017,20 +3321,23 @@ const fn yes() -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        access_block_page_from_envelope, comment_page_from_envelope, comment_stamps_from_envelope,
-        decode_cursor, encode_cursor, extract_embedded_novel_json, mute_settings_from_envelope,
-        normalized_comment, normalized_comment_submission, notification_page_from_envelope,
-        novel_page_from_envelope, page_from_envelope, recommended_url,
-        user_preview_page_from_envelope, validated_media_url, AccessBlockEnvelope, ApiError,
-        CommentsEnvelope, IllustrationDetail, IllustrationDetailEnvelope, IllustrationListEnvelope,
-        IllustrationSeriesEnvelope, IllustrationSeriesPage, MuteSettingsEnvelope,
-        NotificationsEnvelope, NovelContent, NovelContentPayload, NovelDetail, NovelDetailEnvelope,
-        NovelListEnvelope, NovelSeriesEnvelope, NovelSeriesPage, StampListEnvelope, TrendingTag,
-        TrendingTagsEnvelope, UgoiraEnvelope, UgoiraMetadata, UserDetail, UserDetailEnvelope,
-        UserPreviewEnvelope, ILLUSTRATION_COMMENTS_PATH, ILLUSTRATION_SERIES_PATH,
-        NOVEL_COMMENTS_PATH, NOVEL_RECOMMENDED_PATH, NOVEL_SERIES_PATH, RECOMMENDED_PATH,
-        RELATED_ILLUSTRATIONS_PATH, SEARCH_ILLUSTRATIONS_PATH, SEARCH_NOVELS_PATH,
-        SEARCH_USERS_PATH, USER_FOLLOWING_PATH, USER_ILLUSTRATIONS_PATH,
+        access_block_page_from_envelope, bookmark_detail_from_envelope,
+        bookmark_tag_page_from_envelope, bookmark_update_parts, comment_page_from_envelope,
+        comment_stamps_from_envelope, decode_cursor, encode_cursor, extract_embedded_novel_json,
+        mute_settings_from_envelope, normalized_comment, normalized_comment_submission,
+        notification_page_from_envelope, novel_page_from_envelope, page_from_envelope,
+        recommended_url, user_preview_page_from_envelope, validated_media_url, AccessBlockEnvelope,
+        ApiError, BookmarkContentKind, BookmarkDetailEnvelope, BookmarkTagsEnvelope,
+        BookmarkUpdate, CommentsEnvelope, IllustrationDetail, IllustrationDetailEnvelope,
+        IllustrationListEnvelope, IllustrationSeriesEnvelope, IllustrationSeriesPage,
+        MuteSettingsEnvelope, NotificationsEnvelope, NovelContent, NovelContentPayload,
+        NovelDetail, NovelDetailEnvelope, NovelListEnvelope, NovelSeriesEnvelope, NovelSeriesPage,
+        StampListEnvelope, TrendingTag, TrendingTagsEnvelope, UgoiraEnvelope, UgoiraMetadata,
+        UserDetail, UserDetailEnvelope, UserPreviewEnvelope, ILLUSTRATION_BOOKMARK_TAGS_PATH,
+        ILLUSTRATION_COMMENTS_PATH, ILLUSTRATION_SERIES_PATH, NOVEL_COMMENTS_PATH,
+        NOVEL_RECOMMENDED_PATH, NOVEL_SERIES_PATH, RECOMMENDED_PATH, RELATED_ILLUSTRATIONS_PATH,
+        SEARCH_ILLUSTRATIONS_PATH, SEARCH_NOVELS_PATH, SEARCH_USERS_PATH, USER_FOLLOWING_PATH,
+        USER_ILLUSTRATIONS_PATH,
     };
 
     const LIST_RESPONSE: &str = r#"{
@@ -3060,6 +3367,64 @@ mod tests {
       }],
       "next_url": "https://app-api.pixiv.net/v1/illust/recommended?filter=for_ios&offset=30"
     }"#;
+
+    #[test]
+    fn parses_bookmark_detail_and_tag_pages_from_the_official_shape() {
+        let envelope: BookmarkDetailEnvelope = serde_json::from_str(
+            r#"{
+              "bookmark_detail": {
+                "restrict": "private",
+                "tags": [
+                  {"name": "reference", "is_registered": true},
+                  {"name": "blue", "is_registered": false}
+                ]
+              }
+            }"#,
+        )
+        .unwrap();
+        let detail = bookmark_detail_from_envelope(envelope).unwrap();
+        assert_eq!(detail.restrict, "private");
+        assert_eq!(detail.tags.len(), 2);
+        assert!(detail.tags[0].is_registered);
+
+        let envelope: BookmarkTagsEnvelope = serde_json::from_str(
+            r#"{
+              "bookmark_tags": [{"name": "reference", "count": 7}],
+              "next_url": "https://app-api.pixiv.net/v1/user/bookmark-tags/illust?user_id=42&restrict=private&offset=30"
+            }"#,
+        )
+        .unwrap();
+        let page = bookmark_tag_page_from_envelope(
+            envelope,
+            ILLUSTRATION_BOOKMARK_TAGS_PATH,
+            &[("user_id", "42"), ("restrict", "private")],
+        )
+        .unwrap();
+        assert_eq!(page.tags[0].count, 7);
+        assert!(decode_cursor(
+            page.next_cursor.as_deref().unwrap(),
+            ILLUSTRATION_BOOKMARK_TAGS_PATH,
+            &[("user_id", "42"), ("restrict", "private")]
+        )
+        .is_ok());
+    }
+
+    #[test]
+    fn bookmark_updates_keep_restrict_and_deduplicated_tags_together() {
+        let update = BookmarkUpdate {
+            kind: BookmarkContentKind::Illustration,
+            resource_id: "42".into(),
+            bookmarked: true,
+            restrict: "private".into(),
+            tags: vec![" Reference ".into(), "reference".into(), "blue".into()],
+        };
+        let (path, id_parameter, id, restrict, tags) = bookmark_update_parts(&update).unwrap();
+        assert_eq!(path, super::BOOKMARK_ADD_PATH);
+        assert_eq!(id_parameter, "illust_id");
+        assert_eq!(id, "42");
+        assert_eq!(restrict, "private");
+        assert_eq!(tags, ["Reference", "blue"]);
+    }
 
     #[test]
     fn parses_official_account_control_payloads_and_locks_access_block_cursor() {
