@@ -17,11 +17,11 @@
 
 - [x] 发布工作流只能从 `main` 分支的固定提交触发，并校验 npm、Cargo、Tauri 与请求版本一致。
 - [x] 签名构建开始前运行 `npm run test:full`，覆盖全部 Node 回归、Svelte 检查、Rust 格式、Clippy 与 workspace tests。
-- [x] 发布前阻断运行时 npm 低危以上告警、全部 npm 高危以上告警、RustSec advisory，并用 OSV 扫描 ARM64 APK 的 `arm64ReleaseRuntimeClasspath`；runtime 零例外。构建工具图使用重新扫描确认的 82 条精确、限 scope、限版本、限期的临时 OSV 基线（1 条 Critical 于 2026-08-23 到期，其余 81 条于 2026-09-08 到期），新增、变化或到期即失败，原始报告随每个 Release 归档。
+- [x] 发布前阻断运行时 npm 低危以上告警、全部 npm 高危以上告警、RustSec advisory，并用 OSV 扫描 Android ARM APK 的共同 runtime 锁图；runtime 零例外。构建工具图使用重新扫描确认的 83 条精确、限 scope、限版本、限期的临时 OSV 基线（1 条 Critical 于 2026-08-23 到期，81 条于 2026-09-08 到期，新增的 Kotlin 构建缓存告警于 2026-09-12 到期），新增、变化或到期即失败，原始报告随每个 Release 归档。
 - [x] Windows、Linux 与 Android 构建均要求完整的生产构建参数和签名 Secret，缺少任意一项立即失败。
-- [x] Android Release 只允许一个 ARM64 APK，并用 `apksigner` 反查实际 APK 证书与受保护 keystore 一致。
+- [x] Android Release 只允许经过验证的 ARM64 与 ARM32 分包 APK，并用 `apksigner` 反查实际 APK 证书与受保护 keystore 一致。
 - [x] Draft Release 创建前，用公开密钥重新验证 Windows/Linux updater 签名和 Android 清单签名。
-- [x] Draft Release 只公开三个安装包、三个更新文件、`SHA256SUMS.txt` 和一个审计资料包；`BUILD-PROVENANCE.txt`、SBOM、许可证与独立签名统一收进 `pixnya-<version>-verification.tar.gz`。
+- [x] Draft Release 只公开五个平台安装包、三个更新文件、`SHA256SUMS.txt` 和一个审计资料包；`BUILD-PROVENANCE.txt`、SBOM、许可证与独立签名统一收进 `pixnya-<version>-verification.tar.gz`。
 - [x] Draft Release 的 SPDX 2.3 SBOM 与逐依赖许可证归档覆盖 npm、Cargo 和最终 Android Gradle/Maven 锁图；清理无效配置后重新解析的 343 组件 Gradle 图及其 378 份组件/父 POM 证据已重建并离线复核。
 - [x] 所有平台和附件验证成功后，Release job 才通过 Git refs API 原子创建 tag 并回读确认其指向已验证 artifact 的源码 SHA；若上传中断，只允许复用同一源码 SHA 且尚无 Release/仍为 Draft 的幂等续传，已发布或不同源码 SHA 一律失败，上传后再次核对 tag 与 8 个公开附件。
 

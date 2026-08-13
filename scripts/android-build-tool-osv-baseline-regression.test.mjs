@@ -66,7 +66,7 @@ function appReport() {
 
 test("tracked baseline records exact, short-lived, non-runtime findings", async () => {
   const baseline = JSON.parse(await read("docs/android-gradle-osv-risk-baseline.json"));
-  assert.equal(baseline.exceptions.length, 82);
+  assert.equal(baseline.exceptions.length, 83);
   assert.deepEqual(baseline.toolchain, expectedToolchain);
   assert.equal(baseline.policy.runtimeExceptionsAllowed, false);
   assert.ok(baseline.exceptions.some((entry) => entry.severity === "CRITICAL"));
@@ -91,8 +91,16 @@ test("tracked baseline records exact, short-lived, non-runtime findings", async 
     assert.match(entry.unreachableReason, /absent from arm64ReleaseRuntimeClasspath/);
     assert.ok(entry.fixedVersions.length > 0);
     assert.equal(entry.trackingIssue, "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08");
-    assert.equal(entry.reviewedAt, "2026-08-09");
-    assert.equal(entry.expiresAt, entry.severity === "CRITICAL" ? "2026-08-23" : "2026-09-08");
+    const isNewKotlinBuildCacheFinding = entry.advisory === "GHSA-r937-wjx7-w2jp";
+    assert.equal(entry.reviewedAt, isNewKotlinBuildCacheFinding ? "2026-08-13" : "2026-08-09");
+    assert.equal(
+      entry.expiresAt,
+      isNewKotlinBuildCacheFinding
+        ? "2026-09-12"
+        : entry.severity === "CRITICAL"
+          ? "2026-08-23"
+          : "2026-09-08",
+    );
   }
 });
 

@@ -1809,6 +1809,29 @@
       "expiresAt": "2026-09-08"
     },
     {
+      "advisory": "GHSA-r937-wjx7-w2jp",
+      "mavenCoordinate": "org.jetbrains.kotlin:kotlin-gradle-plugin",
+      "version": "1.9.25",
+      "severity": "MODERATE",
+      "scopes": [
+        "android-buildscript-classpath"
+      ],
+      "owner": "space2233",
+      "upstreamChain": [
+        "Tauri 2.11.5 generated Android project",
+        "com.android.tools.build:gradle:8.11.0",
+        "Gradle JVM build classpath",
+        "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.25"
+      ],
+      "unreachableReason": "The vulnerable Kotlin build-cache metadata deserializer is confined to the Gradle JVM build classpath; the coordinate is absent from arm64ReleaseRuntimeClasspath and armReleaseRuntimeClasspath and is not packaged in either APK. Official release jobs use clean ephemeral runners without a remote Gradle build cache.",
+      "fixedVersions": [
+        "2.4.20-Beta1"
+      ],
+      "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
+      "reviewedAt": "2026-08-13",
+      "expiresAt": "2026-09-12"
+    },
+    {
       "advisory": "GHSA-v8h7-rr48-vmmv",
       "mavenCoordinate": "io.netty:netty-codec-http",
       "version": "4.1.110.Final",
