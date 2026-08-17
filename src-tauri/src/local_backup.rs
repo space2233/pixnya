@@ -775,4 +775,71 @@ mod tests {
         ));
         fs::remove_dir_all(root).unwrap();
     }
+
+    #[test]
+    fn offline_merge_preserves_existing_files_and_adds_nonconflicting_imports() {
+        let app_data = test_root("offline-merge");
+        let current = app_data.join("offline-library");
+        let staging = app_data.join(RESTORE_STAGING_DIRECTORY);
+        let rollback = app_data.join(RESTORE_ROLLBACK_DIRECTORY);
+        fs::create_dir_all(&current).unwrap();
+        fs::create_dir_all(&staging).unwrap();
+        fs::write(current.join("existing.txt"), b"existing").unwrap();
+        fs::write(staging.join("imported.txt"), b"imported").unwrap();
+
+        prepare_offline_restore(&app_data, &staging, &rollback, BackupRestoreStrategy::Merge)
+            .unwrap();
+
+        assert_eq!(fs::read(current.join("existing.txt")).unwrap(), b"existing");
+        assert_eq!(fs::read(current.join("imported.txt")).unwrap(), b"imported");
+        assert_eq!(
+            fs::read(rollback.join("existing.txt")).unwrap(),
+            b"existing"
+        );
+        fs::remove_dir_all(app_data).unwrap();
+    }
+
+    #[test]
+    fn offline_merge_rejects_conflicts_without_changing_either_tree() {
+        let app_data = test_root("offline-merge-conflict");
+        let current = app_data.join("offline-library");
+        let staging = app_data.join(RESTORE_STAGING_DIRECTORY);
+        let rollback = app_data.join(RESTORE_ROLLBACK_DIRECTORY);
+        fs::create_dir_all(&current).unwrap();
+        fs::create_dir_all(&staging).unwrap();
+        fs::write(current.join("shared.txt"), b"old").unwrap();
+        fs::write(staging.join("shared.txt"), b"new").unwrap();
+
+        assert!(matches!(
+            prepare_offline_restore(&app_data, &staging, &rollback, BackupRestoreStrategy::Merge,),
+            Err(ApiCommandError::BackupConflict)
+        ));
+        assert_eq!(fs::read(current.join("shared.txt")).unwrap(), b"old");
+        assert_eq!(fs::read(staging.join("shared.txt")).unwrap(), b"new");
+        assert!(!rollback.exists());
+        fs::remove_dir_all(app_data).unwrap();
+    }
+
+    #[test]
+    fn offline_replace_failure_restores_the_original_directory() {
+        let app_data = test_root("offline-replace-failure");
+        let current = app_data.join("offline-library");
+        let missing_staging = app_data.join(RESTORE_STAGING_DIRECTORY);
+        let rollback = app_data.join(RESTORE_ROLLBACK_DIRECTORY);
+        fs::create_dir_all(&current).unwrap();
+        fs::write(current.join("keep.txt"), b"original").unwrap();
+
+        assert!(matches!(
+            prepare_offline_restore(
+                &app_data,
+                &missing_staging,
+                &rollback,
+                BackupRestoreStrategy::Replace,
+            ),
+            Err(ApiCommandError::BackupInvalid)
+        ));
+        assert_eq!(fs::read(current.join("keep.txt")).unwrap(), b"original");
+        assert!(!rollback.exists());
+        fs::remove_dir_all(app_data).unwrap();
+    }
 }

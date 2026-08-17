@@ -66,10 +66,10 @@ function appReport() {
 
 test("tracked baseline records exact, short-lived, non-runtime findings", async () => {
   const baseline = JSON.parse(await read("docs/android-gradle-osv-risk-baseline.json"));
-  assert.equal(baseline.exceptions.length, 83);
+  assert.equal(baseline.exceptions.length, 82);
   assert.deepEqual(baseline.toolchain, expectedToolchain);
   assert.equal(baseline.policy.runtimeExceptionsAllowed, false);
-  assert.ok(baseline.exceptions.some((entry) => entry.severity === "CRITICAL"));
+  assert.ok(baseline.exceptions.every((entry) => entry.severity !== "CRITICAL"));
   assert.deepEqual(
     scopeDefinitions.map((scope) => scope.id),
     [
@@ -91,17 +91,38 @@ test("tracked baseline records exact, short-lived, non-runtime findings", async 
     assert.match(entry.unreachableReason, /absent from arm64ReleaseRuntimeClasspath/);
     assert.ok(entry.fixedVersions.length > 0);
     assert.equal(entry.trackingIssue, "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08");
-    const isNewKotlinBuildCacheFinding = entry.advisory === "GHSA-r937-wjx7-w2jp";
-    assert.equal(entry.reviewedAt, isNewKotlinBuildCacheFinding ? "2026-08-13" : "2026-08-09");
+    const isKotlinBuildCacheFinding = entry.advisory === "GHSA-r937-wjx7-w2jp";
+    const isUpdatedBouncyCastleFinding = ["GHSA-c3fc-8qff-9hwx", "GHSA-wg6q-6289-32hp"]
+      .includes(entry.advisory);
+    assert.equal(
+      entry.reviewedAt,
+      isUpdatedBouncyCastleFinding ? "2026-08-17" : isKotlinBuildCacheFinding ? "2026-08-13" : "2026-08-09",
+    );
     assert.equal(
       entry.expiresAt,
-      isNewKotlinBuildCacheFinding
-        ? "2026-09-12"
-        : entry.severity === "CRITICAL"
-          ? "2026-08-23"
-          : "2026-09-08",
+      isUpdatedBouncyCastleFinding ? "2026-09-16" : isKotlinBuildCacheFinding ? "2026-09-12" : "2026-09-08",
     );
   }
+});
+
+test("the reviewed Android build graph pins the fixed Bouncy Castle family", async () => {
+  const [rootBuild, buildSrcBuild, rootLock, buildSrcLock, baselineText] = await Promise.all([
+    read("src-tauri/gen/android/build.gradle.kts"),
+    read("src-tauri/gen/android/buildSrc/build.gradle.kts"),
+    read("src-tauri/gen/android/buildscript-gradle.lockfile"),
+    read("src-tauri/gen/android/buildSrc/gradle.lockfile"),
+    read("docs/android-gradle-osv-risk-baseline.json"),
+  ]);
+  for (const module of ["bcprov-jdk18on", "bcpkix-jdk18on", "bcutil-jdk18on"]) {
+    const coordinate = `org.bouncycastle:${module}:1.80.2`;
+    assert.match(rootBuild, new RegExp(coordinate.replaceAll(".", "\\.")));
+    assert.match(buildSrcBuild, new RegExp(coordinate.replaceAll(".", "\\.")));
+    assert.match(rootLock, new RegExp(`^${coordinate.replaceAll(".", "\\.")}=`, "m"));
+    assert.match(buildSrcLock, new RegExp(`^${coordinate.replaceAll(".", "\\.")}=`, "m"));
+    assert.doesNotMatch(rootLock, new RegExp(`^org\\.bouncycastle:${module}:1\\.79=`, "m"));
+    assert.doesNotMatch(buildSrcLock, new RegExp(`^org\\.bouncycastle:${module}:1\\.79=`, "m"));
+  }
+  assert.doesNotMatch(baselineText, /GHSA-574f-3g2m-x479/);
 });
 
 test("baseline is exact and rejects new, removed, or changed findings", () => {

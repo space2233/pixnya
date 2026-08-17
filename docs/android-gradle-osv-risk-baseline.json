@@ -590,32 +590,6 @@
       "expiresAt": "2026-09-08"
     },
     {
-      "advisory": "GHSA-574f-3g2m-x479",
-      "mavenCoordinate": "org.bouncycastle:bcprov-jdk18on",
-      "version": "1.79",
-      "severity": "CRITICAL",
-      "scopes": [
-        "android-buildscript-classpath",
-        "android-buildsrc-build-time"
-      ],
-      "owner": "space2233",
-      "upstreamChain": [
-        "Tauri 2.11.5 generated Android project",
-        "com.android.tools.build:gradle:8.11.0",
-        "Gradle JVM build classpath",
-        "org.bouncycastle:bcprov-jdk18on:1.79"
-      ],
-      "unreachableReason": "The coordinate is confined to Gradle JVM build classpaths; it is absent from arm64ReleaseRuntimeClasspath and is not packaged in the APK. The release does not use GOST CTR, LDAP certificate lookup, OpenPGP, or the affected Bouncy Castle paths; APK signing uses Android/JDK signing tooling.",
-      "fixedVersions": [
-        "1.80.2",
-        "1.81.1",
-        "1.84"
-      ],
-      "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-08-23"
-    },
-    {
       "advisory": "GHSA-57rv-r2g8-2cj3",
       "mavenCoordinate": "io.netty:netty-codec-http",
       "version": "4.1.110.Final",
@@ -1071,7 +1045,7 @@
     {
       "advisory": "GHSA-c3fc-8qff-9hwx",
       "mavenCoordinate": "org.bouncycastle:bcprov-jdk18on",
-      "version": "1.79",
+      "version": "1.80.2",
       "severity": "MODERATE",
       "scopes": [
         "android-buildscript-classpath",
@@ -1082,15 +1056,15 @@
         "Tauri 2.11.5 generated Android project",
         "com.android.tools.build:gradle:8.11.0",
         "Gradle JVM build classpath",
-        "org.bouncycastle:bcprov-jdk18on:1.79"
+        "org.bouncycastle:bcprov-jdk18on:1.80.2"
       ],
       "unreachableReason": "The coordinate is confined to Gradle JVM build classpaths; it is absent from arm64ReleaseRuntimeClasspath and is not packaged in the APK. The release does not use GOST CTR, LDAP certificate lookup, OpenPGP, or the affected Bouncy Castle paths; APK signing uses Android/JDK signing tooling.",
       "fixedVersions": [
         "1.84"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-08-17",
+      "expiresAt": "2026-09-16"
     },
     {
       "advisory": "GHSA-c653-97m9-rcg9",
@@ -1936,7 +1910,7 @@
     {
       "advisory": "GHSA-wg6q-6289-32hp",
       "mavenCoordinate": "org.bouncycastle:bcpkix-jdk18on",
-      "version": "1.79",
+      "version": "1.80.2",
       "severity": "MODERATE",
       "scopes": [
         "android-buildscript-classpath",
@@ -1947,15 +1921,15 @@
         "Tauri 2.11.5 generated Android project",
         "com.android.tools.build:gradle:8.11.0",
         "Gradle JVM build classpath",
-        "org.bouncycastle:bcpkix-jdk18on:1.79"
+        "org.bouncycastle:bcpkix-jdk18on:1.80.2"
       ],
       "unreachableReason": "The coordinate is confined to Gradle JVM build classpaths; it is absent from arm64ReleaseRuntimeClasspath and is not packaged in the APK. The release does not use GOST CTR, LDAP certificate lookup, OpenPGP, or the affected Bouncy Castle paths; APK signing uses Android/JDK signing tooling.",
       "fixedVersions": [
         "1.84"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-08-17",
+      "expiresAt": "2026-09-16"
     },
     {
       "advisory": "GHSA-x4gw-5cx5-pgmh",

@@ -406,7 +406,7 @@ fn restore_interrupted_index(root: &Path) -> Result<(), CacheError> {
 
 #[cfg(test)]
 mod tests {
-    use super::{CacheKind, CacheScope, MediaCache};
+    use super::{CacheKind, CacheScope, MediaCache, INDEX_FILE};
     use std::fs;
     use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -503,6 +503,79 @@ mod tests {
             Some(b"1111".to_vec())
         );
         let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn reopening_the_cache_restores_a_warm_entry() {
+        let root = test_root("reopen");
+        {
+            let mut cache = MediaCache::open(&root, Some(64)).unwrap();
+            cache
+                .put(CacheScope::Verified, CacheKind::Thumbnail, "warm", b"image")
+                .unwrap();
+        }
+
+        let mut reopened = MediaCache::open(&root, Some(64)).unwrap();
+        assert_eq!(
+            reopened
+                .get(CacheScope::Verified, CacheKind::Thumbnail, "warm", 16)
+                .unwrap(),
+            Some(b"image".to_vec())
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn a_corrupt_index_is_rebuilt_without_serving_orphaned_bytes() {
+        let root = test_root("corrupt-index");
+        let mut cache = MediaCache::open(&root, Some(64)).unwrap();
+        cache
+            .put(
+                CacheScope::Verified,
+                CacheKind::Thumbnail,
+                "orphan",
+                b"image",
+            )
+            .unwrap();
+        fs::write(root.join(INDEX_FILE), b"not-json").unwrap();
+
+        let mut reopened = MediaCache::open(&root, Some(64)).unwrap();
+        assert_eq!(reopened.stats().entry_count, 0);
+        assert_eq!(
+            reopened
+                .get(CacheScope::Verified, CacheKind::Thumbnail, "orphan", 16)
+                .unwrap(),
+            None
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn reopening_with_a_smaller_limit_immediately_trims_least_recently_used_entries() {
+        let root = test_root("limit-shrink");
+        {
+            let mut cache = MediaCache::open(&root, None).unwrap();
+            cache
+                .put(CacheScope::Verified, CacheKind::Thumbnail, "old", b"111")
+                .unwrap();
+            cache
+                .put(CacheScope::Verified, CacheKind::Thumbnail, "new", b"222")
+                .unwrap();
+        }
+
+        let mut limited = MediaCache::open(&root, Some(3)).unwrap();
+        assert!(limited
+            .get(CacheScope::Verified, CacheKind::Thumbnail, "old", 8)
+            .unwrap()
+            .is_none());
+        assert_eq!(
+            limited
+                .get(CacheScope::Verified, CacheKind::Thumbnail, "new", 8)
+                .unwrap(),
+            Some(b"222".to_vec())
+        );
+        assert_eq!(limited.stats().size_bytes, 3);
+        fs::remove_dir_all(root).unwrap();
     }
 
     #[test]

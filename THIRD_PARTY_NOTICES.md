@@ -5,9 +5,9 @@ PixNya itself is licensed under GNU GPL-3.0-only; the complete project license i
 
 Copyright (C) 2026 PixNya contributors
 
-This inventory records the reviewed license expressions for the exact dependency versions locked for PixNya 1.4.0. It is generated locally from `package-lock.json`, `Cargo.lock`, the Android Gradle lock and verification graph, installed npm/Cargo package evidence, and the tracked Maven license review. It is not legal advice and does not replace any upstream license or notice file shipped with a dependency.
+This inventory records the reviewed license expressions for the exact dependency versions locked for PixNya 1.4.1. It is generated locally from `package-lock.json`, `Cargo.lock`, the Android Gradle lock and verification graph, installed npm/Cargo package evidence, and the tracked Maven license review. It is not legal advice and does not replace any upstream license or notice file shipped with a dependency.
 
-- Lock fingerprint: `sha256:2eabe71fa23d28a1b34f350748ed5e57d7d834ee0c50c7fe72f66ab1c00ffc66`
+- Lock fingerprint: `sha256:70f843b6279b9fef64a5673928f69a365c55f4f73e81e69e3fededfabe131108`
 - npm runtime/optional packages: 1
 - npm build/development packages: 144
 - Rust target-dependent locked packages: 570
@@ -995,9 +995,9 @@ These components come from the strictly locked Android app, buildscript and buil
 | org.apache.httpcomponents:httpcore | 4.4.16 | Apache License, Version 2.0 | build/development |
 | org.apache.httpcomponents:httpmime | 4.5.6 | Apache License, Version 2.0 | build/development |
 | org.bitbucket.b_c:jose4j | 0.9.5 | The Apache Software License, Version 2.0 | build/development |
-| org.bouncycastle:bcpkix-jdk18on | 1.79 | Bouncy Castle Licence | build/development |
-| org.bouncycastle:bcprov-jdk18on | 1.79 | Bouncy Castle Licence | build/development |
-| org.bouncycastle:bcutil-jdk18on | 1.79 | Bouncy Castle Licence | build/development |
+| org.bouncycastle:bcpkix-jdk18on | 1.80.2 | Bouncy Castle Licence | build/development |
+| org.bouncycastle:bcprov-jdk18on | 1.80.2 | Bouncy Castle Licence | build/development |
+| org.bouncycastle:bcutil-jdk18on | 1.80.2 | Bouncy Castle Licence | build/development |
 | org.checkerframework:checker-qual | 3.33.0 | The MIT License | runtime/target-dependent |
 | org.checkerframework:checker-qual | 3.43.0 | The MIT License | runtime/target-dependent |
 | org.codehaus.mojo:animal-sniffer-annotations | 1.23 | MIT license | runtime/target-dependent |

@@ -2,9 +2,15 @@
   import PixivImage from "$lib/components/PixivImage.svelte";
   import Icon from "$lib/components/Icon.svelte";
   import { currentAppLocale, m } from "$lib/i18n";
+  import {
+    publishNovelBookmarkState,
+    resolveNovelBookmarkState,
+    subscribeNovelBookmarkState,
+  } from "$lib/novel-bookmark-state";
   import { describeDataFailure, setNovelBookmark } from "$lib/pixiv-api";
   import { plainPixivText } from "$lib/pixiv-text";
   import { r18DefaultVisible } from "$lib/preferences";
+  import { session } from "$lib/session";
   import type { NovelSummary } from "$lib/types";
 
   let { novel, selectable = false, selected = false, onSelect }: { novel: NovelSummary; selectable?: boolean; selected?: boolean; onSelect?: (selected: boolean) => void } = $props();
@@ -14,10 +20,17 @@
   let bookmarkError = $state("");
   let revealRestricted = $state(false);
   let restricted = $derived(novel.xRestrict > 0);
+  let bookmarkAccount = $derived($session.loggedIn ? ($session.user?.id ?? "logged-in") : "");
 
   $effect(() => {
-    bookmarked = novel.isBookmarked;
+    const account = bookmarkAccount;
+    const novelId = novel.id;
+    bookmarked = resolveNovelBookmarkState(account, novelId, novel.isBookmarked);
     bookmarkError = "";
+    return subscribeNovelBookmarkState(account, novelId, (next) => {
+      bookmarked = next;
+      bookmarkError = "";
+    });
   });
 
   function compact(value: number): string {
@@ -32,6 +45,7 @@
     bookmarkError = "";
     try {
       await setNovelBookmark(novel.id, bookmarked);
+      publishNovelBookmarkState(bookmarkAccount, novel.id, bookmarked);
     } catch (error) {
       bookmarked = previous;
       bookmarkError = describeDataFailure(error);

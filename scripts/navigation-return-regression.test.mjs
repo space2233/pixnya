@@ -93,6 +93,17 @@ test("nested details unwind one source at a time", () => {
   assert.equal(harness.stack().length, 0);
 });
 
+test("an artwork opened from an author page returns to the same author scroll position", () => {
+  const harness = createHarness("/users/8", 30);
+  harness.navigator.capture("/artworks/42");
+  harness.setCurrent("/artworks/42", 31);
+
+  assert.equal(harness.navigator.returnToPrevious("/users/8"), "history");
+  harness.setCurrent("/users/8", 30);
+  assert.equal(harness.navigator.restorePendingPosition(), true);
+  assert.deepEqual(harness.calls.scroll, [[0, 840]]);
+});
+
 test("directly opened details use a replacement fallback instead of a stale entry", () => {
   const harness = createHarness("/artworks/42", 50);
 
@@ -157,6 +168,20 @@ test("navigation view memory is bounded and never restores an unknown disk-only 
   assert.equal(recallNavigationView(first), null);
   assert.deepEqual(recallNavigationView(latest), { page: 70 });
   assert.equal(recallNavigationView("missing-after-reload"), null);
+});
+
+test("navigation snapshots preserve loaded items, filters, pagination, and bookmark state", () => {
+  const snapshot = {
+    selectedFilter: "private",
+    selectedBookmarkTag: "reference",
+    nextCursor: "cursor-page-3",
+    items: [
+      { id: "42", isBookmarked: true },
+      { id: "43", isBookmarked: false },
+    ],
+  };
+  const key = rememberNavigationView(snapshot);
+  assert.deepEqual(recallNavigationView(key), snapshot);
 });
 
 test("primary content sources preserve loaded state in SvelteKit history snapshots", async () => {

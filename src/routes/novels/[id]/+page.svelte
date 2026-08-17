@@ -8,6 +8,11 @@
   import { currentAppLocale, m } from "$lib/i18n";
   import { recallNavigationView, rememberNavigationView } from "$lib/navigation-view-memory";
   import {
+    publishNovelBookmarkState,
+    resolveNovelBookmarkState,
+    subscribeNovelBookmarkState,
+  } from "$lib/novel-bookmark-state";
+  import {
     describeDataFailure,
     enqueueDownload,
     getNovelDetail,
@@ -33,6 +38,7 @@
   let requestedKey = $state("");
   let requestSequence = 0;
   let novelId = $derived(page.params.id ?? "");
+  let bookmarkAccount = $derived($session.loggedIn ? ($session.user?.id ?? "logged-in") : "");
   let caption = $derived(detail ? plainPixivText(detail.novel.caption) : "");
   let restricted = $derived((detail?.novel.xRestrict ?? 0) > 0);
 
@@ -72,8 +78,18 @@
   };
 
   $effect(() => {
-    bookmarked = detail?.novel.isBookmarked ?? false;
+    const account = bookmarkAccount;
+    const currentNovelId = detail?.novel.id ?? "";
+    bookmarked = resolveNovelBookmarkState(
+      account,
+      currentNovelId,
+      detail?.novel.isBookmarked ?? false,
+    );
     bookmarkError = "";
+    return subscribeNovelBookmarkState(account, currentNovelId, (next) => {
+      bookmarked = next;
+      bookmarkError = "";
+    });
   });
 
   $effect(() => {
@@ -152,6 +168,7 @@
     try {
       await setNovelBookmark(detail.novel.id, bookmarked, bookmarkRestrict);
       detail.novel.isBookmarked = bookmarked;
+      publishNovelBookmarkState(bookmarkAccount, detail.novel.id, bookmarked);
     } catch (error) {
       bookmarked = previous;
       bookmarkError = describeDataFailure(error);

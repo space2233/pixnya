@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "gradleFingerprint": "sha256:22f85f1f9149c09eb2f81c11b15e895575f671b13080f7cad090ae8e95034c34",
+  "gradleFingerprint": "sha256:df37f345b5082080403d7b8feb2cd5e123f44a9ca90d97a5abc1cd7de2d03595",
   "components": [
     {
       "coordinate": "androidx.activity:activity-ktx:1.10.1",
@@ -4756,15 +4756,15 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.bouncycastle:bcpkix-jdk18on:1.79",
+      "coordinate": "org.bouncycastle:bcpkix-jdk18on:1.80.2",
       "declaredLicense": "Bouncy Castle Licence",
       "spdxLicense": "LicenseRef-Bouncy-Castle",
-      "projectUrl": "https://www.bouncycastle.org/java.html",
+      "projectUrl": "https://www.bouncycastle.org/download/bouncy-castle-java/",
       "licenseEvidence": {
         "classification": "reviewed-with-license-ref",
-        "componentPomSha256": "35e49f4134de2ac326c3a50a25762cbb4db56f3802fa3f730cc85b653ad0987b",
-        "sourceCoordinate": "org.bouncycastle:bcpkix-jdk18on:1.79",
-        "sourcePomSha256": "35e49f4134de2ac326c3a50a25762cbb4db56f3802fa3f730cc85b653ad0987b",
+        "componentPomSha256": "2b25ccf35996649783bc78c29f4778e140e33f7cef3965c3dcac0db541474340",
+        "sourceCoordinate": "org.bouncycastle:bcpkix-jdk18on:1.80.2",
+        "sourcePomSha256": "2b25ccf35996649783bc78c29f4778e140e33f7cef3965c3dcac0db541474340",
         "declaredLicenses": [
           {
             "name": "Bouncy Castle Licence",
@@ -4785,15 +4785,15 @@
       ]
     },
     {
-      "coordinate": "org.bouncycastle:bcprov-jdk18on:1.79",
+      "coordinate": "org.bouncycastle:bcprov-jdk18on:1.80.2",
       "declaredLicense": "Bouncy Castle Licence",
       "spdxLicense": "LicenseRef-Bouncy-Castle",
-      "projectUrl": "https://www.bouncycastle.org/java.html",
+      "projectUrl": "https://www.bouncycastle.org/download/bouncy-castle-java/",
       "licenseEvidence": {
         "classification": "reviewed-with-license-ref",
-        "componentPomSha256": "d8f1a06b149d746e9d98de54e2f7aa9b2eb613fb35ca67d8ae396ceaac661ee4",
-        "sourceCoordinate": "org.bouncycastle:bcprov-jdk18on:1.79",
-        "sourcePomSha256": "d8f1a06b149d746e9d98de54e2f7aa9b2eb613fb35ca67d8ae396ceaac661ee4",
+        "componentPomSha256": "12a505a717a3bc7647f7d8edea77732c9c6dcb53c4df62a3bb58b7a54228a28f",
+        "sourceCoordinate": "org.bouncycastle:bcprov-jdk18on:1.80.2",
+        "sourcePomSha256": "12a505a717a3bc7647f7d8edea77732c9c6dcb53c4df62a3bb58b7a54228a28f",
         "declaredLicenses": [
           {
             "name": "Bouncy Castle Licence",
@@ -4814,15 +4814,15 @@
       ]
     },
     {
-      "coordinate": "org.bouncycastle:bcutil-jdk18on:1.79",
+      "coordinate": "org.bouncycastle:bcutil-jdk18on:1.80.2",
       "declaredLicense": "Bouncy Castle Licence",
       "spdxLicense": "LicenseRef-Bouncy-Castle",
-      "projectUrl": "https://www.bouncycastle.org/java.html",
+      "projectUrl": "https://www.bouncycastle.org/download/bouncy-castle-java/",
       "licenseEvidence": {
         "classification": "reviewed-with-license-ref",
-        "componentPomSha256": "e24c1fb4cf1605405a6988e9e4d6e4b2e1f4393fc73a89a9452ae625ee311d02",
-        "sourceCoordinate": "org.bouncycastle:bcutil-jdk18on:1.79",
-        "sourcePomSha256": "e24c1fb4cf1605405a6988e9e4d6e4b2e1f4393fc73a89a9452ae625ee311d02",
+        "componentPomSha256": "2688be1af499d525096114cc2f51c7a7a4ca23c3d27317b71e18c1c96bec03d1",
+        "sourceCoordinate": "org.bouncycastle:bcutil-jdk18on:1.80.2",
+        "sourcePomSha256": "2688be1af499d525096114cc2f51c7a7a4ca23c3d27317b71e18c1c96bec03d1",
         "declaredLicenses": [
           {
             "name": "Bouncy Castle Licence",

@@ -59,3 +59,30 @@ test("artwork cards and detail publish through the same bookmark state boundary"
   assert.match(detail, /subscribeIllustrationBookmarkState/);
   assert.match(detail, /publishIllustrationBookmarkState/);
 });
+
+test("a restored novel list follows bookmark changes from cards, detail, and batch removal", async () => {
+  const {
+    clearNovelBookmarkState,
+    publishNovelBookmarkState,
+    resolveNovelBookmarkState,
+  } = await import("../src/lib/novel-bookmark-state.ts");
+  const account = "reader-42";
+  clearNovelBookmarkState(account);
+  assert.equal(resolveNovelBookmarkState(account, "novel-7", false), false);
+  publishNovelBookmarkState(account, "novel-7", true);
+  assert.equal(resolveNovelBookmarkState(account, "novel-7", false), true);
+  assert.equal(resolveNovelBookmarkState("another-reader", "novel-7", false), false);
+
+  const [card, detail, list] = await Promise.all([
+    source("src/lib/components/NovelCard.svelte"),
+    source("src/routes/novels/[id]/+page.svelte"),
+    source("src/routes/novels/+page.svelte"),
+  ]);
+  for (const consumer of [card, detail]) {
+    assert.match(consumer, /resolveNovelBookmarkState/);
+    assert.match(consumer, /subscribeNovelBookmarkState/);
+    assert.match(consumer, /publishNovelBookmarkState/);
+  }
+  assert.match(list, /publishNovelBookmarkState\(account, resourceId, false\)/);
+  clearNovelBookmarkState(account);
+});

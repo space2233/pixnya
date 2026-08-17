@@ -7,6 +7,7 @@
   import { buildBookmarkBatchUpdate, type BookmarkBatchAction } from "$lib/bookmark-batch";
   import { loadAllBookmarkTags } from "$lib/bookmark-tags";
   import { recallNavigationView, rememberNavigationView } from "$lib/navigation-view-memory";
+  import { publishNovelBookmarkState } from "$lib/novel-bookmark-state";
   import { batchUpdateBookmarks, describeDataFailure, getBookmarkDetail, getBookmarkTags, getBookmarkedNovels, getFollowedNovels, getRankingNovels, getRecommendedNovels } from "$lib/pixiv-api";
   import { session, sessionRestoring } from "$lib/session";
   import type { BookmarkRestrict, BookmarkTag, NovelPage, NovelSummary, RankingMode } from "$lib/types";
@@ -149,6 +150,10 @@
       }
       const results = await batchUpdateBookmarks(updates, expectedUserId);
       const succeeded = new Set(results.filter((item) => item.succeeded).map((item) => item.resourceId));
+      if (action === "remove") {
+        const account = $session.user?.id ?? "logged-in";
+        for (const resourceId of succeeded) publishNovelBookmarkState(account, resourceId, false);
+      }
       if (action === "remove" || ((action === "public" || action === "private") && action !== bookmarkRestrict)) {
         novels = novels.filter((item) => !succeeded.has(item.id));
       }

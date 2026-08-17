@@ -1,12 +1,12 @@
 # PixNya 自动检查更新与自动更新计划
 
-> 状态：生产签名更新流程已投入使用；`1.3.0` 扩展为双 Windows 架构与双 Android ABI
-> 日期：2026-08-03
+> 状态：生产签名更新流程已投入使用；当前公开稳定版为 `1.4.0`，维护候选为 `1.4.1`
+> 更新日期：2026-08-17
 > 当前正式平台：Windows x64/ARM64、Linux x64、Android ARM64/ARM32
 
 首个正式版的逐项发布状态与人工验收记录见[首个正式版发布清单](FIRST_STABLE_RELEASE_CHECKLIST.md)。
 
-已确认：产品名为 **PixNya**；最终应用 ID 为 `io.github.space2233.pixnya`；更新源使用 GitHub Releases；Android 交给系统安装组件，并始终保留用户确认。当前候选基线为 `0.29.0`，首个稳定版目标为 `1.0.0`。
+已确认：产品名为 **PixNya**；最终应用 ID 为 `io.github.space2233.pixnya`；更新源使用公开的 GitHub Releases；Android 交给系统安装组件，并始终保留用户确认。Windows x64/ARM64、Linux x64、Android ARM64/ARM32 均已进入正式签名矩阵。
 
 ## 1. 产品定义
 
@@ -157,12 +157,11 @@ Android 清单至少包含：schema 版本、`versionName`、`versionCode`、发
 ## 9. 当前决策状态
 
 1. [x] 更新源使用 GitHub Releases。
-2. [x] 源码仓库已确定为私有仓库 `space2233/pixnya`，本地 `origin` 已连接。
-3. [ ] 确定匿名可访问的正式更新发布源；私人仓库 Release 不能直接作为无凭据客户端的稳定更新源，禁止在应用中内置 GitHub 私人访问令牌。
-4. [ ] Windows 确认以 NSIS 安装包作为正式分发和更新格式。
-5. [ ] Linux 确认首个稳定版只有 AppImage 能应用内自动安装更新。
-6. [x] Android 使用“自动检查，可选自动下载，系统确认安装”，不追求静默安装。
-7. [x] 自动检查默认开启、自动下载默认关闭。
+2. [x] 源码仓库与匿名更新源统一为公开仓库 `space2233/pixnya`，本地 `origin` 已连接；应用不内置 GitHub 私人访问令牌。
+3. [x] Windows 以 NSIS 安装包作为正式分发和更新格式。
+4. [x] Linux 当前只使用 AppImage 进行应用内自动更新。
+5. [x] Android 使用“自动检查，可选自动下载，系统确认安装”，不追求静默安装。
+6. [x] 自动检查默认开启、自动下载默认关闭。
 
 ## 10. 当前实现进度
 
@@ -177,13 +176,13 @@ Android 清单至少包含：schema 版本、`versionName`、`versionCode`、发
 - [x] 发布流水线阻断 npm 高危和 RustSec advisory，并附带 GPL 正文、第三方许可证清单、逐依赖许可证正文归档、SPDX SBOM 与固定提交源码归档。
 - [x] Tauri updater 私钥、Android Release keystore 与 Android 清单签名密钥已生成，已上传受保护的环境 Secrets，并已完成两份加密离线备份。
 - [x] 完成桌面下载/安装以及 Android 清单验证、下载与系统安装链路。
-- [ ] 使用生产签名从 `0.29.0` 候选基线升级到 `1.0.0`，完成 Windows x64、Linux x64、Android ARM64 真机回归。
+- [ ] 使用生产签名从公开 `1.4.0` 升级到 `1.4.1` Draft，完成 Windows x64 与 Android ARM64 的数据保留回归；Linux x64、Windows ARM64 与 Android ARM32 本轮只承诺签名 CI 构建。
 
 ## 11. 发布配置
 
 ### 生产发布前需要配置的 GitHub Environment Secrets
 
-所有生产签名与 OAuth 参数放在 `production-release` 环境中，而不是普通仓库级 Secret。Windows、Linux、Android 和最终 Draft job 都显式引用该环境。该环境已经只允许 `main` 分支；当前私人仓库套餐不支持 required reviewers，主仓库公开后、发布 stable 前必须再启用维护者审核。
+所有生产签名与 OAuth 参数放在 `production-release` 环境中，而不是普通仓库级 Secret。Windows、Linux、Android 和最终 Draft job 都显式引用该环境。该环境只允许 `main` 分支；是否启用 required reviewers 由仓库维护者在 GitHub Environment 中单独管理。
 
 - Pixiv 构建参数：`PIXIV_OAUTH_CLIENT_ID`、`PIXIV_OAUTH_CLIENT_SECRET`、`PIXIV_OAUTH_HASH_SALT`。
 - 桌面更新签名：`TAURI_SIGNING_PRIVATE_KEY`、`TAURI_SIGNING_PRIVATE_KEY_PASSWORD`、`PIXNYA_UPDATER_PUBKEY`。
@@ -202,7 +201,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\provision-rele
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\provision-release-signing.ps1 -UploadSecrets -UploadExisting
 ```
 
-官方工作流只接受手动触发、只创建当前源码仓库的 Draft Release，并将源码、tag、显式源码归档和匿名更新附件保持在同一信任边界。人工核对产物、签名、安装升级和清单后才能发布；`1.0.0` 及更高版本会在预检阶段要求仓库可匿名读取。仓库仍为私人状态时可以生成 `0.x` 签名候选基线，但不能发布 stable，也不向客户端内置 GitHub Token。`PIXNYA_UPDATE_REPOSITORY` 仍供分支或复刻项目在自有工作流中编译期配置。
+官方工作流只接受手动触发、先创建当前源码仓库的 Draft Release，并将源码、tag、显式源码归档和匿名更新附件保持在同一信任边界。独立的 Publish 工作流会重新下载并验证附件、签名、清单、校验和与来源提交，全部通过后才把 Draft 切换为 latest stable。`PIXNYA_UPDATE_REPOSITORY` 仍供分支或复刻项目在自有工作流中编译期配置。
 
 ## 12. 官方依据
 

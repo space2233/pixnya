@@ -26,7 +26,7 @@
 |---|---:|---:|---|---|
 | `target/debug/` | 116.013 GiB | 143,724 | Windows 调试构建、测试、依赖和增量缓存 | 细分保留与清理 |
 | `target/aarch64-linux-android/` | 14.455 GiB | 64,638 | 当前 Android ARM64 构建缓存 | 细分保留与清理 |
-| `target/armv7-linux-androideabi/` | 7.964 GiB | 32,634 | 已暂停的 Android ARM32 构建缓存 | 整体列入清理 |
+| `target/armv7-linux-androideabi/` | 7.964 GiB | 32,634 | 当时尚未进入 Release 的 Android ARM32 构建缓存 | 作为 2026-08-04 历史清理对象 |
 | `target/webview-e2e-*` | 32.70 MiB | 694 | WebView 端到端测试的临时运行目录 | 整体列入清理 |
 | `target/windows-standalone-runtime-*` | 0.08 MiB | 15 | 独立启动回归测试的临时运行目录 | 整体列入清理 |
 | `target/tmp/` | 0 | 0 | Cargo 临时目录 | 空目录，可清理 |
@@ -91,7 +91,7 @@ ARM64 的增量缓存中，旧 `pixiv_client_lib` 占 **5.112 GiB（29 个会话
 
 ## 5. Android ARM32 细分
 
-ARM32 已明确暂停支持，因此 `target/armv7-linux-androideabi/` 当前没有需要继续复用的构建状态，可以整体清理：
+本节记录 2026-08-04 ARM32 尚未进入正式矩阵时的历史判断。自 `1.3.0` 起 ARM32 已恢复为正式目标；现在不能仅依据本节整体清理 `target/armv7-linux-androideabi/`，必须使用当前审计脚本判断可复用缓存：
 
 | 子目录/文件 | 占用 | 用途 |
 |---|---:|---|
@@ -102,7 +102,7 @@ ARM32 已明确暂停支持，因此 `target/armv7-linux-androideabi/` 当前没
 | `libpixiv_client_lib.*` | 302.5 MiB | 旧名称 ARM32 主库输出 |
 | `.fingerprint/` 及锁文件 | 约 1 MiB | Cargo 元数据 |
 
-删除该三元组不会影响 ARM64 APK 和 Windows 构建。以后恢复 ARM32 时，Cargo 会重新生成它。
+历史上删除该三元组不会影响 ARM64 APK 和 Windows 构建，但会使下一次 ARM32 构建从头生成依赖。当前是否删除必须同时考虑 ARM32 正式交付的复用成本。
 
 ## 6. 可精确清理的旧主应用残留
 
@@ -118,11 +118,11 @@ Cargo 指纹中的旧主应用条目不足 2 MiB，也一并列入精确清理�
 
 ## 7. 两档执行方案
 
-### 7.1 复用优先方案（本轮推荐）
+### 7.1 复用优先方案（2026-08-04 历史执行方案）
 
 清理：
 
-1. 整个 `target/armv7-linux-androideabi/`：约 7.964 GiB；
+1. 当时整体清理 `target/armv7-linux-androideabi/`：约 7.964 GiB；当前版本不再默认执行此项；
 2. Windows 和 ARM64 中旧主应用的精确残留：约 58.213 GiB；
 3. `target/webview-e2e-*`、`windows-standalone-runtime-*`、空 `tmp/`：约 32.78 MiB；
 4. `target/debug/examples/`：约 69.0 MiB。
@@ -158,8 +158,8 @@ Cargo 指纹中的旧主应用条目不足 2 MiB，也一并列入精确清理�
 
 ## 9. 后续防止再次膨胀
 
-1. Windows、Android ARM64、暂停的 ARM32 交付脚本和 Linux CI 已设置 `CARGO_INCREMENTAL=0`；日常 `cargo` 开发命令仍可使用增量编译。
-2. ARM32 暂停期间，不主动调用 `build-android-armv7-debug.ps1`；即使以后手动恢复，该脚本也不会生成增量缓存。
+1. Windows、Android ARM64、Android ARM32 交付脚本和 Linux CI 已设置 `CARGO_INCREMENTAL=0`；日常 `cargo` 开发命令仍可使用增量编译。
+2. ARM32 与 ARM64 均按实际交付需要构建；两个脚本都应在构建后运行只读容量审计，不自动删除另一个架构的缓存。
 3. 品牌或 crate 重命名后，运行 `npm run storage:cleanup:preview` 精确检查旧主 crate 残留，确认后再给清理脚本传入 `-Execute`。
 4. 已增加只读 `npm run storage:audit`，分别报告 Windows、ARM64、ARM32、`incremental`、`deps` 和 `build`。
 5. 交付构建结束后会自动执行容量审计；`target/` 达到 80 GiB 时发出警告，但不会自动删除缓存。
@@ -171,6 +171,7 @@ Cargo 指纹中的旧主应用条目不足 2 MiB，也一并列入精确清理�
 - `target/debug/pixnya.exe`、`pixnya.pdb`；
 - `target/aarch64-linux-android/debug/deps/`、`build/`、当前 `.fingerprint/`；
 - ARM64 的 `libpixnya_lib.a/.rlib/.so`；
+- 当前 ARM32 的 `libpixnya_lib.a/.rlib/.so` 与仍可复用的依赖缓存；
 - 当前 PixNya 与内部工作区 crate 的增量缓存（复用优先方案下）；
 - `target/` 外的所有目录和文件。
 

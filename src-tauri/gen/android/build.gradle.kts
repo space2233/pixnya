@@ -8,6 +8,11 @@ buildscript {
     dependencies {
         classpath("com.android.tools.build:gradle:8.11.0")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.25")
+        constraints {
+            classpath("org.bouncycastle:bcprov-jdk18on:1.80.2")
+            classpath("org.bouncycastle:bcpkix-jdk18on:1.80.2")
+            classpath("org.bouncycastle:bcutil-jdk18on:1.80.2")
+        }
     }
     configurations.classpath {
         resolutionStrategy.activateDependencyLocking()
