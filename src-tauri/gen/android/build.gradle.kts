@@ -28,6 +28,20 @@ allprojects {
         google()
         mavenCentral()
     }
+    dependencies.components {
+        withModule("com.android.tools:sdk-common") {
+            allVariants {
+                withDependencies {
+                    filter { dependency ->
+                        dependency.group == "org.bouncycastle" &&
+                            dependency.name in setOf("bcprov-jdk18on", "bcpkix-jdk18on")
+                    }.forEach { dependency ->
+                        dependency.version { strictly("1.80.2") }
+                    }
+                }
+            }
+        }
+    }
 }
 
 tasks.register("clean").configure {

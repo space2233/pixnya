@@ -122,6 +122,10 @@ test("the reviewed Android build graph pins the fixed Bouncy Castle family", asy
     assert.doesNotMatch(rootLock, new RegExp(`^org\\.bouncycastle:${module}:1\\.79=`, "m"));
     assert.doesNotMatch(buildSrcLock, new RegExp(`^org\\.bouncycastle:${module}:1\\.79=`, "m"));
   }
+  assert.match(
+    rootBuild,
+    /allprojects\s*\{[\s\S]*withModule\("com\.android\.tools:sdk-common"\)[\s\S]*strictly\("1\.80\.2"\)/,
+  );
   assert.doesNotMatch(baselineText, /GHSA-574f-3g2m-x479/);
 });
 
