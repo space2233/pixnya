@@ -176,7 +176,7 @@ Android 清单至少包含：schema 版本、`versionName`、`versionCode`、发
 - [x] 发布流水线阻断 npm 高危和 RustSec advisory，并附带 GPL 正文、第三方许可证清单、逐依赖许可证正文归档、SPDX SBOM 与固定提交源码归档。
 - [x] Tauri updater 私钥、Android Release keystore 与 Android 清单签名密钥已生成，已上传受保护的环境 Secrets，并已完成两份加密离线备份。
 - [x] 完成桌面下载/安装以及 Android 清单验证、下载与系统安装链路。
-- [ ] 使用生产签名从公开 `1.4.0` 升级到 `1.4.3` Draft，完成 Windows x64 与 Android ARM64 的数据保留和界面回归；Linux x64、Windows ARM64 与 Android ARM32 本轮只承诺签名 CI 构建。未公开的 `1.4.2` Draft 只保留为测试准备证据。
+- [ ] `1.4.3` Windows x64 从公开 `1.4.0` 覆盖安装、启动、业务数据库和界面回归已通过；Android ARM64 仍等待设备连接后完成登录、离线数据、三种连接模式与界面回归。Linux x64、Windows ARM64 与 Android ARM32 已完成签名 CI 构建；未公开的 `1.4.2` Draft 只保留为测试准备证据。
 
 ## 11. 发布配置
 
