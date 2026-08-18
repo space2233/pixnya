@@ -66,10 +66,17 @@ function appReport() {
 
 test("tracked baseline records exact, short-lived, non-runtime findings", async () => {
   const baseline = JSON.parse(await read("docs/android-gradle-osv-risk-baseline.json"));
-  assert.equal(baseline.exceptions.length, 82);
+  assert.equal(baseline.exceptions.length, 84);
   assert.deepEqual(baseline.toolchain, expectedToolchain);
   assert.equal(baseline.policy.runtimeExceptionsAllowed, false);
   assert.ok(baseline.exceptions.every((entry) => entry.severity !== "CRITICAL"));
+  const nettyCors = baseline.exceptions.filter(
+    (entry) => entry.advisory === "GHSA-8c42-7qj2-3j46",
+  );
+  assert.equal(nettyCors.length, 2);
+  assert.ok(nettyCors.every((entry) => entry.severity === "MODERATE"));
+  assert.ok(nettyCors.every((entry) => entry.fixedVersions.includes("4.1.137.Final")));
+  assert.ok(nettyCors.every((entry) => entry.expiresAt === "2026-09-17"));
   assert.deepEqual(
     scopeDefinitions.map((scope) => scope.id),
     [
@@ -94,13 +101,26 @@ test("tracked baseline records exact, short-lived, non-runtime findings", async 
     const isKotlinBuildCacheFinding = entry.advisory === "GHSA-r937-wjx7-w2jp";
     const isUpdatedBouncyCastleFinding = ["GHSA-c3fc-8qff-9hwx", "GHSA-wg6q-6289-32hp"]
       .includes(entry.advisory);
+    const isNewNettyCorsFinding = entry.advisory === "GHSA-8c42-7qj2-3j46";
     assert.equal(
       entry.reviewedAt,
-      isUpdatedBouncyCastleFinding ? "2026-08-17" : isKotlinBuildCacheFinding ? "2026-08-13" : "2026-08-09",
+      isNewNettyCorsFinding
+        ? "2026-08-18"
+        : isUpdatedBouncyCastleFinding
+          ? "2026-08-17"
+          : isKotlinBuildCacheFinding
+            ? "2026-08-13"
+            : "2026-08-09",
     );
     assert.equal(
       entry.expiresAt,
-      isUpdatedBouncyCastleFinding ? "2026-09-16" : isKotlinBuildCacheFinding ? "2026-09-12" : "2026-09-08",
+      isNewNettyCorsFinding
+        ? "2026-09-17"
+        : isUpdatedBouncyCastleFinding
+          ? "2026-09-16"
+          : isKotlinBuildCacheFinding
+            ? "2026-09-12"
+            : "2026-09-08",
     );
   }
 });

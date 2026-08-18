@@ -941,6 +941,55 @@
       "expiresAt": "2026-09-08"
     },
     {
+      "advisory": "GHSA-8c42-7qj2-3j46",
+      "mavenCoordinate": "io.netty:netty-codec-http",
+      "version": "4.1.110.Final",
+      "severity": "MODERATE",
+      "scopes": [
+        "android-buildscript-classpath",
+        "android-buildsrc-build-time",
+        "android-internal-unified-test-platform"
+      ],
+      "owner": "space2233",
+      "upstreamChain": [
+        "Tauri 2.11.5 generated Android project",
+        "com.android.tools.build:gradle:8.11.0",
+        "Gradle JVM build classpath",
+        "Android Gradle Plugin Unified Test Platform internal configuration",
+        "io.netty:netty-codec-http:4.1.110.Final"
+      ],
+      "unreachableReason": "The coordinate is confined to AGP internal Unified Test Platform and Gradle JVM build classpaths; it is absent from arm64ReleaseRuntimeClasspath and is not packaged in the APK. PixNya does not deploy these build tools as a Netty CorsHandler server behind a shared cache or CDN, so the vulnerable Vary-header overwrite path is not exercised by release builds.",
+      "fixedVersions": [
+        "4.1.137.Final"
+      ],
+      "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
+      "reviewedAt": "2026-08-18",
+      "expiresAt": "2026-09-17"
+    },
+    {
+      "advisory": "GHSA-8c42-7qj2-3j46",
+      "mavenCoordinate": "io.netty:netty-codec-http",
+      "version": "4.1.93.Final",
+      "severity": "MODERATE",
+      "scopes": [
+        "android-internal-unified-test-platform"
+      ],
+      "owner": "space2233",
+      "upstreamChain": [
+        "Tauri 2.11.5 generated Android project",
+        "com.android.tools.build:gradle:8.11.0",
+        "Android Gradle Plugin Unified Test Platform internal configuration",
+        "io.netty:netty-codec-http:4.1.93.Final"
+      ],
+      "unreachableReason": "The coordinate is confined to an AGP internal Unified Test Platform configuration; it is absent from arm64ReleaseRuntimeClasspath and is not packaged in the APK. PixNya does not deploy this build tool as a Netty CorsHandler server behind a shared cache or CDN, so the vulnerable Vary-header overwrite path is not exercised by release builds.",
+      "fixedVersions": [
+        "4.1.137.Final"
+      ],
+      "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
+      "reviewedAt": "2026-08-18",
+      "expiresAt": "2026-09-17"
+    },
+    {
       "advisory": "GHSA-93wv-jw9v-4972",
       "mavenCoordinate": "io.netty:netty-codec-http2",
       "version": "4.1.110.Final",

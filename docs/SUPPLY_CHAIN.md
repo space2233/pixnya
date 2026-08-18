@@ -77,7 +77,7 @@ node --test scripts/supply-chain-regression.test.mjs
 
 AGP、Kotlin Gradle plugin、UTP、buildscript 和 buildSrc 等构建工具仍全部进入严格依赖锁、SHA-256 verification、`android-gradle-dependencies.json`、主 SPDX SBOM、`THIRD_PARTY_NOTICES.md` 与逐依赖许可证归档。它们通过直接插件升级审查和构建环境治理控制；不能把仅存在于 UTP/buildscript 的 advisory 误报成 APK runtime 漏洞，也不能因此从完整供应链记录中删除。
 
-构建工具扫描不使用全局忽略。当前提交的 `docs/android-gradle-osv-risk-baseline.json` 基于稳定锁图的重新扫描，精确列出 82 个仅限 build-only scope 的临时 `(GHSA、Maven 坐标、版本、scope)` 例外：其中 79 个在 2026-09-08 到期，Kotlin Gradle Plugin 构建缓存告警在 2026-09-12 到期，Bouncy Castle `1.80.2` 的两条 Moderate 告警在 2026-09-16 到期。此前唯一的 Critical Bouncy Castle 例外已通过成组约束到 `1.80.2` 消除。每条都记录 owner、上游依赖链、不可达理由、已知修复版本和跟踪编号；新增条目、坐标或版本变化、scope 进入任一 Android ARM runtime、条目到期都会使检查失败。ARM64 与 ARM32 APK runtime 继续保持零例外、零 ignore。
+构建工具扫描不使用全局忽略。当前提交的 `docs/android-gradle-osv-risk-baseline.json` 基于稳定锁图的重新扫描，精确列出 84 个仅限 build-only scope 的临时 `(GHSA、Maven 坐标、版本、scope)` 例外：其中 79 个在 2026-09-08 到期，Kotlin Gradle Plugin 构建缓存告警在 2026-09-12 到期，Bouncy Castle `1.80.2` 的两条 Moderate 告警在 2026-09-16 到期，新发布的 Netty `CorsHandler` 两条 Moderate 构建图告警在 2026-09-17 到期。此前唯一的 Critical Bouncy Castle 例外已通过成组约束到 `1.80.2` 消除。每条都记录 owner、上游依赖链、不可达理由、已知修复版本和跟踪编号；新增条目、坐标或版本变化、scope 进入任一 Android ARM runtime、条目到期都会使检查失败。ARM64 与 ARM32 APK runtime 继续保持零例外、零 ignore。
 
 每次候选 Release 都会重新扫描三套 Gradle 锁，并把未经裁剪的 `pixnya-<version>-android-build-tools-osv.json` 作为附件归档；独立的每周工作流也运行同一基线检查并保留原始报告。到期条目只能通过升级/移除依赖或经过新的人工风险审查后显式更新，不能自动续期。
 
