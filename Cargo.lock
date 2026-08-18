@@ -2921,7 +2921,7 @@ dependencies = [
 
 [[package]]
 name = "pixiv-client-api"
-version = "1.4.1"
+version = "1.4.2"
 dependencies = [
  "base64 0.22.1",
  "pixiv-client-auth",
@@ -2933,7 +2933,7 @@ dependencies = [
 
 [[package]]
 name = "pixiv-client-auth"
-version = "1.4.1"
+version = "1.4.2"
 dependencies = [
  "base64 0.22.1",
  "getrandom 0.3.4",
@@ -2950,7 +2950,7 @@ dependencies = [
 
 [[package]]
 name = "pixiv-client-diagnostic-log"
-version = "1.4.1"
+version = "1.4.2"
 dependencies = [
  "serde",
  "serde_json",
@@ -2958,14 +2958,14 @@ dependencies = [
 
 [[package]]
 name = "pixiv-client-domain"
-version = "1.4.1"
+version = "1.4.2"
 dependencies = [
  "serde",
 ]
 
 [[package]]
 name = "pixiv-client-download-queue"
-version = "1.4.1"
+version = "1.4.2"
 dependencies = [
  "rusqlite",
  "serde",
@@ -2973,7 +2973,7 @@ dependencies = [
 
 [[package]]
 name = "pixiv-client-library"
-version = "1.4.1"
+version = "1.4.2"
 dependencies = [
  "serde",
  "serde_json",
@@ -2982,7 +2982,7 @@ dependencies = [
 
 [[package]]
 name = "pixiv-client-local-backup"
-version = "1.4.1"
+version = "1.4.2"
 dependencies = [
  "serde",
  "serde_json",
@@ -2993,7 +2993,7 @@ dependencies = [
 
 [[package]]
 name = "pixiv-client-local-catalog"
-version = "1.4.1"
+version = "1.4.2"
 dependencies = [
  "rusqlite",
  "serde",
@@ -3001,7 +3001,7 @@ dependencies = [
 
 [[package]]
 name = "pixiv-client-local-history"
-version = "1.4.1"
+version = "1.4.2"
 dependencies = [
  "rusqlite",
  "serde",
@@ -3009,7 +3009,7 @@ dependencies = [
 
 [[package]]
 name = "pixiv-client-media-cache"
-version = "1.4.1"
+version = "1.4.2"
 dependencies = [
  "serde",
  "serde_json",
@@ -3018,7 +3018,7 @@ dependencies = [
 
 [[package]]
 name = "pixiv-client-network"
-version = "1.4.1"
+version = "1.4.2"
 dependencies = [
  "base64 0.22.1",
  "pixiv-client-domain",
@@ -3034,7 +3034,7 @@ dependencies = [
 
 [[package]]
 name = "pixiv-client-storage-policy"
-version = "1.4.1"
+version = "1.4.2"
 dependencies = [
  "libc",
  "serde",
@@ -3044,7 +3044,7 @@ dependencies = [
 
 [[package]]
 name = "pixnya"
-version = "1.4.1"
+version = "1.4.2"
 dependencies = [
  "base64 0.22.1",
  "keyring",
