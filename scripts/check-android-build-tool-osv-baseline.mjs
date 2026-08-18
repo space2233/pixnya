@@ -378,7 +378,18 @@ export function validateBaseline(baseline, observed, { asOf, actualToolchain = e
   const entries = baseline.exceptions;
   if (!Array.isArray(entries) || entries.length === 0) throw new Error("OSV baseline has no exceptions.");
   if (entries.length !== observed.length) {
-    throw new Error(`OSV baseline has ${entries.length} entries but the report has ${observed.length} findings.`);
+    const baselineKeys = new Set(
+      entries.map((entry) => findingKey(entry?.advisory, entry?.mavenCoordinate, entry?.version)),
+    );
+    const observedKeys = new Set(
+      observed.map((entry) => findingKey(entry.advisory, entry.mavenCoordinate, entry.version)),
+    );
+    const added = [...observedKeys].filter((key) => !baselineKeys.has(key));
+    const missing = [...baselineKeys].filter((key) => !observedKeys.has(key));
+    throw new Error(
+      `OSV baseline has ${entries.length} entries but the report has ${observed.length} findings; `
+        + `added: ${added.join(", ") || "none"}; missing: ${missing.join(", ") || "none"}.`,
+    );
   }
 
   for (let index = 0; index < observed.length; index += 1) {

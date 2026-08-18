@@ -138,7 +138,7 @@ test("baseline is exact and rejects new, removed, or changed findings", () => {
   );
   assert.throws(
     () => validateBaseline(baseline, [...observed, finding({ advisory: "GHSA-389x-839f-4rhx" })], { asOf: "2026-08-09" }),
-    /1 entries but the report has 2 findings/,
+    /1 entries but the report has 2 findings; added: GHSA-389x-839f-4rhx\|org\.jdom:jdom2\|2\.0\.6; missing: none/,
   );
   assert.throws(
     () => validateBaseline(baseline, [{ ...observed[0], severity: "CRITICAL" }], { asOf: "2026-08-09" }),
