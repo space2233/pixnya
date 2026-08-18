@@ -76,6 +76,7 @@ test("tracked baseline records exact, short-lived, non-runtime findings", async 
   assert.equal(nettyCors.length, 2);
   assert.ok(nettyCors.every((entry) => entry.severity === "MODERATE"));
   assert.ok(nettyCors.every((entry) => entry.fixedVersions.includes("4.1.137.Final")));
+  assert.ok(nettyCors.every((entry) => entry.fixedVersions.includes("4.2.17.Final")));
   assert.ok(nettyCors.every((entry) => entry.expiresAt === "2026-09-17"));
   assert.deepEqual(
     scopeDefinitions.map((scope) => scope.id),

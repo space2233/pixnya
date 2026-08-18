@@ -960,7 +960,8 @@
       ],
       "unreachableReason": "The coordinate is confined to AGP internal Unified Test Platform and Gradle JVM build classpaths; it is absent from arm64ReleaseRuntimeClasspath and is not packaged in the APK. PixNya does not deploy these build tools as a Netty CorsHandler server behind a shared cache or CDN, so the vulnerable Vary-header overwrite path is not exercised by release builds.",
       "fixedVersions": [
-        "4.1.137.Final"
+        "4.1.137.Final",
+        "4.2.17.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
       "reviewedAt": "2026-08-18",
@@ -983,7 +984,8 @@
       ],
       "unreachableReason": "The coordinate is confined to an AGP internal Unified Test Platform configuration; it is absent from arm64ReleaseRuntimeClasspath and is not packaged in the APK. PixNya does not deploy this build tool as a Netty CorsHandler server behind a shared cache or CDN, so the vulnerable Vary-header overwrite path is not exercised by release builds.",
       "fixedVersions": [
-        "4.1.137.Final"
+        "4.1.137.Final",
+        "4.2.17.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
       "reviewedAt": "2026-08-18",
