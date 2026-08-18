@@ -43,16 +43,19 @@ test("Tauri applies storage policy before offline writes and best-effort cache w
 });
 
 test("settings exposes storage health, safe headroom, and supported cache limits", async () => {
-  const [types, api, settings] = await Promise.all([
+  const [types, api, settings, view] = await Promise.all([
     read("src/lib/types.ts"),
     read("src/lib/pixiv-api.ts"),
     read("src/routes/settings/storage/+page.svelte"),
+    read("src/lib/storage-status-view.ts"),
   ]);
   assert.match(types, /export interface StorageStatus/);
   assert.match(types, /export type StorageHealth = "healthy" \| "low" \| "critical"/);
   assert.match(api, /invoke<StorageStatus>\("get_storage_status"\)/);
   assert.match(api, /invoke<StorageStatus>\("set_media_cache_limit"/);
-  assert.match(settings, /storage\.dataAvailableBytes/);
+  assert.match(settings, /storageMetric\(storageLoadState, metric\)/);
+  assert.match(view, /offlineBytes \+ state\.value\.cacheBytes/);
+  assert.match(view, /state\.value\.dataAvailableBytes/);
   assert.match(settings, /m\.settings_cache_limit\(\)/);
   assert.match(types, /cacheLimitBytes: number \| null/);
   assert.match(types, /cacheRemainingQuotaBytes: number \| null/);

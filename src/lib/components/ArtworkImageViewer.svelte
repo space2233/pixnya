@@ -293,7 +293,7 @@
   figure > button :global(img) { max-height: 82vh; }
   .open-hint, .page-count {
     position: absolute; bottom: 10px; padding: 5px 9px; color: white; border-radius: 13px;
-    background: rgba(20, 22, 24, .66); font-size: 9px; font-weight: 700;
+    background: rgba(20, 22, 24, .66); font-size: var(--type-caption); font-weight: 700;
   }
   .open-hint { left: 10px; opacity: 0; transform: translateY(4px); transition: opacity .16s ease, transform .16s ease; }
   .page-count { right: 10px; }
@@ -311,19 +311,19 @@
   }
   .viewer header div { min-width: 0; }
   .viewer header strong, .viewer header span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .viewer header strong { max-width: min(70vw, 720px); font-size: 12px; }
-  .viewer header span { margin-top: 4px; color: #c5c9cc; font-size: 9px; }
+  .viewer header strong { max-width: min(70vw, 720px); font-size: var(--type-small); }
+  .viewer header span { margin-top: 4px; color: #c5c9cc; font-size: var(--type-caption); }
   .viewer header button, .viewer footer button, .page-nav {
     display: grid; place-items: center; color: white; border: 1px solid rgba(255, 255, 255, .18);
     background: rgba(30, 33, 36, .72); cursor: pointer;
   }
-  .viewer header button { width: 42px; height: 42px; border-radius: 50%; font-size: 27px; line-height: 1; }
+  .viewer header button { width: 42px; height: 42px; border-radius: 50%; font-size: var(--type-title); line-height: 1; }
   .viewport { position: absolute; inset: 0; overflow: hidden; cursor: zoom-in; touch-action: none; user-select: none; }
   .viewport.zoomed { cursor: grab; }
   .viewport.zoomed:active { cursor: grabbing; }
   .image-stage { width: 100%; height: 100%; transform-origin: center; will-change: transform; }
   .image-stage :global(img) { width: 100%; height: 100%; object-fit: contain; }
-  .page-nav { position: absolute; z-index: 4; top: 50%; width: 48px; height: 64px; border-radius: 9px; font-size: 36px; transform: translateY(-50%); }
+  .page-nav { position: absolute; z-index: 4; top: 50%; width: 48px; height: 64px; border-radius: 9px; font-size: var(--type-title); transform: translateY(-50%); }
   .page-nav.previous { left: 16px; }
   .page-nav.next { right: 16px; }
   .page-nav:disabled, .viewer footer button:disabled { cursor: default; opacity: .28; }
@@ -331,15 +331,15 @@
     position: absolute; z-index: 4; right: 50%; bottom: max(18px, env(safe-area-inset-bottom)); display: flex;
     gap: 6px; padding: 6px; border-radius: 24px; background: rgba(0, 0, 0, .42); transform: translateX(50%);
   }
-  .viewer footer button { width: 38px; height: 38px; border-radius: 50%; font-size: 20px; }
-  .viewer footer .zoom-value { width: 66px; border-radius: 19px; font-size: 10px; }
+  .viewer footer button { width: 38px; height: 38px; border-radius: 50%; font-size: var(--type-section); }
+  .viewer footer .zoom-value { width: 66px; border-radius: 19px; font-size: var(--type-body); }
 
   @media (max-width: 620px) {
     figure > button { min-height: 260px; border-radius: 7px; }
     .open-hint { opacity: 1; transform: none; }
     .viewer header { min-height: 58px; padding-right: 12px; padding-left: 12px; }
-    .viewer header strong { max-width: 68vw; font-size: 11px; }
-    .page-nav { top: auto; bottom: max(78px, calc(64px + env(safe-area-inset-bottom))); width: 42px; height: 42px; border-radius: 50%; font-size: 28px; transform: none; }
+    .viewer header strong { max-width: 68vw; font-size: var(--type-small); }
+    .page-nav { top: auto; bottom: max(78px, calc(64px + env(safe-area-inset-bottom))); width: 42px; height: 42px; border-radius: 50%; font-size: var(--type-title); transform: none; }
     .page-nav.previous { left: 12px; }
     .page-nav.next { right: 12px; }
   }

@@ -22,22 +22,11 @@ function requirePattern(body, pattern, message) {
 
 const icon = ruleBody(profile, ".quick-section a > span");
 const title = ruleBody(profile, ".quick-section b");
-const description = ruleBody(profile, ".quick-section small");
 const chevron = ruleBody(profile, ".quick-section i");
 
 requirePattern(icon, /grid-column:\s*1\s*;/, "Quick-entry icon is not locked to column 1.");
 requirePattern(title, /grid-column:\s*2\s*;/, "Quick-entry title is not locked to column 2.");
 requirePattern(title, /grid-row:\s*1\s*;/, "Quick-entry title is not locked to row 1.");
-requirePattern(
-  description,
-  /grid-column:\s*2\s*;/,
-  "Quick-entry description is not locked to column 2.",
-);
-requirePattern(
-  description,
-  /grid-row:\s*2\s*;/,
-  "Quick-entry description is not locked to row 2.",
-);
 requirePattern(chevron, /grid-column:\s*3\s*;/, "Quick-entry chevron is not locked to column 3.");
 
 const mobileStart = profile.indexOf("@media (max-width: 720px)");
@@ -45,12 +34,10 @@ const narrowStart = profile.indexOf("@media (max-width: 420px)");
 if (mobileStart < 0 || narrowStart < mobileStart) throw new Error("Missing profile mobile breakpoint.");
 const mobileCss = profile.slice(mobileStart, narrowStart);
 const mobileTitle = ruleBody(mobileCss, ".quick-section b");
-const mobileDescription = ruleBody(mobileCss, ".quick-section small");
-requirePattern(mobileTitle, /font-size:\s*12px\s*;/, "Mobile quick-entry title must be 12px.");
 requirePattern(
-  mobileDescription,
-  /font-size:\s*10px\s*;/,
-  "Mobile quick-entry description must be 10px.",
+  mobileTitle,
+  /font-size:\s*var\(--type-label\)\s*;/,
+  "Mobile quick-entry title must use the shared 15px label size.",
 );
 
 if (/当前状态/.test(profile)) {

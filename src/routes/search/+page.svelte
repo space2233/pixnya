@@ -289,7 +289,7 @@
 <AppShell title={m.search_title()}>
   <main class="search-page">
     <header>
-      <h1>{m.search_title()}</h1>
+      <h1 class="page-title">{m.search_title()}</h1>
     </header>
 
     <form class="large-search" role="search" onsubmit={submitSearch}>
@@ -371,47 +371,47 @@
 
 <style>
   .search-page { width: min(1040px, 100%); margin: 0 auto; padding: 34px 28px 52px; }
-  header h1 { margin: 0; font-size: 24px; }
+  header h1 { margin: 0; font-size: var(--type-title); }
   .large-search { display: grid; height: 54px; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 11px; align-items: center; margin-top: 22px; padding: 0 6px 0 17px; color: #8b8b8b; border: 1px solid #dedede; border-radius: 10px; background: white; box-shadow: 0 5px 18px rgba(0,0,0,.04); }
   .large-search:focus-within { border-color: var(--pixiv-blue); box-shadow: 0 0 0 3px rgba(0,150,250,.1); }
-  .large-search input { min-width: 0; border: 0; outline: 0; background: transparent; font-size: 13px; }
-  .large-search button { height: 42px; padding: 0 22px; color: white; border: 0; border-radius: 8px; background: var(--pixiv-blue); cursor: pointer; font-size: 11px; font-weight: 700; }
+  .large-search input { min-width: 0; border: 0; outline: 0; background: transparent; font-size: var(--type-body); }
+  .large-search button { height: 42px; padding: 0 22px; color: white; border: 0; border-radius: 8px; background: var(--pixiv-blue); cursor: pointer; font-size: var(--type-body); font-weight: 700; }
   .type-tabs { display: flex; gap: 30px; height: 56px; align-items: stretch; margin-top: 12px; border-bottom: 1px solid var(--line); }
-  .type-tabs button { position: relative; padding: 0 5px; color: var(--muted); border: 0; background: transparent; cursor: pointer; font-size: 12px; font-weight: 600; }
+  .type-tabs button { position: relative; padding: 0 5px; color: var(--muted); border: 0; background: transparent; cursor: pointer; font-size: var(--type-body); font-weight: 600; }
   .type-tabs button.active { color: var(--text); }
   .type-tabs button.active::after { position: absolute; right: 0; bottom: 0; left: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--pixiv-blue); content: ""; }
   .suggestions, .results { margin-top: 30px; }
   .suggestion-title { display: flex; gap: 11px; align-items: center; }
   .suggestion-title > span { display: grid; width: 38px; height: 38px; place-items: center; color: var(--pixiv-blue); border-radius: 50%; background: #eaf6ff; }
-  h2 { margin: 0; font-size: 17px; }
-  .suggestion-title p, .section-heading p { margin: 4px 0 0; color: var(--muted); font-size: 9px; }
+  h2 { margin: 0; font-size: var(--type-label); }
+  .suggestion-title p, .section-heading p { margin: 4px 0 0; color: var(--muted); font-size: var(--type-caption); }
   .tag-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
   .tag-grid a { display: grid; min-width: 0; grid-template-columns: 56px minmax(0, 1fr); grid-template-rows: 1fr 1fr; gap: 0 10px; align-items: center; padding: 9px; color: var(--text); border: 1px solid var(--line); border-radius: 8px; text-decoration: none; }
   .tag-grid a:hover { border-color: #b9dcf4; }
   .tag-art { position: relative; display: block; overflow: hidden; width: 56px; height: 56px; grid-row: 1 / -1; border-radius: 6px; }
-  .tag-grid strong { align-self: end; overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
-  .tag-grid small { align-self: start; overflow: hidden; margin-top: 3px; color: var(--soft-muted); font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+  .tag-grid strong { align-self: end; overflow: hidden; font-size: var(--type-small); text-overflow: ellipsis; white-space: nowrap; }
+  .tag-grid small { align-self: start; overflow: hidden; margin-top: 3px; color: var(--soft-muted); font-size: var(--type-caption); text-overflow: ellipsis; white-space: nowrap; }
   .section-heading { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 16px; }
   .result-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px 14px; }
   .user-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
   .novel-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
-  .state-card { display: flex; min-height: 100px; gap: 14px; align-items: center; justify-content: center; margin-top: 16px; padding: 18px; color: var(--muted); border: 1px dashed var(--line); border-radius: 10px; font-size: 10px; }
+  .state-card { display: flex; min-height: 100px; gap: 14px; align-items: center; justify-content: center; margin-top: 16px; padding: 18px; color: var(--muted); border: 1px dashed var(--line); border-radius: 10px; font-size: var(--type-small); }
   .state-card p { margin: 0; }
-  .state-card a, .state-card button { padding: 8px 14px; color: white; border: 0; border-radius: 16px; background: var(--pixiv-blue); cursor: pointer; font-size: 9px; font-weight: 700; text-decoration: none; }
+  .state-card a, .state-card button { padding: 8px 14px; color: white; border: 0; border-radius: 16px; background: var(--pixiv-blue); cursor: pointer; font-size: var(--type-body); font-weight: 700; text-decoration: none; }
   .state-card.error { color: #a65865; }
   .spinner { width: 26px; height: 26px; border: 3px solid #dceefb; border-top-color: var(--pixiv-blue); border-radius: 50%; animation: spin .8s linear infinite; }
-  .empty { padding: 38px; color: var(--muted); border: 1px dashed var(--line); border-radius: 10px; font-size: 10px; text-align: center; }
-  .pagination-error { color: #a65865; font-size: 9px; text-align: center; }
-  .load-more { display: block; min-width: 116px; height: 36px; margin: 24px auto 0; color: #59636a; border: 1px solid var(--line); border-radius: 18px; background: white; cursor: pointer; font-size: 10px; font-weight: 700; }
+  .empty { padding: 38px; color: var(--muted); border: 1px dashed var(--line); border-radius: 10px; font-size: var(--type-small); text-align: center; }
+  .pagination-error { color: #a65865; font-size: var(--type-caption); text-align: center; }
+  .load-more { display: block; min-width: 116px; height: 36px; margin: 24px auto 0; color: #59636a; border: 1px solid var(--line); border-radius: 18px; background: white; cursor: pointer; font-size: var(--type-body); font-weight: 700; }
   .load-more:disabled { cursor: wait; opacity: .65; }
   .history-card { margin-top: 10px; padding: 13px 16px; border-radius: 9px; background: #f7f7f7; }
   .history-heading { display: flex; gap: 10px; align-items: center; color: #777; }
   .history-heading span { min-width: 0; flex: 1; }
   .history-heading strong { display: block; }
-  .history-heading strong { color: var(--text); font-size: 10px; }
-  .history-heading button { color: var(--muted); border: 0; background: transparent; cursor: pointer; font-size: 9px; }
+  .history-heading strong { color: var(--text); font-size: var(--type-small); }
+  .history-heading button { color: var(--muted); border: 0; background: transparent; cursor: pointer; font-size: var(--type-body); }
   .history-list { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 13px; }
-  .history-list a { padding: 6px 10px; color: #65717a; border-radius: 14px; background: white; font-size: 9px; text-decoration: none; }
+  .history-list a { padding: 6px 10px; color: #65717a; border-radius: 14px; background: white; font-size: var(--type-caption); text-decoration: none; }
   .tone-1 { background: linear-gradient(145deg, #d9effb, #bad8e9); } .tone-2 { background: linear-gradient(145deg, #f3dfec, #dfbfd3); } .tone-3 { background: linear-gradient(145deg, #eee9cf, #d9c993); } .tone-4 { background: linear-gradient(145deg, #e0dcf1, #beb7df); } .tone-5 { background: linear-gradient(145deg, #dceee3, #bcd9c8); }
   @keyframes spin { to { transform: rotate(360deg); } }
   @media (min-width: 960px) { .large-search { display: none; } .type-tabs { margin-top: 22px; } }

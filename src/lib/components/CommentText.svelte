@@ -28,7 +28,7 @@
 {/if}
 
 <style>
-  .comment-text { margin: 7px 0 0; font-size: 10px; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .comment-text { margin: 7px 0 0; font-size: var(--type-small); line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
   .inline-emoji { display: inline-grid; width: 22px; height: 22px; margin: 0 2px; vertical-align: -.36em; place-items: center; border-radius: 4px; background: #f4f5f6; }
   .comment-stamp { width: 92px; height: 92px; margin-top: 8px; border-radius: 10px; background: #f6f7f8; }
 </style>

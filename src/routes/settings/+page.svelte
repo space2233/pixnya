@@ -57,7 +57,7 @@
 
 <AppShell title={m.settings_title()}>
   <div class="settings-page">
-    <h1>{m.settings_title()}</h1>
+    <h1 class="page-title">{m.settings_title()}</h1>
     {#each groups as group}
       <h2>{group.title()}</h2>
       <section class="settings-list">
@@ -76,15 +76,15 @@
 
 <style>
   .settings-page { width: min(760px, 100%); box-sizing: border-box; margin: 0 auto; padding: 34px 24px 60px; }
-  h1 { margin: 0 0 24px; font-size: 28px; }
-  h2 { margin: 24px 4px 10px; color: var(--muted); font-size: 13px; font-weight: 650; }
+  h1 { margin: 0 0 24px; font-size: var(--type-title); }
+  h2 { margin: 24px 4px 10px; color: var(--muted); font-size: var(--type-body); font-weight: 650; }
   .settings-list { overflow: hidden; border: 1px solid var(--line); border-radius: 18px; background: white; }
   a { display: flex; min-height: 64px; align-items: center; gap: 14px; padding: 0 18px; border-bottom: 1px solid var(--line); color: var(--text); text-decoration: none; }
   a:last-child { border-bottom: 0; }
   .icon { display: grid; width: 38px; height: 38px; place-items: center; color: var(--pixiv-blue); border-radius: 50%; background: #eef8ff; }
-  strong { font-size: 15px; }
-  em { overflow: hidden; margin-left: auto; color: var(--muted); font-size: 13px; font-style: normal; text-overflow: ellipsis; white-space: nowrap; }
-  i { margin-left: auto; color: #aeb4ba; font-size: 26px; font-style: normal; }
+  strong { font-size: var(--type-label); }
+  em { overflow: hidden; margin-left: auto; color: var(--muted); font-size: var(--type-body); font-style: normal; text-overflow: ellipsis; white-space: nowrap; }
+  i { margin-left: auto; color: #aeb4ba; font-size: var(--type-title); font-style: normal; }
   em + i { margin-left: 2px; }
   @media (max-width: 600px) { .settings-page { padding: 26px 18px 50px; } }
 </style>

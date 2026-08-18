@@ -1,6 +1,6 @@
 # PixNya 首个正式版发布清单
 
-> 状态：首个稳定版与后续 `1.1.0`–`1.4.0` 已发布；当前维护候选为 `1.4.2`
+> 状态：首个稳定版与后续 `1.1.0`–`1.4.0` 已发布；当前维护候选为 `1.4.3`
 > 当前升级基线：公开稳定版 `1.4.0`
 > 正式支持：Windows x64/ARM64（NSIS）、Linux x64（AppImage）、Android ARM64/ARM32（split APK）
 
@@ -58,15 +58,15 @@
 ### 3.4 真实安装与升级验收
 
 - [x] 已使用同一套生产密钥发布公开 `1.4.0` 升级基线。
-- [ ] Windows x64：从 `1.4.0` 升级到 `1.4.2` Draft，验证 NSIS、重启、登录状态、设置、数据库、离线文件和备份功能。
-  - 先前未公开 `1.4.1` Draft 的安装演练验证了静默安装、两版启动、版本注册、离线 marker 和下载队列数据库保留；该结果不替代 `1.4.2` 候选验收。
-- [ ] Android ARM64：从 `1.4.0` 覆盖安装 `1.4.2` Draft，验证系统安装器、版本码、登录状态、设置、数据库、离线文件和备份功能。
+- [ ] Windows x64：从 `1.4.0` 升级到 `1.4.3` Draft，验证 NSIS、重启、登录状态、设置、数据库、离线文件、字号和日志按钮。
+  - 先前未公开 `1.4.1`/`1.4.2` Draft 的安装演练验证了静默安装、两版启动、版本注册、离线 marker、下载队列数据库保留和五平台签名；这些结果不替代 `1.4.3` 候选验收。
+- [ ] Android ARM64：从 `1.4.0` 覆盖安装 `1.4.3` Draft，验证系统安装器、版本码、登录状态、设置、数据库、离线文件、ECH 缩略图和新字号布局。
 - [ ] 标准、ECH、兼容三种连接模式在 Android ARM64 各完成一次低频登录、API 与图片加载冒烟测试。
-- [ ] Linux x64、Windows ARM64、Android ARM32 完成 `1.4.2` 签名 CI 构建；本轮不宣称已做活体验收。
+- [ ] Linux x64、Windows ARM64、Android ARM32 完成 `1.4.3` 签名 CI 构建；本轮不宣称已做活体验收。
 
 ### 3.5 公开发布治理
 
-- [x] 已在 `docs/PUBLIC_DISTRIBUTION_DECISION.md` 记录上游 App API、OAuth 参数与公开分发决定；公开 Release 仍必须复述其中的风险边界。
+- [x] 已在 `docs/PUBLIC_DISTRIBUTION_DECISION.md`、README、`SECURITY.md` 与 `PRIVACY.md` 集中记录上游 App API、OAuth 参数和风险边界；Release 正文保持简短，只有长期边界发生实质变化时才明确提示并链接更新后的说明。
 - [x] 标准 GPL-3.0 正文、第三方清单、逐依赖归档与可复现 SPDX SBOM 已在最终 Gradle 锁图上完成 Maven 许可证证据闭环；非标准化条款以明确的 `LicenseRef` 和上游声明证据保留。
 - [x] 增加 `PRIVACY.md` 与 `SECURITY.md`，说明本地数据、无遥测、低安全连接风险和私密漏洞报告方式。
 - [ ] Windows 若没有 Authenticode 证书，在下载页明确 SmartScreen 提示；取得证书后再加入代码签名。
@@ -82,4 +82,4 @@
 
 ## 5. 当前结论
 
-`1.4.0` 已是公开 latest stable，生产签名材料与匿名更新源正常。`1.4.2` 发布前仍需固定候选提交、完成五平台签名 Draft，并补齐 Windows x64 与 Android ARM64 的升级和数据保留证据。
+`1.4.0` 已是公开 latest stable，生产签名材料与匿名更新源正常。`1.4.3` 发布前仍需固定候选提交、完成五平台签名 Draft，并补齐 Windows x64 与 Android ARM64 的升级、数据保留和界面验收证据；`1.4.2` Draft 不公开。

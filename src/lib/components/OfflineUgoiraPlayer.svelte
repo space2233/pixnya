@@ -53,7 +53,7 @@
 <style>
   .player { position: relative; display: grid; min-height: 420px; overflow: hidden; place-items: center; border-radius: 10px; background: #edf1f4; }
   img { display: block; max-width: 100%; max-height: 82vh; object-fit: contain; }
-  .empty { display: grid; gap: 11px; place-items: center; color: var(--muted); text-align: center; } .empty p { margin: 0; color: #a34e5d; font-size: 9px; }
-  button { padding: 9px 17px; color: white; border: 0; border-radius: 18px; background: var(--pixiv-blue); cursor: pointer; font-size: 9px; font-weight: 700; }
-  .controls { position: absolute; right: 10px; bottom: 10px; left: 10px; display: flex; gap: 10px; align-items: center; padding: 8px 10px; color: white; border-radius: 8px; background: rgba(25,28,31,.72); font-size: 8px; }
+  .empty { display: grid; gap: 11px; place-items: center; color: var(--muted); text-align: center; } .empty p { margin: 0; color: #a34e5d; font-size: var(--type-caption); }
+  button { padding: 9px 17px; color: white; border: 0; border-radius: 18px; background: var(--pixiv-blue); cursor: pointer; font-size: var(--type-body); font-weight: 700; }
+  .controls { position: absolute; right: 10px; bottom: 10px; left: 10px; display: flex; gap: 10px; align-items: center; padding: 8px 10px; color: white; border-radius: 8px; background: rgba(25,28,31,.72); font-size: var(--type-caption); }
 </style>

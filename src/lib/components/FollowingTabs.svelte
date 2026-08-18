@@ -26,7 +26,7 @@
     padding: 9px 17px;
     color: #697278;
     border-radius: 18px;
-    font-size: 9px;
+    font-size: var(--type-caption);
     font-weight: 700;
     text-align: center;
     text-decoration: none;
@@ -48,7 +48,7 @@
       flex: 1;
       min-width: 0;
       padding-inline: 10px;
-      font-size: 10px;
+      font-size: var(--type-small);
     }
   }
 </style>

@@ -1,6 +1,6 @@
 {
   "name": "pixnya",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "PixNya, an unofficial local-first Pixiv client for Windows, Linux and Android",
   "private": true,
   "type": "module",

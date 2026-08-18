@@ -58,7 +58,7 @@
 
   .quiet-failure small {
     color: #969da2;
-    font-size: 8px;
+    font-size: var(--type-caption);
   }
 
 </style>

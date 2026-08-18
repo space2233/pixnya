@@ -342,7 +342,7 @@
     color: white;
     border-radius: 13px;
     background: var(--pixiv-blue);
-    font-size: 31px;
+    font-size: var(--type-title);
     font-weight: 800;
   }
 
@@ -354,7 +354,7 @@
 
   .login-heading h1 {
     margin: 0;
-    font-size: 23px;
+    font-size: var(--type-title);
   }
 
   .login-panel {
@@ -378,13 +378,13 @@
 
   .eyebrow {
     color: var(--pixiv-blue);
-    font-size: 10px;
+    font-size: var(--type-small);
     font-weight: 700;
   }
 
   .session-summary h2 {
     margin: 7px 0 9px;
-    font-size: 21px;
+    font-size: var(--type-section);
   }
 
   .status-banner {
@@ -437,11 +437,11 @@
   .status-banner small {
     margin-bottom: 4px;
     color: var(--muted);
-    font-size: 9px;
+    font-size: var(--type-caption);
   }
 
   .status-banner strong {
-    font-size: 11px;
+    font-size: var(--type-small);
     line-height: 1.45;
   }
 
@@ -451,7 +451,7 @@
     height: 42px;
     margin-top: 14px;
     border-radius: 21px;
-    font-size: 11px;
+    font-size: var(--type-body);
     font-weight: 700;
   }
 
@@ -484,7 +484,7 @@
     }
 
     .login-heading h1 {
-      font-size: 19px;
+      font-size: var(--type-section);
     }
 
     .login-panel {
@@ -512,7 +512,7 @@
     .pixiv-symbol {
       width: 46px;
       height: 46px;
-      font-size: 27px;
+      font-size: var(--type-title);
     }
 
   }

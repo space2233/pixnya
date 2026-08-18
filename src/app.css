@@ -16,6 +16,12 @@
   --soft-surface: #f7f7f7;
   --danger: #e85d75;
   --success: #33a36b;
+  --type-caption: 0.6875rem;
+  --type-small: 0.75rem;
+  --type-body: 0.875rem;
+  --type-label: 0.9375rem;
+  --type-section: 1.125rem;
+  --type-title: 1.5rem;
   --sidebar-width: 224px;
   --topbar-height: 64px;
   --app-safe-top: env(safe-area-inset-top, 0px);
@@ -38,6 +44,7 @@ body {
   margin: 0;
   overflow-x: hidden;
   background: var(--surface);
+  font-size: var(--type-body);
 }
 
 button,
@@ -94,14 +101,14 @@ input:focus-visible {
 }
 
 .side-brand strong {
-  font-size: 27px;
+  font-size: var(--type-title);
   font-weight: 800;
   letter-spacing: -0.035em;
 }
 
 .side-brand small {
   color: #b5b5b5;
-  font-size: 8px;
+  font-size: var(--type-caption);
   font-weight: 700;
   letter-spacing: 0.08em;
 }
@@ -130,7 +137,7 @@ input:focus-visible {
   border-radius: 6px;
   background: transparent;
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--type-body);
   text-align: left;
   text-decoration: none;
 }
@@ -163,7 +170,7 @@ input:focus-visible {
 .side-footer p {
   margin: 10px 14px 0;
   color: #aaa;
-  font-size: 9px;
+  font-size: var(--type-caption);
   line-height: 1.55;
 }
 
@@ -242,7 +249,7 @@ input:focus-visible {
   border: 0;
   outline: 0;
   background: transparent;
-  font-size: 12px;
+  font-size: var(--type-small);
 }
 
 .search-box input::placeholder {
@@ -265,7 +272,7 @@ input:focus-visible {
   border-radius: 18px;
   background: #f4f4f4;
   cursor: default;
-  font-size: 12px;
+  font-size: var(--type-body);
   font-weight: 700;
 }
 
@@ -292,7 +299,7 @@ input:focus-visible {
 }
 
 .login-avatar b {
-  font-size: 14px;
+  font-size: var(--type-body);
   line-height: 1;
 }
 
@@ -345,19 +352,19 @@ input:focus-visible {
 
 .media-risk-dialog small {
   color: #d66d18;
-  font-size: 10px;
+  font-size: var(--type-caption);
   font-weight: 800;
 }
 
 .media-risk-dialog h2 {
   margin: 5px 0 10px;
-  font-size: 19px;
+  font-size: var(--type-section);
 }
 
 .media-risk-dialog p {
   margin: 0;
   color: #666;
-  font-size: 12px;
+  font-size: var(--type-body);
   line-height: 1.7;
 }
 
@@ -398,13 +405,13 @@ input:focus-visible {
 
 .media-risk-suppress b {
   color: #644a32;
-  font-size: 11px;
+  font-size: var(--type-small);
 }
 
 .media-risk-dialog .media-risk-suppress small {
   margin-top: 3px;
   color: #8b735c;
-  font-size: 9px;
+  font-size: var(--type-caption);
   font-weight: 500;
   line-height: 1.5;
 }
@@ -421,7 +428,7 @@ input:focus-visible {
   padding: 0 17px;
   border-radius: 20px;
   cursor: pointer;
-  font-size: 11px;
+  font-size: var(--type-body);
   font-weight: 750;
 }
 
@@ -495,7 +502,7 @@ input:focus-visible {
   .mobile-title {
     display: block;
     overflow: hidden;
-    font-size: 20px;
+    font-size: var(--type-section);
     font-weight: 500;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -519,6 +526,10 @@ input:focus-visible {
 
   .app-content {
     padding-bottom: calc(72px + env(safe-area-inset-bottom));
+  }
+
+  .app-content .page-title {
+    display: none;
   }
 
   .mobile-bottom-nav {
@@ -550,7 +561,7 @@ input:focus-visible {
   }
 
   .mobile-bottom-nav span {
-    font-size: 10px;
+    font-size: var(--type-caption);
   }
 
   .mobile-bottom-nav .active {

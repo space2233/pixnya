@@ -78,5 +78,5 @@ test("mobile catalog controls remain readable and use a three-action entry row",
   assert.match(page, /\.catalog-tools \{ grid-template-columns: 1fr 1fr/);
   assert.match(page, /\.entry-actions \{ min-height: 48px; grid-template-columns: repeat\(3,1fr\)/);
   assert.match(page, /\.organize-editor \{ grid-template-columns: 1fr/);
-  assert.match(page, /font-size: 12px/);
+  assert.match(page, /\.entry-actions button \{ font-size: var\(--type-body\);/);
 });

@@ -228,33 +228,33 @@
   .reply-page { box-sizing: border-box; width: min(900px, 100%); min-height: 100%; margin: 0 auto; padding: 28px 24px 100px; }
   .thread-card { margin-top: 18px; overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: white; }
   .thread-card > header { display: flex; align-items: end; justify-content: space-between; padding: 22px; border-bottom: 1px solid var(--line); }
-  .thread-card > header span { color: var(--pixiv-blue); font-size: 8px; font-weight: 700; }
-  .thread-card > header h1 { margin: 5px 0 0; font-size: 21px; }
-  .thread-card > header strong { color: var(--muted); font-size: 8px; font-weight: 500; }
+  .thread-card > header span { color: var(--pixiv-blue); font-size: var(--type-caption); font-weight: 700; }
+  .thread-card > header h1 { margin: 5px 0 0; font-size: var(--type-section); }
+  .thread-card > header strong { color: var(--muted); font-size: var(--type-caption); font-weight: 500; }
   .root-comment { margin: 16px; overflow: hidden; border: 1px solid #cfe9f8; border-radius: 10px; background: #f7fcff; }
-  .root-missing { margin: 16px; padding: 14px; color: var(--muted); border-radius: 8px; background: #f7f8f9; font-size: 9px; }
+  .root-missing { margin: 16px; padding: 14px; color: var(--muted); border-radius: 8px; background: #f7f8f9; font-size: var(--type-caption); }
   .composer-wrap { padding: 0 16px 16px; }
   .reply-list { overflow: hidden; border-top: 1px solid var(--line); }
   .reply-list :global(> article + article) { border-top: 1px solid var(--line); }
-  .reply-state { display: flex; gap: 11px; align-items: center; justify-content: center; min-height: 130px; border-top: 1px solid var(--line); color: var(--muted); font-size: 9px; }
+  .reply-state { display: flex; gap: 11px; align-items: center; justify-content: center; min-height: 130px; border-top: 1px solid var(--line); color: var(--muted); font-size: var(--type-caption); }
   .reply-state.error { color: #a44f5e; }
-  .reply-state button, .load-more { height: 34px; padding: 0 15px; border: 0; border-radius: 17px; cursor: pointer; font-size: 9px; font-weight: 700; }
+  .reply-state button, .load-more { height: 34px; padding: 0 15px; border: 0; border-radius: 17px; cursor: pointer; font-size: var(--type-body); font-weight: 700; }
   .reply-state button { color: white; background: var(--pixiv-blue); }
-  .empty { margin: 0; padding: 40px; color: var(--muted); border-top: 1px solid var(--line); text-align: center; font-size: 9px; }
+  .empty { margin: 0; padding: 40px; color: var(--muted); border-top: 1px solid var(--line); text-align: center; font-size: var(--type-caption); }
   .load-more { display: block; min-width: 140px; margin: 18px auto; color: #59636a; border: 1px solid var(--line); background: white; }
   .load-more:disabled { cursor: wait; opacity: .58; }
-  .inline-error { margin: 13px; color: #a44f5e; text-align: center; font-size: 8px; }
+  .inline-error { margin: 13px; color: #a44f5e; text-align: center; font-size: var(--type-caption); }
   .spinner { width: 25px; height: 25px; border: 3px solid #dceefb; border-top-color: var(--pixiv-blue); border-radius: 50%; animation: spin .8s linear infinite; }
   .state-card { display: grid; gap: 8px; margin-top: 18px; padding: 24px; border: 1px solid var(--line); border-radius: 12px; background: white; }
   .state-card h1, .state-card p { margin: 0; }
-  .state-card p { color: var(--muted); font-size: 9px; }
-  .state-card a { width: fit-content; margin-top: 7px; padding: 9px 15px; color: white; border-radius: 18px; background: var(--pixiv-blue); text-decoration: none; font-size: 9px; font-weight: 700; }
+  .state-card p { color: var(--muted); font-size: var(--type-caption); }
+  .state-card a { width: fit-content; margin-top: 7px; padding: 9px 15px; color: white; border-radius: 18px; background: var(--pixiv-blue); text-decoration: none; font-size: var(--type-caption); font-weight: 700; }
   .state-card.error { color: #a44f5e; }
   @keyframes spin { to { transform: rotate(360deg); } }
   @media (max-width: 620px) {
     .reply-page { padding: 18px 12px 92px; }
     .thread-card > header { align-items: start; padding: 17px 15px; }
-    .thread-card > header h1 { font-size: 18px; }
+    .thread-card > header h1 { font-size: var(--type-section); }
     .root-comment { margin: 11px; }
     .composer-wrap { padding: 0 11px 11px; }
   }

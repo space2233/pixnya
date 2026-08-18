@@ -50,7 +50,7 @@
     place-items: center;
     padding: 0 8px;
     color: var(--muted);
-    font-size: 13px;
+    font-size: var(--type-body);
     font-weight: 600;
     text-decoration: none;
   }
@@ -88,7 +88,7 @@
     a {
       min-width: 0;
       flex: 1;
-      font-size: 12px;
+      font-size: var(--type-small);
     }
   }
 </style>

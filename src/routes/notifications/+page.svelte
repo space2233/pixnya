@@ -142,7 +142,7 @@
 <AppShell title={m.notifications_title()}>
   <main class="notification-page">
     <header>
-      <div><h1>{m.notifications_title()}</h1></div>
+      <div><h1 class="page-title">{m.notifications_title()}</h1></div>
       <button type="button" disabled={status === "loading"} onclick={() => loadInitial()}>{m.common_refresh()}</button>
     </header>
 
@@ -179,22 +179,22 @@
 <style>
   .notification-page { box-sizing: border-box; width: min(840px,100%); margin: 0 auto; padding: 28px 24px 100px; }
   header { display: flex; gap: 20px; align-items: end; justify-content: space-between; margin-bottom: 20px; }
-  h1 { margin: 6px 0 0; font-size: 24px; }
+  h1 { margin: 6px 0 0; font-size: var(--type-title); }
   header button, .load-more, .state button { height: 36px; padding: 0 16px; border: 1px solid var(--line); border-radius: 18px; background: white; cursor: pointer; }
   .notification-list { overflow: hidden; border: 1px solid var(--line); border-radius: 13px; background: white; }
   article { display: grid; grid-template-columns: 52px minmax(0,1fr); gap: 13px; padding: 16px; }
   article + article { border-top: 1px solid var(--line); } article.unread { background: #f5fbff; }
   .media { display: grid; overflow: hidden; width: 52px; height: 52px; place-items: center; color: #9eb4c0; border-radius: 9px; background: #edf3f6; }
-  .body p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 10px; line-height: 1.65; }
-  time { display: block; margin-top: 5px; color: var(--soft-muted); font-size: 8px; }
+  .body p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: var(--type-small); line-height: 1.65; }
+  time { display: block; margin-top: 5px; color: var(--soft-muted); font-size: var(--type-caption); }
   .actions { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 10px; }
-  .actions a, .actions button { color: var(--pixiv-blue); border: 0; background: transparent; cursor: pointer; font-size: 8px; text-decoration: none; }
+  .actions a, .actions button { color: var(--pixiv-blue); border: 0; background: transparent; cursor: pointer; font-size: var(--type-body); text-decoration: none; }
   .state { display: flex; gap: 14px; align-items: center; min-height: 100px; padding: 20px; color: var(--muted); border: 1px solid var(--line); border-radius: 12px; background: white; }
-  .state h2, .state p { margin: 0; } .state h2 { color: var(--text); font-size: 15px; } .state p { margin-top: 5px; font-size: 9px; }
-  .state a { margin-left: auto; padding: 10px 15px; color: white; border-radius: 18px; background: var(--pixiv-blue); font-size: 9px; text-decoration: none; }
+  .state h2, .state p { margin: 0; } .state h2 { color: var(--text); font-size: var(--type-label); } .state p { margin-top: 5px; font-size: var(--type-caption); }
+  .state a { margin-left: auto; padding: 10px 15px; color: white; border-radius: 18px; background: var(--pixiv-blue); font-size: var(--type-caption); text-decoration: none; }
   .state.error { color: #ad5360; } .state button { margin-left: auto; }
   .spinner { width: 26px; height: 26px; border: 3px solid #dceefb; border-top-color: var(--pixiv-blue); border-radius: 50%; animation: spin .8s linear infinite; }
-  .inline-error { color: #ad5360; font-size: 9px; text-align: center; }
+  .inline-error { color: #ad5360; font-size: var(--type-caption); text-align: center; }
   .load-more { display: block; min-width: 140px; margin: 18px auto 0; }
   button:disabled { cursor: wait; opacity: .58; }
   @keyframes spin { to { transform: rotate(360deg); } }

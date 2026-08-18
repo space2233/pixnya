@@ -26,10 +26,10 @@
     background: transparent;
     cursor: pointer;
     font: inherit;
-    font-size: 10px;
+    font-size: var(--type-body);
     text-align: left;
   }
   .return-link:hover { color: var(--pixiv-blue); }
   .return-link:focus-visible { outline: 2px solid color-mix(in srgb, var(--pixiv-blue) 45%, transparent); outline-offset: 3px; }
-  span { font-size: 15px; line-height: .8; }
+  span { font-size: var(--type-label); line-height: .8; }
 </style>

@@ -635,7 +635,7 @@
     color: #65717a;
     border-radius: 6px;
     background: #edf2f5;
-    font-size: 11px;
+    font-size: var(--type-small);
     font-weight: 700;
     text-decoration: none;
   }
@@ -668,7 +668,7 @@
 
   .browse-heading h1 {
     margin: 0;
-    font-size: 24px;
+    font-size: var(--type-title);
     letter-spacing: -0.02em;
   }
 
@@ -689,7 +689,7 @@
     border-radius: 17px;
     background: transparent;
     cursor: pointer;
-    font-size: 10px;
+    font-size: var(--type-body);
     font-weight: 600;
   }
 
@@ -698,7 +698,7 @@
     background: white;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   }
-  .manage-bookmarks{padding:8px 14px;border:1px solid #cde7f8;border-radius:18px;background:white;color:var(--pixiv-blue);cursor:pointer}.bookmark-tools,.batch-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin:14px 0;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:white}.bookmark-tools label{display:flex;align-items:center;gap:8px}.bookmark-tools select,.batch-toolbar input{padding:8px;border:1px solid var(--line);border-radius:9px;background:white}.bookmark-tools button,.batch-toolbar button{padding:8px 12px;border:1px solid #cde7f8;border-radius:16px;background:white;color:var(--pixiv-blue);cursor:pointer}.batch-toolbar .danger{color:var(--danger)}.batch-status{margin:8px 0;color:var(--muted);font-size:12px}
+  .manage-bookmarks{padding:8px 14px;border:1px solid #cde7f8;border-radius:18px;background:white;color:var(--pixiv-blue);cursor:pointer}.bookmark-tools,.batch-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin:14px 0;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:white}.bookmark-tools label{display:flex;align-items:center;gap:8px}.bookmark-tools select,.batch-toolbar input{padding:8px;border:1px solid var(--line);border-radius:9px;background:white}.bookmark-tools button,.batch-toolbar button{padding:8px 12px;border:1px solid #cde7f8;border-radius:16px;background:white;color:var(--pixiv-blue);cursor:pointer}.batch-toolbar .danger{color:var(--danger)}.batch-status{margin:8px 0;color:var(--muted);font-size:var(--type-small)}
 
   .account-callout {
     display: grid;
@@ -723,13 +723,13 @@
   }
 
   .account-callout strong {
-    font-size: 12px;
+    font-size: var(--type-small);
   }
 
   .account-callout p {
     margin: 4px 0 0;
     color: #6e8492;
-    font-size: 9px;
+    font-size: var(--type-caption);
     line-height: 1.5;
   }
 
@@ -744,7 +744,7 @@
     place-items: center;
     padding: 0 15px;
     border-radius: 18px;
-    font-size: 10px;
+    font-size: var(--type-small);
     font-weight: 700;
     text-decoration: none;
   }
@@ -772,12 +772,12 @@
     background: #fff8f9;
   }
 
-  .data-error strong { font-size: 12px; }
+  .data-error strong { font-size: var(--type-small); }
 
   .data-error p {
     margin: 4px 0 0;
     color: #8b686d;
-    font-size: 9px;
+    font-size: var(--type-caption);
   }
 
   .data-error button {
@@ -789,7 +789,7 @@
     border-radius: 17px;
     background: var(--pixiv-blue);
     cursor: pointer;
-    font-size: 10px;
+    font-size: var(--type-body);
     font-weight: 700;
   }
 
@@ -807,12 +807,12 @@
 
   .section-heading h2 {
     margin: 0;
-    font-size: 18px;
+    font-size: var(--type-section);
   }
 
   .section-heading > a {
     color: var(--muted);
-    font-size: 10px;
+    font-size: var(--type-small);
     text-decoration: none;
   }
 
@@ -842,7 +842,7 @@
     color: var(--muted);
     border: 1px dashed var(--line);
     border-radius: 8px;
-    font-size: 10px;
+    font-size: var(--type-small);
     text-align: center;
   }
 
@@ -856,7 +856,7 @@
   .load-more p {
     margin: 0;
     color: #a05a63;
-    font-size: 9px;
+    font-size: var(--type-caption);
   }
 
   .load-more button {
@@ -867,7 +867,7 @@
     border-radius: 18px;
     background: white;
     cursor: pointer;
-    font-size: 10px;
+    font-size: var(--type-body);
     font-weight: 700;
   }
 
@@ -922,7 +922,7 @@
     color: #555;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.9);
-    font-size: 10px;
+    font-size: var(--type-small);
   }
 
   .collection-grid.novel {
@@ -957,13 +957,13 @@
     display: block;
     margin-top: 12px;
     color: var(--soft-muted);
-    font-size: 8px;
+    font-size: var(--type-caption);
   }
 
   .page-footnote {
     margin: 38px 0 0;
     color: var(--soft-muted);
-    font-size: 9px;
+    font-size: var(--type-caption);
     text-align: center;
   }
 
@@ -997,7 +997,7 @@
     }
 
     .browse-heading h1 {
-      font-size: 21px;
+      font-size: var(--type-section);
     }
 
     .filter-tabs {

@@ -134,15 +134,15 @@
 
 <style>
   .composer { padding: 15px; border: 1px solid var(--line); border-radius: 10px; background: white; }
-  textarea { box-sizing: border-box; width: 100%; resize: vertical; padding: 11px; color: var(--text); border: 1px solid #dedede; border-radius: 7px; outline: none; font: inherit; font-size: 10px; line-height: 1.6; }
+  textarea { box-sizing: border-box; width: 100%; resize: vertical; padding: 11px; color: var(--text); border: 1px solid #dedede; border-radius: 7px; outline: none; font: inherit; font-size: var(--type-small); line-height: 1.6; }
   textarea:focus { border-color: #75c7f5; box-shadow: 0 0 0 3px rgba(0,150,250,.1); }
-  .composer-foot { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; margin-top: 9px; color: var(--muted); font-size: 8px; }
+  .composer-foot { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; margin-top: 9px; color: var(--muted); font-size: var(--type-caption); }
   .picker-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
   .composer-foot > span { justify-self: end; }
   button { font: inherit; }
-  .emoji-toggle { height: 30px; padding: 0 13px; color: var(--pixiv-blue); border: 1px solid #bde1f7; border-radius: 15px; background: #f5fbff; cursor: pointer; font-size: 9px; font-weight: 700; }
+  .emoji-toggle { height: 30px; padding: 0 13px; color: var(--pixiv-blue); border: 1px solid #bde1f7; border-radius: 15px; background: #f5fbff; cursor: pointer; font-size: var(--type-body); font-weight: 700; }
   .emoji-toggle.active { color: white; border-color: var(--pixiv-blue); background: var(--pixiv-blue); }
-  .submit { min-width: 76px; height: 34px; color: white; border: 0; border-radius: 17px; background: var(--pixiv-blue); cursor: pointer; font-size: 9px; font-weight: 700; }
+  .submit { min-width: 76px; height: 34px; color: white; border: 0; border-radius: 17px; background: var(--pixiv-blue); cursor: pointer; font-size: var(--type-body); font-weight: 700; }
   .submit:disabled { cursor: wait; opacity: .58; }
   .emoji-picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(38px, 1fr)); gap: 5px; max-height: 196px; overflow-y: auto; margin-top: 11px; padding: 9px; border: 1px solid var(--line); border-radius: 8px; background: #fafafa; }
   .emoji-picker button { display: grid; width: 38px; height: 38px; padding: 5px; place-self: center; place-items: center; border: 0; border-radius: 7px; background: transparent; cursor: pointer; }
@@ -150,7 +150,7 @@
   .emoji-picker button.selected { background: #dff3ff; box-shadow: inset 0 0 0 2px var(--pixiv-blue); }
   .selected-stamp { display: flex; gap: 10px; align-items: center; margin-top: 10px; }
   .selected-stamp :global(img) { width: 52px; height: 52px; }
-  .selected-stamp button { color: #667078; border: 0; background: transparent; cursor: pointer; font-size: 8px; }
-  .inline-error { margin: 8px 0 0; color: #a44f5e; font-size: 8px; }
+  .selected-stamp button { color: #667078; border: 0; background: transparent; cursor: pointer; font-size: var(--type-body); }
+  .inline-error { margin: 8px 0 0; color: #a44f5e; font-size: var(--type-caption); }
   @media (max-width: 620px) { .composer { padding: 12px; } }
 </style>

@@ -215,21 +215,21 @@
 <style>
   .comments-section { margin-top: 42px; }
   header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-  header h2 { margin: 0; font-size: 18px; }
-  header p { margin: 5px 0 0; color: var(--muted); font-size: 9px; }
-  header > button { height: 31px; padding: 0 14px; color: var(--pixiv-blue); border: 1px solid #bde1f7; border-radius: 16px; background: white; cursor: pointer; font-size: 8px; }
+  header h2 { margin: 0; font-size: var(--type-section); }
+  header p { margin: 5px 0 0; color: var(--muted); font-size: var(--type-caption); }
+  header > button { height: 31px; padding: 0 14px; color: var(--pixiv-blue); border: 1px solid #bde1f7; border-radius: 16px; background: white; cursor: pointer; font-size: var(--type-body); }
   button:disabled { cursor: wait; opacity: .58; }
-  .comment-state { display: flex; gap: 12px; align-items: center; justify-content: center; min-height: 120px; margin-top: 14px; color: var(--muted); border: 1px dashed var(--line); border-radius: 9px; font-size: 10px; }
+  .comment-state { display: flex; gap: 12px; align-items: center; justify-content: center; min-height: 120px; margin-top: 14px; color: var(--muted); border: 1px dashed var(--line); border-radius: 9px; font-size: var(--type-small); }
   .comment-state.error { color: #9d5964; }
   .comment-state.error > span { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 50%; background: #fff0f3; }
-  .comment-state button { min-width: 76px; height: 34px; color: white; border: 0; border-radius: 17px; background: var(--pixiv-blue); cursor: pointer; font-size: 9px; font-weight: 700; }
+  .comment-state button { min-width: 76px; height: 34px; color: white; border: 0; border-radius: 17px; background: var(--pixiv-blue); cursor: pointer; font-size: var(--type-body); font-weight: 700; }
   .spinner { width: 25px; height: 25px; border: 3px solid #dceefb; border-top-color: var(--pixiv-blue); border-radius: 50%; animation: spin .8s linear infinite; }
-  .empty { padding: 34px; color: var(--muted); border: 1px dashed var(--line); border-radius: 9px; font-size: 10px; text-align: center; }
+  .empty { padding: 34px; color: var(--muted); border: 1px dashed var(--line); border-radius: 9px; font-size: var(--type-small); text-align: center; }
   .comment-list { margin-top: 14px; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: white; }
   .comment-list :global(> article + article) { border-top: 1px solid var(--line); }
-  .inline-error { margin: 8px 0 0; color: #a44f5e; font-size: 8px; }
+  .inline-error { margin: 8px 0 0; color: #a44f5e; font-size: var(--type-caption); }
   .inline-error.center { text-align: center; }
-  .load-more { display: block; min-width: 132px; height: 34px; margin: 20px auto 0; color: #59636a; border: 1px solid var(--line); border-radius: 17px; background: white; cursor: pointer; font-size: 9px; font-weight: 700; }
+  .load-more { display: block; min-width: 132px; height: 34px; margin: 20px auto 0; color: #59636a; border: 1px solid var(--line); border-radius: 17px; background: white; cursor: pointer; font-size: var(--type-body); font-weight: 700; }
   @keyframes spin { to { transform: rotate(360deg); } }
   @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
 </style>

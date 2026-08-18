@@ -28,7 +28,7 @@
 <AppShell title={m.settings_interface()}>
   <div class="page">
     <ReturnLink fallback="/settings" label={m.common_back()} />
-    <h1>{m.settings_interface()}</h1>
+    <h1 class="page-title">{m.settings_interface()}</h1>
     <section>
       <label><strong>{m.language_settings_title()}</strong><select value={language} onchange={(event) => { language = (event.currentTarget as HTMLSelectElement).value as LanguagePreference; setLanguagePreference(language); }}><option value="system">{m.language_system()}</option><option value="zh-CN">{m.language_simplified_chinese()}</option><option value="zh-TW">{m.language_traditional_chinese()}</option><option value="en-US">{m.language_english()}</option></select></label>
       <label><strong>{m.settings_sidebar()}</strong><input type="checkbox" role="switch" bind:checked={sidebar} onchange={() => writeDesktopSidebarExpanded(sidebar)} /></label>
@@ -39,5 +39,5 @@
 </AppShell>
 
 <style>
-  .page { width: min(720px,100%); box-sizing:border-box; margin:auto; padding:30px 24px 60px; } h1{margin:24px 0;font-size:28px} section{overflow:hidden;border:1px solid var(--line);border-radius:18px;background:white} label{display:flex;min-height:62px;align-items:center;justify-content:space-between;gap:20px;padding:0 18px;border-bottom:1px solid var(--line)} label:last-child{border:0} select{max-width:55%;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:white} input{width:20px;height:20px;accent-color:var(--pixiv-blue)}
+  .page { width: min(720px,100%); box-sizing:border-box; margin:auto; padding:30px 24px 60px; } h1{margin:24px 0;font-size:var(--type-title)} section{overflow:hidden;border:1px solid var(--line);border-radius:18px;background:white} label{display:flex;min-height:62px;align-items:center;justify-content:space-between;gap:20px;padding:0 18px;border-bottom:1px solid var(--line)} label:last-child{border:0} select{max-width:55%;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:white} input{width:20px;height:20px;accent-color:var(--pixiv-blue)}
 </style>

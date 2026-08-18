@@ -86,19 +86,19 @@
   .cover.concealed :global(img) { filter: blur(18px) brightness(.7); transform: scale(1.12); }
   .cover-link { position: absolute; z-index: 1; inset: 0; }
   .cover :global(img) { position: absolute; inset: 0; }
-  .cover > span { position: absolute; z-index: 2; right: 7px; bottom: 7px; padding: 4px 7px; color: white; border-radius: 10px; background: rgba(30,34,38,.7); font-size: 8px; }
-  .reveal { position: absolute; z-index: 3; inset: 0; width: 100%; color: white; border: 0; background: rgba(20,24,28,.38); cursor: pointer; font-size: 9px; font-weight: 700; }
+  .cover > span { position: absolute; z-index: 2; right: 7px; bottom: 7px; padding: 4px 7px; color: white; border-radius: 10px; background: rgba(30,34,38,.7); font-size: var(--type-caption); }
+  .reveal { position: absolute; z-index: 3; inset: 0; width: 100%; color: white; border: 0; background: rgba(20,24,28,.38); cursor: pointer; font-size: var(--type-body); font-weight: 700; }
   .select-toggle { position:absolute;z-index:4;top:8px;right:8px;width:28px;height:28px;border:2px solid white;border-radius:50%;background:#20283299;color:white;font-weight:800;cursor:pointer }.select-toggle.selected{border-color:var(--pixiv-blue);background:var(--pixiv-blue)}
   .copy { min-width: 0; padding: 14px; }
   .badges { display: flex; min-height: 22px; gap: 5px; align-items: center; }
-  .badges span { padding: 3px 6px; color: #55778b; border-radius: 3px; background: #eef7fc; font-size: 7px; font-weight: 700; }
+  .badges span { padding: 3px 6px; color: #55778b; border-radius: 3px; background: #eef7fc; font-size: var(--type-caption); font-weight: 700; }
   .badges button { display: grid; width: 25px; height: 25px; margin-left: auto; place-items: center; color: #778087; border: 0; border-radius: 50%; background: #f2f4f5; cursor: pointer; } .badges button.active { color: #ff4060; } .badges button.active :global(svg) { fill: currentColor; } .badges button:disabled { cursor: wait; opacity: .6; }
-  h2 { overflow: hidden; margin: 9px 0 0; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+  h2 { overflow: hidden; margin: 9px 0 0; font-size: var(--type-body); text-overflow: ellipsis; white-space: nowrap; }
   h2 a, .author { color: inherit; text-decoration: none; }
   h2 a:hover, .author:hover { color: var(--pixiv-blue); }
-  p { display: -webkit-box; overflow: hidden; margin: 8px 0; color: var(--muted); font-size: 9px; line-height: 1.55; line-clamp: 2; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-  .author { display: block; overflow: hidden; color: #5e666b; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
-  .meta, .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 9px; color: var(--soft-muted); font-size: 8px; }
+  p { display: -webkit-box; overflow: hidden; margin: 8px 0; color: var(--muted); font-size: var(--type-caption); line-height: 1.55; line-clamp: 2; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+  .author { display: block; overflow: hidden; color: #5e666b; font-size: var(--type-caption); text-overflow: ellipsis; white-space: nowrap; }
+  .meta, .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 9px; color: var(--soft-muted); font-size: var(--type-caption); }
   .tags { gap: 5px; color: #648398; }
   @media (max-width: 520px) { .novel-card { grid-template-columns: 92px minmax(0,1fr); } .cover { min-height: 142px; } .copy { padding: 11px; } }
 </style>

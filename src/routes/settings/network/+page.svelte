@@ -156,7 +156,7 @@
 <AppShell title={m.network_title()}>
   <div class="network-page">
     <ReturnLink fallback="/settings" label={m.network_return_settings()} />
-    <h1>{m.network_title()}</h1>
+    <h1 class="page-title">{m.network_title()}</h1>
     <section class="mode-card">
       <ConnectionModePicker
         {selected}
@@ -197,7 +197,7 @@
 
 <style>
   .network-page { width: min(720px, 100%); box-sizing: border-box; margin: 0 auto; padding: 30px 24px 50px; }
-  h1 { margin: 24px 0; font-size: 28px; }
+  h1 { margin: 24px 0; font-size: var(--type-title); }
   .mode-card { padding: 0; }
   .diagnostics { padding: 20px; border: 1px solid var(--line); border-radius: 18px; background: white; }
   .retest, .diagnostics button {

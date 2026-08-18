@@ -100,7 +100,7 @@
   .selected .radio {
     border: 6px solid var(--pixiv-blue);
   }
-  strong { font-size: 14px; }
+  strong { font-size: var(--type-body); }
   .probe-state {
     display: flex;
     min-height: 42px;
@@ -131,7 +131,7 @@
   .probe-state em {
     overflow: hidden;
     margin-left: auto;
-    font-size: 12px;
+    font-size: var(--type-small);
     font-style: normal;
     text-overflow: ellipsis;
     white-space: nowrap;

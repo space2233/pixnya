@@ -4,11 +4,11 @@
   import Icon from "$lib/components/Icon.svelte";
   import PixivImage from "$lib/components/PixivImage.svelte";
   import { m } from "$lib/i18n";
-  import { describeDataFailure, getOfflineStats, getUserDetail } from "$lib/pixiv-api";
+  import { describeDataFailure, getUserDetail } from "$lib/pixiv-api";
   import { plainPixivText } from "$lib/pixiv-text";
   import { readPreferredConnectionMode } from "$lib/preferences";
   import { initializeSession, logoutSession, session, sessionRestoring } from "$lib/session";
-  import type { OfflineStats, UserDetail } from "$lib/types";
+  import type { UserDetail } from "$lib/types";
 
   let preferredConnectionMode = $state("standard");
   let isLoggingOut = $state(false);
@@ -17,7 +17,6 @@
   let accountDetail = $state<UserDetail | null>(null);
   let accountStatus = $state<"idle" | "loading" | "ready" | "error">("idle");
   let accountError = $state("");
-  let offlineStats = $state<OfflineStats | null>(null);
   let requestedUserId = $state("");
   let accountSequence = 0;
   let avatarUrl = $derived(
@@ -43,26 +42,10 @@
 
   onMount(() => {
     preferredConnectionMode = readPreferredConnectionMode() ?? "standard";
-    void loadOfflineStats();
     void initializeSession().catch((error) => {
       sessionError = describeSessionError(error);
     });
   });
-
-  async function loadOfflineStats() {
-    try {
-      offlineStats = await getOfflineStats();
-    } catch {
-      offlineStats = null;
-    }
-  }
-
-  function formatBytes(value: number): string {
-    if (value < 1024) return `${value} B`;
-    if (value < 1024 ** 2) return `${(value / 1024).toFixed(1)} KiB`;
-    if (value < 1024 ** 3) return `${(value / 1024 ** 2).toFixed(1)} MiB`;
-    return `${(value / 1024 ** 3).toFixed(2)} GiB`;
-  }
 
   async function logOut() {
     if (isLoggingOut) return;
@@ -99,12 +82,6 @@
 
   function avatarInitial(name: string): string {
     return Array.from(name.trim())[0]?.toUpperCase() ?? "P";
-  }
-
-  function connectionModeLabel(mode: typeof $session.connectionMode): string {
-    if (mode === "ech") return m.login_mode_ech();
-    if (mode === "compatible") return m.login_mode_compatible();
-    return m.login_mode_standard();
   }
 
   function describeSessionError(error: unknown): string {
@@ -211,18 +188,18 @@
         </nav>
       </section>
 
-      <aside class="local-card">
-        <span><Icon name="shield" size={22} /></span>
-        <div><h2>{m.profile_credentials_title()}</h2></div>
+      <aside class="session-card">
         <dl>
-          <div><dt>{m.profile_offline_space()}</dt><dd>{offlineStats ? formatBytes(offlineStats.sizeBytes) : "—"}</dd></div>
-          <div><dt>{m.profile_offline_content()}</dt><dd>{offlineStats?.entryCount ?? "—"}</dd></div>
           <div>
             <dt>{m.profile_login_status()}</dt>
             <dd>
-              {$session.loggedIn
-                ? m.profile_session_ready({ mode: connectionModeLabel($session.connectionMode) })
-                : m.profile_session_missing()}
+              {#if $sessionRestoring}
+                {m.profile_session_restoring()}
+              {:else if $session.loggedIn}
+                {m.profile_session_signed_in()}
+              {:else}
+                {m.profile_session_signed_out()}
+              {/if}
             </dd>
           </div>
         </dl>
@@ -270,7 +247,7 @@
     border: 1px solid rgba(255, 255, 255, 0.66);
     border-radius: 14px;
     background: rgba(255, 255, 255, 0.58);
-    font-size: 8px;
+    font-size: var(--type-caption);
     backdrop-filter: blur(8px);
   }
 
@@ -297,7 +274,7 @@
   }
 
   .profile-avatar b {
-    font-size: 28px;
+    font-size: var(--type-title);
   }
 
   .profile-copy {
@@ -306,13 +283,13 @@
 
   .profile-copy h1 {
     margin: 4px 0 0;
-    font-size: 21px;
+    font-size: var(--type-section);
   }
 
   .profile-copy p {
     margin: 5px 0 0;
     color: var(--muted);
-    font-size: 9px;
+    font-size: var(--type-caption);
   }
 
   .profile-copy .profile-comment {
@@ -331,7 +308,7 @@
     color: white;
     border-radius: 20px;
     background: var(--pixiv-blue);
-    font-size: 10px;
+    font-size: var(--type-body);
     font-weight: 700;
     text-decoration: none;
   }
@@ -352,14 +329,14 @@
     margin: 0;
     padding: 10px 24px 14px;
     color: #a43e52;
-    font-size: 9px;
+    font-size: var(--type-caption);
   }
 
   .account-status {
     margin: 0;
     padding: 10px 24px 14px;
     color: var(--muted);
-    font-size: 9px;
+    font-size: var(--type-caption);
   }
 
   .account-error {
@@ -369,7 +346,7 @@
     justify-content: space-between;
     padding: 10px 24px 14px;
     color: #a43e52;
-    font-size: 9px;
+    font-size: var(--type-caption);
   }
 
   .account-error button {
@@ -380,7 +357,7 @@
     border-radius: 15px;
     background: white;
     cursor: pointer;
-    font-size: 9px;
+    font-size: var(--type-body);
     font-weight: 700;
   }
 
@@ -405,12 +382,12 @@
 
   .profile-stats dt {
     color: var(--muted);
-    font-size: 8px;
+    font-size: var(--type-caption);
   }
 
   .profile-stats dd {
     margin: 4px 0 0;
-    font-size: 13px;
+    font-size: var(--type-body);
     font-weight: 700;
   }
 
@@ -418,11 +395,12 @@
     display: grid;
     grid-template-columns: minmax(0, 1.25fr) minmax(250px, 0.75fr);
     gap: 18px;
+    align-items: start;
     margin-top: 20px;
   }
 
   .quick-section,
-  .local-card {
+  .session-card {
     border: 1px solid var(--line);
     border-radius: 11px;
     background: white;
@@ -435,7 +413,7 @@
 
   h2 {
     margin: 0;
-    font-size: 15px;
+    font-size: var(--type-section);
   }
 
   .quick-section nav {
@@ -475,7 +453,7 @@
     grid-column: 2;
     grid-row: 1;
     align-self: center;
-    font-size: 10px;
+    font-size: var(--type-label);
     line-height: 1.35;
   }
 
@@ -485,51 +463,31 @@
     align-self: center;
     justify-self: end;
     color: #aaa;
-    font-size: 19px;
+    font-size: var(--type-section);
     font-style: normal;
   }
 
-  .local-card {
-    padding: 20px;
-  }
-
-  .local-card > span {
-    display: grid;
-    width: 42px;
-    height: 42px;
-    place-items: center;
-    color: #4d9871;
-    border-radius: 50%;
-    background: #edf8f2;
-  }
-
-  .local-card > div {
-    margin-top: 15px;
-  }
-
-  .local-card h2 {
-    margin-top: 4px;
-  }
-
-  .local-card dl {
+  .session-card dl {
     margin: 0;
-    border-top: 1px solid var(--line);
   }
 
-  .local-card dl div {
+  .session-card dl div {
     display: flex;
+    min-height: 62px;
+    align-items: center;
     justify-content: space-between;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--line);
-    font-size: 8px;
+    gap: 16px;
+    padding: 0 18px;
+    font-size: var(--type-body);
   }
 
-  .local-card dt {
+  .session-card dt {
     color: var(--muted);
   }
 
-  .local-card dd {
+  .session-card dd {
     margin: 0;
+    text-align: right;
     font-weight: 700;
   }
 
@@ -570,7 +528,7 @@
     }
 
     .quick-section b {
-      font-size: 12px;
+      font-size: var(--type-label);
     }
 
   }

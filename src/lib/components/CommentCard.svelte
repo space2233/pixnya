@@ -174,32 +174,32 @@
   .comment-avatar { position: relative; display: grid; overflow: hidden; width: 38px; height: 38px; place-items: center; color: white; border-radius: 50%; background: var(--pixiv-blue); text-decoration: none; }
   .comment-avatar :global(img) { position: absolute; z-index: 1; inset: 0; }
   .comment-meta { position: relative; display: flex; gap: 10px; align-items: baseline; padding-right: 35px; }
-  .comment-meta strong { font-size: 10px; }
-  .comment-meta time { color: var(--soft-muted); font-size: 8px; }
+  .comment-meta strong { font-size: var(--type-small); }
+  .comment-meta time { color: var(--soft-muted); font-size: var(--type-caption); }
   .more { position: absolute; top: -8px; right: 0; min-width: 34px; height: 30px; color: var(--muted); border: 0; background: transparent; cursor: pointer; letter-spacing: 1px; }
-  .parent-reference { display: block; overflow: hidden; margin-top: 7px; padding: 7px 9px; color: var(--muted); border-left: 2px solid #baddf1; background: #f6fafc; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+  .parent-reference { display: block; overflow: hidden; margin-top: 7px; padding: 7px 9px; color: var(--muted); border-left: 2px solid #baddf1; background: #f6fafc; font-size: var(--type-caption); text-overflow: ellipsis; white-space: nowrap; }
   .comment-actions { display: flex; gap: 13px; margin-top: 8px; }
-  .comment-actions a { color: var(--pixiv-blue); font-size: 9px; text-decoration: none; }
+  .comment-actions a { color: var(--pixiv-blue); font-size: var(--type-caption); text-decoration: none; }
   .moderation-menu { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 9px; padding: 9px; border-radius: 7px; background: #f6f7f8; }
-  .moderation-menu button { height: 29px; padding: 0 11px; color: #59636a; border: 1px solid var(--line); border-radius: 15px; background: white; cursor: pointer; font-size: 8px; }
+  .moderation-menu button { height: 29px; padding: 0 11px; color: #59636a; border: 1px solid var(--line); border-radius: 15px; background: white; cursor: pointer; font-size: var(--type-body); }
   .moderation-menu button.danger { color: #b24958; border-color: #f0c7ce; }
   .muted-card { display: flex; gap: 16px; align-items: center; justify-content: space-between; padding: 15px; color: var(--muted); background: #fafafa; }
-  .muted-card strong { color: #697279; font-size: 9px; }
-  .muted-card p { margin: 4px 0 0; font-size: 8px; }
-  .muted-card button { flex: 0 0 auto; height: 30px; padding: 0 13px; color: var(--pixiv-blue); border: 1px solid #bde1f7; border-radius: 15px; background: white; cursor: pointer; font-size: 8px; }
+  .muted-card strong { color: #697279; font-size: var(--type-caption); }
+  .muted-card p { margin: 4px 0 0; font-size: var(--type-caption); }
+  .muted-card button { flex: 0 0 auto; height: 30px; padding: 0 13px; color: var(--pixiv-blue); border: 1px solid #bde1f7; border-radius: 15px; background: white; cursor: pointer; font-size: var(--type-body); }
   .modal-backdrop { position: fixed; z-index: 80; inset: 0; display: grid; padding: 20px; place-items: center; background: rgba(0,0,0,.42); }
   .report-dialog { box-sizing: border-box; width: min(520px, 100%); max-height: min(720px, calc(100dvh - 40px)); overflow-y: auto; padding: 22px; border-radius: 16px; background: white; box-shadow: 0 18px 60px rgba(0,0,0,.2); }
-  .report-dialog h2 { margin: 0; font-size: 18px; }
-  .report-dialog > p { margin: 9px 0 16px; color: var(--muted); font-size: 9px; line-height: 1.65; }
+  .report-dialog h2 { margin: 0; font-size: var(--type-section); }
+  .report-dialog > p { margin: 9px 0 16px; color: var(--muted); font-size: var(--type-caption); line-height: 1.65; }
   .reason-list { display: grid; gap: 6px; }
-  .reason-list label { display: flex; gap: 9px; align-items: center; min-height: 38px; padding: 0 11px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; font-size: 9px; }
+  .reason-list label { display: flex; gap: 9px; align-items: center; min-height: 38px; padding: 0 11px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; font-size: var(--type-caption); }
   .reason-list input { accent-color: var(--pixiv-blue); }
   .dialog-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 17px; }
-  .dialog-actions button { height: 38px; border: 1px solid var(--line); border-radius: 19px; background: white; cursor: pointer; font-size: 9px; font-weight: 700; }
+  .dialog-actions button { height: 38px; border: 1px solid var(--line); border-radius: 19px; background: white; cursor: pointer; font-size: var(--type-body); font-weight: 700; }
   .dialog-actions .primary { color: white; border-color: var(--pixiv-blue); background: var(--pixiv-blue); }
   .delete-dialog { box-sizing: border-box; width: min(420px, 100%); padding: 22px; border-radius: 16px; background: white; box-shadow: 0 18px 60px rgba(0,0,0,.2); }
-  .delete-dialog h2 { margin: 0; font-size: 18px; }
-  .delete-dialog > p { margin: 10px 0 0; color: var(--muted); font-size: 9px; line-height: 1.65; }
+  .delete-dialog h2 { margin: 0; font-size: var(--type-section); }
+  .delete-dialog > p { margin: 10px 0 0; color: var(--muted); font-size: var(--type-caption); line-height: 1.65; }
   .delete-dialog .delete-error { color: #b24958; }
   .dialog-actions .danger-action { color: white; border-color: #d55464; background: #d55464; }
   @media (max-width: 620px) {

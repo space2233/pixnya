@@ -64,3 +64,18 @@ test("Pixiv rich text is converted to text without injecting HTML", async () => 
   assert.doesNotMatch(artwork, /{@html/);
   assert.doesNotMatch(user, /{@html/);
 });
+
+test("profile keeps one compact sign-in status and delegates storage usage to settings", async () => {
+  const profile = await source("src/routes/profile/+page.svelte");
+
+  assert.doesNotMatch(profile, /getOfflineStats|OfflineStats|offlineStats|formatBytes/);
+  assert.doesNotMatch(
+    profile,
+    /profile_credentials_title|profile_offline_space|profile_offline_content|connectionModeLabel/,
+  );
+  assert.match(profile, /<aside class="session-card">/);
+  assert.match(profile, /m\.profile_login_status\(\)/);
+  assert.match(profile, /\$sessionRestoring[\s\S]*m\.profile_session_restoring\(\)/);
+  assert.match(profile, /\$session\.loggedIn[\s\S]*m\.profile_session_signed_in\(\)/);
+  assert.match(profile, /m\.profile_session_signed_out\(\)/);
+});

@@ -122,8 +122,8 @@
     align-items: center;
     color: var(--pixiv-blue);
   }
-  .brand-mark strong { font-size: 22px; font-weight: 800; letter-spacing: -0.025em; }
-  h1 { margin: 22px 0 0; color: var(--text); font-size: 24px; line-height: 1.25; }
+  .brand-mark strong { font-size: var(--type-title); font-weight: 800; letter-spacing: -0.025em; }
+  h1 { margin: 22px 0 0; color: var(--text); font-size: var(--type-title); line-height: 1.25; }
   .continue {
     width: 100%;
     min-height: 48px;
@@ -154,6 +154,6 @@
       box-shadow: none;
     }
     .setup-header { margin-bottom: 22px; }
-    h1 { font-size: 22px; }
+    h1 { font-size: var(--type-title); }
   }
 </style>

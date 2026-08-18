@@ -177,6 +177,25 @@ test("storage settings expose isolated media-cache statistics and confirmed clea
   assert.match(cache, /trim_to_capacity/);
 });
 
+test("storage settings show owned content usage, available space, and a terminal read failure", async () => {
+  const page = readFileSync(new URL("../src/routes/settings/storage/+page.svelte", import.meta.url), "utf8");
+  const { storageMetric } = await import("../src/lib/storage-status-view.ts");
+
+  assert.match(page, /m\.settings_space_usage\(\)/);
+  assert.match(page, /m\.settings_available_space\(\)/);
+  assert.match(page, /m\.settings_reading\(\)/);
+  assert.match(page, /m\.settings_read_failed\(\)/);
+  assert.deepEqual(storageMetric({ kind: "loading" }, "usage"), { kind: "loading" });
+  assert.deepEqual(storageMetric({ kind: "error" }, "usage"), { kind: "error" });
+  const value = {
+    offlineBytes: 1_024,
+    cacheBytes: 2_048,
+    dataAvailableBytes: 8_192,
+  };
+  assert.deepEqual(storageMetric({ kind: "ready", value }, "usage"), { kind: "value", bytes: 3_072 });
+  assert.deepEqual(storageMetric({ kind: "ready", value }, "available"), { kind: "value", bytes: 8_192 });
+});
+
 test("privacy settings require typed confirmation and clear every owned data layer", () => {
   const page = readFileSync(new URL("../src/routes/settings/privacy/+page.svelte", import.meta.url), "utf8");
   const api = readFileSync(new URL("../src/lib/pixiv-api.ts", import.meta.url), "utf8");
@@ -196,6 +215,23 @@ test("privacy settings require typed confirmation and clear every owned data lay
   assert.match(android, /removeAllCookies/);
   assert.match(android, /clearCache\(true\)/);
   assert.match(android, /deleteEntry\(KEY_ALIAS\)/);
+});
+
+test("diagnostic log actions stay readable and become equal mobile buttons", () => {
+  const page = readFileSync(new URL("../src/routes/settings/privacy/+page.svelte", import.meta.url), "utf8");
+
+  assert.match(page, /class="row log-row"/);
+  assert.match(page, /class="log-count"/);
+  assert.match(page, /class="log-actions"/);
+  assert.match(page, /class="log-export"/);
+  assert.match(page, /class="log-clear"/);
+  assert.match(page, /\.log-row\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,1fr\)\s+auto\s+auto/);
+  assert.match(page, /\.row \.log-count\s*\{[\s\S]*margin-left:\s*0/);
+  assert.match(page, /\.log-actions button\s*\{[\s\S]*min-height:\s*44px/);
+  assert.match(page, /\.log-actions button\s*\{[\s\S]*font-size:\s*var\(--type-body\)/);
+  assert.match(page, /\.log-actions button\s*\{[\s\S]*white-space:\s*nowrap/);
+  assert.match(page, /@media\s*\(max-width:\s*600px\)[\s\S]*\.log-row\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,1fr\)\s+auto/);
+  assert.match(page, /@media\s*\(max-width:\s*600px\)[\s\S]*\.log-actions\s*\{[\s\S]*grid-column:\s*1\s*\/\s*-1[\s\S]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
 });
 
 test("the documented connection policy matches the warning-free 1.2 interface", () => {

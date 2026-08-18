@@ -240,21 +240,21 @@
 <style>
   .reading-page { width: min(920px, 100%); margin: 0 auto; padding: 20px 28px 55px; }
   .reading-header { display: grid; grid-template-columns: minmax(110px, auto) minmax(0, 1fr) auto; gap: 18px; align-items: center; margin-bottom: 14px; }
-  .reading-header > a { color: var(--muted); font-size: 9px; text-decoration: none; }
-  .reading-header h1 { overflow: hidden; margin: 0; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
-  .reading-header p { margin: 3px 0 0; color: var(--muted); font-size: 8px; }
-  .reading-header > strong { color: var(--pixiv-blue); font-size: 10px; }
+  .reading-header > a { color: var(--muted); font-size: var(--type-caption); text-decoration: none; }
+  .reading-header h1 { overflow: hidden; margin: 0; font-size: var(--type-body); text-overflow: ellipsis; white-space: nowrap; }
+  .reading-header p { margin: 3px 0 0; color: var(--muted); font-size: var(--type-caption); }
+  .reading-header > strong { color: var(--pixiv-blue); font-size: var(--type-small); }
   .state { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 14px; align-items: center; margin-top: 22px; padding: 21px; border: 1px solid var(--line); border-radius: 11px; background: white; }
-  .state h1 { margin: 0; font-size: 16px; }
-  .state p { margin: 5px 0 0; color: var(--muted); font-size: 9px; }
-  .state a, .state button { padding: 10px 17px; color: white; border: 0; border-radius: 20px; background: var(--pixiv-blue); cursor: pointer; font-size: 9px; font-weight: 700; text-decoration: none; }
+  .state h1 { margin: 0; font-size: var(--type-label); }
+  .state p { margin: 5px 0 0; color: var(--muted); font-size: var(--type-caption); }
+  .state a, .state button { padding: 10px 17px; color: white; border: 0; border-radius: 20px; background: var(--pixiv-blue); cursor: pointer; font-size: var(--type-body); font-weight: 700; text-decoration: none; }
   .state.error > span { display: grid; width: 36px; height: 36px; place-items: center; color: #a34e5d; border-radius: 50%; background: #fff0f3; }
   .spinner { width: 29px; height: 29px; border: 3px solid #dceefb; border-top-color: var(--pixiv-blue); border-radius: 50%; animation: spin .8s linear infinite; }
   .reader-shell { min-width: 0; }
   .reader-controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; align-items: center; padding: 12px 16px; border: 1px solid var(--line); border-radius: 10px 10px 0 0; background: white; }
-  .reader-controls label { display: flex; min-width: 0; gap: 7px; align-items: center; color: var(--muted); font-size: 8px; }
+  .reader-controls label { display: flex; min-width: 0; gap: 7px; align-items: center; color: var(--muted); font-size: var(--type-caption); }
   .reader-controls input { min-width: 70px; width: 100%; }
-  .reader-controls select { min-width: 76px; height: 30px; border: 1px solid var(--line); border-radius: 5px; background: white; font-size: 8px; }
+  .reader-controls select { min-width: 76px; height: 30px; border: 1px solid var(--line); border-radius: 5px; background: white; font-size: var(--type-caption); }
   .novel-body { box-sizing: border-box; height: calc(100vh - var(--topbar-height) - 124px); min-height: 520px; overflow-y: auto; padding: 48px clamp(30px, 9vw, 96px) 90px; border: 1px solid var(--line); border-top: 0; border-radius: 0 0 10px 10px; scroll-behavior: smooth; }
   .novel-body.theme-paper { color: #33302a; background: #fbf7ec; }
   .novel-body.theme-white { color: #282b2e; background: white; }
@@ -268,8 +268,8 @@
   .series-navigation { display: grid; grid-template-columns: minmax(180px, .7fr) repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 18px; }
   .series-navigation > a, .series-navigation > span { min-width: 0; padding: 14px 16px; border: 1px solid var(--line); border-radius: 10px; background: white; text-decoration: none; }
   .series-navigation small, .series-navigation strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .series-navigation small { color: var(--muted); font-size: 8px; }
-  .series-navigation strong { margin-top: 5px; color: var(--text); font-size: 10px; }
+  .series-navigation small { color: var(--muted); font-size: var(--type-caption); }
+  .series-navigation strong { margin-top: 5px; color: var(--text); font-size: var(--type-small); }
   .series-overview { border-color: #bfe7ff !important; background: #f3faff !important; }
   .series-sibling.next { text-align: right; }
   .series-sibling.disabled { opacity: .55; }

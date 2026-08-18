@@ -212,7 +212,7 @@
 <AppShell title={m.novels_title()}>
   <ContentTabs />
   <main class="novel-page">
-    <header><div><h1>{m.novels_title()}</h1></div></header>
+    <header><div><h1 class="page-title">{m.novels_title()}</h1></div></header>
     <div class="novel-toolbar">
       <nav aria-label={m.novels_content_type()}>{#each sections as section}<button type="button" class:active={selectedSection === section} onclick={() => (selectedSection = section)}>{sectionLabels[section]()}</button>{/each}</nav>
       {#if selectedSection === "ranking"}<select bind:value={rankingMode} aria-label={m.novels_ranking_period()}><option value="day">{m.novels_today()}</option><option value="week">{m.novels_this_week()}</option><option value="month">{m.novels_this_month()}</option></select>{/if}
@@ -238,17 +238,17 @@
 
 <style>
   .novel-page { width: min(1060px,100%); margin: 0 auto; padding: 26px 28px 64px; }
-  header h1 { margin: 0; font-size: 22px; }
-  .novel-toolbar { display: flex; gap: 10px; align-items: center; justify-content: space-between; margin-top: 18px; } .novel-toolbar nav { display: flex; gap: 4px; padding: 4px; border-radius: 21px; background: #f3f3f3; } .novel-toolbar button { min-width: 58px; height: 31px; color: #777; border: 0; border-radius: 16px; background: transparent; cursor: pointer; font-size: 9px; font-weight: 700; } .novel-toolbar button.active { color: #333; background: white; box-shadow: 0 1px 4px rgba(0,0,0,.08); } .novel-toolbar select { height: 34px; padding: 0 11px; border: 1px solid var(--line); border-radius: 17px; background: white; font-size: 9px; }
-  .bookmark-controls,.batch-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px}.bookmark-controls button,.batch-toolbar button{padding:8px 12px;border:1px solid #cde7f8;border-radius:16px;background:white;color:var(--pixiv-blue);cursor:pointer}.batch-toolbar{margin-top:14px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:white}.batch-toolbar input{padding:8px;border:1px solid var(--line);border-radius:9px}.batch-toolbar .danger{color:var(--danger)}.batch-status{color:var(--muted);font-size:10px}
+  header h1 { margin: 0; font-size: var(--type-title); }
+  .novel-toolbar { display: flex; gap: 10px; align-items: center; justify-content: space-between; margin-top: 18px; } .novel-toolbar nav { display: flex; gap: 4px; padding: 4px; border-radius: 21px; background: #f3f3f3; } .novel-toolbar button { min-width: 58px; height: 31px; color: #777; border: 0; border-radius: 16px; background: transparent; cursor: pointer; font-size: var(--type-body); font-weight: 700; } .novel-toolbar button.active { color: #333; background: white; box-shadow: 0 1px 4px rgba(0,0,0,.08); } .novel-toolbar select { height: 34px; padding: 0 11px; border: 1px solid var(--line); border-radius: 17px; background: white; font-size: var(--type-caption); }
+  .bookmark-controls,.batch-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px}.bookmark-controls button,.batch-toolbar button{padding:8px 12px;border:1px solid #cde7f8;border-radius:16px;background:white;color:var(--pixiv-blue);cursor:pointer}.batch-toolbar{margin-top:14px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:white}.batch-toolbar input{padding:8px;border:1px solid var(--line);border-radius:9px}.batch-toolbar .danger{color:var(--danger)}.batch-status{color:var(--muted);font-size:var(--type-small)}
   .novel-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; margin-top: 22px; }
   .state { display: grid; grid-template-columns: 44px minmax(0,1fr) auto; gap: 14px; align-items: center; margin-top: 22px; padding: 20px; border: 1px solid var(--line); border-radius: 11px; background: white; }
-  .state h2 { margin: 0; font-size: 15px; } .state p { margin: 5px 0 0; color: var(--muted); font-size: 9px; }
-  .state a, .state button, .load-more { padding: 10px 17px; color: white; border: 0; border-radius: 20px; background: var(--pixiv-blue); cursor: pointer; font-size: 9px; font-weight: 700; text-decoration: none; }
+  .state h2 { margin: 0; font-size: var(--type-label); } .state p { margin: 5px 0 0; color: var(--muted); font-size: var(--type-caption); }
+  .state a, .state button, .load-more { padding: 10px 17px; color: white; border: 0; border-radius: 20px; background: var(--pixiv-blue); cursor: pointer; font-size: var(--type-body); font-weight: 700; text-decoration: none; }
   .state.error > span { display: grid; width: 36px; height: 36px; place-items: center; color: #a34e5d; border-radius: 50%; background: #fff0f3; }
   .spinner { width: 29px; height: 29px; border: 3px solid #dceefb; border-top-color: var(--pixiv-blue); border-radius: 50%; animation: spin .8s linear infinite; }
   .empty { margin-top: 22px; padding: 40px; color: var(--muted); border: 1px dashed var(--line); border-radius: 10px; text-align: center; }
-  .paging-error { color: #a34e5d; font-size: 9px; text-align: center; }
+  .paging-error { color: #a34e5d; font-size: var(--type-caption); text-align: center; }
   .load-more { display: block; min-width: 145px; margin: 24px auto 0; color: #59636a; border: 1px solid var(--line); background: white; }
   @keyframes spin { to { transform: rotate(360deg); } }
   @media (max-width: 760px) { .novel-grid { grid-template-columns: 1fr; } }

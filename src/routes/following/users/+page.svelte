@@ -122,7 +122,7 @@
   <main class="following-users-page">
     <FollowingTabs />
     <header class="page-heading">
-      <div><h1>{m.following_users_title()}</h1></div>
+      <div><h1 class="page-title">{m.following_users_title()}</h1></div>
       <nav aria-label={m.following_scope()}>
         <button type="button" class:active={restrict === "public"} aria-pressed={restrict === "public"} onclick={() => (restrict = "public")}>{m.following_public()}</button>
         <button type="button" class:active={restrict === "private"} aria-pressed={restrict === "private"} onclick={() => (restrict = "private")}>{m.following_private()}</button>
@@ -161,19 +161,19 @@
 <style>
   .following-users-page { width: min(1120px, 100%); margin: 0 auto; padding: 0 28px 70px; }
   .page-heading { display: flex; gap: 24px; align-items: end; justify-content: space-between; padding: 27px 0 22px; }
-  .page-heading h1 { margin: 5px 0 0; font-size: 22px; }
+  .page-heading h1 { margin: 5px 0 0; font-size: var(--type-title); }
   .page-heading nav { display: flex; gap: 5px; padding: 4px; border-radius: 20px; background: #eef1f3; }
-  .page-heading button { padding: 8px 14px; color: #6d767c; border: 0; border-radius: 16px; background: transparent; cursor: pointer; font-size: 8px; font-weight: 700; }
+  .page-heading button { padding: 8px 14px; color: #6d767c; border: 0; border-radius: 16px; background: transparent; cursor: pointer; font-size: var(--type-body); font-weight: 700; }
   .page-heading button.active { color: white; background: var(--pixiv-blue); }
   .user-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
   .state-card { display: grid; grid-template-columns: 42px minmax(0,1fr) auto; min-height: 112px; gap: 14px; align-items: center; padding: 21px; border: 1px solid var(--line); border-radius: 11px; background: white; }
-  .state-card h2, .empty-state h2 { margin: 0; font-size: 14px; }
-  .state-card p, .empty-state p { margin: 5px 0 0; color: var(--muted); font-size: 9px; }
-  .state-card a, .state-card button, .load-more { padding: 9px 16px; color: white; border: 0; border-radius: 18px; background: var(--pixiv-blue); cursor: pointer; font-size: 8px; font-weight: 700; text-decoration: none; }
+  .state-card h2, .empty-state h2 { margin: 0; font-size: var(--type-body); }
+  .state-card p, .empty-state p { margin: 5px 0 0; color: var(--muted); font-size: var(--type-caption); }
+  .state-card a, .state-card button, .load-more { padding: 9px 16px; color: white; border: 0; border-radius: 18px; background: var(--pixiv-blue); cursor: pointer; font-size: var(--type-body); font-weight: 700; text-decoration: none; }
   .state-card.error > span { display: grid; width: 34px; height: 34px; place-items: center; color: #a34e5d; border-radius: 50%; background: #fff0f3; }
   .spinner { width: 28px; height: 28px; border: 3px solid #dceefb; border-top-color: var(--pixiv-blue); border-radius: 50%; animation: spin .8s linear infinite; }
   .empty-state { display: grid; min-height: 230px; gap: 8px; place-items: center; align-content: center; color: var(--muted); border: 1px dashed var(--line); border-radius: 11px; text-align: center; }
-  .pagination-error { margin: 16px 0 0; color: #a34e5d; font-size: 9px; text-align: center; }
+  .pagination-error { margin: 16px 0 0; color: #a34e5d; font-size: var(--type-caption); text-align: center; }
   .load-more { display: block; margin: 22px auto 0; }
   .load-more:disabled { cursor: wait; opacity: .65; }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -182,7 +182,7 @@
     .following-users-page { padding: 0 12px 92px; }
     .page-heading { display: grid; gap: 15px; padding: 20px 2px 17px; }
     .page-heading nav { width: 100%; }
-    .page-heading nav button { flex: 1; font-size: 9px; }
+    .page-heading nav button { flex: 1; font-size: var(--type-body); }
     .user-grid { grid-template-columns: 1fr; gap: 11px; }
     .state-card { grid-template-columns: 38px minmax(0,1fr); padding: 17px; }
     .state-card > a, .state-card > button { grid-column: 1 / -1; text-align: center; }

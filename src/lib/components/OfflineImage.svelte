@@ -37,5 +37,5 @@
 
 <style>
   img { display: block; width: 100%; height: 100%; }
-  .placeholder { display: grid; width: 100%; height: 100%; min-height: 100px; place-items: center; color: #9ba2a7; background: #edf1f4; font-size: 9px; }
+  .placeholder { display: grid; width: 100%; height: 100%; min-height: 100px; place-items: center; color: #9ba2a7; background: #edf1f4; font-size: var(--type-caption); }
 </style>

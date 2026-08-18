@@ -155,7 +155,7 @@
     color: white;
     border-radius: 10px;
     background: rgba(45, 49, 53, 0.72);
-    font-size: 9px;
+    font-size: var(--type-caption);
     font-weight: 700;
   }
 
@@ -211,7 +211,7 @@
     border: 0;
     background: rgba(20, 24, 28, 0.38);
     cursor: pointer;
-    font-size: 10px;
+    font-size: var(--type-body);
     font-weight: 700;
   }
 
@@ -219,7 +219,7 @@
     overflow: hidden;
     margin: 8px 0 0;
     color: #25292c;
-    font-size: 11px;
+    font-size: var(--type-small);
     font-weight: 700;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -240,7 +240,7 @@
     overflow: hidden;
     margin: 5px 0 0;
     color: var(--muted);
-    font-size: 9px;
+    font-size: var(--type-caption);
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -250,7 +250,7 @@
     overflow: hidden;
     margin-top: 4px;
     color: #a44f5e;
-    font-size: 8px;
+    font-size: var(--type-caption);
     text-overflow: ellipsis;
     white-space: nowrap;
   }

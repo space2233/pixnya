@@ -94,10 +94,10 @@
   .ugoira-player { position: relative; display: grid; min-height: 420px; overflow: hidden; place-items: center; border-radius: 10px; background: #f2f3f4; }
   .ugoira-player > :global(img) { width: 100%; height: 100%; max-height: 82vh; object-fit: contain; }
   .load-overlay { position: absolute; z-index: 2; display: grid; gap: 10px; place-items: center; padding: 20px; color: #495157; border-radius: 12px; background: rgba(255,255,255,.9); text-align: center; }
-  .load-overlay strong { font-size: 11px; } .load-overlay p { max-width: 320px; margin: 0; color: #a14f5c; font-size: 8px; }
-  .load-overlay button, .player-bar button { padding: 9px 17px; color: white; border: 0; border-radius: 18px; background: var(--pixiv-blue); cursor: pointer; font-size: 9px; font-weight: 700; }
+  .load-overlay strong { font-size: var(--type-small); } .load-overlay p { max-width: 320px; margin: 0; color: #a14f5c; font-size: var(--type-caption); }
+  .load-overlay button, .player-bar button { padding: 9px 17px; color: white; border: 0; border-radius: 18px; background: var(--pixiv-blue); cursor: pointer; font-size: var(--type-body); font-weight: 700; }
   .spinner { width: 28px; height: 28px; border: 3px solid #dceefb; border-top-color: var(--pixiv-blue); border-radius: 50%; animation: spin .8s linear infinite; }
-  .player-bar { position: absolute; z-index: 3; right: 10px; bottom: 10px; left: 10px; display: flex; gap: 10px; align-items: center; padding: 8px 10px; color: white; border-radius: 8px; background: rgba(25,28,31,.72); font-size: 8px; }
+  .player-bar { position: absolute; z-index: 3; right: 10px; bottom: 10px; left: 10px; display: flex; gap: 10px; align-items: center; padding: 8px 10px; color: white; border-radius: 8px; background: rgba(25,28,31,.72); font-size: var(--type-caption); }
   .player-bar span:last-child { margin-left: auto; }
   @keyframes spin { to { transform: rotate(360deg); } }
   @media (max-width: 620px) { .ugoira-player { min-height: 300px; } .player-bar span:last-child { display: none; } }
