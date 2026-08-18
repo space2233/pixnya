@@ -63,6 +63,24 @@ fn ech_mode_refuses_to_silently_fall_back_for_rust_api_requests() {
 }
 
 #[test]
+fn ech_mode_keeps_pixiv_media_on_the_verified_ech_route() {
+    let route = ConnectionPolicy
+        .evaluate(&RouteRequest {
+            mode: ConnectionMode::Ech,
+            traffic: TrafficClass::Media,
+            host: "i.pximg.net".into(),
+            capabilities: PlatformCapabilities {
+                rust_ech: true,
+                ..PlatformCapabilities::default()
+            },
+        })
+        .unwrap();
+    assert_eq!(route.transport, TransportRoute::Ech);
+    assert_eq!(route.ech_requirement, EchRequirement::Accepted);
+    assert_eq!(route.security, TransportSecurity::EchVerified);
+}
+
+#[test]
 fn compatible_mode_marks_pixiv_media_as_insecure_and_requires_acknowledgement() {
     let request = RouteRequest {
         mode: ConnectionMode::Compatible,

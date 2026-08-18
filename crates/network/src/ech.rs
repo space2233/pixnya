@@ -77,7 +77,11 @@ pub(crate) fn verified_client(host: &str, timeout: Duration) -> Result<Client, P
 fn validate_ech_host(host: &str) -> Result<(), ProbeError> {
     if !matches!(
         host.trim_end_matches('.').to_ascii_lowercase().as_str(),
-        "app-api.pixiv.net" | "oauth.secure.pixiv.net" | "accounts.pixiv.net"
+        "app-api.pixiv.net"
+            | "oauth.secure.pixiv.net"
+            | "accounts.pixiv.net"
+            | "i.pximg.net"
+            | "s.pximg.net"
     ) {
         return Err(ProbeError::EchUnavailable {
             host: host.to_owned(),
@@ -281,8 +285,8 @@ fn parse_http_status(response: &[u8]) -> Option<u16> {
 #[cfg(test)]
 mod tests {
     use super::{
-        client_config_with_roots, parse_dns_response, parse_http_status, DnsAnswer,
-        DnsJsonResponse, ECH_BOOTSTRAP_HOST,
+        client_config_with_roots, parse_dns_response, parse_http_status, validate_ech_host,
+        DnsAnswer, DnsJsonResponse, ECH_BOOTSTRAP_HOST,
     };
     use base64::Engine;
     use rcgen::{generate_simple_self_signed, CertifiedKey};
@@ -298,6 +302,13 @@ mod tests {
     use tokio_rustls::TlsConnector;
 
     const ECH_CONFIG_BASE64: &str = "AEX+DQBBxwAgACD64SRg36XkWhRQbHIp4lBdtTDCX31oTlf8ZtXx4X7sZwAEAAEAAQASY2xvdWRmbGFyZS1lY2guY29tAAA=";
+
+    #[test]
+    fn strict_ech_host_policy_includes_pixiv_media_without_opening_third_party_hosts() {
+        assert!(validate_ech_host("i.pximg.net").is_ok());
+        assert!(validate_ech_host("s.pximg.net").is_ok());
+        assert!(validate_ech_host("example.com").is_err());
+    }
 
     #[test]
     fn parses_ech_config_and_cloudflare_ipv4_hints() {

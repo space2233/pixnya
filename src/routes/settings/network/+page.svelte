@@ -198,7 +198,8 @@
 <style>
   .network-page { width: min(720px, 100%); box-sizing: border-box; margin: 0 auto; padding: 30px 24px 50px; }
   h1 { margin: 24px 0; font-size: 28px; }
-  .mode-card, .diagnostics { padding: 20px; border: 1px solid var(--line); border-radius: 18px; background: white; }
+  .mode-card { padding: 0; }
+  .diagnostics { padding: 20px; border: 1px solid var(--line); border-radius: 18px; background: white; }
   .retest, .diagnostics button {
     min-height: 40px;
     margin-top: 16px;
@@ -206,7 +207,7 @@
     border: 1px solid #cde7f8;
     border-radius: 20px;
     background: white;
-    color: var(--brand);
+    color: var(--pixiv-blue);
     font-weight: 700;
     cursor: pointer;
   }

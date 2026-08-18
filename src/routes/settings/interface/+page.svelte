@@ -39,5 +39,5 @@
 </AppShell>
 
 <style>
-  .page { width: min(720px,100%); box-sizing:border-box; margin:auto; padding:30px 24px 60px; } h1{margin:24px 0;font-size:28px} section{overflow:hidden;border:1px solid var(--line);border-radius:18px;background:white} label{display:flex;min-height:62px;align-items:center;justify-content:space-between;gap:20px;padding:0 18px;border-bottom:1px solid var(--line)} label:last-child{border:0} select{max-width:55%;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:white} input{width:20px;height:20px;accent-color:var(--brand)}
+  .page { width: min(720px,100%); box-sizing:border-box; margin:auto; padding:30px 24px 60px; } h1{margin:24px 0;font-size:28px} section{overflow:hidden;border:1px solid var(--line);border-radius:18px;background:white} label{display:flex;min-height:62px;align-items:center;justify-content:space-between;gap:20px;padding:0 18px;border-bottom:1px solid var(--line)} label:last-child{border:0} select{max-width:55%;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:white} input{width:20px;height:20px;accent-color:var(--pixiv-blue)}
 </style>

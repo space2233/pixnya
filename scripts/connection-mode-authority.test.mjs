@@ -122,3 +122,53 @@ test("connection settings surfaces resolve display state through session authori
   );
   assert.match(session, /reconcilePreferredConnectionMode\(snapshot\)/);
 });
+
+test("first-run connection controls use defined theme tokens and expose the continue action", () => {
+  const setup = readFileSync(
+    new URL("../src/routes/setup/connection/+page.svelte", import.meta.url),
+    "utf8",
+  );
+  const picker = readFileSync(
+    new URL("../src/lib/components/ConnectionModePicker.svelte", import.meta.url),
+    "utf8",
+  );
+  const appCss = readFileSync(new URL("../src/app.css", import.meta.url), "utf8");
+  const definedTokens = new Set(
+    [...appCss.matchAll(/--([a-z0-9-]+)\s*:/gi)].map((match) => match[1]),
+  );
+  const setupTokens = [...`${setup}\n${picker}`.matchAll(/var\(--([a-z0-9-]+)\)/gi)]
+    .map((match) => match[1]);
+
+  assert.ok(setupTokens.length > 0);
+  assert.deepEqual(
+    setupTokens.filter((token) => !definedTokens.has(token)),
+    [],
+    "an undefined color token can make the first-run continue button invisible",
+  );
+  assert.match(setup, /class="continue"[\s\S]*onclick=\{completeSetup\}/);
+  assert.match(setup, /await goto\([\s\S]*replaceState:\s*true/);
+});
+
+test("connection choice uses the shared PixNya card, selection, and status language", () => {
+  const setup = readFileSync(
+    new URL("../src/routes/setup/connection/+page.svelte", import.meta.url),
+    "utf8",
+  );
+  const picker = readFileSync(
+    new URL("../src/lib/components/ConnectionModePicker.svelte", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(setup, /class="brand-mark"/);
+  assert.doesNotMatch(setup, /brand-symbol|brand-letter/);
+  assert.match(setup, /background:\s*var\(--soft-surface\)/);
+  assert.match(setup, /grid-template-columns:\s*minmax\(0,\s*1fr\)/);
+  assert.match(setup, /\.continue:hover:not\(:disabled\)/);
+  assert.match(picker, /class:available=\{state === "available"\}/);
+  assert.match(picker, /class:checking=\{state === "checking"\}/);
+  assert.match(
+    picker,
+    /\.mode-list button\.selected\s*\{[\s\S]*?border-color:\s*var\(--pixiv-blue\)/,
+  );
+  assert.match(picker, /\.probe-state\.available[\s\S]*?var\(--success\)/);
+});

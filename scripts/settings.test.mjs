@@ -207,3 +207,27 @@ test("the documented connection policy matches the warning-free 1.2 interface", 
   assert.doesNotMatch(security, /设置页始终标明风险并允许恢复弹窗/);
   assert.doesNotMatch(privacy, /可在设置中恢复/);
 });
+
+test("settings pages use only the defined PixNya theme tokens", () => {
+  const appCss = readFileSync(new URL("../src/app.css", import.meta.url), "utf8");
+  const definedTokens = new Set(
+    [...appCss.matchAll(/--([a-z0-9-]+)\s*:/gi)].map((match) => match[1]),
+  );
+  const pages = [
+    "../src/routes/settings/+page.svelte",
+    "../src/routes/settings/data/+page.svelte",
+    "../src/routes/settings/interface/+page.svelte",
+    "../src/routes/settings/network/+page.svelte",
+    "../src/routes/settings/privacy/+page.svelte",
+    "../src/routes/settings/storage/+page.svelte",
+    "../src/routes/settings/updates/+page.svelte",
+  ];
+
+  for (const page of pages) {
+    const source = readFileSync(new URL(page, import.meta.url), "utf8");
+    const undefinedTokens = [...source.matchAll(/var\(--([a-z0-9-]+)\)/gi)]
+      .map((match) => match[1])
+      .filter((token) => !definedTokens.has(token));
+    assert.deepEqual(undefinedTokens, [], `${page} uses undefined theme tokens`);
+  }
+});

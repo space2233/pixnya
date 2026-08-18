@@ -24,6 +24,28 @@ fn live_ech_probe_requires_an_accepted_handshake() {
 
 #[test]
 #[ignore = "requires live network access"]
+fn live_ech_probe_reaches_both_api_and_media_hosts() {
+    let gateway = NetworkGateway::default();
+    for (traffic, host) in [
+        (TrafficClass::Api, "app-api.pixiv.net"),
+        (TrafficClass::Media, "i.pximg.net"),
+        (TrafficClass::Media, "s.pximg.net"),
+    ] {
+        let report = gateway
+            .probe(&ProbeRequest {
+                mode: ConnectionMode::Ech,
+                traffic,
+                host: host.into(),
+                unsafe_acknowledged: false,
+            })
+            .unwrap_or_else(|error| panic!("ECH {traffic:?} probe failed for {host}: {error}"));
+
+        assert_eq!(report.ech_status, ProbeEchStatus::Accepted);
+    }
+}
+
+#[test]
+#[ignore = "requires live network access"]
 fn live_ech_reqwest_client_reaches_the_oauth_host_after_accepted_preflight() {
     let request = ProbeRequest {
         mode: ConnectionMode::Ech,

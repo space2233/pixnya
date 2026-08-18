@@ -73,8 +73,12 @@
 
 <main class="setup-page">
   <section class="setup-card">
-    <div class="brand">PixNya</div>
-    <h1>{m.connection_setup_title()}</h1>
+    <header class="setup-header">
+      <div class="brand-mark">
+        <strong>PixNya</strong>
+      </div>
+      <h1>{m.connection_setup_title()}</h1>
+    </header>
     <ConnectionModePicker
       {selected}
       state={probeState}
@@ -92,39 +96,64 @@
 </main>
 
 <style>
-  :global(body) { background: #f7f8fa; }
+  :global(body) { background: var(--soft-surface); }
   .setup-page {
     min-height: 100dvh;
     box-sizing: border-box;
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     place-items: center;
     padding: max(28px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
   }
   .setup-card {
-    width: min(460px, 100%);
+    width: min(430px, 100%);
+    min-width: 0;
     box-sizing: border-box;
-    padding: 34px;
+    justify-self: center;
+    padding: 30px;
     border: 1px solid var(--line);
-    border-radius: 24px;
+    border-radius: 18px;
     background: white;
-    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 14px 40px rgba(33, 61, 84, 0.08);
   }
-  .brand { color: var(--brand); font-size: 25px; font-weight: 800; }
-  h1 { margin: 24px 0; font-size: 27px; }
+  .setup-header { margin-bottom: 24px; }
+  .brand-mark {
+    display: flex;
+    align-items: center;
+    color: var(--pixiv-blue);
+  }
+  .brand-mark strong { font-size: 22px; font-weight: 800; letter-spacing: -0.025em; }
+  h1 { margin: 22px 0 0; color: var(--text); font-size: 24px; line-height: 1.25; }
   .continue {
     width: 100%;
     min-height: 48px;
     margin-top: 22px;
     border: 0;
     border-radius: 24px;
-    background: var(--brand);
+    background: var(--pixiv-blue);
     color: white;
     font-weight: 700;
     cursor: pointer;
+    transition: background 150ms ease, transform 150ms ease, opacity 150ms ease;
   }
+  .continue:hover:not(:disabled) { background: var(--pixiv-blue-hover); }
+  .continue:active:not(:disabled) { transform: translateY(1px); }
   .continue:disabled { opacity: 0.45; cursor: default; }
   @media (max-width: 600px) {
-    .setup-page { place-items: stretch; background: white; }
-    .setup-card { align-self: center; padding: 18px 4px; border: 0; box-shadow: none; }
+    .setup-page {
+      place-items: start stretch;
+      padding-top: max(56px, calc(env(safe-area-inset-top) + 28px));
+      background: white;
+    }
+    .setup-card {
+      align-self: start;
+      width: 100%;
+      justify-self: stretch;
+      padding: 0;
+      border: 0;
+      box-shadow: none;
+    }
+    .setup-header { margin-bottom: 22px; }
+    h1 { font-size: 22px; }
   }
 </style>

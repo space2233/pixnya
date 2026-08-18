@@ -79,9 +79,9 @@
   h1 { margin: 0 0 24px; font-size: 28px; }
   h2 { margin: 24px 4px 10px; color: var(--muted); font-size: 13px; font-weight: 650; }
   .settings-list { overflow: hidden; border: 1px solid var(--line); border-radius: 18px; background: white; }
-  a { display: flex; min-height: 64px; align-items: center; gap: 14px; padding: 0 18px; border-bottom: 1px solid var(--line); color: var(--ink); text-decoration: none; }
+  a { display: flex; min-height: 64px; align-items: center; gap: 14px; padding: 0 18px; border-bottom: 1px solid var(--line); color: var(--text); text-decoration: none; }
   a:last-child { border-bottom: 0; }
-  .icon { display: grid; width: 38px; height: 38px; place-items: center; color: var(--brand); border-radius: 50%; background: #eef8ff; }
+  .icon { display: grid; width: 38px; height: 38px; place-items: center; color: var(--pixiv-blue); border-radius: 50%; background: #eef8ff; }
   strong { font-size: 15px; }
   em { overflow: hidden; margin-left: auto; color: var(--muted); font-size: 13px; font-style: normal; text-overflow: ellipsis; white-space: nowrap; }
   i { margin-left: auto; color: #aeb4ba; font-size: 26px; font-style: normal; }

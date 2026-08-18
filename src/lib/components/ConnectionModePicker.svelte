@@ -48,7 +48,13 @@
   {/each}
 </div>
 
-<div class="probe-state" class:failed={state === "failed"} aria-live="polite">
+<div
+  class="probe-state"
+  class:checking={state === "checking"}
+  class:available={state === "available"}
+  class:failed={state === "failed"}
+  aria-live="polite"
+>
   <span class:checking={state === "checking"}></span>
   <strong>{statusLabels[state]()}</strong>
   {#if message}<em>{message}</em>{/if}
@@ -56,45 +62,55 @@
 
 <style>
   .mode-list {
-    overflow: hidden;
-    border: 1px solid var(--line);
-    border-radius: 16px;
-    background: white;
+    display: grid;
+    gap: 10px;
   }
   .mode-list button {
     display: flex;
     width: 100%;
-    min-height: 64px;
+    min-height: 60px;
     align-items: center;
-    gap: 16px;
-    padding: 0 20px;
-    border: 0;
-    border-bottom: 1px solid var(--line);
-    background: transparent;
-    color: var(--ink);
+    gap: 14px;
+    padding: 0 17px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: white;
+    color: var(--text);
     text-align: left;
     cursor: pointer;
+    transition: border-color 150ms ease, background 150ms ease, box-shadow 150ms ease;
   }
-  .mode-list button:last-child { border-bottom: 0; }
-  .mode-list button.selected { background: #f2f9ff; }
+  .mode-list button:hover:not(:disabled) { border-color: #d7e8f3; background: #f8fcff; }
+  .mode-list button.selected {
+    border-color: var(--pixiv-blue);
+    background: #eef8ff;
+    box-shadow: 0 0 0 1px rgba(0, 150, 250, 0.08);
+  }
+  .mode-list button:disabled { cursor: default; opacity: 0.65; }
   .radio {
     width: 21px;
     height: 21px;
     box-sizing: border-box;
+    flex: 0 0 auto;
     border: 2px solid #9aa0a6;
     border-radius: 50%;
+    background: white;
+    transition: border-width 150ms ease, border-color 150ms ease;
   }
   .selected .radio {
-    border: 6px solid var(--brand);
+    border: 6px solid var(--pixiv-blue);
   }
-  strong { font-size: 15px; }
+  strong { font-size: 14px; }
   .probe-state {
     display: flex;
-    min-height: 28px;
+    min-height: 42px;
     align-items: center;
     gap: 9px;
-    margin-top: 14px;
+    margin-top: 12px;
+    padding: 0 14px;
     color: var(--muted);
+    border-radius: 12px;
+    background: var(--soft-surface);
   }
   .probe-state > span {
     width: 8px;
@@ -104,9 +120,12 @@
     background: #aeb4ba;
   }
   .probe-state > span.checking {
-    background: var(--brand);
+    background: var(--pixiv-blue);
     animation: pulse 0.9s ease-in-out infinite alternate;
   }
+  .probe-state.checking { color: var(--pixiv-blue); }
+  .probe-state.available { color: var(--success); }
+  .probe-state.available > span { background: var(--success); }
   .probe-state.failed { color: var(--danger); }
   .probe-state.failed > span { background: var(--danger); }
   .probe-state em {
