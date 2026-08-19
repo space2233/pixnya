@@ -57,15 +57,19 @@
     const previous = bookmarked;
     const next = !previous;
     const account = bookmarkAccount;
+    const illustrationId = illustration.id;
     bookmarked = next;
     bookmarkPending = true;
     bookmarkError = "";
     try {
-      await setIllustrationBookmark(illustration.id, next);
-      publishIllustrationBookmarkState(account, illustration.id, next);
+      await setIllustrationBookmark(illustrationId, next);
+      if (bookmarkAccount !== account) return;
+      publishIllustrationBookmarkState(account, illustrationId, next);
     } catch (error) {
-      bookmarked = previous;
-      bookmarkError = describeDataFailure(error);
+      if (bookmarkAccount === account && illustration.id === illustrationId) {
+        bookmarked = previous;
+        bookmarkError = describeDataFailure(error);
+      }
     } finally {
       bookmarkPending = false;
     }

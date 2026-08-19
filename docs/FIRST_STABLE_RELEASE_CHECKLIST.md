@@ -25,7 +25,9 @@
 - [x] Draft Release 的 SPDX 2.3 SBOM 与逐依赖许可证归档覆盖 npm、Cargo 和最终 Android Gradle/Maven 锁图；清理无效配置后重新解析的 343 组件 Gradle 图及其 378 份组件/父 POM 证据已重建并离线复核。
 - [x] 所有平台和附件验证成功后，Release job 才通过 Git refs API 原子创建 tag 并回读确认其指向已验证 artifact 的源码 SHA；若上传中断，只允许复用同一源码 SHA 且尚无 Release/仍为 Draft 的幂等续传，已发布或不同源码 SHA 一律失败，上传后再次核对 tag 与 10 个公开附件。
 
-## 3. 发布前阻塞项
+## 3. 发布闸门与后续治理
+
+3.1、3.3 与 3.4 是发布闸门；3.2 和 3.5 中明确标为“后续非阻塞”的未勾选项只用于持续加固，不否定已经通过自动检查、签名和活体验收的稳定版。
 
 ### 3.1 固定可复现源码
 
@@ -36,7 +38,7 @@
 - [x] 所有用户可见版本元数据由发布边界测试强制一致。
 - [x] 从固定提交 `95e7bf74a7f9ab5cc7cbe13f460c29e2a8580705` 触发 `1.4.3` 签名 Draft；GitHub Actions run `32128825447` 完成五平台构建、签名与 10 附件汇总，run `32242090056` 复用同一批不可变 artifacts 更新 provenance，Publish run `32242238581` 复验后公开。
 
-### 3.2 长期签名材料
+### 3.2 长期签名材料与后续非阻塞治理
 
 - [x] 提供不把密码写入文件或命令行、使用工作树外 staging 原子落盘、并可从既有恢复目录重新验密和幂等上传全部 Secrets 的交互式初始化脚本 `scripts/provision-release-signing.ps1`。
 - [x] Tauri updater 长期密钥已生成，私钥已保存两份离线备份。
@@ -44,9 +46,9 @@
 - [x] 独立的 Android 更新清单签名密钥已生成，并已保存两份离线备份。
 - [x] GitHub 已创建 `production-release` 环境并只允许 `main` 分支部署。
 - [x] 13 个生产构建与签名 Secrets 已配置到 `production-release` 环境，并核对名称完整。
-- [ ] 为 `production-release` 启用 required reviewers；当前签名工作流已限制为 `main` 与受保护环境。
-- [ ] 为 `v*` 配置禁止更新和删除的 tag ruleset；工作流只负责原子创建，仓库规则负责阻止创建后的 tag 被移动。
-- [ ] 用一份故意错误的公钥运行发布验证，确认工作流 fail closed。
+- [ ] 后续非阻塞：为 `production-release` 启用 required reviewers；当前签名工作流已限制为 `main` 与受保护环境。
+- [x] `v*` 已配置禁止更新和删除的 tag ruleset；工作流负责原子创建，仓库规则阻止 tag 被移动或删除。
+- [ ] 后续非阻塞：在隔离测试仓库用一份故意错误的公钥运行完整发布验证；当前仓库已有错误公钥/签名的自动回归，不用生产 Release 做破坏性演练。
 
 ### 3.3 匿名更新源
 
@@ -68,7 +70,7 @@
 - [x] 已在 `docs/PUBLIC_DISTRIBUTION_DECISION.md`、README、`SECURITY.md` 与 `PRIVACY.md` 集中记录上游 App API、OAuth 参数和风险边界；Release 正文保持简短，只有长期边界发生实质变化时才明确提示并链接更新后的说明。
 - [x] 标准 GPL-3.0 正文、第三方清单、逐依赖归档与可复现 SPDX SBOM 已在最终 Gradle 锁图上完成 Maven 许可证证据闭环；非标准化条款以明确的 `LicenseRef` 和上游声明证据保留。
 - [x] 增加 `PRIVACY.md` 与 `SECURITY.md`，说明本地数据、无遥测、低安全连接风险和私密漏洞报告方式。
-- [ ] Windows 若没有 Authenticode 证书，在下载页明确 SmartScreen 提示；取得证书后再加入代码签名。
+- [ ] 后续非阻塞：取得 Authenticode 证书后加入 Windows 代码签名；按当前产品决定，简洁下载说明不重复 SmartScreen 警告。
 
 ## 4. Draft 到 stable 的人工步骤
 

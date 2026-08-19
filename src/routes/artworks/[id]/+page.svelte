@@ -243,20 +243,25 @@
 
   async function toggleBookmark() {
     if (!detail || bookmarkPending) return;
+    const targetDetail = detail;
     const previous = bookmarked;
     const next = !previous;
     const account = bookmarkAccount;
+    const illustrationId = targetDetail.illustration.id;
     bookmarked = next;
     bookmarkPending = true;
     bookmarkError = "";
     try {
-      await setIllustrationBookmark(detail.illustration.id, next, bookmarkRestrict);
-      detail.illustration.isBookmarked = next;
-      detail.totalBookmarks = Math.max(0, detail.totalBookmarks + (next ? 1 : -1));
-      publishIllustrationBookmarkState(account, detail.illustration.id, next);
+      await setIllustrationBookmark(illustrationId, next, bookmarkRestrict);
+      if (bookmarkAccount !== account) return;
+      targetDetail.illustration.isBookmarked = next;
+      targetDetail.totalBookmarks = Math.max(0, targetDetail.totalBookmarks + (next ? 1 : -1));
+      publishIllustrationBookmarkState(account, illustrationId, next);
     } catch (error) {
-      bookmarked = previous;
-      bookmarkError = describeDataFailure(error);
+      if (detail === targetDetail && bookmarkAccount === account) {
+        bookmarked = previous;
+        bookmarkError = describeDataFailure(error);
+      }
     } finally {
       bookmarkPending = false;
     }

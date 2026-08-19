@@ -138,22 +138,26 @@
   async function applyNovelBatch(action: BookmarkBatchAction) {
     if (batchBusy || selectedNovelIds.length === 0) return;
     if (action === "remove" && !window.confirm(m.bookmark_remove_confirm({ count: selectedNovelIds.length }))) return;
+    const expectedUserId = $session.user?.id;
+    const expectedKey = requestedSession;
+    const expectedTag = batchTag.trim();
+    const expectedResourceIds = [...selectedNovelIds];
     batchBusy = true;
     batchStatus = "";
     try {
-      const expectedUserId = $session.user?.id;
       if (!expectedUserId) throw { kind: "authentication_required" };
       const updates = [];
-      for (const resourceId of selectedNovelIds) {
+      for (const resourceId of expectedResourceIds) {
         const detail = await getBookmarkDetail("novel", resourceId);
-        updates.push(buildBookmarkBatchUpdate("novel", resourceId, detail, action, batchTag));
+        updates.push(buildBookmarkBatchUpdate("novel", resourceId, detail, action, expectedTag));
       }
       const results = await batchUpdateBookmarks(updates, expectedUserId);
       const succeeded = new Set(results.filter((item) => item.succeeded).map((item) => item.resourceId));
+      if ($session.user?.id !== expectedUserId) return;
       if (action === "remove") {
-        const account = $session.user?.id ?? "logged-in";
-        for (const resourceId of succeeded) publishNovelBookmarkState(account, resourceId, false);
+        for (const resourceId of succeeded) publishNovelBookmarkState(expectedUserId, resourceId, false);
       }
+      if (requestedSession !== expectedKey) return;
       if (action === "remove" || ((action === "public" || action === "private") && action !== bookmarkRestrict)) {
         novels = novels.filter((item) => !succeeded.has(item.id));
       }
@@ -166,7 +170,9 @@
         requestedSession = "";
       }
     } catch (error) {
-      batchStatus = describeDataFailure(error);
+      if ($session.user?.id === expectedUserId && requestedSession === expectedKey) {
+        batchStatus = describeDataFailure(error);
+      }
     } finally {
       batchBusy = false;
     }
@@ -174,6 +180,7 @@
 
   async function loadNovels(key: string) {
     const sequence = ++requestSequence;
+    loadingMore = false;
     status = "loading";
     errorMessage = "";
     try {
@@ -192,17 +199,21 @@
   async function loadMore() {
     const cursor = nextCursor;
     if (!cursor || loadingMore) return;
+    const key = requestedSession;
+    const sequence = ++requestSequence;
     loadingMore = true;
     errorMessage = "";
     try {
       const page = await requestPage(cursor);
+      if (sequence !== requestSequence || key !== requestedSession) return;
       const known = new Set(novels.map((novel) => novel.id));
       novels = [...novels, ...page.novels.filter((novel) => !known.has(novel.id))];
       nextCursor = page.nextCursor ?? null;
     } catch (error) {
+      if (sequence !== requestSequence || key !== requestedSession) return;
       errorMessage = describeDataFailure(error);
     } finally {
-      loadingMore = false;
+      if (sequence === requestSequence && key === requestedSession) loadingMore = false;
     }
   }
 </script>

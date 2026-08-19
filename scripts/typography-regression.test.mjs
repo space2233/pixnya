@@ -58,6 +58,13 @@ test("all application text uses the shared six-level typography scale", () => {
         violations.push(`${relative}: ${value}`);
       }
     }
+    for (const match of source.matchAll(/(?:^|[;{])\s*font\s*:\s*([^;}\r\n]+)/gm)) {
+      const value = match[1].trim();
+      if (/\b\d+(?:\.\d+)?(?:px|rem)\b/.test(value)) {
+        const relative = path.relative(projectRoot, file).replaceAll("\\", "/");
+        violations.push(`${relative}: font shorthand ${value}`);
+      }
+    }
   }
 
   assert.deepEqual(violations, []);

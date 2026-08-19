@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 const INDEX_FILE: &str = "index.json";
 const INDEX_STAGING_FILE: &str = ".index.staging";
 const INDEX_BACKUP_FILE: &str = ".index.backup";
-const FORMAT_VERSION: u8 = 1;
+const FORMAT_VERSION: u8 = 2;
 const MAX_SOURCE_KEY_BYTES: usize = 4096;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -132,7 +132,12 @@ impl MediaCache {
 
         let path = self.entry_path(&id, entry.scope);
         let bytes = match fs::read(path) {
-            Ok(bytes) if bytes.len() as u64 == entry.size_bytes => bytes,
+            Ok(bytes)
+                if bytes.len() as u64 == entry.size_bytes
+                    && content_sha256(&bytes) == entry.content_sha256 =>
+            {
+                bytes
+            }
             _ => {
                 self.remove_indexed_entry(&id, &entry);
                 self.persist_index()?;
@@ -182,6 +187,7 @@ impl MediaCache {
                 scope,
                 kind,
                 size_bytes: bytes.len() as u64,
+                content_sha256: content_sha256(bytes),
                 access_order,
             },
         );
@@ -336,6 +342,7 @@ struct StoredEntry {
     scope: CacheScope,
     kind: CacheKind,
     size_bytes: u64,
+    content_sha256: String,
     access_order: u64,
 }
 
@@ -376,6 +383,10 @@ fn cache_id(scope: CacheScope, kind: CacheKind, source_key: &str) -> String {
     digest.update(b"\0");
     digest.update(source_key.as_bytes());
     format!("{:x}", digest.finalize())
+}
+
+fn content_sha256(bytes: &[u8]) -> String {
+    format!("{:x}", Sha256::digest(bytes))
 }
 
 fn valid_cache_id(id: &str) -> bool {
@@ -547,6 +558,37 @@ mod tests {
                 .unwrap(),
             None
         );
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn same_length_cache_corruption_is_not_served_after_reopen() {
+        let root = test_root("corrupt-bytes");
+        {
+            let mut cache = MediaCache::open(&root, Some(64)).unwrap();
+            cache
+                .put(
+                    CacheScope::Verified,
+                    CacheKind::Thumbnail,
+                    "corrupt",
+                    b"image",
+                )
+                .unwrap();
+        }
+        let data_file = walk_files(&root)
+            .into_iter()
+            .find(|path| path.extension().is_some_and(|extension| extension == "bin"))
+            .unwrap();
+        fs::write(data_file, b"xxxxx").unwrap();
+
+        let mut reopened = MediaCache::open(&root, Some(64)).unwrap();
+        assert_eq!(
+            reopened
+                .get(CacheScope::Verified, CacheKind::Thumbnail, "corrupt", 16)
+                .unwrap(),
+            None
+        );
+        assert_eq!(reopened.stats().entry_count, 0);
         fs::remove_dir_all(root).unwrap();
     }
 

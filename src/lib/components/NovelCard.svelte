@@ -40,15 +40,21 @@
   async function toggleBookmark() {
     if (bookmarkPending) return;
     const previous = bookmarked;
-    bookmarked = !previous;
+    const next = !previous;
+    const account = bookmarkAccount;
+    const novelId = novel.id;
+    bookmarked = next;
     bookmarkPending = true;
     bookmarkError = "";
     try {
-      await setNovelBookmark(novel.id, bookmarked);
-      publishNovelBookmarkState(bookmarkAccount, novel.id, bookmarked);
+      await setNovelBookmark(novelId, next);
+      if (bookmarkAccount !== account) return;
+      publishNovelBookmarkState(account, novelId, next);
     } catch (error) {
-      bookmarked = previous;
-      bookmarkError = describeDataFailure(error);
+      if (bookmarkAccount === account && novel.id === novelId) {
+        bookmarked = previous;
+        bookmarkError = describeDataFailure(error);
+      }
     } finally {
       bookmarkPending = false;
     }

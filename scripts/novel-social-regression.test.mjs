@@ -52,3 +52,25 @@ test("novel UI exposes real search, account lists, bookmarks, and comments", asy
   for (const symbol of ["getNovelComments", "addNovelComment"]) assert.match(comments, new RegExp(symbol));
   for (const symbol of ["getNovelCommentReplies", "addNovelComment"]) assert.match(replies, new RegExp(symbol));
 });
+
+test("novel pagination discards a page requested for a stale list key", async () => {
+  const novels = await source("src/routes/novels/+page.svelte");
+  const loadMore = novels.slice(
+    novels.indexOf("async function loadMore()"),
+    novels.indexOf("</script>"),
+  );
+  assert.match(loadMore, /const key = requestedSession/);
+  assert.match(loadMore, /const sequence = \+\+requestSequence/);
+  assert.match(
+    loadMore,
+    /await requestPage\(cursor\)[\s\S]*?if \(sequence !== requestSequence \|\| key !== requestedSession\) return;[\s\S]*?novels =/,
+  );
+  assert.match(
+    loadMore,
+    /catch \(error\) \{[\s\S]*?if \(sequence !== requestSequence \|\| key !== requestedSession\) return;[\s\S]*?errorMessage =/,
+  );
+  assert.match(
+    loadMore,
+    /finally \{[\s\S]*?if \(sequence === requestSequence && key === requestedSession\) loadingMore = false;/,
+  );
+});

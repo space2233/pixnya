@@ -214,6 +214,6 @@
   .diagnostics { margin-top: 18px; }
   .diagnostics summary { cursor: pointer; font-weight: 700; }
   .diagnostics button + button { margin-left: 8px; }
-  textarea { width: 100%; box-sizing: border-box; margin-top: 14px; padding: 12px; resize: vertical; border: 1px solid var(--line); border-radius: 12px; font: 12px/1.5 monospace; }
+  textarea { width: 100%; box-sizing: border-box; margin-top: 14px; padding: 12px; resize: vertical; border: 1px solid var(--line); border-radius: 12px; font: var(--type-small)/1.5 monospace; }
   @media (max-width: 600px) { .network-page { padding: 22px 18px 42px; } .mode-card, .diagnostics { padding: 14px; } }
 </style>

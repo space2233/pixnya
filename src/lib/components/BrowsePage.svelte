@@ -309,17 +309,19 @@
   async function applyBookmarkBatch(action: BookmarkBatchAction) {
     if (batchBusy || selectedBookmarkIds.length === 0) return;
     if (action === "remove" && !window.confirm(m.bookmark_remove_confirm({ count: selectedBookmarkIds.length }))) return;
+    const expectedUserId = $session.user?.id;
+    const expectedKey = requestedKey;
     batchBusy = true;
     batchStatus = "";
     try {
-      const expectedUserId = $session.user?.id;
       if (!expectedUserId) throw { kind: "authentication_required" };
       const results = await batchUpdateBookmarks(await buildBookmarkUpdates(action), expectedUserId);
       const succeeded = new Set(results.filter((item) => item.succeeded).map((item) => item.resourceId));
+      if ($session.user?.id !== expectedUserId) return;
       if (action === "remove") {
-        const account = $session.user?.id ?? "logged-in";
-        for (const resourceId of succeeded) publishIllustrationBookmarkState(account, resourceId, false);
+        for (const resourceId of succeeded) publishIllustrationBookmarkState(expectedUserId, resourceId, false);
       }
+      if (requestedKey !== expectedKey) return;
       const currentRestrict: BookmarkRestrict = selectedFilter === "private" ? "private" : "public";
       if (action === "remove" || ((action === "public" || action === "private") && action !== currentRestrict)) {
         illustrations = illustrations.filter((item) => !succeeded.has(item.id));
@@ -333,7 +335,9 @@
         requestedKey = "";
       }
     } catch (error) {
-      batchStatus = describeDataFailure(error);
+      if ($session.user?.id === expectedUserId && requestedKey === expectedKey) {
+        batchStatus = describeDataFailure(error);
+      }
     } finally {
       batchBusy = false;
     }

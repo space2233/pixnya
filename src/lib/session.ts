@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { writable } from "svelte/store";
+import { clearBookmarkOverlaysForSessionTransition } from "$lib/bookmark-session-transition";
 import { reconcilePreferredConnectionMode } from "$lib/preferences";
 import type { ConnectionMode, SessionSnapshot } from "$lib/types";
 
@@ -11,6 +12,7 @@ export const sessionRestoring = writable<boolean>(true);
 
 let initialization: Promise<SessionSnapshot> | null = null;
 let unlisten: UnlistenFn | null = null;
+let currentSnapshot = loggedOut;
 
 export function initializeSession(): Promise<SessionSnapshot> {
   if (initialization) return initialization;
@@ -30,7 +32,7 @@ async function initialize(): Promise<SessionSnapshot> {
   } catch (error) {
     unlisten?.();
     unlisten = null;
-    session.set(loggedOut);
+    applySessionSnapshot(loggedOut);
     initialization = null;
     throw error;
   } finally {
@@ -39,6 +41,8 @@ async function initialize(): Promise<SessionSnapshot> {
 }
 
 export function applySessionSnapshot(snapshot: SessionSnapshot): void {
+  clearBookmarkOverlaysForSessionTransition(currentSnapshot, snapshot);
+  currentSnapshot = snapshot;
   reconcilePreferredConnectionMode(snapshot);
   session.set(snapshot);
 }
@@ -59,6 +63,6 @@ export function disposeSessionListenerForTests(): void {
   unlisten?.();
   unlisten = null;
   initialization = null;
-  session.set(loggedOut);
+  applySessionSnapshot(loggedOut);
   sessionRestoring.set(true);
 }
