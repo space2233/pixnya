@@ -1,7 +1,7 @@
 # PixNya 首个正式版发布清单
 
-> 状态：首个稳定版与后续 `1.1.0`–`1.4.0` 已发布；当前维护候选为 `1.4.3`
-> 当前升级基线：公开稳定版 `1.4.0`
+> 状态：首个稳定版与后续 `1.1.0`–`1.4.3` 已发布
+> 当前升级基线：公开稳定版 `1.4.3`
 > 正式支持：Windows x64/ARM64（NSIS）、Linux x64（AppImage）、Android ARM64/ARM32（split APK）
 
 候选生命周期：固定 `main` 提交先生成五个平台签名 Draft；完成自动验证和本轮声明的活体验收后，再由独立 Publish 工作流复验并切换为 latest stable。生产签名密钥保持不变。
@@ -34,7 +34,7 @@
 - [x] 固定候选提交在 GitHub Actions 完成 Linux 与全部正式平台验证。
 - [x] 提交并推送完整候选源码，发布时确认 `HEAD`、`origin/main` 与来源 SHA 一致。
 - [x] 所有用户可见版本元数据由发布边界测试强制一致。
-- [x] 从固定提交 `95e7bf74a7f9ab5cc7cbe13f460c29e2a8580705` 触发 `1.4.3` 签名 Draft；GitHub Actions run `32128825447` 完成五平台构建、签名与 10 附件汇总。
+- [x] 从固定提交 `95e7bf74a7f9ab5cc7cbe13f460c29e2a8580705` 触发 `1.4.3` 签名 Draft；GitHub Actions run `32128825447` 完成五平台构建、签名与 10 附件汇总，run `32242090056` 复用同一批不可变 artifacts 更新 provenance，Publish run `32242238581` 复验后公开。
 
 ### 3.2 长期签名材料
 
@@ -81,4 +81,4 @@
 
 ## 5. 当前结论
 
-`1.4.0` 仍是公开 latest stable；`1.4.3` 的固定候选、五平台签名 Draft、10 个附件、Windows x64 与 Android ARM64 升级/数据/界面验收均已完成，可以运行独立 Publish 工作流。`1.4.2` Draft 不公开。
+`1.4.3` 已是公开 latest stable；固定候选、五平台签名、10 个附件、Windows x64 与 Android ARM64 升级/数据/界面验收、匿名更新清单及三套签名均已复验。未公开的 `1.4.2`/`1.4.1` Draft Release 已删除；历史 tag 因仓库不可删除 ruleset 保持原 SHA。

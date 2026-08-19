@@ -41,7 +41,8 @@ test("all user-visible package versions agree on the stable source version", asy
   }
   assert.ok(
     readme.includes("当前源码版本 `" + expectedVersion + "`") ||
-      readme.includes("当前源码版本为 `" + expectedVersion + "`"),
+      readme.includes("当前源码版本为 `" + expectedVersion + "`") ||
+      readme.includes("当前公开稳定版与源码版本均为 `" + expectedVersion + "`"),
   );
 });
 
