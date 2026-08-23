@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { m } from "$lib/i18n";
+import { clearPixivImageMemoryCache } from "$lib/pixiv-image-memory-cache";
 import type {
   CommandFailure,
   IllustrationDetail,
@@ -348,8 +349,10 @@ export function getMediaCacheStats(): Promise<MediaCacheStats> {
   return invoke<MediaCacheStats>("get_media_cache_stats");
 }
 
-export function clearMediaCache(): Promise<MediaCacheStats> {
-  return invoke<MediaCacheStats>("clear_media_cache", { confirmed: true });
+export async function clearMediaCache(): Promise<MediaCacheStats> {
+  const result = await invoke<MediaCacheStats>("clear_media_cache", { confirmed: true });
+  clearPixivImageMemoryCache();
+  return result;
 }
 
 export function getStorageStatus(): Promise<StorageStatus> {

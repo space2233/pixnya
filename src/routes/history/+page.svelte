@@ -143,7 +143,7 @@
     {:else if snapshot}
       <section class="history-panel">
         <div class="toolbar">
-          <label><Icon name="search" size={16} /><input bind:value={query} placeholder={m.history_search_placeholder()} aria-label={m.history_search_label()} /></label>
+          <label><Icon name="search" size={16} /><input bind:value={query} type="search" placeholder={m.history_search_placeholder()} aria-label={m.history_search_label()} /></label>
           <div class="kind-filters" aria-label={m.history_type_label()}>
             {#each kindOptions as option}
               <button class:active={kind === option.id} type="button" onclick={() => (kind = option.id)}>{option.label()}</button>
@@ -236,4 +236,5 @@
     .thumbnail { width: 68px; height: 58px; }
     .history-list article > a > i { display: none; }
   }
+  @media (pointer: coarse) { .toolbar label { height: 44px; } }
 </style>

@@ -2,7 +2,9 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { writable } from "svelte/store";
 import { clearBookmarkOverlaysForSessionTransition } from "$lib/bookmark-session-transition";
+import { clearPixivImageMemoryCache } from "$lib/pixiv-image-memory-cache";
 import { reconcilePreferredConnectionMode } from "$lib/preferences";
+import { clearProfileMediaSnapshots } from "$lib/profile-media-memory";
 import type { ConnectionMode, SessionSnapshot } from "$lib/types";
 
 const loggedOut: SessionSnapshot = { loggedIn: false };
@@ -42,9 +44,20 @@ async function initialize(): Promise<SessionSnapshot> {
 
 export function applySessionSnapshot(snapshot: SessionSnapshot): void {
   clearBookmarkOverlaysForSessionTransition(currentSnapshot, snapshot);
+  if (mediaStateIdentity(currentSnapshot) !== mediaStateIdentity(snapshot)) {
+    clearPixivImageMemoryCache();
+    clearProfileMediaSnapshots();
+  }
   currentSnapshot = snapshot;
   reconcilePreferredConnectionMode(snapshot);
   session.set(snapshot);
+}
+
+function mediaStateIdentity(snapshot: SessionSnapshot): string {
+  if (!snapshot.loggedIn) return "logged-out";
+  const account = snapshot.user?.id?.trim() || "logged-in";
+  const scope = snapshot.connectionMode === "compatible" ? "insecure" : "verified";
+  return `${account}:${scope}`;
 }
 
 export async function logoutSession(): Promise<SessionSnapshot> {

@@ -16,6 +16,7 @@
     writeDesktopSidebarExpanded,
   } from "$lib/preferences";
   import { initializeSession, session, sessionRestoring } from "$lib/session";
+  import { recordSearchHistory } from "$lib/search-history";
   import { m } from "$lib/i18n";
   import Icon from "./Icon.svelte";
   import PixivImage from "./PixivImage.svelte";
@@ -84,6 +85,7 @@
   function submitSearch(event: SubmitEvent) {
     event.preventDefault();
     const query = searchQuery.trim();
+    if (query) recordSearchHistory(query);
     void goto(query ? `/search?q=${encodeURIComponent(query)}` : "/search");
   }
 
@@ -151,7 +153,7 @@
 
       <form class="search-box" role="search" onsubmit={submitSearch}>
         <Icon name="search" size={18} />
-        <input bind:value={searchQuery} type="search" placeholder={m.shell_search_placeholder()} aria-label={m.navigation_search()} />
+        <input bind:value={searchQuery} type="search" maxlength="100" placeholder={m.shell_search_placeholder()} aria-label={m.navigation_search()} />
       </form>
 
       <div class="top-actions">

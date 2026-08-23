@@ -6,7 +6,16 @@ import {
   writeR18DefaultVisible,
   writeReducedMotion,
 } from "$lib/preferences";
-import { readSearchHistory } from "$lib/search-history";
+import {
+  SEARCH_HISTORY_LIMIT_KEY,
+  SEARCH_HISTORY_LIMIT_OPTIONS,
+  readSearchHistory,
+  readSearchHistoryLimit,
+  normalizeSearchHistoryValue,
+  searchHistoryLimitOrDefault,
+  writeSearchHistoryLimit,
+  type SearchHistoryLimit,
+} from "$lib/search-history";
 
 const SEARCH_HISTORY_KEY = "pixiv-client.search-history.v1";
 const NOVEL_PROGRESS_PREFIX = "pixiv-client:novel-progress:";
@@ -17,6 +26,7 @@ const MAX_PROGRESS_ITEMS = 10_000;
 
 export interface FrontendBackupState {
   searchHistory: string[];
+  searchHistoryLimit?: SearchHistoryLimit;
   novelReadingProgress: Record<string, number>;
   sidebarExpanded: boolean;
   reducedMotion: boolean;
@@ -39,6 +49,7 @@ export function collectFrontendBackupState(): FrontendBackupState {
   }
   return {
     searchHistory: readSearchHistory(),
+    searchHistoryLimit: readSearchHistoryLimit(),
     novelReadingProgress,
     sidebarExpanded: readDesktopSidebarExpanded(),
     reducedMotion: readReducedMotion(),
@@ -53,6 +64,7 @@ export function restoreFrontendBackupState(state: FrontendBackupState): void {
   const previous = new Map(keys.map((key) => [key, localStorage.getItem(key)]));
   try {
     for (const key of keys) localStorage.removeItem(key);
+    writeSearchHistoryLimit(searchHistoryLimitOrDefault(state.searchHistoryLimit));
     localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(state.searchHistory));
     for (const [novelId, progress] of Object.entries(state.novelReadingProgress)) {
       localStorage.setItem(`${NOVEL_PROGRESS_PREFIX}${novelId}`, String(progress / 1_000_000));
@@ -70,7 +82,7 @@ export function restoreFrontendBackupState(state: FrontendBackupState): void {
 }
 
 function backupKeys(): string[] {
-  const keys = [SEARCH_HISTORY_KEY, SIDEBAR_KEY, REDUCED_MOTION_KEY, R18_KEY];
+  const keys = [SEARCH_HISTORY_KEY, SEARCH_HISTORY_LIMIT_KEY, SIDEBAR_KEY, REDUCED_MOTION_KEY, R18_KEY];
   if (typeof localStorage === "undefined") return keys;
   for (let index = 0; index < localStorage.length; index += 1) {
     const key = localStorage.key(index);
@@ -80,14 +92,18 @@ function backupKeys(): string[] {
 }
 
 function validateFrontendBackupState(state: FrontendBackupState): void {
-  if (!Array.isArray(state.searchHistory) || state.searchHistory.length > 8) throw new Error("invalid_backup");
+  if (!Array.isArray(state.searchHistory)) throw new Error("invalid_backup");
+  const limit = searchHistoryLimitOrDefault(state.searchHistoryLimit);
+  if (!SEARCH_HISTORY_LIMIT_OPTIONS.includes(limit) || (limit !== null && state.searchHistory.length > limit)) {
+    throw new Error("invalid_backup");
+  }
   if (Object.keys(state.novelReadingProgress).length > MAX_PROGRESS_ITEMS) throw new Error("invalid_backup");
   for (const [id, progress] of Object.entries(state.novelReadingProgress)) {
     if (!/^[1-9][0-9]{0,19}$/.test(id) || !Number.isInteger(progress) || progress < 0 || progress > 1_000_000) {
       throw new Error("invalid_backup");
     }
   }
-  if (state.searchHistory.some((item) => typeof item !== "string" || !item.trim() || item.length > 512)) {
+  if (state.searchHistory.some((item) => typeof item !== "string" || normalizeSearchHistoryValue(item) !== item)) {
     throw new Error("invalid_backup");
   }
 }

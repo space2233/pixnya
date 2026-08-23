@@ -22,6 +22,7 @@
     clearSearchHistory,
     readSearchHistory,
     recordSearchHistory,
+    SEARCH_HISTORY_CHANGED_EVENT,
   } from "$lib/search-history";
   import type {
     IllustrationSummary,
@@ -46,6 +47,7 @@
     users: UserPreview[];
     trending: TrendingTag[];
     history: string[];
+    historyVisibleCount: number;
     resultStatus: "idle" | "loading" | "ready" | "error";
     trendingStatus: "idle" | "loading" | "ready" | "error";
     resultError: string;
@@ -73,6 +75,7 @@
   let users = $state<UserPreview[]>([]);
   let trending = $state<TrendingTag[]>([]);
   let history = $state<string[]>([]);
+  let historyVisibleCount = $state(20);
   let resultStatus = $state<"idle" | "loading" | "ready" | "error">("idle");
   let trendingStatus = $state<"idle" | "loading" | "ready" | "error">("idle");
   let resultError = $state("");
@@ -85,6 +88,7 @@
   let requestSequence = 0;
   let submittedQuery = $derived(page.url.searchParams.get("q")?.trim() ?? "");
   let displayTags = $derived(trending.length ? trending.slice(0, 12) : []);
+  let visibleHistory = $derived(history.slice(0, historyVisibleCount));
 
   export const snapshot = {
     capture: () => rememberNavigationView<SearchSnapshot>({
@@ -95,6 +99,7 @@
       users,
       trending,
       history,
+      historyVisibleCount,
       resultStatus,
       trendingStatus,
       resultError,
@@ -115,6 +120,9 @@
       users = value.users;
       trending = value.trending;
       history = value.history;
+      historyVisibleCount = Number.isInteger(value.historyVisibleCount)
+        ? Math.max(20, value.historyVisibleCount)
+        : 20;
       resultStatus = value.resultStatus === "loading" ? "idle" : value.resultStatus;
       trendingStatus = value.trendingStatus === "loading" ? "idle" : value.trendingStatus;
       resultError = value.resultError;
@@ -128,7 +136,13 @@
   };
 
   onMount(() => {
-    history = readSearchHistory();
+    const syncHistory = () => {
+      history = readSearchHistory();
+      historyVisibleCount = Math.max(20, Math.min(historyVisibleCount, history.length));
+    };
+    syncHistory();
+    window.addEventListener(SEARCH_HISTORY_CHANGED_EVENT, syncHistory);
+    return () => window.removeEventListener(SEARCH_HISTORY_CHANGED_EVENT, syncHistory);
   });
 
   $effect(() => {
@@ -173,10 +187,12 @@
 
   function saveHistory(value: string) {
     history = recordSearchHistory(value);
+    historyVisibleCount = Math.max(20, Math.min(historyVisibleCount, history.length));
   }
 
   function clearHistory() {
     history = [];
+    historyVisibleCount = 20;
     clearSearchHistory();
   }
 
@@ -294,14 +310,15 @@
 
     <form class="large-search" role="search" onsubmit={submitSearch}>
       <Icon name="search" size={21} />
-      <input bind:value={query} type="search" placeholder={m.search_placeholder()} aria-label={m.search_content_label()} />
+      <input bind:value={query} type="search" maxlength="100" placeholder={m.search_placeholder()} aria-label={m.search_content_label()} />
       <button type="submit">{m.search_title()}</button>
     </form>
 
     {#if history.length > 0}
       <section class="history-card" aria-label={m.search_recent()}>
         <div class="history-heading"><Icon name="search" size={18} /><span><strong>{m.search_recent()}</strong></span><button type="button" onclick={clearHistory}>{m.search_clear()}</button></div>
-        <div class="history-list">{#each history as item}<a href={`/search?q=${encodeURIComponent(item)}`}>{item}</a>{/each}</div>
+        <div class="history-list">{#each visibleHistory as item}<a href={`/search?q=${encodeURIComponent(item)}`} onclick={() => saveHistory(item)}>{item}</a>{/each}</div>
+        {#if visibleHistory.length < history.length}<button class="history-more" type="button" onclick={() => (historyVisibleCount += 20)}>{m.search_history_show_more()}</button>{/if}
       </section>
     {/if}
 
@@ -346,7 +363,7 @@
           <div class="tag-grid fallback">
             {#each fallbackTags as tagMessage, index}
               {@const tag = tagMessage()}
-              <a href={`/search?q=${encodeURIComponent(tag)}`}><span class="tag-art tone-{(index % 5) + 1}"></span><strong>#{tag}</strong><small>{m.search_trending_sign_in()}</small></a>
+              <a href={`/search?q=${encodeURIComponent(tag)}`} onclick={() => saveHistory(tag)}><span class="tag-art tone-{(index % 5) + 1}"></span><strong>#{tag}</strong><small>{m.search_trending_sign_in()}</small></a>
             {/each}
           </div>
         {:else if trendingStatus === "loading"}
@@ -354,7 +371,7 @@
         {:else if displayTags.length > 0}
           <div class="tag-grid">
             {#each displayTags as tag, index (tag.name)}
-              <a href={`/search?q=${encodeURIComponent(tag.name)}`}>
+              <a href={`/search?q=${encodeURIComponent(tag.name)}`} onclick={() => saveHistory(tag.name)}>
                 <span class="tag-art"><ArtworkThumbnail url={tag.illustration.thumbnailUrl} alt="" tone={(index % 6) + 1} /></span>
                 <strong>#{tag.name}</strong><small>{tag.translatedName || m.search_view_related()}</small>
               </a>
@@ -412,6 +429,7 @@
   .history-heading button { color: var(--muted); border: 0; background: transparent; cursor: pointer; font-size: var(--type-body); }
   .history-list { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 13px; }
   .history-list a { padding: 6px 10px; color: #65717a; border-radius: 14px; background: white; font-size: var(--type-caption); text-decoration: none; }
+  .history-more { display: block; min-height: 36px; margin: 10px auto 0; padding: 0 14px; color: var(--pixiv-blue); border: 0; background: transparent; cursor: pointer; font-size: var(--type-body); font-weight: 700; }
   .tone-1 { background: linear-gradient(145deg, #d9effb, #bad8e9); } .tone-2 { background: linear-gradient(145deg, #f3dfec, #dfbfd3); } .tone-3 { background: linear-gradient(145deg, #eee9cf, #d9c993); } .tone-4 { background: linear-gradient(145deg, #e0dcf1, #beb7df); } .tone-5 { background: linear-gradient(145deg, #dceee3, #bcd9c8); }
   @keyframes spin { to { transform: rotate(360deg); } }
   @media (min-width: 960px) { .large-search { display: none; } .type-tabs { margin-top: 22px; } }

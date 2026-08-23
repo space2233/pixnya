@@ -27,11 +27,27 @@ const MAX_ARCHIVE_FILES: usize = 100_000;
 #[serde(rename_all = "camelCase")]
 pub struct FrontendBackupState {
     pub search_history: Vec<String>,
+    /// Missing in legacy backups, `null` for unlimited, otherwise a reviewed finite limit.
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "deserialize_search_history_limit"
+    )]
+    pub search_history_limit: Option<Option<u32>>,
     /// Reading position in millionths, from 0 through 1_000_000.
     pub novel_reading_progress: BTreeMap<String, u32>,
     pub sidebar_expanded: bool,
     pub reduced_motion: bool,
     pub r18_default_visible: bool,
+}
+
+fn deserialize_search_history_limit<'de, D>(
+    deserializer: D,
+) -> Result<Option<Option<u32>>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    Option::<u32>::deserialize(deserializer).map(Some)
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

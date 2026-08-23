@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import AppShell from "$lib/components/AppShell.svelte";
   import Icon from "$lib/components/Icon.svelte";
   import PixivImage from "$lib/components/PixivImage.svelte";
@@ -7,6 +7,12 @@
   import { describeDataFailure, getUserDetail } from "$lib/pixiv-api";
   import { plainPixivText } from "$lib/pixiv-text";
   import { readPreferredConnectionMode } from "$lib/preferences";
+  import {
+    readProfileMediaSnapshot,
+    profileMediaSnapshotKey,
+    writeProfileMediaSnapshot,
+    type ProfileMediaSnapshot,
+  } from "$lib/profile-media-memory";
   import { initializeSession, logoutSession, session, sessionRestoring } from "$lib/session";
   import type { UserDetail } from "$lib/types";
 
@@ -17,26 +23,38 @@
   let accountDetail = $state<UserDetail | null>(null);
   let accountStatus = $state<"idle" | "loading" | "ready" | "error">("idle");
   let accountError = $state("");
-  let requestedUserId = $state("");
+  let mediaSnapshot = $state<ProfileMediaSnapshot | null>(null);
+  let requestedProfileKey = $state("");
   let accountSequence = 0;
   let avatarUrl = $derived(
-    $session.loggedIn ? (accountDetail?.user.avatarUrl ?? $session.user?.avatarUrl ?? null) : null,
+    $session.loggedIn ? (accountDetail?.user.avatarUrl ?? mediaSnapshot?.avatarUrl ?? $session.user?.avatarUrl ?? null) : null,
+  );
+  let backgroundImageUrl = $derived(
+    accountDetail?.profile.backgroundImageUrl ?? mediaSnapshot?.backgroundImageUrl ?? null,
   );
   let accountComment = $derived(accountDetail ? plainPixivText(accountDetail.comment) : "");
+  let mediaSnapshotKey = $derived(
+    $session.loggedIn && $session.user
+      ? profileMediaSnapshotKey($session.user.id, $session.connectionMode)
+      : "",
+  );
 
   $effect(() => {
     const userId = $session.loggedIn ? ($session.user?.id ?? "") : "";
     if (!userId) {
       accountSequence += 1;
-      requestedUserId = "";
+      requestedProfileKey = "";
       accountDetail = null;
+      mediaSnapshot = null;
       accountStatus = "idle";
       accountError = "";
       return;
     }
-    if (userId !== requestedUserId) {
-      requestedUserId = userId;
-      void loadAccountDetail(userId);
+    if (mediaSnapshotKey !== requestedProfileKey) {
+      requestedProfileKey = mediaSnapshotKey;
+      accountDetail = null;
+      mediaSnapshot = readProfileMediaSnapshot(mediaSnapshotKey);
+      void loadAccountDetail(userId, mediaSnapshotKey);
     }
   });
 
@@ -45,6 +63,10 @@
     void initializeSession().catch((error) => {
       sessionError = describeSessionError(error);
     });
+  });
+  onDestroy(() => {
+    accountSequence += 1;
+    requestedProfileKey = "";
   });
 
   async function logOut() {
@@ -60,24 +82,31 @@
     }
   }
 
-  async function loadAccountDetail(userId: string) {
+  async function loadAccountDetail(userId: string, profileKey: string) {
     const sequence = ++accountSequence;
-    accountStatus = "loading";
+    accountStatus = mediaSnapshot ? "ready" : "loading";
     accountError = "";
     try {
       const nextDetail = await getUserDetail(userId);
-      if (sequence !== accountSequence || requestedUserId !== userId) return;
+      if (sequence !== accountSequence || requestedProfileKey !== profileKey) return;
+      const nextMediaSnapshot = {
+        avatarUrl: nextDetail.user.avatarUrl ?? null,
+        backgroundImageUrl: nextDetail.profile.backgroundImageUrl ?? null,
+      };
+      writeProfileMediaSnapshot(profileKey, nextMediaSnapshot);
+      mediaSnapshot = nextMediaSnapshot;
       accountDetail = nextDetail;
       accountStatus = "ready";
     } catch (error) {
-      if (sequence !== accountSequence || requestedUserId !== userId) return;
+      if (sequence !== accountSequence || requestedProfileKey !== profileKey) return;
       accountError = describeDataFailure(error);
       accountStatus = "error";
     }
   }
 
   function retryAccountDetail() {
-    if (requestedUserId) void loadAccountDetail(requestedUserId);
+    const userId = $session.loggedIn ? ($session.user?.id ?? "") : "";
+    if (userId && requestedProfileKey) void loadAccountDetail(userId, requestedProfileKey);
   }
 
   function avatarInitial(name: string): string {
@@ -111,8 +140,8 @@
   <div class="profile-page">
     <section class="profile-card">
       <div class="profile-banner">
-        {#if accountDetail?.profile.backgroundImageUrl}
-          <PixivImage url={accountDetail.profile.backgroundImageUrl} alt={m.profile_background_alt()} cacheKind="preview" />
+        {#if backgroundImageUrl}
+          <PixivImage url={backgroundImageUrl} alt={m.profile_background_alt()} cacheKind="preview" />
         {:else if accountStatus === "ready"}
           <span class="profile-banner-note"><Icon name="image" size={15} />{m.profile_background_none()}</span>
         {:else if $session.loggedIn}

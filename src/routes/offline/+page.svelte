@@ -1097,4 +1097,5 @@
     .catalog-notice { padding: 12px; font-size: var(--type-small); }
     .inline-error { font-size: var(--type-small); }
   }
+  @media (pointer: coarse) { .catalog-tools input[type="search"] { height: 44px; } }
 </style>

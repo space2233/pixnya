@@ -1,5 +1,9 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
+  import {
+    acquirePixivImageSource,
+  } from "$lib/pixiv-image-memory-cache";
+  import { session } from "$lib/session";
   import type { MediaCacheKind } from "$lib/types";
 
   type LoadStatus = "loading" | "ready" | "error";
@@ -18,32 +22,36 @@
     onstatus?: (status: LoadStatus) => void;
   } = $props();
 
-  let source = $state<string | null>(null);
+  let rendered = $state<{ source: string; invalidate: () => void } | null>(null);
   $effect(() => {
     const requestedUrl = url;
-    source = null;
+    const account = $session.loggedIn ? ($session.user?.id ?? "logged-in") : "logged-out";
+    const securityScope = $session.connectionMode === "compatible" ? "insecure" : "verified";
+    const cacheKey = `${account}:${securityScope}:${cacheKind}:${requestedUrl ?? ""}`;
+    rendered = null;
     if (!requestedUrl) {
       onstatus?.("error");
       return;
     }
 
-    onstatus?.("loading");
     let disposed = false;
-    let objectUrl: string | null = null;
-    void invoke<ArrayBuffer>("fetch_pixiv_thumbnail", {
-      url: requestedUrl,
-      cacheKind,
-    })
-      .then((buffer) => {
-        const bytes = new Uint8Array(buffer);
-        if (bytes.byteLength === 0) throw new Error("empty Pixiv media response");
-        objectUrl = URL.createObjectURL(new Blob([bytes]));
-        if (disposed) {
-          URL.revokeObjectURL(objectUrl);
-          objectUrl = null;
-          return;
-        }
-        source = objectUrl;
+    const lease = acquirePixivImageSource(cacheKey, async () => {
+      const buffer = await invoke<ArrayBuffer>("fetch_pixiv_thumbnail", {
+        url: requestedUrl,
+        cacheKind,
+      });
+      return new Uint8Array(buffer);
+    });
+    if (lease.source) {
+      rendered = { source: lease.source, invalidate: lease.invalidate };
+      onstatus?.("ready");
+    } else {
+      onstatus?.("loading");
+    }
+    void lease.ready
+      .then((nextSource) => {
+        if (disposed) return;
+        rendered = { source: nextSource, invalidate: lease.invalidate };
         onstatus?.("ready");
       })
       .catch(() => {
@@ -52,19 +60,29 @@
 
     return () => {
       disposed = true;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      lease.release();
     };
   });
+
+  function handleImageError(image: { source: string; invalidate: () => void }) {
+    image.invalidate();
+    if (rendered !== image) return;
+    rendered = null;
+    onstatus?.("error");
+  }
 </script>
 
-{#if source}
-  <img
-    src={source}
+{#if rendered}
+  {@const image = rendered}
+  {#key image.source}
+    <img
+    src={image.source}
     {alt}
     draggable="false"
     style:object-fit={fit}
-    onerror={() => onstatus?.("error")}
+    onerror={() => handleImageError(image)}
   />
+  {/key}
 {/if}
 
 <style>

@@ -6,6 +6,12 @@
   import { m } from "$lib/i18n";
   import { clearFrontendLocalData } from "$lib/local-data";
   import { clearDiagnosticLogs, clearLocalData, exportDiagnosticLogs, getBrowsingHistory, getDiagnosticLogSummary, setBrowsingHistoryEnabled } from "$lib/pixiv-api";
+  import {
+    DEFAULT_SEARCH_HISTORY_LIMIT,
+    readSearchHistoryLimit,
+    writeSearchHistoryLimit,
+    type SearchHistoryLimit,
+  } from "$lib/search-history";
   import { applySessionSnapshot } from "$lib/session";
   import type { DiagnosticLogSummary, HistorySnapshot, LocalDataClearFailure } from "$lib/types";
 
@@ -33,11 +39,20 @@
   let confirmation = $state("");
   let notice = $state("");
   let error = $state(false);
-  onMount(() => { void reload(); });
+  let searchHistoryLimit = $state<SearchHistoryLimit>(DEFAULT_SEARCH_HISTORY_LIMIT);
+  onMount(() => {
+    searchHistoryLimit = readSearchHistoryLimit();
+    void reload();
+  });
   async function reload(){ const [h,l]=await Promise.allSettled([getBrowsingHistory(),getDiagnosticLogSummary()]); history=h.status==="fulfilled"?h.value:null;logs=l.status==="fulfilled"?l.value:null; }
   async function toggleHistory(){ if(!history)return;await act(async()=>{history=await setBrowsingHistoryEnabled(!history!.enabled)}); }
   async function exportLogs(){await act(async()=>{const result=await exportDiagnosticLogs();notice=result.destination;});}
   async function clearLogs(){await act(async()=>{logs=await clearDiagnosticLogs();});}
+  function changeSearchHistoryLimit(event: Event) {
+    const value = (event.currentTarget as HTMLSelectElement).value;
+    searchHistoryLimit = value === "unlimited" ? null : Number(value) as SearchHistoryLimit;
+    writeSearchHistoryLimit(searchHistoryLimit);
+  }
   async function clearEverything(){
     if(confirmation!==m.settings_clear_confirmation_word())return;
     await act(async()=>{
@@ -61,6 +76,7 @@
 <AppShell title={m.settings_privacy()}><div class="page"><ReturnLink fallback="/settings" label={m.common_back()} /><h1 class="page-title">{m.settings_privacy()}</h1><section>
   <label class="row"><strong>{m.settings_history()}</strong><input type="checkbox" role="switch" checked={history?.enabled ?? false} disabled={!history||busy} onchange={toggleHistory}/></label>
   <a class="row" href="/history"><strong>{m.settings_manage_history()}</strong><i>›</i></a>
+  <label class="row"><strong>{m.settings_search_history_limit()}</strong><select value={searchHistoryLimit === null ? "unlimited" : String(searchHistoryLimit)} onchange={changeSearchHistoryLimit}><option value="8">{m.settings_search_history_limit_count({ count: 8 })}</option><option value="20">{m.settings_search_history_limit_count({ count: 20 })}</option><option value="50">{m.settings_search_history_limit_count({ count: 50 })}</option><option value="100">{m.settings_search_history_limit_count({ count: 100 })}</option><option value="unlimited">{m.settings_search_history_limit_unlimited()}</option></select></label>
   <div class="row log-row">
     <strong>{m.settings_diagnostic_log()}</strong>
     <span class="log-count">{logs?.entryCount ?? "—"}</span>
@@ -78,8 +94,9 @@
   section { overflow: hidden; border: 1px solid var(--line); border-radius: 18px; background: white; }
   .row { display: flex; min-height: 62px; align-items: center; gap: 12px; padding: 0 18px; border-bottom: 1px solid var(--line); color: var(--text); text-decoration: none; }
   .row:last-child { border: 0; }
-  .row input, .row span, .row i { margin-left: auto; }
+  .row input, .row span, .row i, .row select { margin-left: auto; }
   .row i { font-style: normal; }
+  .row select { max-width: 52%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: white; font-size: var(--type-body); }
   .row button { padding: 8px 12px; border: 1px solid var(--line); border-radius: 16px; background: white; }
   .log-row { display: grid; grid-template-columns: minmax(0,1fr) auto auto; }
   .row .log-count { margin-left: 0; color: var(--muted); }

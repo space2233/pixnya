@@ -11,6 +11,7 @@ fn sample_data() -> PortableBackupData {
     PortableBackupData {
         frontend: FrontendBackupState {
             search_history: vec!["猫".to_owned()],
+            search_history_limit: Some(Some(8)),
             novel_reading_progress: BTreeMap::from([("42".to_owned(), 730_000)]),
             sidebar_expanded: false,
             reduced_motion: true,
@@ -71,6 +72,38 @@ fn creates_inspects_and_restores_a_portable_backup() {
     let restored = manager.restore(&path).unwrap();
     assert_eq!(restored.data, data);
     assert!(restored.offline_files.is_empty());
+}
+
+#[test]
+fn distinguishes_legacy_missing_search_limit_from_explicit_unlimited() {
+    let legacy: FrontendBackupState = serde_json::from_value(serde_json::json!({
+        "searchHistory": ["猫"],
+        "novelReadingProgress": {},
+        "sidebarExpanded": true,
+        "reducedMotion": false,
+        "r18DefaultVisible": false
+    }))
+    .unwrap();
+    assert_eq!(legacy.search_history_limit, None);
+    assert!(serde_json::to_value(&legacy)
+        .unwrap()
+        .get("searchHistoryLimit")
+        .is_none());
+
+    let unlimited: FrontendBackupState = serde_json::from_value(serde_json::json!({
+        "searchHistory": ["猫"],
+        "searchHistoryLimit": null,
+        "novelReadingProgress": {},
+        "sidebarExpanded": true,
+        "reducedMotion": false,
+        "r18DefaultVisible": false
+    }))
+    .unwrap();
+    assert_eq!(unlimited.search_history_limit, Some(None));
+    assert!(serde_json::to_value(&unlimited)
+        .unwrap()
+        .get("searchHistoryLimit")
+        .is_some_and(serde_json::Value::is_null));
 }
 
 #[test]
