@@ -43,6 +43,14 @@ impl CacheKind {
             Self::Original => "original",
         }
     }
+
+    fn eviction_priority(self) -> u8 {
+        match self {
+            Self::Original => 0,
+            Self::Preview => 1,
+            Self::Thumbnail => 2,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize)]
@@ -241,7 +249,8 @@ impl MediaCache {
     fn reconcile(&mut self) -> Result<(), CacheError> {
         let root = self.root.clone();
         self.index.entries.retain(|id, entry| {
-            valid_cache_id(id)
+            entry.kind != CacheKind::Original
+                && valid_cache_id(id)
                 && root
                     .join(entry.scope.code())
                     .join(format!("{id}.bin"))
@@ -287,7 +296,7 @@ impl MediaCache {
             .iter()
             .map(|(id, entry)| (id.clone(), entry.clone()))
             .collect();
-        oldest.sort_by_key(|(_, entry)| entry.access_order);
+        oldest.sort_by_key(|(_, entry)| (entry.kind.eviction_priority(), entry.access_order));
         for (id, entry) in oldest {
             if total <= max_bytes {
                 break;
@@ -493,6 +502,72 @@ mod tests {
     }
 
     #[test]
+    fn evicts_originals_and_previews_before_thumbnails() {
+        let root = test_root("kind-priority");
+        let mut cache = MediaCache::open(&root, Some(8)).unwrap();
+        cache
+            .put(
+                CacheScope::Verified,
+                CacheKind::Thumbnail,
+                "old-thumbnail",
+                b"1111",
+            )
+            .unwrap();
+        cache
+            .put(
+                CacheScope::Verified,
+                CacheKind::Preview,
+                "new-preview",
+                b"2222",
+            )
+            .unwrap();
+        cache
+            .put(
+                CacheScope::Verified,
+                CacheKind::Original,
+                "newest-original",
+                b"3333",
+            )
+            .unwrap();
+
+        assert!(cache
+            .get(
+                CacheScope::Verified,
+                CacheKind::Original,
+                "newest-original",
+                8
+            )
+            .unwrap()
+            .is_none());
+        assert!(cache
+            .get(
+                CacheScope::Verified,
+                CacheKind::Thumbnail,
+                "old-thumbnail",
+                8
+            )
+            .unwrap()
+            .is_some());
+
+        cache
+            .put(
+                CacheScope::Verified,
+                CacheKind::Thumbnail,
+                "latest-thumbnail",
+                b"4444",
+            )
+            .unwrap();
+        assert!(cache
+            .get(CacheScope::Verified, CacheKind::Preview, "new-preview", 8)
+            .unwrap()
+            .is_none());
+        assert_eq!(cache.stats().thumbnail_bytes, 8);
+        assert_eq!(cache.stats().preview_bytes, 0);
+        assert_eq!(cache.stats().original_bytes, 0);
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
     fn unlimited_cache_keeps_entries_without_capacity_eviction() {
         let root = test_root("unlimited");
         let mut cache = MediaCache::open(&root, None).unwrap();
@@ -532,6 +607,47 @@ mod tests {
                 .get(CacheScope::Verified, CacheKind::Thumbnail, "warm", 16)
                 .unwrap(),
             Some(b"image".to_vec())
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn reopening_purges_legacy_originals_without_dropping_previews() {
+        let root = test_root("legacy-original-purge");
+        {
+            let mut cache = MediaCache::open(&root, None).unwrap();
+            cache
+                .put(
+                    CacheScope::Verified,
+                    CacheKind::Preview,
+                    "preview",
+                    b"preview",
+                )
+                .unwrap();
+            cache
+                .put(
+                    CacheScope::Verified,
+                    CacheKind::Original,
+                    "original",
+                    b"original",
+                )
+                .unwrap();
+            assert_eq!(cache.stats().original_bytes, 8);
+        }
+
+        let mut reopened = MediaCache::open(&root, None).unwrap();
+        assert_eq!(reopened.stats().original_bytes, 0);
+        assert_eq!(
+            reopened
+                .get(CacheScope::Verified, CacheKind::Preview, "preview", 16)
+                .unwrap(),
+            Some(b"preview".to_vec())
+        );
+        assert_eq!(
+            reopened
+                .get(CacheScope::Verified, CacheKind::Original, "original", 16)
+                .unwrap(),
+            None
         );
         fs::remove_dir_all(root).unwrap();
     }

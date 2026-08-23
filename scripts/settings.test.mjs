@@ -167,6 +167,13 @@ test("storage settings expose isolated media-cache statistics and confirmed clea
   );
 
   assert.match(page, /m\.settings_media_cache\(\)/);
+  assert.match(page, /cache\.thumbnailBytes/);
+  assert.match(page, /cache\.previewBytes/);
+  assert.match(page, /cache\.originalBytes/);
+  assert.match(page, /m\.settings_cache_thumbnails\(\)/);
+  assert.match(page, /m\.settings_cache_previews\(\)/);
+  assert.match(page, /m\.settings_cache_originals\(\)/);
+  assert.match(page, /await clearMediaCache\(\);[\s\S]*cache = await getMediaCacheStats\(\)/);
   assert.match(page, /m\.settings_cache_dialog_description\(\)/);
   assert.match(api, /invoke<MediaCacheStats>\("clear_media_cache", \{ confirmed: true \}\)/);
   assert.match(backend, /async fn get_media_cache_stats/);

@@ -68,7 +68,7 @@ test("online and offline artwork routes share the guarded image viewer", async (
   assert.match(offline, /<ArtworkImageViewer/);
   assert.match(offline, /entryKey: key/);
   assert.match(component, /<PixivImage/);
-  assert.match(component, /cacheKind="original"/);
+  assert.match(component, /cacheKind=\{currentPage\.originalUrl \? null : "preview"\}/);
   assert.match(component, /<OfflineImage/);
   assert.match(component, /role="dialog"/);
   assert.match(component, /aria-modal="true"/);

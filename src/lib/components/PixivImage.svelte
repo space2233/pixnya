@@ -18,7 +18,7 @@
     url?: string | null;
     alt?: string;
     fit?: "cover" | "contain";
-    cacheKind?: MediaCacheKind;
+    cacheKind?: MediaCacheKind | null;
     onstatus?: (status: LoadStatus) => void;
   } = $props();
 
@@ -27,7 +27,7 @@
     const requestedUrl = url;
     const account = $session.loggedIn ? ($session.user?.id ?? "logged-in") : "logged-out";
     const securityScope = $session.connectionMode === "compatible" ? "insecure" : "verified";
-    const cacheKey = `${account}:${securityScope}:${cacheKind}:${requestedUrl ?? ""}`;
+    const cacheKey = `${account}:${securityScope}:${cacheKind ?? "transient"}:${requestedUrl ?? ""}`;
     rendered = null;
     if (!requestedUrl) {
       onstatus?.("error");

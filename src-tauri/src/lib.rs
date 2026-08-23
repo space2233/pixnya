@@ -141,6 +141,26 @@ struct CachedTransportClient {
 #[derive(Clone, Default)]
 struct MediaCacheState {
     gate: Arc<Mutex<()>>,
+    epoch: Arc<MediaCacheEpoch>,
+}
+
+#[derive(Default)]
+struct MediaCacheEpoch {
+    value: AtomicU64,
+}
+
+impl MediaCacheEpoch {
+    fn capture(&self) -> u64 {
+        self.value.load(Ordering::Acquire)
+    }
+
+    fn is_current(&self, expected: u64) -> bool {
+        self.capture() == expected
+    }
+
+    fn advance(&self) {
+        self.value.fetch_add(1, Ordering::AcqRel);
+    }
 }
 
 #[derive(Default)]
@@ -3644,32 +3664,53 @@ async fn fetch_pixiv_thumbnail(
         .map_err(|_| ApiCommandError::StateUnavailable)?
         .ok_or(ApiCommandError::AuthenticationRequired)?;
     let mode = media_route.connection_mode();
-    let cache_kind = cache_kind.unwrap_or(CacheKind::Thumbnail);
     let cache_scope = media_cache_scope(mode);
-    let cache_source_key = media_cache_source_key(&url)?;
-    let cache_root = media_cache_root(&app)?;
-    let storage = storage_manager(&app)?;
-    let cache_limit_bytes = storage.cache_limit_bytes()?;
-    let read_gate = cache_state.gate.clone();
-    let read_root = cache_root.clone();
-    let read_key = cache_source_key.clone();
-    let cached = tauri::async_runtime::spawn_blocking(move || {
-        let _guard = read_gate.lock().ok()?;
-        let mut cache = MediaCache::open(read_root, cache_limit_bytes).ok()?;
-        cache
-            .get(
-                cache_scope,
-                cache_kind,
-                &read_key,
-                MAX_THUMBNAIL_BYTES as u64,
-            )
-            .ok()?
-    })
-    .await
-    .unwrap_or(None);
-    if let Some(bytes) = cached {
-        return Ok(tauri::ipc::Response::new(bytes));
-    }
+    let cache_kind =
+        cache_kind.filter(|kind| matches!(kind, CacheKind::Thumbnail | CacheKind::Preview));
+    let cache_context = if let Some(cache_kind) = cache_kind {
+        let cache_source_key = media_cache_source_key(&url)?;
+        let cache_root = media_cache_root(&app)?;
+        let storage = storage_manager(&app)?;
+        let cache_limit_bytes = storage.cache_limit_bytes()?;
+        let read_gate = cache_state.gate.clone();
+        let read_epoch = cache_state.epoch.clone();
+        let read_root = cache_root.clone();
+        let read_key = cache_source_key.clone();
+        let read_result = tauri::async_runtime::spawn_blocking(move || {
+            let _guard = read_gate.lock().ok()?;
+            let expected_epoch = read_epoch.capture();
+            let cached = MediaCache::open(read_root, cache_limit_bytes)
+                .ok()
+                .and_then(|mut cache| {
+                    cache
+                        .get(
+                            cache_scope,
+                            cache_kind,
+                            &read_key,
+                            MAX_THUMBNAIL_BYTES as u64,
+                        )
+                        .ok()
+                        .flatten()
+                });
+            Some((cached, expected_epoch))
+        })
+        .await
+        .unwrap_or(None);
+        let (cached, expected_epoch) =
+            read_result.unwrap_or_else(|| (None, cache_state.epoch.capture()));
+        if let Some(bytes) = cached {
+            return Ok(tauri::ipc::Response::new(bytes));
+        }
+        Some((
+            cache_kind,
+            cache_source_key,
+            cache_root,
+            storage,
+            expected_epoch,
+        ))
+    } else {
+        None
+    };
 
     let permit = data_state
         .media_gate
@@ -3694,25 +3735,36 @@ async fn fetch_pixiv_thumbnail(
     .await
     .map_err(|_| ApiCommandError::RequestFailed)??;
 
-    let store_gate = cache_state.gate.clone();
-    let store_storage = storage.clone();
-    let bytes = tauri::async_runtime::spawn_blocking(move || {
-        if let Ok(_guard) = store_gate.lock() {
-            if store_storage
-                .allows_cache_write(media.bytes.len() as u64)
-                .unwrap_or(false)
-            {
-                if let Ok(limit) = store_storage.cache_limit_bytes() {
-                    if let Ok(mut cache) = MediaCache::open(cache_root, limit) {
-                        let _ = cache.put(cache_scope, cache_kind, &cache_source_key, &media.bytes);
+    let bytes = if let Some((cache_kind, cache_source_key, cache_root, storage, expected_epoch)) =
+        cache_context
+    {
+        let store_gate = cache_state.gate.clone();
+        let store_epoch = cache_state.epoch.clone();
+        let store_storage = storage.clone();
+        tauri::async_runtime::spawn_blocking(move || {
+            if let Ok(_guard) = store_gate.lock() {
+                if !store_epoch.is_current(expected_epoch) {
+                    return media.bytes;
+                }
+                if store_storage
+                    .allows_cache_write(media.bytes.len() as u64)
+                    .unwrap_or(false)
+                {
+                    if let Ok(limit) = store_storage.cache_limit_bytes() {
+                        if let Ok(mut cache) = MediaCache::open(cache_root, limit) {
+                            let _ =
+                                cache.put(cache_scope, cache_kind, &cache_source_key, &media.bytes);
+                        }
                     }
                 }
             }
-        }
+            media.bytes
+        })
+        .await
+        .map_err(|_| ApiCommandError::CacheUnavailable)?
+    } else {
         media.bytes
-    })
-    .await
-    .map_err(|_| ApiCommandError::CacheUnavailable)?;
+    };
 
     Ok(tauri::ipc::Response::new(bytes))
 }
@@ -3745,11 +3797,14 @@ async fn clear_media_cache(
     let root = media_cache_root(&app)?;
     let limit = storage_manager(&app)?.cache_limit_bytes()?;
     let gate = cache_state.gate.clone();
+    let epoch = cache_state.epoch.clone();
     let result = tauri::async_runtime::spawn_blocking(move || {
         let _guard = gate.lock().map_err(|_| ApiCommandError::StateUnavailable)?;
-        MediaCache::open(root, limit)?
+        let removed = MediaCache::open(root, limit)?
             .clear()
-            .map_err(ApiCommandError::from)
+            .map_err(ApiCommandError::from)?;
+        epoch.advance();
+        Ok(removed)
     })
     .await
     .map_err(|_| ApiCommandError::CacheUnavailable)?;
@@ -3909,14 +3964,17 @@ async fn clear_local_data(
         .unwrap_or(Some(DEFAULT_CACHE_LIMIT_BYTES));
     let cache_root = media_cache_root(&app);
     let cache_gate = cache_state.gate.clone();
+    let cache_epoch = cache_state.epoch.clone();
     let cache_result = match cache_root {
         Ok(root) => tauri::async_runtime::spawn_blocking(move || {
             let _guard = cache_gate
                 .lock()
                 .map_err(|_| ApiCommandError::StateUnavailable)?;
-            MediaCache::open(root, cache_limit)?
+            let removed = MediaCache::open(root, cache_limit)?
                 .clear()
-                .map_err(ApiCommandError::from)
+                .map_err(ApiCommandError::from)?;
+            cache_epoch.advance();
+            Ok(removed)
         })
         .await
         .map_err(|_| ApiCommandError::CacheUnavailable)
@@ -4527,12 +4585,23 @@ pub fn run() {
 mod tests {
     use super::{
         build_authorization_url, create_login_attempt, oauth_configuration,
-        validate_login_launch_binding, LoginLaunchError, LoginPreparationError, PendingLogin,
+        validate_login_launch_binding, LoginLaunchError, LoginPreparationError, MediaCacheEpoch,
+        PendingLogin,
     };
     use pixiv_client_auth::LoginStatus;
     use pixiv_client_domain::{
         ConnectionMode, EchRequirement, PlatformCapabilities, TransportRoute,
     };
+
+    #[test]
+    fn media_cache_epoch_rejects_writes_started_before_a_clear() {
+        let epoch = MediaCacheEpoch::default();
+        let before_clear = epoch.capture();
+        assert!(epoch.is_current(before_clear));
+        epoch.advance();
+        assert!(!epoch.is_current(before_clear));
+        assert!(epoch.is_current(epoch.capture()));
+    }
 
     #[test]
     fn standard_login_prepares_pkce_for_the_system_webview() {

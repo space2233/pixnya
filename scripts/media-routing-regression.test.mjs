@@ -13,6 +13,7 @@ const thumbnailSkeleton = source("../src/lib/components/ThumbnailSkeleton.svelte
 const browsePage = source("../src/lib/components/BrowsePage.svelte");
 const pixivImage = source("../src/lib/components/PixivImage.svelte");
 const ugoiraPlayer = source("../src/lib/components/UgoiraPlayer.svelte");
+const artworkViewer = source("../src/lib/components/ArtworkImageViewer.svelte");
 const preferences = source("../src/lib/preferences.ts");
 const rustCommands = source("../src-tauri/src/lib.rs");
 
@@ -54,4 +55,14 @@ test("media requests keep the selected global connection mode and never prompt f
   assert.doesNotMatch(pixivImage, /unsafe_media_acknowledgement_required|requestInsecureMediaFallback/);
   assert.doesNotMatch(ugoiraPlayer, /unsafe_media_acknowledgement_required|requestInsecureMediaFallback/);
   assert.doesNotMatch(preferences, /insecure-media-warning|InsecureMediaWarning/);
+});
+
+test("full-resolution viewer media stays transient instead of filling the disk cache", () => {
+  assert.match(artworkViewer, /cacheKind=\{currentPage\.originalUrl \? null : "preview"\}/);
+  assert.doesNotMatch(artworkViewer, /cacheKind="original"/);
+  assert.match(rustCommands, /cache_kind\.filter\([\s\S]*CacheKind::Thumbnail \| CacheKind::Preview/);
+  assert.match(rustCommands, /if let Some\(cache_kind\) = cache_kind[\s\S]*MediaCache::open/);
+  assert.match(rustCommands, /store_epoch\.is_current\(expected_epoch\)/);
+  assert.match(rustCommands, /async fn clear_media_cache[\s\S]*epoch\.advance\(\)/);
+  assert.match(rustCommands, /async fn clear_local_data[\s\S]*cache_epoch\.advance\(\)/);
 });

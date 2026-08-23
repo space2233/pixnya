@@ -264,7 +264,7 @@
             url={currentPage.originalUrl ?? currentPage.previewUrl}
             alt={currentPage.alt}
             fit="contain"
-            cacheKind="original"
+            cacheKind={currentPage.originalUrl ? null : "preview"}
           />
         {/if}
       </div>
