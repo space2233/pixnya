@@ -102,6 +102,28 @@ export function recordSearchHistory(value: string): string[] {
   return history;
 }
 
+export function removeSearchHistory(value: string): string[] {
+  const normalized = normalizeSearchHistoryValue(value);
+  const history = readSearchHistory();
+  if (!normalized) return history;
+  const nextHistory = history.filter((item) => item !== normalized);
+  if (nextHistory.length === history.length) return history;
+  const storage = getSearchHistoryStorage();
+  try {
+    storage?.setItem(SEARCH_HISTORY_KEY, JSON.stringify(nextHistory));
+  } catch {
+    // The caller still removes the entry from its in-memory history.
+  }
+  notifySearchHistoryChanged();
+  return nextHistory;
+}
+
+export function filterSearchHistory(history: readonly string[], query: string): string[] {
+  const needle = query.trim().toLocaleLowerCase();
+  if (!needle) return [...history];
+  return history.filter((item) => item.toLocaleLowerCase().includes(needle));
+}
+
 export function normalizeSearchHistoryValue(value: string): string {
   const normalized = value.trim();
   if (

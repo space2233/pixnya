@@ -14,8 +14,12 @@ function createStorage() {
   };
 }
 
+const historyEvents = [];
 globalThis.localStorage = createStorage();
-globalThis.window = { localStorage: globalThis.localStorage };
+globalThis.window = {
+  localStorage: globalThis.localStorage,
+  dispatchEvent(event) { historyEvents.push(event.type); },
+};
 
 const history = await import("../src/lib/search-history.ts");
 
@@ -58,6 +62,44 @@ test("search history keeps MRU order and refuses values rejected by the API", ()
   assert.deepEqual(history.readSearchHistory(), ["first", "second"]);
 });
 
+test("one search history entry can be removed without disturbing MRU order", () => {
+  localStorage.clear();
+  historyEvents.length = 0;
+  history.writeSearchHistoryLimit(null);
+  history.recordSearchHistory("first");
+  history.recordSearchHistory("second");
+  history.recordSearchHistory("third");
+  const beforeRemovalEvents = historyEvents.length;
+
+  assert.deepEqual(history.removeSearchHistory("second"), ["third", "first"]);
+  assert.deepEqual(history.readSearchHistory(), ["third", "first"]);
+  assert.equal(historyEvents.length, beforeRemovalEvents + 1);
+
+  assert.deepEqual(history.removeSearchHistory("missing"), ["third", "first"]);
+  assert.equal(historyEvents.length, beforeRemovalEvents + 1);
+});
+
+test("search history filtering is local, case-insensitive, and keeps MRU order", () => {
+  const values = ["Cat drawing", "夜景", "CAT girl", "landscape"];
+  assert.deepEqual(history.filterSearchHistory(values, " cat "), ["Cat drawing", "CAT girl"]);
+  assert.deepEqual(history.filterSearchHistory(values, "景"), ["夜景"]);
+  assert.deepEqual(history.filterSearchHistory(values, ""), values);
+  assert.deepEqual(values, ["Cat drawing", "夜景", "CAT girl", "landscape"]);
+});
+
+test("a filtered entry can be removed without deleting hidden history", () => {
+  localStorage.clear();
+  history.writeSearchHistoryLimit(null);
+  history.recordSearchHistory("landscape");
+  history.recordSearchHistory("CAT girl");
+  history.recordSearchHistory("Cat drawing");
+
+  const [match] = history.filterSearchHistory(history.readSearchHistory(), "cat girl");
+  assert.equal(match, "CAT girl");
+  assert.deepEqual(history.removeSearchHistory(match), ["Cat drawing", "landscape"]);
+  assert.deepEqual(history.readSearchHistory(), ["Cat drawing", "landscape"]);
+});
+
 test("privacy settings, backup, and every search entry point share the history preference", async () => {
   const [privacy, backup, rustBackup, appShell, search] = await Promise.all([
     readFile(new URL("../src/routes/settings/privacy/+page.svelte", import.meta.url), "utf8"),
@@ -93,4 +135,18 @@ test("all search inputs use the enlarged cross-platform clear control", async ()
   }
   assert.match(globalCss, /input\[type="search"\]::-webkit-search-cancel-button/);
   assert.match(globalCss, /@media \(pointer: coarse\)[\s\S]*44px/);
+});
+
+test("search page manages recent entries inline without turning delete into navigation", async () => {
+  const search = await readFile(
+    new URL("../src/routes/search/+page.svelte", import.meta.url),
+    "utf8",
+  );
+  assert.match(search, /filterSearchHistory/);
+  assert.match(search, /removeSearchHistory/);
+  assert.match(search, /history\.length > 8[\s\S]*search_history_filter_label/);
+  assert.match(search, /event\.preventDefault\(\)[\s\S]*event\.stopPropagation\(\)/);
+  assert.match(search, /search_history_remove/);
+  assert.match(search, /search_history_no_matches/);
+  assert.match(search, /\.history-remove[^}]*min-width:\s*44px[^}]*min-height:\s*44px/);
 });

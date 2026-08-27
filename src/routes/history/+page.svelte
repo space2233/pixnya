@@ -3,7 +3,12 @@
   import AppShell from "$lib/components/AppShell.svelte";
   import Icon from "$lib/components/Icon.svelte";
   import PixivImage from "$lib/components/PixivImage.svelte";
+  import {
+    HISTORY_BATCH_SIZE,
+    progressiveHistoryWindow,
+  } from "$lib/history-progressive";
   import { currentAppLocale, m } from "$lib/i18n";
+  import { recallNavigationView, rememberNavigationView } from "$lib/navigation-view-memory";
   import {
     clearBrowsingHistory,
     describeDataFailure,
@@ -13,7 +18,15 @@
   } from "$lib/pixiv-api";
   import type { HistoryEntry, HistoryKind, HistorySnapshot } from "$lib/types";
 
-  let snapshot = $state<HistorySnapshot | null>(null);
+  type HistoryViewSnapshot = {
+    historyState: HistorySnapshot;
+    query: string;
+    kind: "all" | HistoryKind;
+    visibleCount: number;
+    notice: string;
+  };
+
+  let historyState = $state<HistorySnapshot | null>(null);
   let status = $state<"loading" | "ready" | "error">("loading");
   let errorMessage = $state("");
   let query = $state("");
@@ -23,6 +36,8 @@
   let confirmingClear = $state(false);
   let clearing = $state(false);
   let notice = $state("");
+  let visibleCount = $state(HISTORY_BATCH_SIZE);
+  let viewRestored = false;
   const kindOptions: Array<{ id: "all" | HistoryKind; label: () => string }> = [
     { id: "all", label: m.history_kind_all },
     { id: "artwork", label: m.history_kind_artwork },
@@ -32,19 +47,53 @@
 
   const filteredEntries = $derived.by(() => {
     const needle = query.trim().toLocaleLowerCase();
-    return (snapshot?.entries ?? []).filter((entry) => {
+    return (historyState?.entries ?? []).filter((entry) => {
       if (kind !== "all" && entry.kind !== kind) return false;
       return !needle || `${entry.title}\n${entry.subtitle}`.toLocaleLowerCase().includes(needle);
     });
   });
+  const historyWindow = $derived(progressiveHistoryWindow(filteredEntries, visibleCount));
+  const visibleEntries = $derived(historyWindow.visible);
 
-  onMount(() => void loadHistory());
+  export const snapshot = {
+    capture: () => historyState
+      ? rememberNavigationView<HistoryViewSnapshot>({
+          historyState,
+          query,
+          kind,
+          visibleCount,
+          notice,
+        })
+      : null,
+    restore: (key: unknown) => {
+      const value = recallNavigationView<HistoryViewSnapshot>(key);
+      if (!value) return;
+      historyState = value.historyState;
+      query = value.query;
+      kind = kindOptions.some((option) => option.id === value.kind) ? value.kind : "all";
+      visibleCount = Number.isInteger(value.visibleCount)
+        ? Math.max(HISTORY_BATCH_SIZE, value.visibleCount)
+        : HISTORY_BATCH_SIZE;
+      notice = value.notice;
+      status = "ready";
+      errorMessage = "";
+      viewRestored = true;
+    },
+  };
+
+  onMount(() => {
+    const frameId = window.requestAnimationFrame(() => {
+      if (!viewRestored) void loadHistory();
+    });
+    return () => window.cancelAnimationFrame(frameId);
+  });
 
   async function loadHistory() {
+    visibleCount = HISTORY_BATCH_SIZE;
     status = "loading";
     errorMessage = "";
     try {
-      snapshot = await getBrowsingHistory();
+      historyState = await getBrowsingHistory();
       status = "ready";
     } catch (error) {
       errorMessage = describeDataFailure(error);
@@ -53,12 +102,12 @@
   }
 
   async function toggleHistory() {
-    if (!snapshot || savingPreference) return;
+    if (!historyState || savingPreference) return;
     savingPreference = true;
     notice = "";
     try {
-      snapshot = await setBrowsingHistoryEnabled(!snapshot.enabled);
-      notice = snapshot.enabled ? m.history_started() : m.history_stopped();
+      historyState = await setBrowsingHistoryEnabled(!historyState.enabled);
+      notice = historyState.enabled ? m.history_started() : m.history_stopped();
     } catch (error) {
       notice = describeDataFailure(error);
     } finally {
@@ -67,11 +116,12 @@
   }
 
   async function removeEntry(entry: HistoryEntry) {
-    if (!snapshot || pendingKey) return;
+    if (!historyState || pendingKey) return;
     pendingKey = `${entry.kind}-${entry.resourceId}`;
     try {
       await removeBrowsingHistoryEntry(entry.kind, entry.resourceId);
-      snapshot = { ...snapshot, entries: snapshot.entries.filter((candidate) => candidate.kind !== entry.kind || candidate.resourceId !== entry.resourceId) };
+      historyState = { ...historyState, entries: historyState.entries.filter((candidate) => candidate.kind !== entry.kind || candidate.resourceId !== entry.resourceId) };
+      visibleCount = HISTORY_BATCH_SIZE;
     } catch (error) {
       notice = describeDataFailure(error);
     } finally {
@@ -80,7 +130,7 @@
   }
 
   async function clearHistory() {
-    if (!snapshot || clearing) return;
+    if (!historyState || clearing) return;
     if (!confirmingClear) {
       confirmingClear = true;
       return;
@@ -89,7 +139,8 @@
     notice = "";
     try {
       const removed = await clearBrowsingHistory();
-      snapshot = { ...snapshot, entries: [] };
+      historyState = { ...historyState, entries: [] };
+      visibleCount = HISTORY_BATCH_SIZE;
       notice = m.history_removed({ count: removed.entriesRemoved });
       confirmingClear = false;
     } catch (error) {
@@ -97,6 +148,32 @@
     } finally {
       clearing = false;
     }
+  }
+
+  function changeQuery(event: Event) {
+    query = (event.currentTarget as HTMLInputElement).value;
+    visibleCount = HISTORY_BATCH_SIZE;
+  }
+
+  function changeKind(nextKind: "all" | HistoryKind) {
+    kind = nextKind;
+    visibleCount = HISTORY_BATCH_SIZE;
+  }
+
+  function showNextBatch() {
+    if (historyWindow.hasMore) visibleCount = historyWindow.nextCount;
+  }
+
+  function observeLoadMore(node: HTMLElement) {
+    if (typeof IntersectionObserver === "undefined") return {};
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) showNextBatch();
+      },
+      { rootMargin: "0px" },
+    );
+    observer.observe(node);
+    return { destroy: () => observer.disconnect() };
   }
 
   function entryHref(entry: HistoryEntry): string {
@@ -129,9 +206,9 @@
   <main class="history-page">
     <header class="page-heading">
       <div><h1 class="page-title">{m.history_title()}</h1></div>
-      {#if snapshot}
-        <button class:disabled={!snapshot.enabled} type="button" disabled={savingPreference} onclick={toggleHistory}>
-          <Icon name="history" size={18} />{savingPreference ? m.history_saving() : snapshot.enabled ? m.history_recording() : m.history_recording_stopped()}
+      {#if historyState}
+        <button class:disabled={!historyState.enabled} type="button" disabled={savingPreference} onclick={toggleHistory}>
+          <Icon name="history" size={18} />{savingPreference ? m.history_saving() : historyState.enabled ? m.history_recording() : m.history_recording_stopped()}
         </button>
       {/if}
     </header>
@@ -140,28 +217,28 @@
       <section class="state">{m.history_loading()}</section>
     {:else if status === "error"}
       <section class="state error" role="alert"><p>{errorMessage}</p><button type="button" onclick={loadHistory}>{m.common_retry()}</button></section>
-    {:else if snapshot}
+    {:else if historyState}
       <section class="history-panel">
         <div class="toolbar">
-          <label><Icon name="search" size={16} /><input bind:value={query} type="search" placeholder={m.history_search_placeholder()} aria-label={m.history_search_label()} /></label>
+          <label><Icon name="search" size={16} /><input value={query} oninput={changeQuery} type="search" placeholder={m.history_search_placeholder()} aria-label={m.history_search_label()} /></label>
           <div class="kind-filters" aria-label={m.history_type_label()}>
             {#each kindOptions as option}
-              <button class:active={kind === option.id} type="button" onclick={() => (kind = option.id)}>{option.label()}</button>
+              <button class:active={kind === option.id} type="button" onclick={() => changeKind(option.id)}>{option.label()}</button>
             {/each}
           </div>
-          <button class="clear" class:confirm={confirmingClear} type="button" disabled={clearing || snapshot.entries.length === 0} onclick={clearHistory}>
+          <button class="clear" class:confirm={confirmingClear} type="button" disabled={clearing || historyState.entries.length === 0} onclick={clearHistory}>
             {clearing ? m.history_clearing() : confirmingClear ? m.history_confirm_clear() : m.history_clear_all()}
           </button>
         </div>
 
         {#if notice}<p class="notice" role="status">{notice}</p>{/if}
-        {#if !snapshot.enabled}
+        {#if !historyState.enabled}
           <p class="paused"><Icon name="shield" size={17} />{m.history_paused()}</p>
         {/if}
 
         {#if filteredEntries.length > 0}
           <div class="history-list">
-            {#each filteredEntries as entry (`${entry.kind}-${entry.resourceId}`)}
+            {#each visibleEntries as entry (`${entry.kind}-${entry.resourceId}`)}
               <article>
                 <a href={entryHref(entry)}>
                   <span class="thumbnail">
@@ -177,8 +254,12 @@
               </article>
             {/each}
           </div>
+          {#if historyWindow.hasMore}
+            <div class="history-sentinel" use:observeLoadMore aria-hidden="true"></div>
+            <button class="history-more" type="button" onclick={showNextBatch}>{m.common_load_more()}</button>
+          {/if}
         {:else}
-          <div class="empty"><Icon name="history" size={34} /><h2>{snapshot.entries.length ? m.history_no_matches() : m.history_empty()}</h2><p>{snapshot.enabled ? m.history_empty_enabled() : m.history_empty_disabled()}</p></div>
+          <div class="empty"><Icon name="history" size={34} /><h2>{historyState.entries.length ? m.history_no_matches() : m.history_empty()}</h2><p>{historyState.enabled ? m.history_empty_enabled() : m.history_empty_disabled()}</p></div>
         {/if}
       </section>
     {/if}
@@ -220,6 +301,8 @@
   .history-list article > a > i { color: #afb4b7; font-size: var(--type-title); font-style: normal; }
   .history-list article > button { position: absolute; top: 50%; right: 14px; display: grid; width: 30px; height: 30px; place-items: center; color: #92989c; border: 0; border-radius: 50%; background: transparent; cursor: pointer; font-size: var(--type-section); transform: translateY(-50%); }
   .history-list article > button:hover { color: #be5263; background: #fff0f3; }
+  .history-sentinel { height: 1px; }
+  .history-more { display: block; min-width: 128px; min-height: 44px; margin: 14px auto; padding: 0 18px; color: var(--pixiv-blue); border: 1px solid #cde7f8; border-radius: 22px; background: white; cursor: pointer; font-size: var(--type-body); font-weight: 700; }
   .empty { display: grid; min-height: 260px; place-items: center; align-content: center; color: #abb1b5; text-align: center; }
   .empty h2 { margin: 13px 0 0; color: #62686c; font-size: var(--type-label); }
   .empty p { margin: 7px 0 0; font-size: var(--type-caption); }

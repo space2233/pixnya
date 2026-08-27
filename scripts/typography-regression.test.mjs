@@ -76,6 +76,7 @@ test("text buttons use the shared body size while symbol-only controls keep icon
     ".viewer footer button",
     ".page-nav",
     ".history-list article > button",
+    ".history-remove",
   ]);
   const violations = [];
   const files = sourceFiles(sourceRoot);

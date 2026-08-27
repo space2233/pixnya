@@ -66,7 +66,7 @@ test("history page, shared navigation, and settings operate on the same backend 
     read("src/lib/types.ts"),
   ]);
   assert.match(page, /getBrowsingHistory\(\)/);
-  assert.match(page, /setBrowsingHistoryEnabled\(!snapshot\.enabled\)/);
+  assert.match(page, /setBrowsingHistoryEnabled\(!historyState\.enabled\)/);
   assert.match(page, /removeBrowsingHistoryEntry\(entry\.kind, entry\.resourceId\)/);
   assert.match(page, /clearBrowsingHistory\(\)/);
   assert.doesNotMatch(page, /m\.history_description/);
