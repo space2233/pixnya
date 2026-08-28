@@ -1,7 +1,7 @@
 # PixNya 自动检查更新与自动更新计划
 
-> 状态：生产签名更新流程已投入使用；当前公开稳定版为 `1.4.3`，`1.4.4` 保留为未公开签名候选，当前源码版本为 `1.5.0`
-> 更新日期：2026-08-23
+> 状态：生产签名更新流程已投入使用；当前公开稳定版与源码版本均为 `1.5.0`
+> 更新日期：2026-08-28
 > 当前正式平台：Windows x64/ARM64、Linux x64、Android ARM64/ARM32
 
 首个正式版的逐项发布状态与人工验收记录见[首个正式版发布清单](FIRST_STABLE_RELEASE_CHECKLIST.md)。
@@ -177,6 +177,7 @@ Android 清单至少包含：schema 版本、`versionName`、`versionCode`、发
 - [x] Tauri updater 私钥、Android Release keystore 与 Android 清单签名密钥已生成，已上传受保护的环境 Secrets，并已完成两份加密离线备份。
 - [x] 完成桌面下载/安装以及 Android 清单验证、下载与系统安装链路。
 - [x] `1.4.3` Windows x64 与 Android ARM64 的覆盖安装、启动、登录/数据保留、三种连接模式和界面回归均通过；Linux x64、Windows ARM64 与 Android ARM32 已完成签名 CI 构建。`1.4.3` 已公开为 latest stable；未公开的 `1.4.2`/`1.4.1` Draft Release 已删除，受 tag ruleset 保护的历史 tag 保持原 SHA。
+- [x] `1.5.0` 已由 Publish 工作流复验并公开为 latest stable；本轮按维护者决定不做人机活体验收。未公开的 `1.4.4` Draft Release 已删除，历史 tag 保持原 SHA。
 
 ## 11. 发布配置
 

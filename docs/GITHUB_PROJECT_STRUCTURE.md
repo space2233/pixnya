@@ -2,9 +2,9 @@
 
 > 仓库：<https://github.com/space2233/pixnya>
 >
-> 更新日期：2026-08-19
+> 更新日期：2026-08-28
 >
-> 当前 Latest Stable：`v1.4.3`
+> 当前 Latest Stable：`v1.5.0`
 
 本文只说明 GitHub 上的两类内容：**源码仓库**和 **Releases**。GitHub 源码页不包含本机依赖、编译缓存、私密配置或签名私钥。
 
@@ -15,7 +15,7 @@
 | 区域 | 内容 | 用途 |
 |---|---|---|
 | `main` 分支 | 受版本控制的源码、文档、锁文件和工作流 | 开发、审查和复现构建 |
-| Git tags | 如 `v1.4.3`，直接指向发布源码提交 | 将 Release 与不可变源码版本绑定 |
+| Git tags | 如 `v1.5.0`，直接指向发布源码提交 | 将 Release 与不可变源码版本绑定 |
 | GitHub Actions | CI 日志和有保留期的中间 artifacts | 测试、跨平台签名构建、Draft 汇总、Stable 复验 |
 | GitHub Releases | 面向用户的安装包、自动更新清单和验证包 | 下载、自动更新和发布审计 |
 | Issues/PR（启用时） | 问题、讨论和改动审查 | 协作记录，不属于安装包 |
@@ -91,19 +91,19 @@
 
 Actions 的中间 artifacts（例如 `windows-arm64` 或 `android-armeabi-v7a`）服务于同一次流水线，有 GitHub 保留期；它们不是长期面向用户的 Release 附件。
 
-## 5. v1.4.3 Release 的 10 个附件
+## 5. v1.5.0 Release 的 10 个附件
 
-公开页面：<https://github.com/space2233/pixnya/releases/tag/v1.4.3>
+公开页面：<https://github.com/space2233/pixnya/releases/tag/v1.5.0>
 
 ### 用户安装包
 
 | 文件 | 大小（约） | 用途 |
 |---|---:|---|
-| `PixNya_1.4.3_x64-setup.exe` | 6.53 MiB | Windows x64 NSIS 安装包 |
-| `PixNya_1.4.3_arm64-setup.exe` | 5.74 MiB | Windows ARM64 原生应用安装包 |
-| `PixNya_1.4.3_amd64.AppImage` | 83.95 MiB | Linux x64 AppImage |
-| `pixnya-1.4.3-android-arm64-v8a.apk` | 30.90 MiB | Android ARM64 split APK，Android 10+ |
-| `pixnya-1.4.3-android-armeabi-v7a.apk` | 23.72 MiB | Android ARM32 split APK，Android 10+ |
+| `PixNya_1.5.0_x64-setup.exe` | 6.53 MiB | Windows x64 NSIS 安装包 |
+| `PixNya_1.5.0_arm64-setup.exe` | 5.75 MiB | Windows ARM64 原生应用安装包 |
+| `PixNya_1.5.0_amd64.AppImage` | 84.02 MiB | Linux x64 AppImage |
+| `pixnya-1.5.0-android-arm64-v8a.apk` | 30.95 MiB | Android ARM64 split APK，Android 10+ |
+| `pixnya-1.5.0-android-armeabi-v7a.apk` | 23.76 MiB | Android ARM32 split APK，Android 10+ |
 
 普通用户只需按设备下载上述一个文件。
 
@@ -114,14 +114,14 @@ Actions 的中间 artifacts（例如 `windows-arm64` 或 `android-armeabi-v7a`�
 | `latest.json` | Tauri 桌面更新清单；按 `windows-x86_64`、`windows-aarch64`、`linux-x86_64` 选择安装包并携带签名 | 否 |
 | `android-latest.json` | Android 更新清单；按 `arm64-v8a` / `armeabi-v7a` 选择 APK，并记录大小、SHA-256、包名和证书摘要 | 否 |
 | `android-latest.json.minisig` | Android 更新清单的 Ed25519/minisign 签名 | 否 |
-| `pixnya-1.4.3-verification.tar.gz` | 发布审计包：来源证明、SBOM、许可证归档、构建工具扫描结果和桌面签名 | 仅审计时需要 |
+| `pixnya-1.5.0-verification.tar.gz` | 发布审计包：来源证明、SBOM、许可证归档、构建工具扫描结果和桌面签名 | 仅审计时需要 |
 | `SHA256SUMS.txt` | 覆盖其余 9 个公开附件的 SHA-256 | 验证下载时可用 |
 
 Release 页面自动显示的 `Source code (zip)` / `Source code (tar.gz)` 由 GitHub 根据 tag 生成，不计入上述 10 个上传附件。
 
 ## 6. `verification.tar.gz` 内部内容
 
-v1.4.3 的验证包固定包含 12 项：
+v1.5.0 的验证包固定包含 12 项：
 
 1. `BUILD-PROVENANCE.txt`：源码仓库、源码提交、发布工作流提交和 run 来源。
 2. `LICENSE.txt`：项目 GPL-3.0-only 许可证。
@@ -161,7 +161,7 @@ main 上的固定提交
   -> 五个平台签名构建
   -> Draft Release（10 个附件）
   -> 独立重新下载和验签
-  -> tag v1.4.3 + Latest Stable
+  -> tag v1.5.0 + Latest Stable
 ```
 
-`v1.4.3` tag 当前直接指向发布源码提交 `95e7bf74a7f9ab5cc7cbe13f460c29e2a8580705`。安装包不提交到 `main`，而是放在 Release；源码、构建规则和验证脚本则保存在 `main` 和 tag 中。验收文档提交后的恢复 finalizer 使用 `release_workflow_commit=23c2fb97a004e941997a2e4c3adb5aef05fb0fcb`，但没有改变安装包来源或 tag 目标。
+`v1.5.0` tag 当前直接指向发布源码提交 `b5de41654e84389542ee8f1c3f7259c224f2d935`。安装包不提交到 `main`，而是放在 Release；源码、构建规则和验证脚本则保存在 `main` 和 tag 中。本轮未再跑 provenance 恢复 finalizer；Draft 工作流提交与 tag 目标均为该源码 SHA。

@@ -4,17 +4,17 @@
 
 ## 中文下载说明
 
-请前往 [PixNya v1.4.3 正式版](https://github.com/space2233/pixnya/releases/tag/v1.4.3)，按设备架构选择一个安装包：
+请前往 [PixNya v1.5.0 正式版](https://github.com/space2233/pixnya/releases/tag/v1.5.0)，按设备架构选择一个安装包：
 
-- Windows x64：`PixNya_1.4.3_x64-setup.exe`
-- Windows ARM64：`PixNya_1.4.3_arm64-setup.exe`
-- Linux x64：`PixNya_1.4.3_amd64.AppImage`
-- Android 10 及以上、ARM64：`pixnya-1.4.3-android-arm64-v8a.apk`
-- Android 10 及以上、ARM32：`pixnya-1.4.3-android-armeabi-v7a.apk`
+- Windows x64：`PixNya_1.5.0_x64-setup.exe`
+- Windows ARM64：`PixNya_1.5.0_arm64-setup.exe`
+- Linux x64：`PixNya_1.5.0_amd64.AppImage`
+- Android 10 及以上、ARM64：`pixnya-1.5.0-android-arm64-v8a.apk`
+- Android 10 及以上、ARM32：`pixnya-1.5.0-android-armeabi-v7a.apk`
 
 Release 中的 JSON 和签名文件供自动更新使用，普通用户无须下载。
 
-当前公开稳定版为 `1.4.3`；当前源码版本为 `1.5.0`。
+当前公开稳定版与源码版本均为 `1.5.0`。
 
 ## 项目性质
 
