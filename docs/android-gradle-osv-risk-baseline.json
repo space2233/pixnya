@@ -59,8 +59,8 @@
         "2.0.6.1"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-3677-xxcr-wjqv",
@@ -83,8 +83,8 @@
         "0.9.6"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-389x-839f-4rhx",
@@ -109,8 +109,8 @@
         "4.1.118.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-389x-839f-4rhx",
@@ -132,8 +132,8 @@
         "4.1.118.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-38f8-5428-x5cv",
@@ -159,8 +159,8 @@
         "4.2.13.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-38f8-5428-x5cv",
@@ -183,8 +183,8 @@
         "4.2.13.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-3p8m-j85q-pgmj",
@@ -210,8 +210,8 @@
         "4.2.5.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-3p8m-j85q-pgmj",
@@ -234,8 +234,8 @@
         "4.2.5.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-3qp7-7mw8-wx86",
@@ -261,8 +261,8 @@
         "4.2.15.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-3qp7-7mw8-wx86",
@@ -285,8 +285,8 @@
         "4.2.15.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-4265-ccf5-phj5",
@@ -309,8 +309,8 @@
         "1.26.0"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-45q3-82m4-75jr",
@@ -336,8 +336,8 @@
         "4.2.13.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-45q3-82m4-75jr",
@@ -360,8 +360,8 @@
         "4.2.13.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-4g8c-wm8x-jfhw",
@@ -386,8 +386,8 @@
         "4.1.118.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-4g8c-wm8x-jfhw",
@@ -409,8 +409,8 @@
         "4.1.118.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-4g9r-vxhx-9pgx",
@@ -433,8 +433,8 @@
         "1.26.0"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-4mp9-239f-g9hg",
@@ -460,8 +460,8 @@
         "4.2.16.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-4mp9-239f-g9hg",
@@ -484,8 +484,8 @@
         "4.2.16.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-558v-64gr-wgg4",
@@ -511,8 +511,8 @@
         "4.2.16.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-558v-64gr-wgg4",
@@ -535,8 +535,8 @@
         "4.2.16.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-563q-j3cm-6jxm",
@@ -562,8 +562,8 @@
         "4.2.15.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-563q-j3cm-6jxm",
@@ -586,8 +586,8 @@
         "4.2.15.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-57rv-r2g8-2cj3",
@@ -613,8 +613,8 @@
         "4.2.13.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-57rv-r2g8-2cj3",
@@ -637,8 +637,8 @@
         "4.2.13.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-5jpm-x58v-624v",
@@ -660,8 +660,8 @@
         "4.1.108.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-5x3r-wrvg-rp6q",
@@ -687,8 +687,8 @@
         "4.2.15.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-5x3r-wrvg-rp6q",
@@ -711,8 +711,8 @@
         "4.2.15.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-6cqp-g7gg-8hr5",
@@ -738,8 +738,8 @@
         "4.2.16.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-6cqp-g7gg-8hr5",
@@ -762,8 +762,8 @@
         "4.2.16.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-6jqx-86gh-f27w",
@@ -789,8 +789,8 @@
         "4.2.16.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-6jqx-86gh-f27w",
@@ -813,8 +813,8 @@
         "4.2.16.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-6mjq-h674-j845",
@@ -836,8 +836,8 @@
         "4.1.94.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-735f-pc8j-v9w8",
@@ -861,8 +861,8 @@
         "4.28.2"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-735f-pc8j-v9w8",
@@ -886,8 +886,8 @@
         "4.28.2"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-84h7-rjj3-6jx4",
@@ -913,8 +913,8 @@
         "4.2.8.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-84h7-rjj3-6jx4",
@@ -937,8 +937,8 @@
         "4.2.8.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-8c42-7qj2-3j46",
@@ -964,8 +964,8 @@
         "4.2.17.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-18",
-      "expiresAt": "2026-09-17"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-8c42-7qj2-3j46",
@@ -988,8 +988,8 @@
         "4.2.17.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-18",
-      "expiresAt": "2026-09-17"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-93wv-jw9v-4972",
@@ -1015,8 +1015,8 @@
         "4.2.16.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-93wv-jw9v-4972",
@@ -1039,8 +1039,8 @@
         "4.2.16.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-c2gf-v879-257j",
@@ -1066,8 +1066,8 @@
         "4.2.15.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-c2gf-v879-257j",
@@ -1090,8 +1090,8 @@
         "4.2.15.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-c3fc-8qff-9hwx",
@@ -1114,8 +1114,8 @@
         "1.84"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-17",
-      "expiresAt": "2026-09-16"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-c653-97m9-rcg9",
@@ -1141,8 +1141,8 @@
         "4.2.15.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-c653-97m9-rcg9",
@@ -1165,8 +1165,8 @@
         "4.2.15.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-c69g-56f8-xwqj",
@@ -1192,8 +1192,8 @@
         "4.2.16.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-c69g-56f8-xwqj",
@@ -1216,8 +1216,8 @@
         "4.2.16.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-f6hv-jmp6-3vwv",
@@ -1243,8 +1243,8 @@
         "4.2.13.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-f6hv-jmp6-3vwv",
@@ -1267,8 +1267,8 @@
         "4.2.13.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-f6hv-jmp6-3vwv",
@@ -1294,8 +1294,8 @@
         "4.2.13.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-f6hv-jmp6-3vwv",
@@ -1318,8 +1318,8 @@
         "4.2.13.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-fghv-69vj-qj49",
@@ -1345,8 +1345,8 @@
         "4.2.5.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-fghv-69vj-qj49",
@@ -1369,8 +1369,8 @@
         "4.2.5.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-gcjf-9mgh-3p7g",
@@ -1396,8 +1396,8 @@
         "4.2.16.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-gcjf-9mgh-3p7g",
@@ -1420,8 +1420,8 @@
         "4.2.16.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-hvcg-qmg6-jm4c",
@@ -1447,8 +1447,8 @@
         "4.2.15.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-hvcg-qmg6-jm4c",
@@ -1471,8 +1471,8 @@
         "4.2.15.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-jppx-w49h-x2qq",
@@ -1498,8 +1498,8 @@
         "4.2.16.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-jppx-w49h-x2qq",
@@ -1522,8 +1522,8 @@
         "4.2.16.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-m4cv-j2px-7723",
@@ -1549,8 +1549,8 @@
         "4.2.13.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-m4cv-j2px-7723",
@@ -1573,8 +1573,8 @@
         "4.2.13.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-mj4r-2hfc-f8p6",
@@ -1600,8 +1600,8 @@
         "4.2.13.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-mj4r-2hfc-f8p6",
@@ -1624,8 +1624,8 @@
         "4.2.13.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-mvh2-crg5-v77c",
@@ -1651,8 +1651,8 @@
         "4.2.16.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-mvh2-crg5-v77c",
@@ -1675,8 +1675,8 @@
         "4.2.16.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-prj3-ccx8-p6x4",
@@ -1703,8 +1703,8 @@
         "4.2.4.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-prj3-ccx8-p6x4",
@@ -1728,8 +1728,8 @@
         "4.2.4.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-pwqr-wmgm-9rr8",
@@ -1755,8 +1755,8 @@
         "4.2.10.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-pwqr-wmgm-9rr8",
@@ -1779,8 +1779,8 @@
         "4.2.10.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-q4f6-jm68-57ww",
@@ -1806,8 +1806,8 @@
         "4.2.16.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-q4f6-jm68-57ww",
@@ -1830,8 +1830,8 @@
         "4.2.16.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-r937-wjx7-w2jp",
@@ -1853,8 +1853,8 @@
         "2.4.20-Beta1"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-13",
-      "expiresAt": "2026-09-12"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-v8h7-rr48-vmmv",
@@ -1880,8 +1880,8 @@
         "4.2.13.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-v8h7-rr48-vmmv",
@@ -1904,8 +1904,8 @@
         "4.2.13.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-w9fj-cfpg-grvv",
@@ -1931,8 +1931,8 @@
         "4.2.11.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-w9fj-cfpg-grvv",
@@ -1955,8 +1955,8 @@
         "4.2.11.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-wg6q-6289-32hp",
@@ -1979,8 +1979,8 @@
         "1.84"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-17",
-      "expiresAt": "2026-09-16"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-x4gw-5cx5-pgmh",
@@ -2006,8 +2006,8 @@
         "4.2.15.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-x4gw-5cx5-pgmh",
@@ -2030,8 +2030,8 @@
         "4.2.15.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-xpw8-rcwv-8f8p",
@@ -2053,8 +2053,8 @@
         "4.1.100.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-xq3w-v528-46rv",
@@ -2079,8 +2079,8 @@
         "4.1.115.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-xq3w-v528-46rv",
@@ -2102,8 +2102,8 @@
         "4.1.115.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-xxqh-mfjm-7mv9",
@@ -2129,8 +2129,8 @@
         "4.2.13.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     },
     {
       "advisory": "GHSA-xxqh-mfjm-7mv9",
@@ -2153,8 +2153,8 @@
         "4.2.13.Final"
       ],
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
-      "reviewedAt": "2026-08-09",
-      "expiresAt": "2026-09-08"
+      "reviewedAt": "2026-09-02",
+      "expiresAt": "2026-10-02"
     }
   ]
 }

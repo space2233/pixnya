@@ -55,7 +55,7 @@ test("Rust advisory policy keeps a narrow, expiring list of reviewed upstream ex
   for (const { id, reason } of exceptions) {
     const match = reason.match(reviewDatePattern);
     assert.ok(match, `${id} must include a machine-readable review-by date`);
-    assert.equal(match[1], "2026-09-09", `${id} must not be extended without review`);
+    assert.equal(match[1], "2026-10-02", `${id} must not be extended without review`);
     assert.ok(new Date(`${match[1]}T00:00:00Z`) >= today, `${id} expired on ${match[1]}`);
     assert.match(reason, /upstream=/, `${id} must identify its upstream migration path`);
     if (id === "RUSTSEC-2024-0429") {

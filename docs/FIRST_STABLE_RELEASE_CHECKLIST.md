@@ -1,6 +1,6 @@
 # PixNya 首个正式版发布清单
 
-> 状态：首个稳定版与后续 `1.1.0`–`1.5.0` 已发布
+> 状态：首个稳定版与后续 `1.1.0`–`1.5.0` 已发布；当前维护范围是 `1.5.1` 补丁
 > 当前升级基线：公开稳定版 `1.5.0`
 > 正式支持：Windows x64/ARM64（NSIS）、Linux x64（AppImage）、Android ARM64/ARM32（split APK）
 
@@ -17,7 +17,7 @@
 
 - [x] 发布工作流只能从 `main` 分支的固定提交触发，并校验 npm、Cargo、Tauri 与请求版本一致。
 - [x] 签名构建开始前运行 `npm run test:full`，覆盖全部 Node 回归、Svelte 检查、Rust 格式、Clippy 与 workspace tests。
-- [x] 发布前阻断运行时 npm 低危以上告警、全部 npm 高危以上告警、RustSec advisory，并用 OSV 扫描 Android ARM APK 的共同 runtime 锁图；runtime 零例外。构建工具图使用重新扫描确认的 84 条精确、限 scope、限版本、限期的临时 OSV 基线（79 条于 2026-09-08 到期，Kotlin 构建缓存告警于 2026-09-12 到期，Bouncy Castle 的两条 Moderate 告警于 2026-09-16 到期，Netty 的两条 Moderate 告警于 2026-09-17 到期）；此前唯一的 Critical Bouncy Castle 例外已通过升级到 `1.80.2` 消除。新增、变化或到期即失败，原始报告随每个 Release 归档。
+- [x] 发布前阻断运行时 npm 低危以上告警、全部 npm 高危以上告警、RustSec advisory，并用 OSV 扫描 Android ARM APK 的共同 runtime 锁图；runtime 零例外。构建工具图使用 2026-09-02 重新扫描确认的 84 条精确、限 scope、限版本、限期的临时 OSV 基线（与锁图完全一致，无新增、无消失、无坐标/版本/scope 变化；全部 84 条于 2026-10-02 到期）。此前唯一的 Critical Bouncy Castle 例外已通过升级到 `1.80.2` 消除。新增、变化或到期即失败，原始报告随每个 Release 归档。
 - [x] Windows、Linux 与 Android 构建均要求完整的生产构建参数和签名 Secret，缺少任意一项立即失败。
 - [x] Android Release 只允许经过验证的 ARM64 与 ARM32 分包 APK，并用 `apksigner` 反查实际 APK 证书与受保护 keystore 一致。
 - [x] Draft Release 创建前，用公开密钥重新验证 Windows/Linux updater 签名和 Android 清单签名。
@@ -37,6 +37,7 @@
 - [x] 提交并推送完整候选源码，发布时确认 `HEAD`、`origin/main` 与来源 SHA 一致。
 - [x] 所有用户可见版本元数据由发布边界测试强制一致。
 - [x] 从固定提交 `95e7bf74a7f9ab5cc7cbe13f460c29e2a8580705` 触发 `1.4.3` 签名 Draft；GitHub Actions run `32128825447` 完成五平台构建、签名与 10 附件汇总，run `32242090056` 复用同一批不可变 artifacts 更新 provenance，Publish run `32242238581` 复验后公开。
+- [x] `1.4.4` 维护提交 `c433fc5e0ff2a3eff999d7b5a384cf6c4d6006c3` 已打 tag，但未公开为面向用户的 GitHub Release；维护内容已包含在 `1.5.0` 中。
 - [x] 从固定提交 `b5de41654e84389542ee8f1c3f7259c224f2d935` 触发 `1.5.0` 签名 Draft；GitHub Actions run `33059441874` 完成五平台构建、签名与 10 附件汇总，Publish run `33162282043` 复验后公开。本轮按维护者决定不做人机活体验收。
 
 ### 3.2 长期签名材料与后续非阻塞治理
@@ -65,6 +66,9 @@
 - [x] Android ARM64：`1.4.3` Draft 真机覆盖安装通过，系统安装器、版本码、登录状态、设置、数据库、离线文件、备份功能、ECH 缩略图和新字号布局均由维护者确认正常。
 - [x] 标准、ECH、兼容三种连接模式在 Android ARM64 的低频登录、API 与图片加载冒烟测试通过。
 - [x] Linux x64、Windows ARM64、Android ARM32 完成 `1.4.3` 签名 CI 构建；本轮不宣称已做活体验收。
+- [ ] `1.5.1`：Windows x64 从公开 `1.5.0` 覆盖升级活体验收。尚未执行，不得预先填写 PASS、设备名或安装包 SHA-256。
+- [ ] `1.5.1`：Android ARM64 从公开 `1.5.0` 覆盖升级，并覆盖标准、ECH、兼容三种连接模式。尚未执行。
+- [ ] Linux x64、Windows ARM64、Android ARM32：`1.5.1` 仅要求 CI 签名构建；`1.4.3` 与 `1.5.0` 均未做这些平台的活体验收。
 
 ### 3.5 公开发布治理
 
@@ -84,4 +88,4 @@
 
 ## 5. 当前结论
 
-`1.5.0` 已是公开 latest stable；固定候选、五平台签名、10 个附件、匿名更新清单及三套签名均已复验。本轮不做人机活体验收。未公开的 `1.4.4` Draft Release 已删除；历史 tag 因仓库不可删除 ruleset 保持原 SHA。
+`1.5.0` 已是公开 latest stable；固定候选、五平台签名、10 个附件、匿名更新清单及三套签名均已复验。本轮不做人机活体验收。`1.4.4` 维护工作已完成并打 tag，但从未作为面向用户的 GitHub Release 公开，内容已包含在 `1.5.0` 中；未公开的 `1.4.4` Draft Release 已删除；历史 tag 因仓库不可删除 ruleset 保持原 SHA。当前激活的下一版本是 `1.5.1` 维护补丁：供应链/OSV 基线复核，以及从公开 `1.5.0` 到 `1.5.1` 的 Windows x64 / Android ARM64 覆盖升级活体验收；活体验收尚未开始。

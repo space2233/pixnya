@@ -77,7 +77,7 @@ test("tracked baseline records exact, short-lived, non-runtime findings", async 
   assert.ok(nettyCors.every((entry) => entry.severity === "MODERATE"));
   assert.ok(nettyCors.every((entry) => entry.fixedVersions.includes("4.1.137.Final")));
   assert.ok(nettyCors.every((entry) => entry.fixedVersions.includes("4.2.17.Final")));
-  assert.ok(nettyCors.every((entry) => entry.expiresAt === "2026-09-17"));
+  assert.ok(nettyCors.every((entry) => entry.expiresAt === "2026-10-02"));
   assert.deepEqual(
     scopeDefinitions.map((scope) => scope.id),
     [
@@ -99,30 +99,8 @@ test("tracked baseline records exact, short-lived, non-runtime findings", async 
     assert.match(entry.unreachableReason, /absent from arm64ReleaseRuntimeClasspath/);
     assert.ok(entry.fixedVersions.length > 0);
     assert.equal(entry.trackingIssue, "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08");
-    const isKotlinBuildCacheFinding = entry.advisory === "GHSA-r937-wjx7-w2jp";
-    const isUpdatedBouncyCastleFinding = ["GHSA-c3fc-8qff-9hwx", "GHSA-wg6q-6289-32hp"]
-      .includes(entry.advisory);
-    const isNewNettyCorsFinding = entry.advisory === "GHSA-8c42-7qj2-3j46";
-    assert.equal(
-      entry.reviewedAt,
-      isNewNettyCorsFinding
-        ? "2026-08-18"
-        : isUpdatedBouncyCastleFinding
-          ? "2026-08-17"
-          : isKotlinBuildCacheFinding
-            ? "2026-08-13"
-            : "2026-08-09",
-    );
-    assert.equal(
-      entry.expiresAt,
-      isNewNettyCorsFinding
-        ? "2026-09-17"
-        : isUpdatedBouncyCastleFinding
-          ? "2026-09-16"
-          : isKotlinBuildCacheFinding
-            ? "2026-09-12"
-            : "2026-09-08",
-    );
+    assert.equal(entry.reviewedAt, "2026-09-02");
+    assert.equal(entry.expiresAt, "2026-10-02");
   }
 });
 
