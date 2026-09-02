@@ -177,7 +177,7 @@ Android 清单至少包含：schema 版本、`versionName`、`versionCode`、发
 - [x] Tauri updater 私钥、Android Release keystore 与 Android 清单签名密钥已生成，已上传受保护的环境 Secrets，并已完成两份加密离线备份。
 - [x] 完成桌面下载/安装以及 Android 清单验证、下载与系统安装链路。
 - [x] `1.4.3` Windows x64 与 Android ARM64 的覆盖安装、启动、登录/数据保留、三种连接模式和界面回归均通过；Linux x64、Windows ARM64 与 Android ARM32 已完成签名 CI 构建。`1.4.3` 已公开为 latest stable；未公开的 `1.4.2`/`1.4.1` Draft Release 已删除，受 tag ruleset 保护的历史 tag 保持原 SHA。
-- [x] `1.5.0` 已由 Publish 工作流复验并公开为 latest stable；本轮按维护者决定不做人机活体验收。未公开的 `1.4.4` Draft Release 已删除，历史 tag 保持原 SHA。
+- [x] `1.5.0` 已由 Publish 工作流复验并公开为 latest stable；本轮按维护者决定不做人机活体验收。`1.4.4` 维护工作已完成并打 tag，但从未作为面向用户的 GitHub Release 公开，内容已包含在 `1.5.0` 中；未公开的 `1.4.4` Draft Release 已删除，历史 tag 保持原 SHA。
 
 ## 11. 发布配置
 
