@@ -3,6 +3,7 @@
   import AppShell from "$lib/components/AppShell.svelte";
   import ArtworkComments from "$lib/components/ArtworkComments.svelte";
   import Icon from "$lib/components/Icon.svelte";
+  import OfflineImage from "$lib/components/OfflineImage.svelte";
   import PixivImage from "$lib/components/PixivImage.svelte";
   import ReturnLink from "$lib/components/ReturnLink.svelte";
   import { currentAppLocale, m } from "$lib/i18n";
@@ -16,6 +17,7 @@
     describeDataFailure,
     enqueueDownload,
     getNovelDetail,
+    readOfflineText,
     recordBrowsingHistory,
     setNovelBookmark,
   } from "$lib/pixiv-api";
@@ -37,6 +39,7 @@
   let revealRestricted = $state(false);
   let requestedKey = $state("");
   let requestSequence = 0;
+  let localNovelKey = $state<string | null>(null);
   let novelId = $derived(page.params.id ?? "");
   let bookmarkAccount = $derived($session.loggedIn ? ($session.user?.id ?? "logged-in") : "");
   let caption = $derived(detail ? plainPixivText(detail.novel.caption) : "");
@@ -90,6 +93,27 @@
       bookmarked = next;
       bookmarkError = "";
     });
+  });
+
+  $effect(() => {
+    const id = detail?.novel.id;
+    if (!id || id !== novelId) {
+      localNovelKey = null;
+      return;
+    }
+    let cancelled = false;
+    void readOfflineText(`novel-${id}`, "detail.json")
+      .then((text) => {
+        if (cancelled) return;
+        const parsed = JSON.parse(text) as NovelDetail;
+        localNovelKey = parsed?.novel?.id === id ? `novel-${id}` : null;
+      })
+      .catch(() => {
+        if (!cancelled) localNovelKey = null;
+      });
+    return () => {
+      cancelled = true;
+    };
   });
 
   $effect(() => {
@@ -211,7 +235,18 @@
     {:else if detail}
       <article class="detail-card">
         <div class="cover" class:concealed={restricted && !$r18DefaultVisible && !revealRestricted}>
-          <PixivImage url={detail.novel.coverUrl} alt="" cacheKind="preview" />
+          {#if localNovelKey}
+            <OfflineImage
+              entryKey={localNovelKey}
+              assetNames={["cover.jpg", "cover.jpeg", "cover.png", "cover.webp", "cover.gif", "cover.avif"]}
+              alt=""
+              fit="cover"
+              fallbackUrl={detail.novel.coverUrl}
+              fallbackCacheKind="preview"
+            />
+          {:else}
+            <PixivImage url={detail.novel.coverUrl} alt="" cacheKind="preview" />
+          {/if}
           {#if restricted && !$r18DefaultVisible && !revealRestricted}
             <button class="reveal-cover" type="button" onclick={() => (revealRestricted = true)}>
               {m.novel_reveal_cover()}

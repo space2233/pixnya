@@ -152,7 +152,7 @@ npm run storage:cleanup:preview
 - `browsing-history-v1.sqlite3`：浏览历史。
 - `download-queue-v1.sqlite3`：下载队列状态。
 - `offline-library/`：已下载的离线作品和小说。
-- `media-v1/`：在线媒体缓存，通常不必备份，可重新下载。
+- `media-v1/`：在线媒体缓存，通常不必备份，可重新下载。进程内复用同一缓存实例；打开时仍会清除旧原图缓存。清除媒体缓存不会触及相邻的 `offline-library/`。
 
 登录凭据还会进入系统安全存储，不能仅靠复制源码目录或上述 SQLite 文件完成账号迁移。
 

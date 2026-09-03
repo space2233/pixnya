@@ -22,6 +22,7 @@
     getIllustrationDetail,
     getRelatedIllustrations,
     enqueueDownload,
+    readOfflineText,
     recordBrowsingHistory,
     setIllustrationBookmark,
     startUgoiraExport,
@@ -57,6 +58,7 @@
   let seriesNavigationLoading = $state(false);
   let requestedKey = $state("");
   let requestSequence = 0;
+  let localArtworkKey = $state<string | null>(null);
   let illustrationId = $derived(page.params.id ?? "");
   let bookmarkAccount = $derived($session.loggedIn ? ($session.user?.id ?? "logged-in") : "");
   let restricted = $derived((detail?.illustration.xRestrict ?? 0) > 0);
@@ -69,6 +71,8 @@
     }),
     previewUrl: image.displayUrl ?? image.originalUrl,
     originalUrl: image.originalUrl ?? image.displayUrl,
+    entryKey: localArtworkKey ?? undefined,
+    assetNames: localArtworkKey ? offlineArtworkPageAssets(image.pageIndex) : undefined,
   })));
   let ugoiraExportActive = $derived(ugoiraExportTask !== null && !["completed", "failed", "cancelled"].includes(ugoiraExportTask.phase));
   let ugoiraExportProgress = $derived(ugoiraExportTask && ugoiraExportTask.totalUnits > 0 ? Math.min(100, Math.round(ugoiraExportTask.completedUnits / ugoiraExportTask.totalUnits * 100)) : 0);
@@ -137,6 +141,28 @@
       bookmarked = next;
       bookmarkError = "";
     });
+  });
+
+  $effect(() => {
+    const id = detail?.illustration.id;
+    if (!id || id !== illustrationId) {
+      localArtworkKey = null;
+      return;
+    }
+    let cancelled = false;
+    void readOfflineText(`artwork-${id}`, "detail.json")
+      .then((text) => {
+        if (cancelled) return;
+        const parsed = JSON.parse(text) as IllustrationDetail;
+        localArtworkKey =
+          parsed?.illustration?.id === id && Array.isArray(parsed.pages) ? `artwork-${id}` : null;
+      })
+      .catch(() => {
+        if (!cancelled) localArtworkKey = null;
+      });
+    return () => {
+      cancelled = true;
+    };
   });
 
   $effect(() => {
@@ -213,6 +239,11 @@
     } finally {
       if (sequence === requestSequence && key === requestedKey) seriesNavigationLoading = false;
     }
+  }
+
+  function offlineArtworkPageAssets(index: number): string[] {
+    const base = `page-${String(index + 1).padStart(4, "0")}`;
+    return ["jpg", "jpeg", "png", "webp", "gif", "avif"].map((extension) => `${base}.${extension}`);
   }
 
   function retry() {

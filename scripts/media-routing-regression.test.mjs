@@ -16,6 +16,7 @@ const ugoiraPlayer = source("../src/lib/components/UgoiraPlayer.svelte");
 const artworkViewer = source("../src/lib/components/ArtworkImageViewer.svelte");
 const preferences = source("../src/lib/preferences.ts");
 const rustCommands = source("../src-tauri/src/lib.rs");
+const mediaCache = source("../crates/media-cache/src/lib.rs");
 
 test("all remote Pixiv images cross the Rust media pipeline", () => {
   assert.match(appShell, /<PixivImage[\s\S]*url=\{avatarUrl\}/);
@@ -59,10 +60,29 @@ test("media requests keep the selected global connection mode and never prompt f
 
 test("full-resolution viewer media stays transient instead of filling the disk cache", () => {
   assert.match(artworkViewer, /cacheKind=\{currentPage\.originalUrl \? null : "preview"\}/);
+  assert.match(artworkViewer, /fallbackCacheKind=\{currentPage\.originalUrl \? null : "preview"\}/);
   assert.doesNotMatch(artworkViewer, /cacheKind="original"/);
   assert.match(rustCommands, /cache_kind\.filter\([\s\S]*CacheKind::Thumbnail \| CacheKind::Preview/);
-  assert.match(rustCommands, /if let Some\(cache_kind\) = cache_kind[\s\S]*MediaCache::open/);
+  assert.match(rustCommands, /fn ensure_resident_media_cache/);
+  assert.match(rustCommands, /if let Some\(cache_kind\) = cache_kind[\s\S]*ensure_resident_media_cache/);
   assert.match(rustCommands, /store_epoch\.is_current\(expected_epoch\)/);
   assert.match(rustCommands, /async fn clear_media_cache[\s\S]*epoch\.advance\(\)/);
   assert.match(rustCommands, /async fn clear_local_data[\s\S]*cache_epoch\.advance\(\)/);
+});
+
+test("thumbnail fetches reuse a process-resident media cache instead of reopening on every hit", () => {
+  const fetchStart = rustCommands.indexOf("async fn fetch_pixiv_thumbnail");
+  const fetchEnd = rustCommands.indexOf("async fn get_media_cache_stats");
+  const fetch = rustCommands.slice(fetchStart, fetchEnd);
+  assert.ok(fetchStart >= 0 && fetchEnd > fetchStart);
+  assert.doesNotMatch(fetch, /MediaCache::open/);
+  assert.match(fetch, /ensure_resident_media_cache/);
+  assert.match(rustCommands, /gate: Arc<Mutex<Option<MediaCache>>>/);
+  assert.match(mediaCache, /entry\.kind != CacheKind::Original/);
+  assert.match(mediaCache, /fn mark_hit_dirty/);
+  assert.match(mediaCache, /INDEX_FLUSH_HIT_INTERVAL/);
+  assert.match(mediaCache, /reopening_purges_legacy_originals_without_dropping_previews/);
+  assert.match(mediaCache, /cache_hits_do_not_rewrite_the_index_until_a_flush/);
+  assert.doesNotMatch(artworkThumbnail, /readOffline|OfflineImage/);
+  assert.doesNotMatch(browsePage, /readOfflineText|OfflineImage/);
 });

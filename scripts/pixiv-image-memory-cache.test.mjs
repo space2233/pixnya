@@ -150,3 +150,14 @@ test("PixivImage and profile use warm media immediately while refreshing in the 
   assert.match(session, /clearProfileMediaSnapshots/);
   assert.match(api, /clear_media_cache[\s\S]*clearPixivImageMemoryCache/);
 });
+
+test("detail-page offline reuse falls back to PixivImage without a new cache interface", async () => {
+  const offlineImage = await readFile(
+    new URL("../src/lib/components/OfflineImage.svelte", import.meta.url),
+    "utf8",
+  );
+  assert.match(offlineImage, /readOfflineAsset/);
+  assert.match(offlineImage, /fallbackUrl/);
+  assert.match(offlineImage, /<PixivImage url=\{fallbackUrl\}/);
+  assert.doesNotMatch(offlineImage, /fetch_pixiv_thumbnail/);
+});

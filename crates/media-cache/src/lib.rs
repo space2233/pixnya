@@ -10,6 +10,7 @@ const INDEX_STAGING_FILE: &str = ".index.staging";
 const INDEX_BACKUP_FILE: &str = ".index.backup";
 const FORMAT_VERSION: u8 = 2;
 const MAX_SOURCE_KEY_BYTES: usize = 4096;
+const INDEX_FLUSH_HIT_INTERVAL: u32 = 32;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -89,6 +90,8 @@ pub struct MediaCache {
     root: PathBuf,
     max_bytes: Option<u64>,
     index: StoredIndex,
+    index_dirty: bool,
+    unpersisted_hits: u32,
 }
 
 impl MediaCache {
@@ -113,11 +116,30 @@ impl MediaCache {
             root,
             max_bytes,
             index: index.unwrap_or_default(),
+            index_dirty: false,
+            unpersisted_hits: 0,
         };
         cache.reconcile()?;
         cache.trim_to_capacity()?;
         cache.persist_index()?;
         Ok(cache)
+    }
+
+    pub fn root(&self) -> &Path {
+        &self.root
+    }
+
+    pub fn max_bytes(&self) -> Option<u64> {
+        self.max_bytes
+    }
+
+    pub fn set_max_bytes(&mut self, max_bytes: Option<u64>) -> Result<(), CacheError> {
+        if self.max_bytes == max_bytes {
+            return Ok(());
+        }
+        self.max_bytes = max_bytes;
+        self.trim_to_capacity()?;
+        self.persist_index()
     }
 
     pub fn get(
@@ -156,7 +178,7 @@ impl MediaCache {
         if let Some(entry) = self.index.entries.get_mut(&id) {
             entry.access_order = access_order;
         }
-        self.persist_index()?;
+        self.mark_hit_dirty()?;
         Ok(Some(bytes))
     }
 
@@ -322,7 +344,16 @@ impl MediaCache {
         self.root.join(scope.code()).join(format!("{id}.bin"))
     }
 
-    fn persist_index(&self) -> Result<(), CacheError> {
+    fn mark_hit_dirty(&mut self) -> Result<(), CacheError> {
+        self.index_dirty = true;
+        self.unpersisted_hits = self.unpersisted_hits.saturating_add(1);
+        if self.unpersisted_hits >= INDEX_FLUSH_HIT_INTERVAL {
+            self.persist_index()?;
+        }
+        Ok(())
+    }
+
+    fn persist_index(&mut self) -> Result<(), CacheError> {
         let bytes = serde_json::to_vec(&self.index).map_err(|_| CacheError::Io)?;
         let staging = self.root.join(INDEX_STAGING_FILE);
         let index = self.root.join(INDEX_FILE);
@@ -342,7 +373,17 @@ impl MediaCache {
         if replacing {
             let _ = fs::remove_file(backup);
         }
+        self.index_dirty = false;
+        self.unpersisted_hits = 0;
         Ok(())
+    }
+}
+
+impl Drop for MediaCache {
+    fn drop(&mut self) {
+        if self.index_dirty {
+            let _ = self.persist_index();
+        }
     }
 }
 
@@ -426,7 +467,7 @@ fn restore_interrupted_index(root: &Path) -> Result<(), CacheError> {
 
 #[cfg(test)]
 mod tests {
-    use super::{CacheKind, CacheScope, MediaCache, INDEX_FILE};
+    use super::{CacheKind, CacheScope, MediaCache, StoredIndex, INDEX_FILE};
     use std::fs;
     use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -737,6 +778,32 @@ mod tests {
     }
 
     #[test]
+    fn shrinking_the_limit_on_an_open_cache_trims_without_reopening() {
+        let root = test_root("limit-shrink-resident");
+        let mut cache = MediaCache::open(&root, None).unwrap();
+        cache
+            .put(CacheScope::Verified, CacheKind::Thumbnail, "old", b"111")
+            .unwrap();
+        cache
+            .put(CacheScope::Verified, CacheKind::Thumbnail, "new", b"222")
+            .unwrap();
+
+        cache.set_max_bytes(Some(3)).unwrap();
+        assert!(cache
+            .get(CacheScope::Verified, CacheKind::Thumbnail, "old", 8)
+            .unwrap()
+            .is_none());
+        assert_eq!(
+            cache
+                .get(CacheScope::Verified, CacheKind::Thumbnail, "new", 8)
+                .unwrap(),
+            Some(b"222".to_vec())
+        );
+        assert_eq!(cache.stats().size_bytes, 3);
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
     fn clearing_cache_never_removes_the_adjacent_offline_library() {
         let parent = test_root("clear-boundary");
         let root = parent.join("media-cache");
@@ -754,6 +821,92 @@ mod tests {
         assert!(offline.join("keep.txt").is_file());
         assert_eq!(cache.stats().entry_count, 0);
         fs::remove_dir_all(parent).unwrap();
+    }
+
+    #[test]
+    fn cache_hits_do_not_rewrite_the_index_until_a_flush() {
+        let root = test_root("hit-no-rewrite");
+        let mut cache = MediaCache::open(&root, Some(64)).unwrap();
+        cache
+            .put(CacheScope::Verified, CacheKind::Thumbnail, "warm", b"image")
+            .unwrap();
+        let index_path = root.join(INDEX_FILE);
+        let before = fs::read(&index_path).unwrap();
+
+        assert_eq!(
+            cache
+                .get(CacheScope::Verified, CacheKind::Thumbnail, "warm", 16)
+                .unwrap(),
+            Some(b"image".to_vec())
+        );
+        assert_eq!(fs::read(&index_path).unwrap(), before);
+
+        drop(cache);
+        let flushed = fs::read(&index_path).unwrap();
+        assert_ne!(flushed, before);
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn dropping_a_dirty_cache_persists_lru_order_for_the_next_open() {
+        let root = test_root("dirty-lru-flush");
+        {
+            let mut cache = MediaCache::open(&root, Some(6)).unwrap();
+            cache
+                .put(CacheScope::Verified, CacheKind::Thumbnail, "one", b"111")
+                .unwrap();
+            cache
+                .put(CacheScope::Verified, CacheKind::Thumbnail, "two", b"22")
+                .unwrap();
+            assert!(cache
+                .get(CacheScope::Verified, CacheKind::Thumbnail, "one", 8)
+                .unwrap()
+                .is_some());
+        }
+
+        let mut cache = MediaCache::open(&root, Some(6)).unwrap();
+        cache
+            .put(CacheScope::Verified, CacheKind::Thumbnail, "three", b"333")
+            .unwrap();
+        assert!(cache
+            .get(CacheScope::Verified, CacheKind::Thumbnail, "one", 8)
+            .unwrap()
+            .is_some());
+        assert!(cache
+            .get(CacheScope::Verified, CacheKind::Thumbnail, "two", 8)
+            .unwrap()
+            .is_none());
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn corrupt_hits_still_persist_index_removal_immediately() {
+        let root = test_root("corrupt-hit-persist");
+        let mut cache = MediaCache::open(&root, Some(64)).unwrap();
+        cache
+            .put(
+                CacheScope::Verified,
+                CacheKind::Thumbnail,
+                "corrupt",
+                b"image",
+            )
+            .unwrap();
+        let data_file = walk_files(&root)
+            .into_iter()
+            .find(|path| path.extension().is_some_and(|extension| extension == "bin"))
+            .unwrap();
+        fs::write(data_file, b"xxxxx").unwrap();
+
+        assert_eq!(
+            cache
+                .get(CacheScope::Verified, CacheKind::Thumbnail, "corrupt", 16)
+                .unwrap(),
+            None
+        );
+        let index: StoredIndex =
+            serde_json::from_slice(&fs::read(root.join(INDEX_FILE)).unwrap()).unwrap();
+        assert!(index.entries.is_empty());
+        fs::remove_dir_all(root).unwrap();
     }
 
     fn walk_files(root: &std::path::Path) -> Vec<std::path::PathBuf> {

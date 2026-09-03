@@ -64,6 +64,8 @@ test("Tauri owns downloads, extraction, limits, and offline command registration
   assert.match(backend, /\.by_name\(&frame\.file_name\)/);
   assert.match(backend, /total_uncompressed > MAX_UGOIRA_ARCHIVE_BYTES/);
   assert.match(backend, /paths::app_data_dir\(app\).*join\("offline-library"\)/s);
+  assert.match(backend, /try_existing_prepared_ugoira/);
+  assert.match(backend, /if let Some\(prepared\) = try_existing_prepared_ugoira/);
   assert.match(paths, /app\.path\(\)\.app_data_dir\(\)/);
   assert.match(paths, /#\[cfg\(not\(debug_assertions\)\)\][\s\S]*None/);
 });
@@ -91,6 +93,10 @@ test("frontend uses typed readers and local-only offline routes", async () => {
   assert.doesNotMatch(novelReader, /\{@html/);
   assert.doesNotMatch(novelReader, /target="_blank"/);
   assert.match(artworkReader, /<UgoiraPlayer/);
+  assert.match(artworkReader, /readOfflineText\(`artwork-\$\{id\}`/);
+  assert.match(artworkReader, /parsed\?\.illustration\?\.id === id/);
+  assert.match(novelDetail, /readOfflineText\(`novel-\$\{id\}`/);
+  assert.match(novelDetail, /parsed\?\.novel\?\.id === id/);
   assert.match(ugoira, /prepareUgoira/);
   assert.match(ugoira, /readOfflineAsset/);
   assert.match(ugoira, /URL\.revokeObjectURL/);
@@ -99,6 +105,7 @@ test("frontend uses typed readers and local-only offline routes", async () => {
   assert.match(offlineArtwork, /readOfflineText/);
   assert.match(offlineArtwork, /<ArtworkImageViewer/);
   assert.match(artworkViewer, /<OfflineImage/);
+  assert.match(artworkViewer, /fallbackUrl=\{image\.previewUrl \?\? image\.originalUrl\}/);
   assert.match(offlineNovel, /readOfflineText/);
   assert.match(offlineNovel, /parseNovelText/);
   assert.match(offlineUgoira, /<OfflineUgoiraPlayer/);
