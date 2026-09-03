@@ -140,7 +140,7 @@ struct CachedTransportClient {
 
 #[derive(Clone, Default)]
 struct MediaCacheState {
-    gate: Arc<Mutex<()>>,
+    gate: Arc<Mutex<Option<MediaCache>>>,
     epoch: Arc<MediaCacheEpoch>,
 }
 
@@ -2981,6 +2981,25 @@ fn media_cache_root(app: &tauri::AppHandle) -> Result<std::path::PathBuf, ApiCom
         .map_err(|_| ApiCommandError::CacheUnavailable)
 }
 
+fn ensure_resident_media_cache(
+    slot: &mut Option<MediaCache>,
+    root: std::path::PathBuf,
+    max_bytes: Option<u64>,
+) -> Result<&mut MediaCache, CacheError> {
+    if slot
+        .as_ref()
+        .is_some_and(|cache| cache.root() == root.as_path())
+    {
+        let cache = slot.as_mut().ok_or(CacheError::Io)?;
+        if cache.max_bytes() != max_bytes {
+            cache.set_max_bytes(max_bytes)?;
+        }
+        return Ok(cache);
+    }
+    *slot = Some(MediaCache::open(root, max_bytes)?);
+    slot.as_mut().ok_or(CacheError::Io)
+}
+
 fn storage_manager(app: &tauri::AppHandle) -> Result<Arc<StorageManager>, ApiCommandError> {
     let state = app.state::<StoragePolicyState>();
     let mut manager = state
@@ -3358,6 +3377,47 @@ async fn perform_novel_download(
     .map_err(|_| ApiCommandError::RequestFailed)?
 }
 
+pub(crate) fn try_existing_prepared_ugoira(
+    app: &tauri::AppHandle,
+    illustration_id: &str,
+) -> Option<PreparedUgoira> {
+    let library = offline_library(app).ok()?;
+    let key = format!("ugoira-{illustration_id}");
+    let entry = library.get_entry(&key).ok()?;
+    if entry.kind != OfflineKind::Ugoira || entry.resource_id != illustration_id {
+        return None;
+    }
+    let metadata_asset = library.read_asset(&key, "metadata.json").ok()?;
+    let metadata: UgoiraMetadata = serde_json::from_slice(&metadata_asset.bytes).ok()?;
+    if metadata.frames.is_empty() {
+        return None;
+    }
+    let frames: Vec<PreparedUgoiraFrame> = metadata
+        .frames
+        .iter()
+        .enumerate()
+        .map(|(index, frame)| PreparedUgoiraFrame {
+            asset_name: format!(
+                "frame-{index:06}.{}",
+                frame
+                    .file_name
+                    .rsplit('.')
+                    .next()
+                    .unwrap_or("jpg")
+                    .to_ascii_lowercase()
+            ),
+            delay_ms: frame.delay_ms,
+        })
+        .collect();
+    for frame in &frames {
+        let asset = library.read_asset(&key, &frame.asset_name).ok()?;
+        if !asset.content_type.starts_with("image/") {
+            return None;
+        }
+    }
+    Some(PreparedUgoira { entry, frames })
+}
+
 #[tauri::command]
 async fn prepare_ugoira(
     illustration_id: String,
@@ -3389,6 +3449,9 @@ async fn perform_ugoira_download(
         .is_some_and(|flag| flag.load(Ordering::Acquire))
     {
         return Err(ApiCommandError::DownloadInterrupted);
+    }
+    if let Some(prepared) = try_existing_prepared_ugoira(app, &illustration_id) {
+        return Ok(prepared);
     }
     if let Some(progress) = &progress {
         progress.checkpoint()?;
@@ -3677,11 +3740,11 @@ async fn fetch_pixiv_thumbnail(
         let read_root = cache_root.clone();
         let read_key = cache_source_key.clone();
         let read_result = tauri::async_runtime::spawn_blocking(move || {
-            let _guard = read_gate.lock().ok()?;
+            let mut slot = read_gate.lock().ok()?;
             let expected_epoch = read_epoch.capture();
-            let cached = MediaCache::open(read_root, cache_limit_bytes)
+            let cached = ensure_resident_media_cache(&mut slot, read_root, cache_limit_bytes)
                 .ok()
-                .and_then(|mut cache| {
+                .and_then(|cache| {
                     cache
                         .get(
                             cache_scope,
@@ -3742,7 +3805,7 @@ async fn fetch_pixiv_thumbnail(
         let store_epoch = cache_state.epoch.clone();
         let store_storage = storage.clone();
         tauri::async_runtime::spawn_blocking(move || {
-            if let Ok(_guard) = store_gate.lock() {
+            if let Ok(mut slot) = store_gate.lock() {
                 if !store_epoch.is_current(expected_epoch) {
                     return media.bytes;
                 }
@@ -3751,7 +3814,8 @@ async fn fetch_pixiv_thumbnail(
                     .unwrap_or(false)
                 {
                     if let Ok(limit) = store_storage.cache_limit_bytes() {
-                        if let Ok(mut cache) = MediaCache::open(cache_root, limit) {
+                        if let Ok(cache) = ensure_resident_media_cache(&mut slot, cache_root, limit)
+                        {
                             let _ =
                                 cache.put(cache_scope, cache_kind, &cache_source_key, &media.bytes);
                         }
@@ -3778,8 +3842,8 @@ async fn get_media_cache_stats(
     let limit = storage_manager(&app)?.cache_limit_bytes()?;
     let gate = cache_state.gate.clone();
     tauri::async_runtime::spawn_blocking(move || {
-        let _guard = gate.lock().map_err(|_| ApiCommandError::StateUnavailable)?;
-        Ok(MediaCache::open(root, limit)?.stats())
+        let mut slot = gate.lock().map_err(|_| ApiCommandError::StateUnavailable)?;
+        Ok(ensure_resident_media_cache(&mut slot, root, limit)?.stats())
     })
     .await
     .map_err(|_| ApiCommandError::CacheUnavailable)?
@@ -3799,8 +3863,8 @@ async fn clear_media_cache(
     let gate = cache_state.gate.clone();
     let epoch = cache_state.epoch.clone();
     let result = tauri::async_runtime::spawn_blocking(move || {
-        let _guard = gate.lock().map_err(|_| ApiCommandError::StateUnavailable)?;
-        let removed = MediaCache::open(root, limit)?
+        let mut slot = gate.lock().map_err(|_| ApiCommandError::StateUnavailable)?;
+        let removed = ensure_resident_media_cache(&mut slot, root, limit)?
             .clear()
             .map_err(ApiCommandError::from)?;
         epoch.advance();
@@ -3840,10 +3904,12 @@ async fn set_media_cache_limit(
     let manager = storage_manager(&app)?;
     let gate = cache_state.gate.clone();
     tauri::async_runtime::spawn_blocking(move || {
-        let _guard = gate.lock().map_err(|_| ApiCommandError::StateUnavailable)?;
+        let mut slot = gate.lock().map_err(|_| ApiCommandError::StateUnavailable)?;
         let previous_limit = manager.cache_limit_bytes()?;
         manager.set_cache_limit(cache_limit_bytes)?;
-        if let Err(error) = MediaCache::open(root, manager.cache_limit_bytes()?) {
+        if let Err(error) =
+            ensure_resident_media_cache(&mut slot, root, manager.cache_limit_bytes()?)
+        {
             let _ = manager.set_cache_limit(previous_limit);
             return Err(ApiCommandError::from(error));
         }
@@ -3967,10 +4033,10 @@ async fn clear_local_data(
     let cache_epoch = cache_state.epoch.clone();
     let cache_result = match cache_root {
         Ok(root) => tauri::async_runtime::spawn_blocking(move || {
-            let _guard = cache_gate
+            let mut slot = cache_gate
                 .lock()
                 .map_err(|_| ApiCommandError::StateUnavailable)?;
-            let removed = MediaCache::open(root, cache_limit)?
+            let removed = ensure_resident_media_cache(&mut slot, root, cache_limit)?
                 .clear()
                 .map_err(ApiCommandError::from)?;
             cache_epoch.advance();
@@ -4584,14 +4650,15 @@ pub fn run() {
 #[cfg(test)]
 mod tests {
     use super::{
-        build_authorization_url, create_login_attempt, oauth_configuration,
-        validate_login_launch_binding, LoginLaunchError, LoginPreparationError, MediaCacheEpoch,
-        PendingLogin,
+        build_authorization_url, create_login_attempt, ensure_resident_media_cache,
+        oauth_configuration, validate_login_launch_binding, LoginLaunchError,
+        LoginPreparationError, MediaCacheEpoch, PendingLogin,
     };
     use pixiv_client_auth::LoginStatus;
     use pixiv_client_domain::{
         ConnectionMode, EchRequirement, PlatformCapabilities, TransportRoute,
     };
+    use pixiv_client_media_cache::{CacheKind, CacheScope};
 
     #[test]
     fn media_cache_epoch_rejects_writes_started_before_a_clear() {
@@ -4601,6 +4668,29 @@ mod tests {
         epoch.advance();
         assert!(!epoch.is_current(before_clear));
         assert!(epoch.is_current(epoch.capture()));
+    }
+
+    #[test]
+    fn resident_media_cache_reuses_one_open_instance_across_hits() {
+        let nonce = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("pixiv-client-resident-{nonce}"));
+        let mut slot = None;
+        ensure_resident_media_cache(&mut slot, root.clone(), Some(64))
+            .unwrap()
+            .put(CacheScope::Verified, CacheKind::Thumbnail, "warm", b"image")
+            .unwrap();
+        let reused = ensure_resident_media_cache(&mut slot, root.clone(), Some(64)).unwrap();
+        assert_eq!(reused.root(), root.as_path());
+        assert_eq!(
+            reused
+                .get(CacheScope::Verified, CacheKind::Thumbnail, "warm", 16)
+                .unwrap(),
+            Some(b"image".to_vec())
+        );
+        let _ = std::fs::remove_dir_all(root);
     }
 
     #[test]

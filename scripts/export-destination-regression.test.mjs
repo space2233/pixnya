@@ -10,6 +10,9 @@ const read = (relativePath) => readFile(path.join(root, relativePath), "utf8");
 test("offline library exports validated entries atomically without overwriting unrelated data", async () => {
   const library = await read("crates/library/src/lib.rs");
   assert.match(library, /pub fn export_entry/);
+  assert.match(library, /pub fn get_entry/);
+  assert.match(library, /manifest\.entry\.key != key/);
+  assert.match(library, /refuses_to_read_an_entry_whose_manifest_key_does_not_match/);
   assert.match(library, /ensure_replaceable_export_target/);
   assert.match(library, /EXPORT_MARKER_FILE: &str = "pixiv-client-entry\.json"/);
   assert.match(library, /fs::rename\(&target, &backup\)/);

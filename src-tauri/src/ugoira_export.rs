@@ -2,8 +2,6 @@ use crate::{
     exports, offline_library, paths, perform_ugoira_download, storage_manager, ApiCommandError,
     AuthenticatedDataState, PreparedUgoira, PreparedUgoiraFrame, SessionState,
 };
-use pixiv_client_api::UgoiraMetadata;
-use pixiv_client_library::OfflineKind;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
@@ -379,34 +377,8 @@ fn load_prepared_ugoira(
     app: &tauri::AppHandle,
     illustration_id: &str,
 ) -> Result<PreparedUgoira, ApiCommandError> {
-    let library = offline_library(app)?;
-    let key = format!("ugoira-{illustration_id}");
-    let entry = library
-        .list_entries()?
-        .into_iter()
-        .find(|entry| entry.key == key && entry.kind == OfflineKind::Ugoira)
-        .ok_or(ApiCommandError::OfflineNotFound)?;
-    let metadata_asset = library.read_asset(&entry.key, "metadata.json")?;
-    let metadata: UgoiraMetadata = serde_json::from_slice(&metadata_asset.bytes)
-        .map_err(|_| ApiCommandError::InvalidResponse)?;
-    let frames = metadata
-        .frames
-        .into_iter()
-        .enumerate()
-        .map(|(index, frame)| PreparedUgoiraFrame {
-            asset_name: format!(
-                "frame-{index:06}.{}",
-                frame
-                    .file_name
-                    .rsplit('.')
-                    .next()
-                    .unwrap_or("jpg")
-                    .to_ascii_lowercase()
-            ),
-            delay_ms: frame.delay_ms,
-        })
-        .collect();
-    Ok(PreparedUgoira { entry, frames })
+    crate::try_existing_prepared_ugoira(app, illustration_id)
+        .ok_or(ApiCommandError::OfflineNotFound)
 }
 
 fn validate_frames(frames: &[PreparedUgoiraFrame]) -> Result<u64, &'static str> {

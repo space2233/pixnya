@@ -179,9 +179,11 @@ test("storage settings expose isolated media-cache statistics and confirmed clea
   assert.match(backend, /async fn get_media_cache_stats/);
   assert.match(backend, /async fn clear_media_cache/);
   assert.match(backend, /if !confirmed/);
+  assert.match(backend, /ensure_resident_media_cache[\s\S]*?\.clear\(\)/);
   assert.match(cache, /CacheScope::Verified/);
   assert.match(cache, /CacheScope::Insecure/);
   assert.match(cache, /trim_to_capacity/);
+  assert.match(cache, /content_sha256\(&bytes\) == entry\.content_sha256/);
 });
 
 test("storage settings show owned content usage, available space, and a terminal read failure", async () => {
@@ -217,7 +219,7 @@ test("privacy settings require typed confirmation and clear every owned data lay
   assert.match(backend, /if request\.confirmation != "CLEAR_LOCAL_DATA"/);
   assert.match(backend, /delete_refresh_token\(&app\)/);
   assert.match(backend, /library\.clear\(\)/);
-  assert.match(backend, /MediaCache::open[\s\S]*?\.clear\(\)/);
+  assert.match(backend, /ensure_resident_media_cache[\s\S]*?\.clear\(\)/);
   assert.match(android, /fun clearLocalWebData/);
   assert.match(android, /removeAllCookies/);
   assert.match(android, /clearCache\(true\)/);

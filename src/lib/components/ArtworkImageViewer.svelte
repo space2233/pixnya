@@ -214,7 +214,13 @@
     <figure>
       <button type="button" aria-label={m.viewer_open_original_label({ alt: image.alt })} onclick={() => openViewer(index)} disabled={concealed}>
         {#if image.entryKey && image.assetNames}
-          <OfflineImage entryKey={image.entryKey} assetNames={image.assetNames} alt={image.alt} />
+          <OfflineImage
+            entryKey={image.entryKey}
+            assetNames={image.assetNames}
+            alt={image.alt}
+            fallbackUrl={image.previewUrl ?? image.originalUrl}
+            fallbackCacheKind="preview"
+          />
         {:else}
           <PixivImage url={image.previewUrl ?? image.originalUrl} alt={image.alt} fit="contain" cacheKind="preview" />
         {/if}
@@ -258,7 +264,13 @@
     >
       <div class="image-stage" style:transform={`translate3d(${transform.x}px, ${transform.y}px, 0) scale(${transform.scale})`}>
         {#if currentPage.entryKey && currentPage.assetNames}
-          <OfflineImage entryKey={currentPage.entryKey} assetNames={currentPage.assetNames} alt={currentPage.alt} />
+          <OfflineImage
+            entryKey={currentPage.entryKey}
+            assetNames={currentPage.assetNames}
+            alt={currentPage.alt}
+            fallbackUrl={currentPage.originalUrl ?? currentPage.previewUrl}
+            fallbackCacheKind={currentPage.originalUrl ? null : "preview"}
+          />
         {:else}
           <PixivImage
             url={currentPage.originalUrl ?? currentPage.previewUrl}

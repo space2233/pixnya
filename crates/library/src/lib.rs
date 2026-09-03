@@ -294,6 +294,9 @@ impl OfflineLibrary {
     pub fn read_asset(&self, key: &str, name: &str) -> Result<OfflineAsset, LibraryError> {
         let entry_path = self.entry_path(key)?;
         let manifest = read_manifest(&entry_path)?;
+        if manifest.entry.key != key {
+            return Err(LibraryError::InvalidManifest);
+        }
         let asset = manifest
             .assets
             .iter()
@@ -311,6 +314,15 @@ impl OfflineLibrary {
             content_type: asset.content_type.clone(),
             bytes,
         })
+    }
+
+    pub fn get_entry(&self, key: &str) -> Result<OfflineEntry, LibraryError> {
+        let entry_path = self.entry_path(key)?;
+        let manifest = read_manifest(&entry_path)?;
+        if manifest.entry.key != key {
+            return Err(LibraryError::InvalidManifest);
+        }
+        Ok(manifest.entry)
     }
 
     /// Materializes one validated entry as a user-visible directory.
@@ -653,6 +665,7 @@ mod tests {
             library.read_asset("novel-42", "content.txt").unwrap().bytes,
             b"hello"
         );
+        assert_eq!(library.get_entry("novel-42").unwrap().key, "novel-42");
         assert_eq!(library.stats().unwrap().size_bytes, 5);
         let replaced = library
             .store_entry(
@@ -704,6 +717,40 @@ mod tests {
         assert_eq!(
             library.read_asset("novel-../../x", "content.txt"),
             Err(LibraryError::InvalidIdentifier)
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn refuses_to_read_an_entry_whose_manifest_key_does_not_match() {
+        let root = test_root("manifest-key");
+        let library = OfflineLibrary::open(&root).unwrap();
+        library
+            .store_entry(
+                EntryDraft {
+                    kind: OfflineKind::Artwork,
+                    resource_id: "7".to_owned(),
+                    title: String::new(),
+                    author: String::new(),
+                    cover_url: None,
+                },
+                |writer| writer.write_asset("page-0001.jpg", "image/jpeg", b"image"),
+            )
+            .unwrap();
+        let manifest_path = root.join("artwork-7").join("manifest.json");
+        let mut manifest: serde_json::Value =
+            serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
+        manifest["entry"]["key"] = serde_json::Value::String("artwork-8".into());
+        manifest["entry"]["resourceId"] = serde_json::Value::String("8".into());
+        fs::write(&manifest_path, serde_json::to_vec(&manifest).unwrap()).unwrap();
+
+        assert_eq!(
+            library.read_asset("artwork-7", "page-0001.jpg"),
+            Err(LibraryError::InvalidManifest)
+        );
+        assert_eq!(
+            library.get_entry("artwork-7"),
+            Err(LibraryError::InvalidManifest)
         );
         fs::remove_dir_all(root).unwrap();
     }
