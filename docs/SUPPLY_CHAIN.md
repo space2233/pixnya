@@ -77,7 +77,9 @@ node --test scripts/supply-chain-regression.test.mjs
 
 AGP、Kotlin Gradle plugin、UTP、buildscript 和 buildSrc 等构建工具仍全部进入严格依赖锁、SHA-256 verification、`android-gradle-dependencies.json`、主 SPDX SBOM、`THIRD_PARTY_NOTICES.md` 与逐依赖许可证归档。它们通过直接插件升级审查和构建环境治理控制；不能把仅存在于 UTP/buildscript 的 advisory 误报成 APK runtime 漏洞，也不能因此从完整供应链记录中删除。
 
-构建工具扫描不使用全局忽略。当前提交的 `docs/android-gradle-osv-risk-baseline.json` 基于稳定锁图的重新扫描，精确列出 84 个仅限 build-only scope 的临时 `(GHSA、Maven 坐标、版本、scope)` 例外：其中 79 个在 2026-09-08 到期，Kotlin Gradle Plugin 构建缓存告警在 2026-09-12 到期，Bouncy Castle `1.80.2` 的两条 Moderate 告警在 2026-09-16 到期，新发布的 Netty `CorsHandler` 两条 Moderate 构建图告警在 2026-09-17 到期。此前唯一的 Critical Bouncy Castle 例外已通过成组约束到 `1.80.2` 消除。每条都记录 owner、上游依赖链、不可达理由、已知修复版本和跟踪编号；新增条目、坐标或版本变化、scope 进入任一 Android ARM runtime、条目到期都会使检查失败。ARM64 与 ARM32 APK runtime 继续保持零例外、零 ignore。
+构建工具扫描不使用全局忽略。当前提交的 `docs/android-gradle-osv-risk-baseline.json` 基于 2026-09-02 对稳定锁图的重新扫描，精确列出 84 个仅限 build-only scope 的临时 `(GHSA、Maven 坐标、版本、scope)` 例外：与扫描结果完全一致，无新增、无消失、无坐标/版本/severity/scope/fixedVersions 变化。Toolchain 仍为 Tauri 2.11.5、AGP 8.11.0、Kotlin Gradle Plugin 1.9.25、Gradle 8.14.3、JDK 17。全部 84 条于 2026-09-02 复核后在 2026-10-02 到期。此前唯一的 Critical Bouncy Castle 例外已通过成组约束到 `1.80.2` 消除。每条都记录 owner、上游依赖链、不可达理由、已知修复版本和跟踪编号；新增条目、坐标或版本变化、scope 进入任一 Android ARM runtime、条目到期都会使检查失败。ARM64 与 ARM32 APK runtime 继续保持零例外、零 ignore。
+
+本次续期仍只接受精确、限 scope、限版本、限期的临时例外，不使用全局忽略。复核结论：上述坐标仍只出现在 Gradle JVM buildscript/buildSrc classpath 或 AGP 内部 Unified Test Platform 配置，均不在 `arm64ReleaseRuntimeClasspath`/`armReleaseRuntimeClasspath`，也不会打进 APK。官方发布任务不启动 UTP、emulator-control、测试结果服务或把这些 Netty/Protobuf 模块当运行时 HTTP 服务；不解析用户提交的 JDOM XML、jose4j JWT 或未校验归档；不使用受影响的 Bouncy Castle GOST/LDAP/OpenPGP 路径（APK 签名仍走 Android/JDK 工具）；Kotlin 构建缓存告警只影响 Gradle JVM 元数据反序列化，而正式发布使用无远程 build cache 的干净临时 runner。已知修复版本仍要求升级 AGP/Kotlin 传递图，超出本补丁允许的依赖变更。
 
 每次候选 Release 都会重新扫描三套 Gradle 锁，并把未经裁剪的 `pixnya-<version>-android-build-tools-osv.json` 作为附件归档；独立的每周工作流也运行同一基线检查并保留原始报告。到期条目只能通过升级/移除依赖或经过新的人工风险审查后显式更新，不能自动续期。
 
@@ -87,7 +89,7 @@ Release 的 `cargo-deny` 门以 `unmaintained = "all"` 和 `unsound = "all"` 检
 
 `RUSTSEC-2024-0429` 的官方修复要求 `glib >=0.20`，与 Tauri 2 的 GTK3 0.18 图不兼容。对当前锁定依赖进行人工调用点复核后，PixNya 与已检查的 Tauri 消费路径没有使用 `VariantStrIter`/`array_iter_str`；因此私人候选版把它作为短期风险例外，而不是关闭 `unsound` 检查。上游修复记录为 [gtk-rs-core#1343](https://github.com/gtk-rs/gtk-rs-core/pull/1343)。
 
-Linux GTK3 路径要等待 [Tauri 上游尚无发布日期的 GTK4 迁移](https://github.com/tauri-apps/tauri/issues/11942)；`rust-unic` 路径已在 Tauri 未发布开发分支中改用 `urlpattern 0.6`，其已合入迁移记录见 [tauri#15660](https://github.com/tauri-apps/tauri/pull/15660)。所有例外在 2026-09-09 到期，且 `unused-ignored-advisory = "deny"`：上游升级移除任一公告、出现新公告或到期未复核都会让测试或 `cargo-deny` 失败。不得把该清单改成 `unmaintained = "none"`、`workspace` 或无编号的全局忽略。
+Linux GTK3 路径要等待 [Tauri 上游尚无发布日期的 GTK4 迁移](https://github.com/tauri-apps/tauri/issues/11942)；`rust-unic` 路径已在 Tauri 未发布开发分支中改用 `urlpattern 0.6`，其已合入迁移记录见 [tauri#15660](https://github.com/tauri-apps/tauri/pull/15660)。2026-09-02 复核确认：当前锁图仍为 Tauri 2.11.5、`tauri-utils 2.9.3`、`urlpattern 0.3.0`、`glib 0.18.5`；GTK4 议题仍开放且无时间表；urlpattern 0.6 仍只在 Tauri `dev` 分支。所有例外在 2026-10-02 到期，且 `unused-ignored-advisory = "deny"`：上游升级移除任一公告、出现新公告或到期未复核都会让测试或 `cargo-deny` 失败。不得把该清单改成 `unmaintained = "none"`、`workspace` 或无编号的全局忽略。本轮不升级 Tauri。
 
 ## 正式发布要求
 

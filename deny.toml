@@ -7,24 +7,24 @@ unused-ignored-advisory = "deny"
 ignore = [
   # Tauri 2 on Linux is tied to gtk-rs GTK3. The upstream GTK4 migration has no
   # released replacement or committed timeline yet.
-  { id = "RUSTSEC-2024-0411", reason = "Tauri 2.11.5 Linux GTK3 transitive dependency; upstream=https://github.com/tauri-apps/tauri/issues/11942; review-by=2026-09-09" },
-  { id = "RUSTSEC-2024-0412", reason = "Tauri 2.11.5 Linux GTK3 transitive dependency; upstream=https://github.com/tauri-apps/tauri/issues/11942; review-by=2026-09-09" },
-  { id = "RUSTSEC-2024-0413", reason = "Tauri 2.11.5 Linux GTK3 transitive dependency; upstream=https://github.com/tauri-apps/tauri/issues/11942; review-by=2026-09-09" },
-  { id = "RUSTSEC-2024-0414", reason = "Tauri 2.11.5 Linux GTK3 transitive dependency; upstream=https://github.com/tauri-apps/tauri/issues/11942; review-by=2026-09-09" },
-  { id = "RUSTSEC-2024-0415", reason = "Tauri 2.11.5 Linux GTK3 transitive dependency; upstream=https://github.com/tauri-apps/tauri/issues/11942; review-by=2026-09-09" },
-  { id = "RUSTSEC-2024-0416", reason = "Tauri 2.11.5 Linux GTK3 transitive dependency; upstream=https://github.com/tauri-apps/tauri/issues/11942; review-by=2026-09-09" },
-  { id = "RUSTSEC-2024-0417", reason = "Tauri 2.11.5 Linux GTK3 transitive dependency; upstream=https://github.com/tauri-apps/tauri/issues/11942; review-by=2026-09-09" },
-  { id = "RUSTSEC-2024-0418", reason = "Tauri 2.11.5 Linux GTK3 transitive dependency; upstream=https://github.com/tauri-apps/tauri/issues/11942; review-by=2026-09-09" },
-  { id = "RUSTSEC-2024-0419", reason = "Tauri 2.11.5 Linux GTK3 transitive dependency; upstream=https://github.com/tauri-apps/tauri/issues/11942; review-by=2026-09-09" },
-  { id = "RUSTSEC-2024-0420", reason = "Tauri 2.11.5 Linux GTK3 transitive dependency; upstream=https://github.com/tauri-apps/tauri/issues/11942; review-by=2026-09-09" },
-  { id = "RUSTSEC-2024-0370", reason = "gtk-rs 0.18 macro transitive dependency required by Tauri 2 Linux; upstream=https://github.com/tauri-apps/tauri/issues/10910; review-by=2026-09-09" },
-  { id = "RUSTSEC-2024-0429", reason = "glib 0.18.5 VariantStrIter unsound API was not found in locked non-test callers; upstream=https://github.com/gtk-rs/gtk-rs-core/pull/1343; risk-review=no-locked-nontest-callers; review-by=2026-09-09" },
+  { id = "RUSTSEC-2024-0411", reason = "Tauri 2.11.5 Linux GTK3 transitive dependency; upstream=https://github.com/tauri-apps/tauri/issues/11942; review-by=2026-10-02" },
+  { id = "RUSTSEC-2024-0412", reason = "Tauri 2.11.5 Linux GTK3 transitive dependency; upstream=https://github.com/tauri-apps/tauri/issues/11942; review-by=2026-10-02" },
+  { id = "RUSTSEC-2024-0413", reason = "Tauri 2.11.5 Linux GTK3 transitive dependency; upstream=https://github.com/tauri-apps/tauri/issues/11942; review-by=2026-10-02" },
+  { id = "RUSTSEC-2024-0414", reason = "Tauri 2.11.5 Linux GTK3 transitive dependency; upstream=https://github.com/tauri-apps/tauri/issues/11942; review-by=2026-10-02" },
+  { id = "RUSTSEC-2024-0415", reason = "Tauri 2.11.5 Linux GTK3 transitive dependency; upstream=https://github.com/tauri-apps/tauri/issues/11942; review-by=2026-10-02" },
+  { id = "RUSTSEC-2024-0416", reason = "Tauri 2.11.5 Linux GTK3 transitive dependency; upstream=https://github.com/tauri-apps/tauri/issues/11942; review-by=2026-10-02" },
+  { id = "RUSTSEC-2024-0417", reason = "Tauri 2.11.5 Linux GTK3 transitive dependency; upstream=https://github.com/tauri-apps/tauri/issues/11942; review-by=2026-10-02" },
+  { id = "RUSTSEC-2024-0418", reason = "Tauri 2.11.5 Linux GTK3 transitive dependency; upstream=https://github.com/tauri-apps/tauri/issues/11942; review-by=2026-10-02" },
+  { id = "RUSTSEC-2024-0419", reason = "Tauri 2.11.5 Linux GTK3 transitive dependency; upstream=https://github.com/tauri-apps/tauri/issues/11942; review-by=2026-10-02" },
+  { id = "RUSTSEC-2024-0420", reason = "Tauri 2.11.5 Linux GTK3 transitive dependency; upstream=https://github.com/tauri-apps/tauri/issues/11942; review-by=2026-10-02" },
+  { id = "RUSTSEC-2024-0370", reason = "gtk-rs 0.18 macro transitive dependency required by Tauri 2 Linux; upstream=https://github.com/tauri-apps/tauri/issues/10910; review-by=2026-10-02" },
+  { id = "RUSTSEC-2024-0429", reason = "glib 0.18.5 VariantStrIter unsound API was not found in locked non-test callers; upstream=https://github.com/gtk-rs/gtk-rs-core/pull/1343; risk-review=no-locked-nontest-callers; review-by=2026-10-02" },
 
   # tauri-utils 2.9.3 requires urlpattern ^0.3. Tauri's unreleased development
   # branch already selects urlpattern 0.6; use that migration once released.
-  { id = "RUSTSEC-2025-0075", reason = "tauri-utils 2.9.3 via urlpattern 0.3; upstream=https://github.com/tauri-apps/tauri/pull/15660; review-by=2026-09-09" },
-  { id = "RUSTSEC-2025-0080", reason = "tauri-utils 2.9.3 via urlpattern 0.3; upstream=https://github.com/tauri-apps/tauri/pull/15660; review-by=2026-09-09" },
-  { id = "RUSTSEC-2025-0081", reason = "tauri-utils 2.9.3 via urlpattern 0.3; upstream=https://github.com/tauri-apps/tauri/pull/15660; review-by=2026-09-09" },
-  { id = "RUSTSEC-2025-0098", reason = "tauri-utils 2.9.3 via urlpattern 0.3; upstream=https://github.com/tauri-apps/tauri/pull/15660; review-by=2026-09-09" },
-  { id = "RUSTSEC-2025-0100", reason = "tauri-utils 2.9.3 via urlpattern 0.3; upstream=https://github.com/tauri-apps/tauri/pull/15660; review-by=2026-09-09" },
+  { id = "RUSTSEC-2025-0075", reason = "tauri-utils 2.9.3 via urlpattern 0.3; upstream=https://github.com/tauri-apps/tauri/pull/15660; review-by=2026-10-02" },
+  { id = "RUSTSEC-2025-0080", reason = "tauri-utils 2.9.3 via urlpattern 0.3; upstream=https://github.com/tauri-apps/tauri/pull/15660; review-by=2026-10-02" },
+  { id = "RUSTSEC-2025-0081", reason = "tauri-utils 2.9.3 via urlpattern 0.3; upstream=https://github.com/tauri-apps/tauri/pull/15660; review-by=2026-10-02" },
+  { id = "RUSTSEC-2025-0098", reason = "tauri-utils 2.9.3 via urlpattern 0.3; upstream=https://github.com/tauri-apps/tauri/pull/15660; review-by=2026-10-02" },
+  { id = "RUSTSEC-2025-0100", reason = "tauri-utils 2.9.3 via urlpattern 0.3; upstream=https://github.com/tauri-apps/tauri/pull/15660; review-by=2026-10-02" },
 ]
