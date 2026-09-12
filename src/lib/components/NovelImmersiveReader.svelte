@@ -37,6 +37,7 @@
   let pageIndex = $state(0);
   let totalPages = $state(1);
   let viewport = $state<HTMLElement | null>(null);
+  let clip = $state<HTMLElement | null>(null);
   let article = $state<HTMLElement | null>(null);
   let pointerStartX = 0;
   let pointerActive = false;
@@ -63,12 +64,13 @@
     theme;
     blocks;
     viewport;
+    clip;
     article;
     void tick().then(() => layoutPages(!untrack(() => restored)));
   });
 
   $effect(() => {
-    const el = viewport;
+    const el = clip ?? viewport;
     if (!el) return;
     const observer = new ResizeObserver(() => layoutPages(false));
     observer.observe(el);
@@ -112,11 +114,21 @@
     writeNovelReaderPreferences({ fontSize, lineHeight, theme });
   }
 
+  function pageWidth(): number {
+    const el = clip ?? viewport;
+    if (!el) return 1;
+    return Math.max(1, Math.floor(el.clientWidth));
+  }
+
   function layoutPages(restore: boolean) {
-    if (!article || !viewport) return;
-    const width = Math.max(1, article.clientWidth);
+    if (!article || !clip) return;
+    const width = pageWidth();
+    article.style.width = `${width}px`;
+    article.style.maxWidth = `${width}px`;
     article.style.columnWidth = `${width}px`;
     article.style.setProperty("-webkit-column-width", `${width}px`);
+    article.style.columnGap = "0px";
+    article.style.setProperty("-webkit-column-gap", "0px");
     const measured = Math.max(1, Math.round(article.scrollWidth / width));
     totalPages = measured;
     if (restore) {
@@ -131,7 +143,7 @@
 
   function applyTransform() {
     if (!article) return;
-    const width = Math.max(1, article.clientWidth);
+    const width = pageWidth();
     const reduced = readReducedMotion();
     article.style.transition = reduced ? "none" : "transform 180ms ease";
     article.style.transform = `translate3d(-${pageIndex * width}px, 0, 0)`;
@@ -157,7 +169,7 @@
     if (!article) return 0;
     const heading = article.querySelector(`[data-block="${blockIndex}"]`);
     if (!(heading instanceof HTMLElement)) return 0;
-    const width = Math.max(1, article.clientWidth);
+    const width = pageWidth();
     return Math.min(totalPages - 1, Math.max(0, Math.floor(heading.offsetLeft / width)));
   }
 
@@ -228,27 +240,29 @@
     onpointerup={onPointerUp}
     onpointercancel={() => (pointerActive = false)}
   >
-    <article
-      class="paged"
-      bind:this={article}
-      style={`--reader-font:${fontSize}px;--reader-line:${lineHeight}`}
-    >
-      {#each blocks as block, index (index)}
-        {#if block.kind === "chapter"}
-          <h2 data-chapter data-block={index}>{block.text}</h2>
-        {:else if block.kind === "page_break"}
-          <hr />
-        {:else if block.kind === "artwork_link"}
-          <a class="embed" href={`/artworks/${block.id}`}>{m.novel_reader_artwork_link({ id: block.id })}</a>
-        {:else if block.kind === "uploaded_image"}
-          <div class="embed muted">{m.novel_reader_uploaded_image({ id: block.id })}</div>
-        {:else if block.kind === "external_link"}
-          <div class="embed external">{block.label}<small>{block.url}</small></div>
-        {:else}
-          <p>{block.text}</p>
-        {/if}
-      {/each}
-    </article>
+    <div class="page-clip" bind:this={clip}>
+      <article
+        class="paged"
+        bind:this={article}
+        style={`--reader-font:${fontSize}px;--reader-line:${lineHeight}`}
+      >
+        {#each blocks as block, index (index)}
+          {#if block.kind === "chapter"}
+            <h2 data-chapter data-block={index}>{block.text}</h2>
+          {:else if block.kind === "page_break"}
+            <hr />
+          {:else if block.kind === "artwork_link"}
+            <a class="embed" href={`/artworks/${block.id}`}>{m.novel_reader_artwork_link({ id: block.id })}</a>
+          {:else if block.kind === "uploaded_image"}
+            <div class="embed muted">{m.novel_reader_uploaded_image({ id: block.id })}</div>
+          {:else if block.kind === "external_link"}
+            <div class="embed external">{block.label}<small>{block.url}</small></div>
+          {:else}
+            <p>{block.text}</p>
+          {/if}
+        {/each}
+      </article>
+    </div>
   </div>
 
   {#if !chromeOpen}
@@ -367,15 +381,28 @@
   .ghost-progress { bottom: calc(10px + env(safe-area-inset-bottom, 0px)); }
   .viewport {
     flex: 1;
+    min-width: 0;
     min-height: 0;
     padding: calc(42px + env(safe-area-inset-top, 0px)) 22px calc(36px + env(safe-area-inset-bottom, 0px));
     overflow: hidden;
     touch-action: none;
   }
+  .page-clip {
+    height: 100%;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    contain: paint;
+    isolation: isolate;
+  }
   .paged {
     height: 100%;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
     column-fill: auto;
     column-gap: 0;
+    column-count: auto;
   }
   .paged p {
     margin: 0 0 1.15em;

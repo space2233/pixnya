@@ -1,12 +1,16 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { tick } from "svelte";
   import AppShell from "$lib/components/AppShell.svelte";
   import Icon from "$lib/components/Icon.svelte";
   import NovelImmersiveReader from "$lib/components/NovelImmersiveReader.svelte";
   import ReturnLink from "$lib/components/ReturnLink.svelte";
   import { m } from "$lib/i18n";
   import { recallNavigationView, rememberNavigationView } from "$lib/navigation-view-memory";
+  import {
+    NOVEL_READER_LOAD_ATTEMPTS,
+    NOVEL_READER_RETRY_DELAY_MS,
+    shouldRetryNovelReaderLoad,
+  } from "$lib/novel-reader-load";
   import { parseNovelText } from "$lib/novel-text";
   import {
     describeDataFailure,
@@ -83,29 +87,36 @@
     detail = null;
     content = null;
     revealRestricted = false;
-    try {
-      const [nextDetail, nextContent] = await Promise.all([
-        getNovelDetail(id),
-        getNovelContent(id),
-      ]);
+    let lastError: unknown;
+    for (let attempt = 1; attempt <= NOVEL_READER_LOAD_ATTEMPTS; attempt += 1) {
       if (sequence !== requestSequence || key !== requestedKey) return;
-      detail = nextDetail;
-      content = nextContent;
-      status = "ready";
-      void recordBrowsingHistory({
-        kind: "novel",
-        resourceId: nextDetail.novel.id,
-        title: nextDetail.novel.title || m.common_untitled(),
-        subtitle: nextDetail.novel.author.name || m.common_unknown_author(),
-        thumbnailUrl: nextDetail.novel.coverUrl ?? nextContent.coverUrl,
-      }).catch(() => undefined);
-      await tick();
-      restoreProgress(id);
-    } catch (error) {
-      if (sequence !== requestSequence || key !== requestedKey) return;
-      errorMessage = describeDataFailure(error);
-      status = "error";
+      try {
+        const [nextDetail, nextContent] = await Promise.all([
+          getNovelDetail(id),
+          getNovelContent(id),
+        ]);
+        if (sequence !== requestSequence || key !== requestedKey) return;
+        detail = nextDetail;
+        content = nextContent;
+        status = "ready";
+        void recordBrowsingHistory({
+          kind: "novel",
+          resourceId: nextDetail.novel.id,
+          title: nextDetail.novel.title || m.common_untitled(),
+          subtitle: nextDetail.novel.author.name || m.common_unknown_author(),
+          thumbnailUrl: nextDetail.novel.coverUrl ?? nextContent.coverUrl,
+        }).catch(() => undefined);
+        restoreProgress(id);
+        return;
+      } catch (error) {
+        lastError = error;
+        if (!shouldRetryNovelReaderLoad(error, attempt)) break;
+        await new Promise((resolve) => setTimeout(resolve, NOVEL_READER_RETRY_DELAY_MS));
+      }
     }
+    if (sequence !== requestSequence || key !== requestedKey) return;
+    errorMessage = describeDataFailure(lastError);
+    status = "error";
   }
 
   function progressKey(id: string): string {

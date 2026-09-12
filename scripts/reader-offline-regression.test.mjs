@@ -93,6 +93,8 @@ test("frontend uses typed readers and local-only offline routes", async () => {
   assert.match(novelReader, /parseNovelText/);
   assert.match(novelReader, /immersive/);
   assert.match(novelReader, /<NovelImmersiveReader/);
+  assert.match(novelReader, /NOVEL_READER_LOAD_ATTEMPTS/);
+  assert.match(immersiveReader, /class="page-clip"/);
   assert.doesNotMatch(novelReader, /\{@html/);
   assert.doesNotMatch(novelReader, /target="_blank"/);
   assert.doesNotMatch(immersiveReader, /\{@html/);

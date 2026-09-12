@@ -18,12 +18,17 @@ test("the novel reader is an immersive paginated surface without search or speec
   assert.match(page, /pixiv-client:novel-progress:/);
   assert.match(shell, /immersive = false/);
   assert.match(css, /\.app-frame\.immersive/);
+  assert.match(page, /NOVEL_READER_LOAD_ATTEMPTS/);
+  assert.match(page, /shouldRetryNovelReaderLoad/);
   assert.match(reader, /m\.novel_reader_contents\(\)/);
   assert.match(reader, /m\.novel_reader_night\(\)/);
   assert.match(reader, /m\.novel_reader_more\(\)/);
   assert.match(reader, /m\.novel_reader_previous_chapter\(\)/);
   assert.match(reader, /m\.novel_reader_next_chapter\(\)/);
+  assert.match(reader, /class="page-clip"/);
+  assert.match(reader, /contain: paint/);
   assert.match(reader, /columnWidth/);
+  assert.match(reader, /pageWidth\(\)/);
   assert.match(reader, /toggleChrome|chromeOpen/);
   assert.match(reader, /writeNovelReaderPreferences/);
   assert.match(reader, /<ReturnLink compact/);
