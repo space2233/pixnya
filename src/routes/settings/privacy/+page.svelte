@@ -73,7 +73,7 @@
 </script>
 
 <svelte:head><title>{m.settings_privacy()} · PixNya</title></svelte:head>
-<AppShell title={m.settings_privacy()}><div class="page"><ReturnLink fallback="/settings" label={m.common_back()} /><h1 class="page-title">{m.settings_privacy()}</h1><section>
+<AppShell title={m.settings_privacy()}><div class="page"><ReturnLink variant="capsule" fallback="/settings" label={m.common_back()} /><h1 class="page-title">{m.settings_privacy()}</h1><section>
   <label class="row"><strong>{m.settings_history()}</strong><input type="checkbox" role="switch" checked={history?.enabled ?? false} disabled={!history||busy} onchange={toggleHistory}/></label>
   <a class="row" href="/history"><strong>{m.settings_manage_history()}</strong><i>›</i></a>
   <label class="row"><strong>{m.settings_search_history_limit()}</strong><select value={searchHistoryLimit === null ? "unlimited" : String(searchHistoryLimit)} onchange={changeSearchHistoryLimit}><option value="8">{m.settings_search_history_limit_count({ count: 8 })}</option><option value="20">{m.settings_search_history_limit_count({ count: 20 })}</option><option value="50">{m.settings_search_history_limit_count({ count: 50 })}</option><option value="100">{m.settings_search_history_limit_count({ count: 100 })}</option><option value="unlimited">{m.settings_search_history_limit_unlimited()}</option></select></label>

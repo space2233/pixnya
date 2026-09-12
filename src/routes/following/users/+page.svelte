@@ -161,9 +161,10 @@
 <style>
   .following-users-page { width: min(1120px, 100%); margin: 0 auto; padding: 0 28px 70px; }
   .page-heading { display: flex; gap: 24px; align-items: end; justify-content: space-between; padding: 27px 0 22px; }
+  .page-heading > div { min-width: 0; }
   .page-heading h1 { margin: 5px 0 0; font-size: var(--type-title); }
-  .page-heading nav { display: flex; gap: 5px; padding: 4px; border-radius: 20px; background: #eef1f3; }
-  .page-heading button { padding: 8px 14px; color: #6d767c; border: 0; border-radius: 16px; background: transparent; cursor: pointer; font-size: var(--type-body); font-weight: 700; }
+  .page-heading nav { display: flex; flex-shrink: 0; flex-wrap: nowrap; gap: 5px; padding: 4px; border-radius: 20px; background: #eef1f3; }
+  .page-heading button { flex: 1 0 auto; padding: 8px 14px; color: #6d767c; border: 0; border-radius: 16px; background: transparent; cursor: pointer; font-size: var(--type-body); font-weight: 700; white-space: nowrap; }
   .page-heading button.active { color: white; background: var(--pixiv-blue); }
   .user-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
   .state-card { display: grid; grid-template-columns: 42px minmax(0,1fr) auto; min-height: 112px; gap: 14px; align-items: center; padding: 21px; border: 1px solid var(--line); border-radius: 11px; background: white; }

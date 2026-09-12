@@ -90,7 +90,7 @@
 <svelte:head><title>{m.settings_storage()} · PixNya</title></svelte:head>
 <AppShell title={m.settings_storage()}>
   <div class="page">
-    <ReturnLink fallback="/settings" label={m.common_back()} />
+    <ReturnLink variant="capsule" fallback="/settings" label={m.common_back()} />
     <h1 class="page-title">{m.settings_storage()}</h1>
     <section>
       <div class="row"><strong>{m.settings_space_usage()}</strong><span>{metricText("usage")}</span></div>

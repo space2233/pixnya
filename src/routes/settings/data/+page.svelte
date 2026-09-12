@@ -78,7 +78,7 @@
 <svelte:head><title>{m.settings_data_backup()} · PixNya</title></svelte:head>
 <AppShell title={m.settings_data_backup()}>
   <main class="page">
-    <ReturnLink fallback="/settings" label={m.common_back()} />
+    <ReturnLink variant="capsule" fallback="/settings" label={m.common_back()} />
     <h1 class="page-title">{m.settings_data_backup()}</h1>
     <h2>{m.backup_create_title()}</h2>
     <section>

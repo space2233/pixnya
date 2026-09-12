@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import AppShell from "$lib/components/AppShell.svelte";
   import Icon from "$lib/components/Icon.svelte";
+  import ReturnLink from "$lib/components/ReturnLink.svelte";
   import { m } from "$lib/i18n";
   import {
     readPreferredConnectionMode,
@@ -57,6 +58,7 @@
 
 <AppShell title={m.settings_title()}>
   <div class="settings-page">
+    <ReturnLink variant="capsule" fallback="/" label={m.common_back()} />
     <h1 class="page-title">{m.settings_title()}</h1>
     {#each groups as group}
       <h2>{group.title()}</h2>
@@ -76,7 +78,7 @@
 
 <style>
   .settings-page { width: min(760px, 100%); box-sizing: border-box; margin: 0 auto; padding: 34px 24px 60px; }
-  h1 { margin: 0 0 24px; font-size: var(--type-title); }
+  h1 { margin: 18px 0 24px; font-size: var(--type-title); }
   h2 { margin: 24px 4px 10px; color: var(--muted); font-size: var(--type-body); font-weight: 650; }
   .settings-list { overflow: hidden; border: 1px solid var(--line); border-radius: 18px; background: white; }
   a { display: flex; min-height: 64px; align-items: center; gap: 14px; padding: 0 18px; border-bottom: 1px solid var(--line); color: var(--text); text-decoration: none; }

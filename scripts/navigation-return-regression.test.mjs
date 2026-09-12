@@ -56,8 +56,11 @@ test("detail routes are recognized without treating ordinary lists as details", 
   assert.equal(isReturnDestination("/offline/ugoira/3"), true);
   assert.equal(isReturnDestination("/comments/illustration/42/701"), true);
   assert.equal(isReturnDestination("/comments/novel/7/702?compose=1"), true);
+  assert.equal(isReturnDestination("/settings"), true);
+  assert.equal(isReturnDestination("/settings/network"), true);
   assert.equal(isReturnDestination("/artworks"), false);
   assert.equal(isReturnDestination("/search?q=cat"), false);
+  assert.equal(isReturnDestination("/settings/interface"), false);
 });
 
 test("returning from a detail uses browser history and restores the source scroll", () => {

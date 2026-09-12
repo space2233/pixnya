@@ -71,6 +71,7 @@ export function isReturnDestination(value: string): boolean {
     /^\/comments\/(?:illustration|novel)\/[^/]+\/[^/]+$/,
     /^\/offline\/(?:artworks|novels|ugoira)\/[^/]+$/,
     /^\/login$/,
+    /^\/settings$/,
     /^\/settings\/network$/,
   ].some((pattern) => pattern.test(pathname));
 }

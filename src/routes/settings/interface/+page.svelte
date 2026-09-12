@@ -27,7 +27,7 @@
 <svelte:head><title>{m.settings_interface()} · PixNya</title></svelte:head>
 <AppShell title={m.settings_interface()}>
   <div class="page">
-    <ReturnLink fallback="/settings" label={m.common_back()} />
+    <ReturnLink variant="capsule" fallback="/settings" label={m.common_back()} />
     <h1 class="page-title">{m.settings_interface()}</h1>
     <section>
       <label><strong>{m.language_settings_title()}</strong><select value={language} onchange={(event) => { language = (event.currentTarget as HTMLSelectElement).value as LanguagePreference; setLanguagePreference(language); }}><option value="system">{m.language_system()}</option><option value="zh-CN">{m.language_simplified_chinese()}</option><option value="zh-TW">{m.language_traditional_chinese()}</option><option value="en-US">{m.language_english()}</option></select></label>

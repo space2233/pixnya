@@ -155,7 +155,7 @@
 
 <AppShell title={m.network_title()}>
   <div class="network-page">
-    <ReturnLink fallback="/settings" label={m.network_return_settings()} />
+    <ReturnLink variant="capsule" fallback="/settings" label={m.network_return_settings()} />
     <h1 class="page-title">{m.network_title()}</h1>
     <section class="mode-card">
       <ConnectionModePicker
