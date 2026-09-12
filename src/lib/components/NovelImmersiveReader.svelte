@@ -1,12 +1,34 @@
 <script lang="ts">
-  import { onMount, tick, untrack } from "svelte";
+  import { onMount, untrack } from "svelte";
   import Icon from "$lib/components/Icon.svelte";
   import ReturnLink from "$lib/components/ReturnLink.svelte";
   import { m } from "$lib/i18n";
   import type { NovelBlock } from "$lib/novel-text";
   import {
+    type ChapterMark,
+    type PageBlockView,
+    type PageCursor,
+    type PageSlice,
+    NOVEL_READER_LONG_TEXT_WEIGHT,
+    NOVEL_READER_PAGINATE_YIELD_EVERY,
+    NOVEL_READER_PAGINATE_YIELD_EVERY_LONG,
+    NOVEL_READER_RELAYOUT_DEBOUNCE_MS,
+    chapterMarksFromPages,
+    chapterTitleAtPage,
+    compareCursor,
+    estimatePageCount,
+    materializePage,
+    normalizeCursor,
+    pageIndexForChapter,
+    paginateNextPage,
+    paginateNovelProgressive,
+    restorePageIndex,
+    sliceContentWeight,
+    startCursor,
+    totalContentWeight,
+  } from "$lib/novel-reader-pagination";
+  import {
     readNovelReaderPreferences,
-    readReducedMotion,
     writeNovelReaderPreferences,
     type NovelReaderTheme,
   } from "$lib/preferences";
@@ -36,43 +58,55 @@
   let panel = $state<null | "toc" | "settings" | "more">(null);
   let pageIndex = $state(0);
   let totalPages = $state(1);
+  let pageSlices = $state<PageSlice[]>([]);
+  let chapterMarks = $state<ChapterMark[]>([]);
   let viewport = $state<HTMLElement | null>(null);
   let clip = $state<HTMLElement | null>(null);
-  let article = $state<HTMLElement | null>(null);
+  let measureRoot = $state<HTMLElement | null>(null);
   let pointerStartX = 0;
   let pointerActive = false;
   let restored = $state(false);
+  let paginationComplete = $state(false);
+  let userTurned = false;
+  let layoutGeneration = 0;
+  let lastLayoutKey = "";
+  let relayoutTimer: ReturnType<typeof setTimeout> | null = null;
+  let probeStart: PageCursor | null = null;
+  let probeEnd: PageCursor | null = null;
 
   let previous = $derived(content.seriesNavigation.previous);
   let next = $derived(content.seriesNavigation.next);
   let seriesId = $derived(content.seriesId ?? detail.novel.series?.id ?? null);
   let seriesTitle = $derived(content.seriesTitle ?? detail.novel.series?.title ?? m.novel_series_label());
   let chapters = $derived(blocks.flatMap((block, index) => block.kind === "chapter" ? [{ index, text: block.text }] : []));
-  let currentChapter = $derived.by(() => {
-    if (chapters.length === 0) return detail.novel.title || m.common_untitled();
-    let title = chapters[0].text;
-    for (const chapter of chapters) {
-      if (pageOfChapter(chapter.index) <= pageIndex) title = chapter.text;
-    }
-    return title;
-  });
+  let fallbackTitle = $derived(detail.novel.title || m.common_untitled());
+  let currentChapter = $derived(
+    chapters.length === 0 ? fallbackTitle : chapterTitleAtPage(chapterMarks, pageIndex, chapters[0].text),
+  );
   let pageLabel = $derived(m.novel_reader_page_status({ current: String(pageIndex + 1), total: String(totalPages) }));
+  let visibleItems = $derived(
+    pageSlices.length === 0
+      ? []
+      : materializePage(blocks, pageSlices[Math.min(pageIndex, pageSlices.length - 1)]),
+  );
 
   $effect(() => {
     fontSize;
     lineHeight;
-    theme;
     blocks;
-    viewport;
     clip;
-    article;
-    void tick().then(() => layoutPages(!untrack(() => restored)));
+    measureRoot;
+    scheduleRelayout(!untrack(() => restored), untrack(() => pageSlices.length === 0));
   });
 
   $effect(() => {
-    const el = clip ?? viewport;
+    const el = clip;
     if (!el) return;
-    const observer = new ResizeObserver(() => layoutPages(false));
+    const observer = new ResizeObserver(() => {
+      const key = layoutKey(el);
+      if (key === lastLayoutKey) return;
+      scheduleRelayout(false, false);
+    });
     observer.observe(el);
     return () => observer.disconnect();
   });
@@ -81,9 +115,9 @@
     pageIndex;
     totalPages;
     restored;
-    if (!restored) return;
+    paginationComplete;
+    if (!restored || !paginationComplete) return;
     untrack(() => {
-      applyTransform();
       const maximum = Math.max(1, totalPages - 1);
       onprogress(totalPages <= 1 ? 1 : pageIndex / maximum);
     });
@@ -107,70 +141,186 @@
       }
     };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      layoutGeneration += 1;
+      if (relayoutTimer !== null) clearTimeout(relayoutTimer);
+      window.removeEventListener("keydown", onKey);
+    };
   });
 
   function persistPrefs() {
     writeNovelReaderPreferences({ fontSize, lineHeight, theme });
   }
 
-  function pageWidth(): number {
-    const el = clip ?? viewport;
-    if (!el) return 1;
-    return Math.max(1, Math.floor(el.clientWidth));
+  function layoutKey(el: HTMLElement): string {
+    return `${Math.floor(el.clientWidth)}x${Math.floor(el.clientHeight)}:${fontSize}:${lineHeight}:${blocks.length}`;
   }
 
-  function layoutPages(restore: boolean) {
-    if (!article || !clip) return;
-    const width = pageWidth();
-    article.style.width = `${width}px`;
-    article.style.maxWidth = `${width}px`;
-    article.style.columnWidth = `${width}px`;
-    article.style.setProperty("-webkit-column-width", `${width}px`);
-    article.style.columnGap = "0px";
-    article.style.setProperty("-webkit-column-gap", "0px");
-    const measured = Math.max(1, Math.round(article.scrollWidth / width));
-    totalPages = measured;
-    if (restore) {
-      const ratio = Number.isFinite(initialProgress) ? Math.min(1, Math.max(0, initialProgress)) : 0;
-      pageIndex = Math.min(measured - 1, Math.round(ratio * Math.max(measured - 1, 1)));
-      restored = true;
-    } else {
-      pageIndex = Math.min(pageIndex, measured - 1);
+  function scheduleRelayout(restore: boolean, immediate: boolean) {
+    if (relayoutTimer !== null) {
+      clearTimeout(relayoutTimer);
+      relayoutTimer = null;
     }
-    applyTransform();
+    const run = () => {
+      relayoutTimer = null;
+      void relayout(restore);
+    };
+    if (immediate) {
+      run();
+      return;
+    }
+    relayoutTimer = setTimeout(run, NOVEL_READER_RELAYOUT_DEBOUNCE_MS);
   }
 
-  function applyTransform() {
-    if (!article) return;
-    const width = pageWidth();
-    const reduced = readReducedMotion();
-    article.style.transition = reduced ? "none" : "transform 180ms ease";
-    article.style.transform = `translate3d(-${pageIndex * width}px, 0, 0)`;
+  async function relayout(restore: boolean) {
+    if (!clip || !measureRoot) return;
+    if (clip.clientWidth < 32 || clip.clientHeight < 32) return;
+    const key = layoutKey(clip);
+    const keepRatio = !restore && paginationComplete && totalPages > 0
+      ? (totalPages <= 1 ? 0 : pageIndex / Math.max(totalPages - 1, 1))
+      : null;
+    const gen = ++layoutGeneration;
+    lastLayoutKey = key;
+    paginationComplete = false;
+    probeStart = null;
+    probeEnd = null;
+
+    const overflows = (slice: PageSlice) => measureOverflow(slice);
+    const origin = startCursor();
+    const first = blocks.length === 0
+      ? { start: origin, end: origin }
+      : paginateNextPage(blocks, origin, overflows);
+    if (gen !== layoutGeneration) return;
+    const sample = Math.max(1, sliceContentWeight(blocks, first));
+    const estimatedTotal = estimatePageCount(totalContentWeight(blocks), sample);
+    if (restore) {
+      pageSlices = [first];
+      totalPages = Math.max(1, estimatedTotal);
+      chapterMarks = chapterMarksFromPages(blocks, [first]);
+      if (!userTurned) pageIndex = 0;
+    }
+
+    const weight = totalContentWeight(blocks);
+    const pages = await paginateNovelProgressive(blocks, overflows, {
+      initialPages: [first],
+      yieldEvery: weight >= NOVEL_READER_LONG_TEXT_WEIGHT
+        ? NOVEL_READER_PAGINATE_YIELD_EVERY_LONG
+        : NOVEL_READER_PAGINATE_YIELD_EVERY,
+      shouldAbort: () => gen !== layoutGeneration,
+      yieldFn: () => new Promise((resolve) => setTimeout(resolve, 0)),
+      onProgress: (next) => {
+        if (gen !== layoutGeneration || !restore) return;
+        pageSlices = next;
+        totalPages = Math.max(estimatedTotal, next.length);
+        if (!userTurned) {
+          const target = restorePageIndex(initialProgress, estimatedTotal);
+          if (next.length > target) pageIndex = target;
+        }
+      },
+    });
+    if (gen !== layoutGeneration || !pages) return;
+    pageSlices = pages;
+    totalPages = Math.max(1, pages.length);
+    chapterMarks = chapterMarksFromPages(blocks, pages);
+    paginationComplete = true;
+    if (restore && !userTurned) pageIndex = restorePageIndex(initialProgress, totalPages);
+    else if (keepRatio !== null) pageIndex = restorePageIndex(keepRatio, totalPages);
+    else pageIndex = Math.min(pageIndex, Math.max(0, totalPages - 1));
+    restored = true;
+    probeStart = null;
+    probeEnd = null;
+    mountMeasure([]);
+  }
+
+  function measureOverflow(slice: PageSlice): boolean {
+    if (!measureRoot) return false;
+    const start = normalizeCursor(blocks, slice.start);
+    const end = normalizeCursor(blocks, slice.end);
+    const measuredStart = probeStart;
+    const measuredEnd = probeEnd;
+    const canAppend =
+      measuredStart !== null
+      && measuredEnd !== null
+      && compareCursor(measuredStart, start) === 0
+      && compareCursor(end, measuredEnd) > 0;
+    if (canAppend && measuredEnd) {
+      const tail = materializePage(blocks, { start: measuredEnd, end });
+      for (const item of tail) measureRoot.append(createBlockElement(item));
+    } else {
+      mountMeasure(materializePage(blocks, { start, end }));
+    }
+    probeStart = start;
+    probeEnd = end;
+    return measureRoot.scrollHeight > measureRoot.clientHeight + 1;
+  }
+
+  function mountMeasure(items: PageBlockView[]) {
+    if (!measureRoot) return;
+    measureRoot.replaceChildren(...items.map((item) => createBlockElement(item)));
+  }
+
+  function createBlockElement(item: PageBlockView): HTMLElement {
+    if (item.kind === "chapter") {
+      const heading = document.createElement("h2");
+      heading.dataset.chapter = "";
+      heading.textContent = item.text;
+      return heading;
+    }
+    if (item.kind === "page_break") return document.createElement("hr");
+    if (item.kind === "artwork_link") {
+      const link = document.createElement("a");
+      link.className = "embed";
+      link.href = `/artworks/${item.id}`;
+      link.textContent = m.novel_reader_artwork_link({ id: item.id });
+      return link;
+    }
+    if (item.kind === "uploaded_image") {
+      const el = document.createElement("div");
+      el.className = "embed muted";
+      el.textContent = m.novel_reader_uploaded_image({ id: item.id });
+      return el;
+    }
+    if (item.kind === "external_link") {
+      const el = document.createElement("div");
+      el.className = "embed external";
+      el.append(item.label);
+      const small = document.createElement("small");
+      small.textContent = item.url;
+      el.append(small);
+      return el;
+    }
+    const paragraph = document.createElement("p");
+    if (item.continuation) paragraph.className = "continue";
+    paragraph.textContent = item.text;
+    return paragraph;
+  }
+
+  function reachablePageCount(): number {
+    return Math.max(1, pageSlices.length);
   }
 
   function turnPage(delta: number) {
     const nextIndex = pageIndex + delta;
-    if (nextIndex < 0 || nextIndex >= totalPages) return;
+    if (nextIndex < 0 || nextIndex >= reachablePageCount()) return;
+    userTurned = true;
     pageIndex = nextIndex;
     chromeOpen = false;
     panel = null;
   }
 
   function goToPage(index: number, keepChrome = false) {
-    pageIndex = Math.min(totalPages - 1, Math.max(0, index));
+    userTurned = true;
+    pageIndex = Math.min(reachablePageCount() - 1, Math.max(0, index));
     if (!keepChrome) {
       chromeOpen = false;
       panel = null;
     }
   }
 
-  function pageOfChapter(blockIndex: number): number {
-    if (!article) return 0;
-    const heading = article.querySelector(`[data-block="${blockIndex}"]`);
-    if (!(heading instanceof HTMLElement)) return 0;
-    const width = pageWidth();
-    return Math.min(totalPages - 1, Math.max(0, Math.floor(heading.offsetLeft / width)));
+  function goToChapter(blockIndex: number) {
+    const page = pageIndexForChapter(blocks, pageSlices, blockIndex);
+    if (page < 0) return;
+    goToPage(page);
   }
 
   function toggleChrome() {
@@ -240,28 +390,25 @@
     onpointerup={onPointerUp}
     onpointercancel={() => (pointerActive = false)}
   >
-    <div class="page-clip" bind:this={clip}>
-      <article
-        class="paged"
-        bind:this={article}
-        style={`--reader-font:${fontSize}px;--reader-line:${lineHeight}`}
-      >
-        {#each blocks as block, index (index)}
-          {#if block.kind === "chapter"}
-            <h2 data-chapter data-block={index}>{block.text}</h2>
-          {:else if block.kind === "page_break"}
+    <div class="page-clip" bind:this={clip} style={`--reader-font:${fontSize}px;--reader-line:${lineHeight}`}>
+      <article class="paged">
+        {#each visibleItems as item (item.key)}
+          {#if item.kind === "chapter"}
+            <h2 data-chapter>{item.text}</h2>
+          {:else if item.kind === "page_break"}
             <hr />
-          {:else if block.kind === "artwork_link"}
-            <a class="embed" href={`/artworks/${block.id}`}>{m.novel_reader_artwork_link({ id: block.id })}</a>
-          {:else if block.kind === "uploaded_image"}
-            <div class="embed muted">{m.novel_reader_uploaded_image({ id: block.id })}</div>
-          {:else if block.kind === "external_link"}
-            <div class="embed external">{block.label}<small>{block.url}</small></div>
+          {:else if item.kind === "artwork_link"}
+            <a class="embed" href={`/artworks/${item.id}`}>{m.novel_reader_artwork_link({ id: item.id })}</a>
+          {:else if item.kind === "uploaded_image"}
+            <div class="embed muted">{m.novel_reader_uploaded_image({ id: item.id })}</div>
+          {:else if item.kind === "external_link"}
+            <div class="embed external">{item.label}<small>{item.url}</small></div>
           {:else}
-            <p>{block.text}</p>
+            <p class:continue={item.continuation}>{item.text}</p>
           {/if}
         {/each}
       </article>
+      <div class="paged measure" bind:this={measureRoot} aria-hidden="true"></div>
     </div>
   </div>
 
@@ -288,7 +435,7 @@
         <input
           type="range"
           min="0"
-          max={Math.max(0, totalPages - 1)}
+          max={Math.max(0, reachablePageCount() - 1)}
           value={pageIndex}
           aria-label={pageLabel}
           oninput={(event) => goToPage(Number((event.currentTarget as HTMLInputElement).value), true)}
@@ -323,7 +470,7 @@
         <p>{m.novel_reader_no_chapters()}</p>
       {:else}
         {#each chapters as chapter}
-          <button type="button" onclick={() => goToPage(pageOfChapter(chapter.index))}>{chapter.text}</button>
+          <button type="button" onclick={() => goToChapter(chapter.index)}>{chapter.text}</button>
         {/each}
       {/if}
     </section>
@@ -388,6 +535,7 @@
     touch-action: none;
   }
   .page-clip {
+    position: relative;
     height: 100%;
     width: 100%;
     min-width: 0;
@@ -400,9 +548,13 @@
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
-    column-fill: auto;
-    column-gap: 0;
-    column-count: auto;
+    overflow: hidden;
+  }
+  .paged.measure {
+    position: absolute;
+    inset: 0;
+    visibility: hidden;
+    pointer-events: none;
   }
   .paged p {
     margin: 0 0 1.15em;
@@ -411,6 +563,7 @@
     white-space: pre-wrap;
     overflow-wrap: anywhere;
   }
+  .paged p.continue { margin-top: 0; }
   .paged h2 {
     margin: 1.4em 0 1em;
     font-size: calc(var(--reader-font) * 1.3);

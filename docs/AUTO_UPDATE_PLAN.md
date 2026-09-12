@@ -1,6 +1,6 @@
 # PixNya 自动检查更新与自动更新计划
 
-> 状态：生产签名更新流程已投入使用；当前公开稳定版为 `1.5.1`，当前源码版本为 `1.6.1`
+> 状态：生产签名更新流程已投入使用；当前公开稳定版为 `1.5.1`，当前源码版本为 `1.6.2`
 > 更新日期：2026-09-12
 > 当前正式平台：Windows x64/ARM64、Linux x64、Android ARM64/ARM32
 
@@ -179,7 +179,7 @@ Android 清单至少包含：schema 版本、`versionName`、`versionCode`、发
 - [x] `1.4.3` Windows x64 与 Android ARM64 的覆盖安装、启动、登录/数据保留、三种连接模式和界面回归均通过；Linux x64、Windows ARM64 与 Android ARM32 已完成签名 CI 构建。`1.4.3` 已公开为 latest stable；未公开的 `1.4.2`/`1.4.1` Draft Release 已删除，受 tag ruleset 保护的历史 tag 保持原 SHA。
 - [x] `1.5.0` 已由 Publish 工作流复验并公开为 latest stable；本轮按维护者决定不做人机活体验收。`1.4.4` 维护工作已完成并打 tag，但从未作为面向用户的 GitHub Release 公开，内容已包含在 `1.5.0` 中；未公开的 `1.4.4` Draft Release 已删除，历史 tag 保持原 SHA。
 - [x] `1.5.1` 已公开为 latest stable（Draft `33730303676` 完成五平台签名；因该 Release 已从 Draft 转为 Pre-release，官方 Publish 无法再消费，维护者直接改标为 latest）。活体验收未执行；Linux x64、Windows ARM64 与 Android ARM32 继续只要 CI 签名构建。不增加新的缓存接口。
-- [ ] `1.6.1`：沉浸小说阅读、分页裁剪与正文加载重试的签名 Draft；从公开 `1.5.1` 在 Windows x64 与 Android ARM64 做覆盖升级活体验收（Android 含三种连接模式）。活体验收尚未执行。`v1.6.0` tag 仍指向首个沉浸阅读 Draft 源码，不可移动。
+- [ ] `1.6.2`：沉浸小说阅读、分页裁剪、正文加载重试与长文只渲染当前页的签名 Draft；从公开 `1.5.1` 在 Windows x64 与 Android ARM64 做覆盖升级活体验收（Android 含三种连接模式）。活体验收尚未执行。`v1.6.0` 与 `v1.6.1` tag 不可移动。
 
 ## 11. 发布配置
 
