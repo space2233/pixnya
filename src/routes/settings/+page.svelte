@@ -58,7 +58,7 @@
 
 <AppShell title={m.settings_title()}>
   <div class="settings-page">
-    <ReturnLink variant="capsule" fallback="/" label={m.common_back()} />
+    <ReturnLink fallback="/" label={m.common_back()} />
     <h1 class="page-title">{m.settings_title()}</h1>
     {#each groups as group}
       <h2>{group.title()}</h2>

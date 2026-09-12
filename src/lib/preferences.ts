@@ -5,6 +5,7 @@ const CONNECTION_MODE_KEY = "pixiv-client.connection-mode";
 const SIDEBAR_KEY = "pixiv-client.sidebar";
 const REDUCED_MOTION_KEY = "pixiv-client.reduced-motion";
 const R18_DEFAULT_VISIBLE_KEY = "pixiv-client.r18-default-visible";
+const READER_PREFS_KEY = "pixiv-client.reader-prefs.v1";
 
 export const PREFERENCES_CHANGED_EVENT = "pixiv-client:preferences-changed";
 export const r18DefaultVisible = writable<boolean>(false);
@@ -75,6 +76,65 @@ export function writeR18DefaultVisible(visible: boolean): void {
 
 export function syncR18DefaultVisible(): void {
   r18DefaultVisible.set(readR18DefaultVisible());
+}
+
+export type NovelReaderTheme = "paper" | "white" | "dark";
+
+export type NovelReaderPreferences = {
+  fontSize: number;
+  lineHeight: number;
+  theme: NovelReaderTheme;
+};
+
+const DEFAULT_READER_PREFERENCES: NovelReaderPreferences = {
+  fontSize: 18,
+  lineHeight: 1.9,
+  theme: "paper",
+};
+
+function clampReaderFontSize(value: number): number {
+  return Math.min(28, Math.max(14, Math.round(value)));
+}
+
+function clampReaderLineHeight(value: number): number {
+  return Math.min(2.4, Math.max(1.4, Math.round(value * 10) / 10));
+}
+
+function isReaderTheme(value: unknown): value is NovelReaderTheme {
+  return value === "paper" || value === "white" || value === "dark";
+}
+
+export function readNovelReaderPreferences(): NovelReaderPreferences {
+  if (typeof window === "undefined") return { ...DEFAULT_READER_PREFERENCES };
+  try {
+    const stored = JSON.parse(localStorage.getItem(READER_PREFS_KEY) ?? "null") as Partial<NovelReaderPreferences> | null;
+    if (!stored || typeof stored !== "object") return { ...DEFAULT_READER_PREFERENCES };
+    return {
+      fontSize: typeof stored.fontSize === "number" && Number.isFinite(stored.fontSize)
+        ? clampReaderFontSize(stored.fontSize)
+        : DEFAULT_READER_PREFERENCES.fontSize,
+      lineHeight: typeof stored.lineHeight === "number" && Number.isFinite(stored.lineHeight)
+        ? clampReaderLineHeight(stored.lineHeight)
+        : DEFAULT_READER_PREFERENCES.lineHeight,
+      theme: isReaderTheme(stored.theme) ? stored.theme : DEFAULT_READER_PREFERENCES.theme,
+    };
+  } catch {
+    return { ...DEFAULT_READER_PREFERENCES };
+  }
+}
+
+export function writeNovelReaderPreferences(patch: Partial<NovelReaderPreferences>): NovelReaderPreferences {
+  const current = readNovelReaderPreferences();
+  const next: NovelReaderPreferences = {
+    fontSize: clampReaderFontSize(typeof patch.fontSize === "number" ? patch.fontSize : current.fontSize),
+    lineHeight: clampReaderLineHeight(typeof patch.lineHeight === "number" ? patch.lineHeight : current.lineHeight),
+    theme: isReaderTheme(patch.theme) ? patch.theme : current.theme,
+  };
+  if (typeof window !== "undefined") {
+    localStorage.setItem(READER_PREFS_KEY, JSON.stringify(next));
+    notifyPreferencesChanged();
+  }
+  return next;
 }
 
 function notifyPreferencesChanged(): void {

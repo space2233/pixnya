@@ -13,7 +13,10 @@
     | "settings"
     | "download"
     | "history"
-    | "shield";
+    | "shield"
+    | "list"
+    | "moon"
+    | "dots";
 
   const paths: Record<IconName, string[]> = {
     menu: ["M4 7h16", "M4 12h16", "M4 17h16"],
@@ -37,6 +40,9 @@
     download: ["M12 3v12", "m7 10 5 5 5-5", "M5 21h14"],
     history: ["M3 12a9 9 0 1 0 3-6.7", "M3 4v5h5", "M12 7v5l3 2"],
     shield: ["M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z", "m9 12 2 2 4-5"],
+    list: ["M8 6h13", "M8 12h13", "M8 18h13", "M3.5 6h.01", "M3.5 12h.01", "M3.5 18h.01"],
+    moon: ["M21 14.35A8.4 8.4 0 1 1 9.65 3 7 7 0 0 0 21 14.35Z"],
+    dots: ["M6 12h.01", "M12 12h.01", "M18 12h.01"],
   };
 
   let { name, size = 22 }: { name: IconName; size?: number } = $props();

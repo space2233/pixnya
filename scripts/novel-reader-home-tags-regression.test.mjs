@@ -10,16 +10,22 @@ const read = (...segments) => readFileSync(path.join(root, ...segments), "utf8")
 test("novel metadata and reading live on separate routes", () => {
   const detail = read("src", "routes", "novels", "[id]", "+page.svelte");
   const readerPath = path.join(root, "src", "routes", "novels", "[id]", "read", "+page.svelte");
+  const immersivePath = path.join(root, "src", "lib", "components", "NovelImmersiveReader.svelte");
 
   assert.ok(existsSync(readerPath), "an independent /novels/[id]/read route must exist");
+  assert.ok(existsSync(immersivePath), "the immersive novel reader module must exist");
   const reader = readFileSync(readerPath, "utf8");
+  const immersive = readFileSync(immersivePath, "utf8");
 
   assert.match(detail, /href=\{`\/novels\/\$\{detail\.novel\.id\}\/read`\}/);
   assert.match(detail, /class="read-button"/);
   assert.doesNotMatch(detail, /class="reader-controls"/);
   assert.doesNotMatch(detail, /class="novel-body"/);
-  assert.match(reader, /class="reader-controls"/);
-  assert.match(reader, /class="novel-body(?:\s|\")/);
+  assert.doesNotMatch(detail, /<NovelImmersiveReader/);
+  assert.match(reader, /<NovelImmersiveReader/);
+  assert.match(reader, /immersive/);
+  assert.match(immersive, /class="paged"/);
+  assert.match(immersive, /class="tools"/);
 });
 
 test("novel detail actions reflow instead of colliding on mobile", () => {

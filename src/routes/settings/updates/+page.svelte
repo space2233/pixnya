@@ -33,7 +33,7 @@
 </script>
 
 <svelte:head><title>{m.settings_updates()} · PixNya</title></svelte:head>
-<AppShell title={m.settings_updates()}><div class="page"><ReturnLink variant="capsule" fallback="/settings" label={m.common_back()} /><h1 class="page-title">{m.settings_updates()}</h1><section>
+<AppShell title={m.settings_updates()}><div class="page"><ReturnLink fallback="/settings" label={m.common_back()} /><h1 class="page-title">{m.settings_updates()}</h1><section>
   <div class="row"><strong>{phase()}</strong><button type="button" disabled={!snapshot || busy} onclick={() => act(() => checkForUpdates("manual"))}>{m.settings_check_now()}</button></div>
   <label class="row"><strong>{m.settings_auto_check()}</strong><input type="checkbox" role="switch" checked={snapshot?.preferences.autoCheck ?? true} disabled={!snapshot || busy} onchange={() => updatePreferences("autoCheck")} /></label>
   <label class="row"><strong>{m.settings_auto_download()}</strong><input type="checkbox" role="switch" checked={snapshot?.preferences.autoDownload ?? false} disabled={!snapshot || busy} onchange={() => updatePreferences("autoDownload")} /></label>

@@ -132,7 +132,7 @@
 
 <AppShell title={m.account_controls_title()}>
   <main class="account-controls">
-    <ReturnLink variant="capsule" fallback="/settings" label={m.account_controls_back()} />
+    <ReturnLink fallback="/settings" label={m.account_controls_back()} />
     <header class="page-heading">
       <h1 class="page-title">{m.account_controls_title()}</h1>
     </header>

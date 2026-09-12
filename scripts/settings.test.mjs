@@ -83,6 +83,25 @@ test("settings contain no media-only fallback warning preference or controls", (
   assert.doesNotMatch(preferenceSource, /insecure-media-warning|InsecureMediaWarning/);
 });
 
+test("novel reader typography preferences persist locally and reject invalid values", () => {
+  localStorage.removeItem("pixiv-client.reader-prefs.v1");
+  assert.deepEqual(preferences.readNovelReaderPreferences(), {
+    fontSize: 18,
+    lineHeight: 1.9,
+    theme: "paper",
+  });
+  preferences.writeNovelReaderPreferences({ fontSize: 22, lineHeight: 2.2, theme: "dark" });
+  assert.deepEqual(preferences.readNovelReaderPreferences(), {
+    fontSize: 22,
+    lineHeight: 2.2,
+    theme: "dark",
+  });
+  preferences.writeNovelReaderPreferences({ fontSize: 99, lineHeight: 0.2, theme: "sepia" });
+  assert.equal(preferences.readNovelReaderPreferences().fontSize, 28);
+  assert.equal(preferences.readNovelReaderPreferences().lineHeight, 1.4);
+  assert.equal(preferences.readNovelReaderPreferences().theme, "dark");
+});
+
 test("interface settings persist and reduced motion applies immediately", () => {
   preferences.writeDesktopSidebarExpanded(false);
   assert.equal(preferences.readDesktopSidebarExpanded(), false);
@@ -142,15 +161,14 @@ test("settings center owns the connection entry and uses the corrected cog", () 
   assert.doesNotMatch(icon, /M19\.4 15a1\.7/);
 });
 
-test("settings hub and subpages use a capsule return control", () => {
+test("settings hub and subpages use the shared capsule return control", () => {
   const returnLink = readFileSync(new URL("../src/lib/components/ReturnLink.svelte", import.meta.url), "utf8");
-  assert.match(returnLink, /variant = "plain"/);
-  assert.match(returnLink, /class:capsule=\{variant === "capsule"\}/);
   assert.match(returnLink, /border-radius:\s*999px/);
+  assert.match(returnLink, /white-space:\s*nowrap/);
+  assert.doesNotMatch(returnLink, /variant/);
 
   const hub = readFileSync(new URL("../src/routes/settings/+page.svelte", import.meta.url), "utf8");
-  assert.match(hub, /variant="capsule"/);
-  assert.match(hub, /fallback="\/"/);
+  assert.match(hub, /<ReturnLink fallback="\/"/);
 
   const pages = [
     "../src/routes/settings/account-controls/+page.svelte",
@@ -163,8 +181,8 @@ test("settings hub and subpages use a capsule return control", () => {
   ];
   for (const page of pages) {
     const source = readFileSync(new URL(page, import.meta.url), "utf8");
-    assert.match(source, /<ReturnLink variant="capsule"/);
-    assert.match(source, /fallback="\/settings"/);
+    assert.match(source, /<ReturnLink fallback="\/settings"/);
+    assert.doesNotMatch(source, /variant="capsule"/);
   }
 });
 

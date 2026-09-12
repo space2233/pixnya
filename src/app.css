@@ -338,6 +338,31 @@ input[type="search"]::-webkit-search-cancel-button:hover {
   min-width: 0;
 }
 
+.app-frame.immersive {
+  min-height: 100dvh;
+  background: transparent;
+}
+
+.app-frame.immersive .side-panel,
+.app-frame.immersive .app-topbar,
+.app-frame.immersive .mobile-bottom-nav,
+.app-frame.immersive .drawer-scrim {
+  display: none;
+}
+
+.app-frame.immersive .app-column {
+  height: 100dvh;
+  min-height: 100dvh;
+  margin-left: 0;
+  overflow: hidden;
+}
+
+.app-frame.immersive .app-content {
+  height: 100%;
+  min-height: 100%;
+  padding: 0;
+}
+
 .drawer-scrim {
   display: none;
 }
@@ -553,6 +578,10 @@ input[type="search"]::-webkit-search-cancel-button:hover {
 
   .app-content {
     padding-bottom: calc(72px + env(safe-area-inset-bottom));
+  }
+
+  .app-frame.immersive .app-content {
+    padding-bottom: 0;
   }
 
   .app-content .page-title {

@@ -36,6 +36,8 @@ test("following works and followed authors share one active navigation destinati
   assert.match(browse, /section === "following"[\s\S]*?<FollowingTabs/);
   assert.match(tabs, /href="\/following"/);
   assert.match(tabs, /href="\/following\/users"/);
+  assert.match(tabs, /flex-wrap:\s*nowrap/);
+  assert.match(tabs, /white-space:\s*nowrap/);
   assert.match(users, /getFollowedUsers/);
   assert.match(users, /UserPreviewCard/);
   assert.match(users, /m\.following_public\(\)/);

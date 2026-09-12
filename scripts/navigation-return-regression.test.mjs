@@ -154,6 +154,14 @@ test("all detail screens delegate return behavior to the shared component", asyn
   }
 });
 
+test("the shared return control is always a nowrap capsule", async () => {
+  const source = await readFile(path.join(root, "src/lib/components/ReturnLink.svelte"), "utf8");
+  assert.match(source, /border-radius:\s*999px/);
+  assert.match(source, /white-space:\s*nowrap/);
+  assert.match(source, /word-break:\s*keep-all/);
+  assert.doesNotMatch(source, /variant/);
+});
+
 test("the root layout captures links and handles both button and platform returns", async () => {
   const layout = await readFile(path.join(root, "src/routes/+layout.svelte"), "utf8");
   assert.match(layout, /captureReturnNavigation/);

@@ -75,6 +75,7 @@ test("frontend uses typed readers and local-only offline routes", async () => {
   const novels = await source("src/routes/novels/+page.svelte");
   const novelDetail = await source("src/routes/novels/[id]/+page.svelte");
   const novelReader = await source("src/routes/novels/[id]/read/+page.svelte");
+  const immersiveReader = await source("src/lib/components/NovelImmersiveReader.svelte");
   const artworkReader = await source("src/routes/artworks/[id]/+page.svelte");
   const ugoira = await source("src/lib/components/UgoiraPlayer.svelte");
   const offline = await source("src/routes/offline/+page.svelte");
@@ -90,8 +91,14 @@ test("frontend uses typed readers and local-only offline routes", async () => {
   assert.match(novelReader, /getNovelDetail/);
   assert.match(novelReader, /getNovelContent/);
   assert.match(novelReader, /parseNovelText/);
+  assert.match(novelReader, /immersive/);
+  assert.match(novelReader, /<NovelImmersiveReader/);
   assert.doesNotMatch(novelReader, /\{@html/);
   assert.doesNotMatch(novelReader, /target="_blank"/);
+  assert.doesNotMatch(immersiveReader, /\{@html/);
+  assert.doesNotMatch(immersiveReader, /target="_blank"/);
+  assert.doesNotMatch(immersiveReader, /speechSynthesis|webkitSpeech|utterance/i);
+  assert.doesNotMatch(immersiveReader, /searchQuery|shell_search|type="search"/);
   assert.match(artworkReader, /<UgoiraPlayer/);
   assert.match(artworkReader, /readOfflineText\(`artwork-\$\{id\}`/);
   assert.match(artworkReader, /parsed\?\.illustration\?\.id === id/);

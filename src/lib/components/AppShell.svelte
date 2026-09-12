@@ -21,7 +21,7 @@
   import Icon from "./Icon.svelte";
   import PixivImage from "./PixivImage.svelte";
 
-  let { children, title }: { children: Snippet; title: string } = $props();
+  let { children, title, immersive = false }: { children: Snippet; title: string; immersive?: boolean } = $props();
 
   let isDesktop = $state(false);
   let sidebarVisible = $state(true);
@@ -97,10 +97,11 @@
 
 <div
   class="app-frame"
-  class:sidebar-hidden={isDesktop && !sidebarVisible}
+  class:immersive
+  class:sidebar-hidden={immersive || (isDesktop && !sidebarVisible)}
   data-session-restoring={$sessionRestoring ? "true" : "false"}
 >
-  <aside class="side-panel" class:drawer-open={drawerOpen} aria-label={m.shell_main_navigation()}>
+  <aside class="side-panel" class:drawer-open={!immersive && drawerOpen} aria-hidden={immersive ? "true" : undefined} inert={immersive} aria-label={m.shell_main_navigation()}>
     <div class="side-brand">
       <a href="/" aria-label={m.shell_pixnya_home()} onclick={closeDrawer}>
         <strong>PixNya</strong>
@@ -139,12 +140,12 @@
     </div>
   </aside>
 
-  {#if drawerOpen}
+  {#if drawerOpen && !immersive}
     <button class="drawer-scrim" type="button" aria-label={m.shell_close_navigation()} onclick={closeDrawer}></button>
   {/if}
 
   <div class="app-column">
-    <header class="app-topbar">
+    <header class="app-topbar" aria-hidden={immersive ? "true" : undefined} inert={immersive}>
       <button class="icon-button menu-button" type="button" aria-label={m.shell_toggle_navigation()} onclick={toggleNavigation}>
         <Icon name="menu" size={24} />
       </button>
@@ -194,7 +195,7 @@
     </main>
   </div>
 
-  <nav class="mobile-bottom-nav" aria-label={m.shell_mobile_navigation()}>
+  <nav class="mobile-bottom-nav" aria-hidden={immersive ? "true" : undefined} inert={immersive} aria-label={m.shell_mobile_navigation()}>
     {#each bottomNavigationKeys as key}
       {@const item = getNavigationItem(key)}
       <a

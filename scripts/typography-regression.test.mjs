@@ -53,6 +53,7 @@ test("all application text uses the shared six-level typography scale", () => {
       const value = match[1].trim();
       const relative = path.relative(projectRoot, file).replaceAll("\\", "/");
       const isReader = relative === "src/routes/novels/[id]/read/+page.svelte"
+        || relative === "src/lib/components/NovelImmersiveReader.svelte"
         || relative === "src/routes/offline/novels/[id]/+page.svelte";
       if (!typographyValues.has(value) && !(isReader && readerValues.has(value))) {
         violations.push(`${relative}: ${value}`);

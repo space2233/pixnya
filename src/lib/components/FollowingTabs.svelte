@@ -13,6 +13,7 @@
 <style>
   .following-tabs {
     display: flex;
+    flex-wrap: nowrap;
     width: fit-content;
     gap: 4px;
     margin: 20px 0 4px;
@@ -22,6 +23,7 @@
   }
 
   a {
+    flex: 1 0 auto;
     min-width: 92px;
     padding: 9px 17px;
     color: #697278;
@@ -30,6 +32,7 @@
     font-weight: 700;
     text-align: center;
     text-decoration: none;
+    white-space: nowrap;
   }
 
   a.active {
@@ -46,7 +49,7 @@
 
     a {
       flex: 1;
-      min-width: 0;
+      min-width: min-content;
       padding-inline: 10px;
       font-size: var(--type-small);
     }
