@@ -7,7 +7,7 @@ Copyright (C) 2026 PixNya contributors
 
 This inventory records the reviewed license expressions for the exact dependency versions locked for PixNya 1.6.1. It is generated locally from `package-lock.json`, `Cargo.lock`, the Android Gradle lock and verification graph, installed npm/Cargo package evidence, and the tracked Maven license review. It is not legal advice and does not replace any upstream license or notice file shipped with a dependency.
 
-- Lock fingerprint: `sha256:c7975f5ed92588f8e5bd90cea3d6b85f502c2eb077d0406f7bb31a77016b1fb5`
+- Lock fingerprint: `sha256:3a188727cb4f8bfaee83eeaa46b8ccc7f587a6ddfc69d74158d705357e449c3c`
 - npm runtime/optional packages: 1
 - npm build/development packages: 144
 - Rust target-dependent locked packages: 570
