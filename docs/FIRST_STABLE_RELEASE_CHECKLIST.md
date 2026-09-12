@@ -17,7 +17,7 @@
 
 - [x] 发布工作流只能从 `main` 分支的固定提交触发，并校验 npm、Cargo、Tauri 与请求版本一致。
 - [x] 签名构建开始前运行 `npm run test:full`，覆盖全部 Node 回归、Svelte 检查、Rust 格式、Clippy 与 workspace tests。
-- [x] 发布前阻断运行时 npm 低危以上告警、全部 npm 高危以上告警、RustSec advisory，并用 OSV 扫描 Android ARM APK 的共同 runtime 锁图；runtime 零例外。构建工具图使用 2026-09-02 重新扫描确认的 84 条精确、限 scope、限版本、限期的临时 OSV 基线（与锁图完全一致，无新增、无消失、无坐标/版本/scope 变化；全部 84 条于 2026-10-02 到期）。此前唯一的 Critical Bouncy Castle 例外已通过升级到 `1.80.2` 消除。新增、变化或到期即失败，原始报告随每个 Release 归档。
+- [x] 发布前阻断运行时 npm 低危以上告警、全部 npm 高危以上告警、RustSec advisory，并用 OSV 扫描 Android ARM APK 的共同 runtime 锁图；runtime 零例外。构建工具图使用 2026-09-12 扫描确认的 88 条精确、限 scope、限版本、限期的临时 OSV 基线（2026-09-02 的 84 条仍于 2026-10-02 到期；新增 4 条 `io.netty:netty-handler` 构建期告警：`GHSA-c4c3-7fpv-j4q5` Critical 于 2026-09-26 到期，`GHSA-fccg-mwvh-qqg4` Moderate 于 2026-10-12 到期）。此前 Bouncy Castle Critical 已通过升级到 `1.80.2` 消除。新增、变化或到期即失败，原始报告随每个 Release 归档。
 - [x] Windows、Linux 与 Android 构建均要求完整的生产构建参数和签名 Secret，缺少任意一项立即失败。
 - [x] Android Release 只允许经过验证的 ARM64 与 ARM32 分包 APK，并用 `apksigner` 反查实际 APK 证书与受保护 keystore 一致。
 - [x] Draft Release 创建前，用公开密钥重新验证 Windows/Linux updater 签名和 Android 清单签名。

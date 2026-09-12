@@ -1118,6 +1118,57 @@
       "expiresAt": "2026-10-02"
     },
     {
+      "advisory": "GHSA-c4c3-7fpv-j4q5",
+      "mavenCoordinate": "io.netty:netty-handler",
+      "version": "4.1.110.Final",
+      "severity": "CRITICAL",
+      "scopes": [
+        "android-buildscript-classpath",
+        "android-buildsrc-build-time",
+        "android-internal-unified-test-platform"
+      ],
+      "owner": "space2233",
+      "upstreamChain": [
+        "Tauri 2.11.5 generated Android project",
+        "com.android.tools.build:gradle:8.11.0",
+        "Gradle JVM build classpath",
+        "Android Gradle Plugin Unified Test Platform internal configuration",
+        "io.netty:netty-handler:4.1.110.Final"
+      ],
+      "unreachableReason": "The coordinate is confined to AGP internal Unified Test Platform and/or Gradle JVM build classpaths; it is absent from arm64ReleaseRuntimeClasspath and is not packaged in the APK. The release tasks do not start UTP, emulator-control, test-result, proxy, HTTP, or HTTP/2 services backed by these Netty modules.",
+      "fixedVersions": [
+        "4.1.137.Final",
+        "4.2.17.Final"
+      ],
+      "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
+      "reviewedAt": "2026-09-12",
+      "expiresAt": "2026-09-26"
+    },
+    {
+      "advisory": "GHSA-c4c3-7fpv-j4q5",
+      "mavenCoordinate": "io.netty:netty-handler",
+      "version": "4.1.93.Final",
+      "severity": "CRITICAL",
+      "scopes": [
+        "android-internal-unified-test-platform"
+      ],
+      "owner": "space2233",
+      "upstreamChain": [
+        "Tauri 2.11.5 generated Android project",
+        "com.android.tools.build:gradle:8.11.0",
+        "Android Gradle Plugin Unified Test Platform internal configuration",
+        "io.netty:netty-handler:4.1.93.Final"
+      ],
+      "unreachableReason": "The coordinate is confined to AGP internal Unified Test Platform and/or Gradle JVM build classpaths; it is absent from arm64ReleaseRuntimeClasspath and is not packaged in the APK. The release tasks do not start UTP, emulator-control, test-result, proxy, HTTP, or HTTP/2 services backed by these Netty modules.",
+      "fixedVersions": [
+        "4.1.137.Final",
+        "4.2.17.Final"
+      ],
+      "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
+      "reviewedAt": "2026-09-12",
+      "expiresAt": "2026-09-26"
+    },
+    {
       "advisory": "GHSA-c653-97m9-rcg9",
       "mavenCoordinate": "io.netty:netty-handler",
       "version": "4.1.110.Final",
@@ -1320,6 +1371,57 @@
       "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
       "reviewedAt": "2026-09-02",
       "expiresAt": "2026-10-02"
+    },
+    {
+      "advisory": "GHSA-fccg-mwvh-qqg4",
+      "mavenCoordinate": "io.netty:netty-handler",
+      "version": "4.1.110.Final",
+      "severity": "MODERATE",
+      "scopes": [
+        "android-buildscript-classpath",
+        "android-buildsrc-build-time",
+        "android-internal-unified-test-platform"
+      ],
+      "owner": "space2233",
+      "upstreamChain": [
+        "Tauri 2.11.5 generated Android project",
+        "com.android.tools.build:gradle:8.11.0",
+        "Gradle JVM build classpath",
+        "Android Gradle Plugin Unified Test Platform internal configuration",
+        "io.netty:netty-handler:4.1.110.Final"
+      ],
+      "unreachableReason": "The coordinate is confined to AGP internal Unified Test Platform and/or Gradle JVM build classpaths; it is absent from arm64ReleaseRuntimeClasspath and is not packaged in the APK. The release tasks do not start UTP, emulator-control, test-result, proxy, HTTP, or HTTP/2 services backed by these Netty modules.",
+      "fixedVersions": [
+        "4.1.137.Final",
+        "4.2.17.Final"
+      ],
+      "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
+      "reviewedAt": "2026-09-12",
+      "expiresAt": "2026-10-12"
+    },
+    {
+      "advisory": "GHSA-fccg-mwvh-qqg4",
+      "mavenCoordinate": "io.netty:netty-handler",
+      "version": "4.1.93.Final",
+      "severity": "MODERATE",
+      "scopes": [
+        "android-internal-unified-test-platform"
+      ],
+      "owner": "space2233",
+      "upstreamChain": [
+        "Tauri 2.11.5 generated Android project",
+        "com.android.tools.build:gradle:8.11.0",
+        "Android Gradle Plugin Unified Test Platform internal configuration",
+        "io.netty:netty-handler:4.1.93.Final"
+      ],
+      "unreachableReason": "The coordinate is confined to AGP internal Unified Test Platform and/or Gradle JVM build classpaths; it is absent from arm64ReleaseRuntimeClasspath and is not packaged in the APK. The release tasks do not start UTP, emulator-control, test-result, proxy, HTTP, or HTTP/2 services backed by these Netty modules.",
+      "fixedVersions": [
+        "4.1.137.Final",
+        "4.2.17.Final"
+      ],
+      "trackingIssue": "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08",
+      "reviewedAt": "2026-09-12",
+      "expiresAt": "2026-10-12"
     },
     {
       "advisory": "GHSA-fghv-69vj-qj49",

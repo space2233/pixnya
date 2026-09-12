@@ -66,10 +66,17 @@ function appReport() {
 
 test("tracked baseline records exact, short-lived, non-runtime findings", async () => {
   const baseline = JSON.parse(await read("docs/android-gradle-osv-risk-baseline.json"));
-  assert.equal(baseline.exceptions.length, 84);
+  assert.equal(baseline.exceptions.length, 88);
   assert.deepEqual(baseline.toolchain, expectedToolchain);
   assert.equal(baseline.policy.runtimeExceptionsAllowed, false);
-  assert.ok(baseline.exceptions.every((entry) => entry.severity !== "CRITICAL"));
+  const nettySniBypass = baseline.exceptions.filter((entry) => entry.advisory === "GHSA-c4c3-7fpv-j4q5");
+  const nettySniCpu = baseline.exceptions.filter((entry) => entry.advisory === "GHSA-fccg-mwvh-qqg4");
+  assert.equal(nettySniBypass.length, 2);
+  assert.equal(nettySniCpu.length, 2);
+  assert.ok(nettySniBypass.every((entry) => entry.severity === "CRITICAL"));
+  assert.ok(nettySniBypass.every((entry) => entry.expiresAt === "2026-09-26"));
+  assert.ok(nettySniCpu.every((entry) => entry.severity === "MODERATE"));
+  assert.ok(nettySniCpu.every((entry) => entry.expiresAt === "2026-10-12"));
   const nettyCors = baseline.exceptions.filter(
     (entry) => entry.advisory === "GHSA-8c42-7qj2-3j46",
   );
@@ -99,6 +106,11 @@ test("tracked baseline records exact, short-lived, non-runtime findings", async 
     assert.match(entry.unreachableReason, /absent from arm64ReleaseRuntimeClasspath/);
     assert.ok(entry.fixedVersions.length > 0);
     assert.equal(entry.trackingIssue, "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08");
+    if (entry.advisory === "GHSA-c4c3-7fpv-j4q5" || entry.advisory === "GHSA-fccg-mwvh-qqg4") {
+      assert.equal(entry.reviewedAt, "2026-09-12");
+      continue;
+    }
+    assert.notEqual(entry.severity, "CRITICAL");
     assert.equal(entry.reviewedAt, "2026-09-02");
     assert.equal(entry.expiresAt, "2026-10-02");
   }
