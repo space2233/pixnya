@@ -60,6 +60,7 @@
 - 小说阅读改为全屏沉浸分页：点中间显示工具栏，左右滑动或点边缘翻页；可调字号、行距和纸色/白底/夜间主题。不提供朗读或阅读页内搜索。
 - 设置与阅读门禁的返回控件统一为胶囊形状；关注列表的公开/非公开选项保持单行。
 - 2026-09-12 复核 Android 构建工具 OSV：在既有 84 条之外新增 4 条仅 build-only 的 `io.netty:netty-handler` 告警（`GHSA-c4c3-7fpv-j4q5` Critical，`GHSA-fccg-mwvh-qqg4` Moderate）。不升级 Tauri/AGP；ARM runtime 继续零例外。
+- 2026-09-12 `cargo-deny` 因 RustSec 撤回 GTK3 停止维护公告而报 unused ignore；从 `deny.toml` 删除 `RUSTSEC-2024-0411`–`0420`，保留 7 条仍命中的例外。
 - 在 Windows x64 与 Android ARM64 上，从公开 `1.5.1` 做覆盖升级活体验收；Android 须覆盖标准、ECH、兼容三种连接模式。
 - Linux x64、Windows ARM64 与 Android ARM32 继续只要 CI 签名构建成功；本轮不宣称这些平台的活体验收。
 - 活体验收结果未跑之前，不得填写 PASS/失败、设备名、安装包 SHA-256 或工作流 run ID。

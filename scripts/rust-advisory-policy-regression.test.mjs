@@ -7,16 +7,6 @@ const policyPath = path.join(process.cwd(), "deny.toml");
 const reviewDatePattern = /review-by=(\d{4}-\d{2}-\d{2})/;
 const expectedTemporaryRustSecExceptions = new Set([
   "RUSTSEC-2024-0370",
-  "RUSTSEC-2024-0411",
-  "RUSTSEC-2024-0412",
-  "RUSTSEC-2024-0413",
-  "RUSTSEC-2024-0414",
-  "RUSTSEC-2024-0415",
-  "RUSTSEC-2024-0416",
-  "RUSTSEC-2024-0417",
-  "RUSTSEC-2024-0418",
-  "RUSTSEC-2024-0419",
-  "RUSTSEC-2024-0420",
   "RUSTSEC-2024-0429",
   "RUSTSEC-2025-0075",
   "RUSTSEC-2025-0080",
