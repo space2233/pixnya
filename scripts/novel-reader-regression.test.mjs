@@ -32,6 +32,9 @@ test("the novel reader is an immersive paginated surface without search or speec
   assert.match(reader, /NOVEL_READER_LONG_TEXT_WEIGHT/);
   assert.match(reader, /visibleItems/);
   assert.match(reader, /class="paged measure"|class="measure paged"/);
+  assert.match(reader, /--reader-progress-reserve/);
+  assert.match(reader, /padding-bottom:\s*var\(--reader-progress-reserve\)/);
+  assert.match(reader, /class="ghost-progress"/);
   assert.match(reader, /toggleChrome|chromeOpen/);
   assert.match(reader, /writeNovelReaderPreferences/);
   assert.match(reader, /<ReturnLink compact/);

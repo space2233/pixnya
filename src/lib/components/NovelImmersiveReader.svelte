@@ -507,6 +507,7 @@
     background: #fbf7ec;
     user-select: text;
     -webkit-user-select: text;
+    --reader-progress-reserve: calc(var(--type-caption) * 2 + 14px);
   }
   .reader.theme-white { color: #282b2e; background: #fff; }
   .reader.theme-dark { color: #d8d5cf; background: #202326; }
@@ -530,7 +531,7 @@
     flex: 1;
     min-width: 0;
     min-height: 0;
-    padding: calc(42px + env(safe-area-inset-top, 0px)) 22px calc(36px + env(safe-area-inset-bottom, 0px));
+    padding: calc(42px + env(safe-area-inset-top, 0px)) 22px calc(var(--reader-progress-reserve) + env(safe-area-inset-bottom, 0px));
     overflow: hidden;
     touch-action: none;
   }
@@ -549,6 +550,7 @@
     max-width: 100%;
     box-sizing: border-box;
     overflow: hidden;
+    padding-bottom: var(--reader-progress-reserve);
   }
   .paged.measure {
     position: absolute;
