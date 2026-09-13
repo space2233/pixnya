@@ -1,5 +1,6 @@
 <script lang="ts">
   import AppShell from "$lib/components/AppShell.svelte";
+  import LoadMoreOnScroll from "$lib/components/LoadMoreOnScroll.svelte";
   import PixivImage from "$lib/components/PixivImage.svelte";
   import ReturnLink from "$lib/components/ReturnLink.svelte";
   import { m } from "$lib/i18n";
@@ -22,6 +23,7 @@
   let mutedTag = $state("");
   let loading = $state(false);
   let loadingMore = $state(false);
+  let paginationError = $state("");
   let pendingMutation = $state(false);
   let errorMessage = $state("");
   let sessionKey = $state("");
@@ -43,6 +45,7 @@
   async function loadAll() {
     loading = true;
     errorMessage = "";
+    paginationError = "";
     const requestedSession = sessionKey;
     try {
       const [blocked, muted] = await Promise.all([getAccessBlockedUsers(), getMuteSettings()]);
@@ -61,7 +64,7 @@
     if (!nextCursor || loadingMore) return;
     const requestedSession = sessionKey;
     loadingMore = true;
-    errorMessage = "";
+    paginationError = "";
     try {
       const page = await getAccessBlockedUsers(nextCursor);
       if (requestedSession !== sessionKey) return;
@@ -69,7 +72,7 @@
       blockedUsers = [...blockedUsers, ...page.users.filter((user) => !known.has(user.id))];
       nextCursor = page.nextCursor ?? null;
     } catch (error) {
-      if (requestedSession === sessionKey) errorMessage = describeDataFailure(error);
+      if (requestedSession === sessionKey) paginationError = describeDataFailure(error);
     } finally {
       if (requestedSession === sessionKey) loadingMore = false;
     }
@@ -159,7 +162,13 @@
             </article>
           {:else}<p class="empty">{m.account_controls_empty()}</p>{/each}
         </div>
-        {#if nextCursor}<button class="wide secondary" disabled={loadingMore} onclick={loadMoreBlocked}>{loadingMore ? m.account_controls_loading() : m.account_controls_load_more()}</button>{/if}
+        <LoadMoreOnScroll
+          enabled={!!nextCursor}
+          loading={loadingMore}
+          error={paginationError}
+          onload={loadMoreBlocked}
+          loadingLabel={m.account_controls_loading()}
+        />
       </section>
 
       <section class="card">
@@ -199,5 +208,5 @@
 </AppShell>
 
 <style>
-  .account-controls{width:min(920px,calc(100% - 32px));margin:0 auto;padding:28px 0 110px}.page-heading{margin:24px 0}.page-heading h1{font-size:var(--type-title);margin:0 0 8px}.card>p,.state,.empty{color:#777;line-height:1.7}.card{background:#fff;border:1px solid #e7e7e7;border-radius:20px;padding:24px;margin:18px 0}.card h2{margin:0 0 6px}.card h3{margin:24px 0 10px}.add-row{display:flex;gap:10px;margin:16px 0}.add-row input{min-width:0;flex:1;border:1px solid #ddd;border-radius:12px;padding:12px 14px;font:inherit}.add-row button,.wide{border:0;border-radius:12px;background:#0096fa;color:#fff;padding:0 18px;font-weight:700}.items{display:grid;gap:8px}.user-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid #eee}.user-row :global(img){width:44px;height:44px;border-radius:50%;object-fit:cover}.user-row a{display:grid;flex:1;color:inherit;text-decoration:none}.user-row small{color:#888}.secondary{border:1px solid #d8d8d8;background:#fff;color:#555;border-radius:999px;padding:9px 14px}.wide{width:100%;margin-top:12px}.tags{display:flex;flex-wrap:wrap;gap:8px}.tag{font-weight:600}.error{background:#fff1f1;color:#b3261e;padding:12px 16px;border-radius:12px}.local-only{background:#f5f7f8}.limit{font-size:var(--type-body)}button:disabled{opacity:.5}@media(max-width:560px){.account-controls{width:min(100% - 24px,920px);padding-top:18px}.card{padding:18px;border-radius:16px}.add-row{align-items:stretch}.add-row button{max-width:42%}.user-row{align-items:flex-start;flex-wrap:wrap}.user-row a{min-width:calc(100% - 64px)}}
+  .account-controls{width:min(920px,calc(100% - 32px));margin:0 auto;padding:28px 0 110px}.page-heading{margin:24px 0}.page-heading h1{font-size:var(--type-title);margin:0 0 8px}.card>p,.state,.empty{color:#777;line-height:1.7}.card{background:#fff;border:1px solid #e7e7e7;border-radius:20px;padding:24px;margin:18px 0}.card h2{margin:0 0 6px}.card h3{margin:24px 0 10px}.add-row{display:flex;gap:10px;margin:16px 0}.add-row input{min-width:0;flex:1;border:1px solid #ddd;border-radius:12px;padding:12px 14px;font:inherit}.add-row button{border:0;border-radius:12px;background:#0096fa;color:#fff;padding:0 18px;font-weight:700}.items{display:grid;gap:8px}.user-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid #eee}.user-row :global(img){width:44px;height:44px;border-radius:50%;object-fit:cover}.user-row a{display:grid;flex:1;color:inherit;text-decoration:none}.user-row small{color:#888}.secondary{border:1px solid #d8d8d8;background:#fff;color:#555;border-radius:999px;padding:9px 14px}.tags{display:flex;flex-wrap:wrap;gap:8px}.tag{font-weight:600}.error{background:#fff1f1;color:#b3261e;padding:12px 16px;border-radius:12px}.local-only{background:#f5f7f8}.limit{font-size:var(--type-body)}button:disabled{opacity:.5}@media(max-width:560px){.account-controls{width:min(100% - 24px,920px);padding-top:18px}.card{padding:18px;border-radius:16px}.add-row{align-items:stretch}.add-row button{max-width:42%}.user-row{align-items:flex-start;flex-wrap:wrap}.user-row a{min-width:calc(100% - 64px)}}
 </style>

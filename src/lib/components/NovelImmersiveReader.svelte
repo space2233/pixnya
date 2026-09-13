@@ -28,10 +28,19 @@
     totalContentWeight,
   } from "$lib/novel-reader-pagination";
   import {
+    PREFERENCES_CHANGED_EVENT,
     readNovelReaderPreferences,
+    readVolumePageTurnEnabled,
     writeNovelReaderPreferences,
+    writeVolumePageTurnEnabled,
     type NovelReaderTheme,
   } from "$lib/preferences";
+  import {
+    VOLUME_PAGE_EVENT,
+    setVolumePageTurnCapture,
+    volumePageDirectionFromDetail,
+    volumePageDirectionFromKey,
+  } from "$lib/volume-page-turn";
   import type { NovelContent, NovelDetail } from "$lib/types";
 
   let {
@@ -54,6 +63,7 @@
   let fontSize = $state(stored.fontSize);
   let lineHeight = $state(stored.lineHeight);
   let theme = $state<NovelReaderTheme>(stored.theme);
+  let volumePageTurn = $state(readVolumePageTurnEnabled());
   let chromeOpen = $state(false);
   let panel = $state<null | "toc" | "settings" | "more">(null);
   let pageIndex = $state(0);
@@ -124,6 +134,10 @@
   });
 
   onMount(() => {
+    const applyVolumePage = (direction: "next" | "previous") => {
+      if (!volumePageTurn) return;
+      turnPage(direction === "next" ? 1 : -1);
+    };
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         chromeOpen = false;
@@ -139,14 +153,38 @@
         event.preventDefault();
         turnPage(1);
       }
+      const volumeDirection = volumePageDirectionFromKey(event);
+      if (volumeDirection) {
+        event.preventDefault();
+        applyVolumePage(volumeDirection);
+      }
+    };
+    const onVolumePage = (event: Event) => {
+      const direction = volumePageDirectionFromDetail((event as CustomEvent).detail);
+      if (direction) applyVolumePage(direction);
+    };
+    const onPreferences = () => {
+      volumePageTurn = readVolumePageTurnEnabled();
+      void setVolumePageTurnCapture(volumePageTurn);
     };
     window.addEventListener("keydown", onKey);
+    window.addEventListener(VOLUME_PAGE_EVENT, onVolumePage);
+    window.addEventListener(PREFERENCES_CHANGED_EVENT, onPreferences);
+    void setVolumePageTurnCapture(volumePageTurn);
     return () => {
       layoutGeneration += 1;
       if (relayoutTimer !== null) clearTimeout(relayoutTimer);
       window.removeEventListener("keydown", onKey);
+      window.removeEventListener(VOLUME_PAGE_EVENT, onVolumePage);
+      window.removeEventListener(PREFERENCES_CHANGED_EVENT, onPreferences);
+      void setVolumePageTurnCapture(false);
     };
   });
+
+  function persistVolumePageTurn() {
+    writeVolumePageTurnEnabled(volumePageTurn);
+    void setVolumePageTurnCapture(volumePageTurn);
+  }
 
   function persistPrefs() {
     writeNovelReaderPreferences({ fontSize, lineHeight, theme });
@@ -484,6 +522,10 @@
         <button type="button" class:active={theme === "white"} onclick={() => { theme = "white"; persistPrefs(); }}>{m.novel_reader_theme_white()}</button>
         <button type="button" class:active={theme === "dark"} onclick={() => { theme = "dark"; persistPrefs(); }}>{m.novel_reader_theme_dark()}</button>
       </div>
+      <label class="toggle">
+        <span>{m.settings_volume_page_turn()}</span>
+        <input type="checkbox" role="switch" bind:checked={volumePageTurn} onchange={persistVolumePageTurn} />
+      </label>
     </section>
   {:else if panel === "more"}
     <section class="sheet" data-chrome>
@@ -683,6 +725,13 @@
     text-decoration: none;
   }
   .sheet label { display: grid; gap: 6px; }
+  .sheet label.toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .sheet label.toggle input { width: 20px; height: 20px; accent-color: var(--pixiv-blue); }
   .themes { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
   .themes button {
     padding: 6px 12px;

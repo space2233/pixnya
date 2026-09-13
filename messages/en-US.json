@@ -903,6 +903,8 @@
   "settings_reduced_motion_description": "Reduce transitions for the sidebar, drawers, and controls",
   "settings_r18": "Show R18 by default",
   "settings_r18_description": "Only removes PixNya's mask; content availability still follows Pixiv account settings",
+  "settings_volume_page_turn": "Volume-key paging",
+  "settings_volume_page_turn_description": "While reading a novel, volume down turns to the next page and volume up to the previous page",
   "settings_storage": "Content and storage",
   "settings_storage_description": "Media display rules, offline downloads, and local space.",
   "settings_storage_critical": "Storage is critically low; download writes are limited",

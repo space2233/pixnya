@@ -903,6 +903,8 @@
   "settings_reduced_motion_description": "減少側欄、抽屜和控制項的轉場動畫",
   "settings_r18": "預設顯示 R18",
   "settings_r18_description": "僅解除本客戶端遮罩；內容範圍仍跟隨 Pixiv 帳號設定",
+  "settings_volume_page_turn": "音量鍵翻頁",
+  "settings_volume_page_turn_description": "閱讀小說時，音量下鍵下一頁，音量上鍵上一頁",
   "settings_storage": "內容與儲存",
   "settings_storage_description": "媒體顯示原則、離線下載與本機空間。",
   "settings_storage_critical": "儲存空間不足，下載寫入已受限",

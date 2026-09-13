@@ -4,6 +4,7 @@
   import AppShell from "$lib/components/AppShell.svelte";
   import CommentCard from "$lib/components/CommentCard.svelte";
   import CommentComposer from "$lib/components/CommentComposer.svelte";
+  import LoadMoreOnScroll from "$lib/components/LoadMoreOnScroll.svelte";
   import ReturnLink from "$lib/components/ReturnLink.svelte";
   import { m } from "$lib/i18n";
   import { forgetComment, recallCommentRoot, type CommentResourceKind } from "$lib/comment-thread-memory";
@@ -217,8 +218,12 @@
             {/each}
           </div>
         {/if}
-        {#if paginationError}<p class="inline-error" role="alert">{paginationError}</p>{/if}
-        {#if nextCursor && status === "ready"}<button class="load-more" type="button" disabled={loadingMore} onclick={loadMoreReplies}>{loadingMore ? m.common_loading() : m.reply_load_more()}</button>{/if}
+        <LoadMoreOnScroll
+          enabled={Boolean(nextCursor) && status === "ready"}
+          loading={loadingMore}
+          error={paginationError}
+          onload={loadMoreReplies}
+        />
       </section>
     {/if}
   </main>
@@ -238,12 +243,9 @@
   .reply-list :global(> article + article) { border-top: 1px solid var(--line); }
   .reply-state { display: flex; gap: 11px; align-items: center; justify-content: center; min-height: 130px; border-top: 1px solid var(--line); color: var(--muted); font-size: var(--type-caption); }
   .reply-state.error { color: #a44f5e; }
-  .reply-state button, .load-more { height: 34px; padding: 0 15px; border: 0; border-radius: 17px; cursor: pointer; font-size: var(--type-body); font-weight: 700; }
+  .reply-state button { height: 34px; padding: 0 15px; border: 0; border-radius: 17px; cursor: pointer; font-size: var(--type-body); font-weight: 700; }
   .reply-state button { color: white; background: var(--pixiv-blue); }
   .empty { margin: 0; padding: 40px; color: var(--muted); border-top: 1px solid var(--line); text-align: center; font-size: var(--type-caption); }
-  .load-more { display: block; min-width: 140px; margin: 18px auto; color: #59636a; border: 1px solid var(--line); background: white; }
-  .load-more:disabled { cursor: wait; opacity: .58; }
-  .inline-error { margin: 13px; color: #a44f5e; text-align: center; font-size: var(--type-caption); }
   .spinner { width: 25px; height: 25px; border: 3px solid #dceefb; border-top-color: var(--pixiv-blue); border-radius: 50%; animation: spin .8s linear infinite; }
   .state-card { display: grid; gap: 8px; margin-top: 18px; padding: 24px; border: 1px solid var(--line); border-radius: 12px; background: white; }
   .state-card h1, .state-card p { margin: 0; }

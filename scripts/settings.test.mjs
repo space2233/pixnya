@@ -112,6 +112,15 @@ test("interface settings persist and reduced motion applies immediately", () => 
   assert.ok(events.every((event) => event === preferences.PREFERENCES_CHANGED_EVENT));
 });
 
+test("volume-key paging is opt-in and defaults off", () => {
+  localStorage.removeItem("pixiv-client.volume-page-turn");
+  assert.equal(preferences.readVolumePageTurnEnabled(), false);
+  preferences.writeVolumePageTurnEnabled(true);
+  assert.equal(preferences.readVolumePageTurnEnabled(), true);
+  preferences.writeVolumePageTurnEnabled(false);
+  assert.equal(preferences.readVolumePageTurnEnabled(), false);
+});
+
 test("R18 visibility is opt-in, persists locally, and controls every restricted-content surface", () => {
   preferences.writeR18DefaultVisible(false);
   assert.equal(preferences.readR18DefaultVisible(), false);
@@ -127,6 +136,8 @@ test("R18 visibility is opt-in, persists locally, and controls every restricted-
 
   assert.match(settings, /m\.settings_r18\(\)/);
   assert.match(settings, /writeR18DefaultVisible/);
+  assert.match(settings, /m\.settings_volume_page_turn\(\)/);
+  assert.match(settings, /writeVolumePageTurnEnabled/);
   for (const surface of [artworkCard, artworkDetail, novelCard, novelDetail, userPreview]) {
     assert.match(surface, /\$r18DefaultVisible/);
   }

@@ -2,6 +2,7 @@
   import { page } from "$app/state";
   import AppShell from "$lib/components/AppShell.svelte";
   import Icon from "$lib/components/Icon.svelte";
+  import LoadMoreOnScroll from "$lib/components/LoadMoreOnScroll.svelte";
   import NovelCard from "$lib/components/NovelCard.svelte";
   import PixivImage from "$lib/components/PixivImage.svelte";
   import ReturnLink from "$lib/components/ReturnLink.svelte";
@@ -165,8 +166,7 @@
         {#if novels.length}
           <div class="novel-grid">{#each novels as novel (novel.id)}<NovelCard {novel} />{/each}</div>
         {:else}<p class="empty">{m.novel_series_empty()}</p>{/if}
-        {#if loadMoreError}<p class="load-error" role="alert">{loadMoreError}</p>{/if}
-        {#if nextCursor}<button class="load-more" type="button" disabled={loadingMore} onclick={loadMore}>{loadingMore ? m.common_loading() : m.novel_series_load_more()}</button>{/if}
+        <LoadMoreOnScroll enabled={!!nextCursor} loading={loadingMore} error={loadMoreError} onload={loadMore} />
       </section>
     {/if}
   </main>
@@ -196,9 +196,6 @@
   .contents h2 { margin: 0; font-size: var(--type-section); } .contents header strong { color: var(--muted); font-size: var(--type-caption); }
   .novel-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; margin-top: 16px; }
   .empty { padding: 36px; color: var(--muted); border: 1px dashed var(--line); border-radius: 10px; font-size: var(--type-small); text-align: center; }
-  .load-error { color: #a65865; font-size: var(--type-caption); text-align: center; }
-  .load-more { display: block; min-width: 150px; height: 38px; margin: 26px auto 0; color: #59636a; border: 1px solid var(--line); border-radius: 19px; background: white; cursor: pointer; font-size: var(--type-body); font-weight: 700; }
-  .load-more:disabled { cursor: wait; opacity: .65; }
   @keyframes spin { to { transform: rotate(360deg); } }
   @media (max-width: 820px) { .novel-grid { grid-template-columns: 1fr; } }
   @media (max-width: 620px) { .series-page { padding: 16px 12px 88px; } .series-hero { grid-template-columns: 84px minmax(0,1fr); gap: 16px; padding: 16px; } .series-copy h1 { margin-top: 6px; font-size: var(--type-section); } .start { justify-content: center; } .state-card { grid-template-columns: 38px minmax(0,1fr); } .state-card a, .state-card button { grid-column: 1 / -1; text-align: center; } }

@@ -5,9 +5,9 @@ PixNya itself is licensed under GNU GPL-3.0-only; the complete project license i
 
 Copyright (C) 2026 PixNya contributors
 
-This inventory records the reviewed license expressions for the exact dependency versions locked for PixNya 1.6.2. It is generated locally from `package-lock.json`, `Cargo.lock`, the Android Gradle lock and verification graph, installed npm/Cargo package evidence, and the tracked Maven license review. It is not legal advice and does not replace any upstream license or notice file shipped with a dependency.
+This inventory records the reviewed license expressions for the exact dependency versions locked for PixNya 1.6.3. It is generated locally from `package-lock.json`, `Cargo.lock`, the Android Gradle lock and verification graph, installed npm/Cargo package evidence, and the tracked Maven license review. It is not legal advice and does not replace any upstream license or notice file shipped with a dependency.
 
-- Lock fingerprint: `sha256:17cf60ff006b584a4d090ac7be9ebd929be7c7224d39beaea2b802dde3ac014a`
+- Lock fingerprint: `sha256:064c18291a10644a71c8419cd3ac8ac6bc0d3e83ea954316d5952583dac220ec`
 - npm runtime/optional packages: 1
 - npm build/development packages: 144
 - Rust target-dependent locked packages: 570

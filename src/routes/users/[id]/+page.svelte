@@ -3,6 +3,7 @@
   import AppShell from "$lib/components/AppShell.svelte";
   import ArtworkCard from "$lib/components/ArtworkCard.svelte";
   import Icon from "$lib/components/Icon.svelte";
+  import LoadMoreOnScroll from "$lib/components/LoadMoreOnScroll.svelte";
   import NovelCard from "$lib/components/NovelCard.svelte";
   import PixivImage from "$lib/components/PixivImage.svelte";
   import ReturnLink from "$lib/components/ReturnLink.svelte";
@@ -340,12 +341,12 @@
           <p class="empty">{m.user_empty_works({ kind: workKind === "illust" ? m.common_illustrations() : workKind === "manga" ? m.common_manga() : m.common_novels() })}</p>
         {/if}
 
-        {#if worksError && worksStatus === "ready"}<p class="pagination-error" role="alert">{worksError}</p>{/if}
-        {#if nextCursor && worksStatus === "ready"}
-          <button class="load-more" type="button" disabled={loadingMore} onclick={loadMore}>
-            {loadingMore ? m.common_loading() : m.user_load_more_works()}
-          </button>
-        {/if}
+        <LoadMoreOnScroll
+          enabled={Boolean(nextCursor) && worksStatus === "ready"}
+          loading={loadingMore}
+          error={worksStatus === "ready" ? worksError : ""}
+          onload={loadMore}
+        />
       </section>
     {/if}
   </main>
@@ -396,12 +397,8 @@
   .works-loading, .works-error { display: flex; gap: 14px; align-items: center; justify-content: center; min-height: 150px; color: var(--muted); border: 1px dashed var(--line); border-radius: 10px; font-size: var(--type-small); }
   .works-error { flex-direction: column; color: #9b5964; }
   .works-error p { margin: 0; }
-  .works-error button, .load-more { min-width: 110px; height: 36px; color: #59636a; border: 1px solid var(--line); border-radius: 18px; background: white; cursor: pointer; font-size: var(--type-body); font-weight: 700; }
+  .works-error button { min-width: 110px; height: 36px; color: #59636a; border: 1px solid var(--line); border-radius: 18px; background: white; cursor: pointer; font-size: var(--type-body); font-weight: 700; }
   .empty { padding: 38px; color: var(--muted); border: 1px dashed var(--line); border-radius: 10px; font-size: var(--type-small); text-align: center; }
-  .pagination-error { color: #a65865; font-size: var(--type-caption); text-align: center; }
-  .load-more { display: block; margin: 26px auto 0; }
-  .load-more:disabled { cursor: wait; opacity: .65; }
-
   @keyframes spin { to { transform: rotate(360deg); } }
   @media (max-width: 860px) {
     .profile-stats { grid-template-columns: repeat(3, 1fr); }

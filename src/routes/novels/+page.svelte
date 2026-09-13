@@ -2,6 +2,7 @@
   import AppShell from "$lib/components/AppShell.svelte";
   import ContentTabs from "$lib/components/ContentTabs.svelte";
   import Icon from "$lib/components/Icon.svelte";
+  import LoadMoreOnScroll from "$lib/components/LoadMoreOnScroll.svelte";
   import NovelCard from "$lib/components/NovelCard.svelte";
   import { m } from "$lib/i18n";
   import { buildBookmarkBatchUpdate, type BookmarkBatchAction } from "$lib/bookmark-batch";
@@ -241,8 +242,7 @@
       <section class="state error" role="alert"><span>!</span><div><h2>{m.novels_load_failed()}</h2><p>{errorMessage}</p></div><button type="button" onclick={() => loadNovels(requestedSession)}>{m.common_retry()}</button></section>
     {:else if status === "ready"}
       {#if novels.length}<div class="novel-grid">{#each novels as novel (novel.id)}<NovelCard {novel} selectable={selectedSection === "bookmarks" && selectionMode} selected={selectedNovelIds.includes(novel.id)} onSelect={(selected) => toggleNovelSelection(novel.id, selected)} />{/each}</div>{:else}<p class="empty">{m.novels_empty()}</p>{/if}
-      {#if errorMessage}<p class="paging-error" role="alert">{errorMessage}</p>{/if}
-      {#if nextCursor}<button class="load-more" type="button" disabled={loadingMore} onclick={loadMore}>{loadingMore ? m.common_loading() : m.novels_load_more()}</button>{/if}
+      <LoadMoreOnScroll enabled={!!nextCursor} loading={loadingMore} error={errorMessage} onload={loadMore} />
     {/if}
   </main>
 </AppShell>
@@ -255,12 +255,10 @@
   .novel-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; margin-top: 22px; }
   .state { display: grid; grid-template-columns: 44px minmax(0,1fr) auto; gap: 14px; align-items: center; margin-top: 22px; padding: 20px; border: 1px solid var(--line); border-radius: 11px; background: white; }
   .state h2 { margin: 0; font-size: var(--type-label); } .state p { margin: 5px 0 0; color: var(--muted); font-size: var(--type-caption); }
-  .state a, .state button, .load-more { padding: 10px 17px; color: white; border: 0; border-radius: 20px; background: var(--pixiv-blue); cursor: pointer; font-size: var(--type-body); font-weight: 700; text-decoration: none; }
+  .state a, .state button { padding: 10px 17px; color: white; border: 0; border-radius: 20px; background: var(--pixiv-blue); cursor: pointer; font-size: var(--type-body); font-weight: 700; text-decoration: none; }
   .state.error > span { display: grid; width: 36px; height: 36px; place-items: center; color: #a34e5d; border-radius: 50%; background: #fff0f3; }
   .spinner { width: 29px; height: 29px; border: 3px solid #dceefb; border-top-color: var(--pixiv-blue); border-radius: 50%; animation: spin .8s linear infinite; }
   .empty { margin-top: 22px; padding: 40px; color: var(--muted); border: 1px dashed var(--line); border-radius: 10px; text-align: center; }
-  .paging-error { color: #a34e5d; font-size: var(--type-caption); text-align: center; }
-  .load-more { display: block; min-width: 145px; margin: 24px auto 0; color: #59636a; border: 1px solid var(--line); background: white; }
   @keyframes spin { to { transform: rotate(360deg); } }
   @media (max-width: 760px) { .novel-grid { grid-template-columns: 1fr; } }
   @media (max-width: 620px) { .novel-page { padding: 18px 14px 90px; } .novel-toolbar { align-items: stretch; flex-direction: column; } .novel-toolbar nav { width: 100%; } .novel-toolbar nav button { min-width: 0; flex: 1; } .novel-toolbar select { align-self: flex-end; } .state { grid-template-columns: 38px minmax(0,1fr); } .state a, .state button { grid-column: 1 / -1; text-align: center; } }

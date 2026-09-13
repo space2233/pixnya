@@ -5,6 +5,7 @@ const CONNECTION_MODE_KEY = "pixiv-client.connection-mode";
 const SIDEBAR_KEY = "pixiv-client.sidebar";
 const REDUCED_MOTION_KEY = "pixiv-client.reduced-motion";
 const R18_DEFAULT_VISIBLE_KEY = "pixiv-client.r18-default-visible";
+const VOLUME_PAGE_TURN_KEY = "pixiv-client.volume-page-turn";
 const READER_PREFS_KEY = "pixiv-client.reader-prefs.v1";
 
 export const PREFERENCES_CHANGED_EVENT = "pixiv-client:preferences-changed";
@@ -76,6 +77,17 @@ export function writeR18DefaultVisible(visible: boolean): void {
 
 export function syncR18DefaultVisible(): void {
   r18DefaultVisible.set(readR18DefaultVisible());
+}
+
+export function readVolumePageTurnEnabled(): boolean {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem(VOLUME_PAGE_TURN_KEY) === "on";
+}
+
+export function writeVolumePageTurnEnabled(enabled: boolean): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(VOLUME_PAGE_TURN_KEY, enabled ? "on" : "off");
+  notifyPreferencesChanged();
 }
 
 export type NovelReaderTheme = "paper" | "white" | "dark";

@@ -6,6 +6,7 @@
   import ArtworkCard from "$lib/components/ArtworkCard.svelte";
   import ArtworkThumbnail from "$lib/components/ArtworkThumbnail.svelte";
   import Icon from "$lib/components/Icon.svelte";
+  import LoadMoreOnScroll from "$lib/components/LoadMoreOnScroll.svelte";
   import NovelCard from "$lib/components/NovelCard.svelte";
   import UserPreviewCard from "$lib/components/UserPreviewCard.svelte";
   import { m } from "$lib/i18n";
@@ -415,10 +416,12 @@
           <p class="empty">{m.search_empty({ type: searchTypeLabels[currentRoute.type]() })}</p>
         {/if}
 
-        {#if paginationError}<p class="pagination-error" role="alert">{paginationError}</p>{/if}
-        {#if nextCursor && resultStatus === "ready"}
-          <button class="load-more" type="button" disabled={loadingMore} onclick={loadMore}>{loadingMore ? m.common_loading() : m.common_load_more()}</button>
-        {/if}
+        <LoadMoreOnScroll
+          enabled={Boolean(nextCursor) && resultStatus === "ready"}
+          loading={loadingMore}
+          error={paginationError}
+          onload={loadMore}
+        />
       </section>
     {:else}
       <section class="suggestions" aria-labelledby="suggestions-heading">
@@ -486,9 +489,6 @@
   .state-card.error { color: #a65865; }
   .spinner { width: 26px; height: 26px; border: 3px solid #dceefb; border-top-color: var(--pixiv-blue); border-radius: 50%; animation: spin .8s linear infinite; }
   .empty { padding: 38px; color: var(--muted); border: 1px dashed var(--line); border-radius: 10px; font-size: var(--type-small); text-align: center; }
-  .pagination-error { color: #a65865; font-size: var(--type-caption); text-align: center; }
-  .load-more { display: block; min-width: 116px; height: 36px; margin: 24px auto 0; color: #59636a; border: 1px solid var(--line); border-radius: 18px; background: white; cursor: pointer; font-size: var(--type-body); font-weight: 700; }
-  .load-more:disabled { cursor: wait; opacity: .65; }
   .history-card { margin-top: 10px; padding: 13px 16px; border-radius: 9px; background: #f7f7f7; }
   .history-heading { display: flex; gap: 10px; align-items: center; color: #777; }
   .history-heading span { min-width: 0; flex: 1; }

@@ -1,6 +1,7 @@
 <script lang="ts">
   import CommentCard from "$lib/components/CommentCard.svelte";
   import CommentComposer from "$lib/components/CommentComposer.svelte";
+  import LoadMoreOnScroll from "$lib/components/LoadMoreOnScroll.svelte";
   import { m } from "$lib/i18n";
   import {
     recallCommentThread,
@@ -208,8 +209,12 @@
     </div>
   {/if}
 
-  {#if paginationError}<p class="inline-error center" role="alert">{paginationError}</p>{/if}
-  {#if nextCursor && status === "ready"}<button class="load-more" type="button" disabled={loadingMore} onclick={loadMoreComments}>{loadingMore ? m.common_loading() : m.comments_load_more()}</button>{/if}
+  <LoadMoreOnScroll
+    enabled={Boolean(nextCursor) && status === "ready"}
+    loading={loadingMore}
+    error={paginationError}
+    onload={loadMoreComments}
+  />
 </section>
 
 <style>
@@ -227,9 +232,6 @@
   .empty { padding: 34px; color: var(--muted); border: 1px dashed var(--line); border-radius: 9px; font-size: var(--type-small); text-align: center; }
   .comment-list { margin-top: 14px; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: white; }
   .comment-list :global(> article + article) { border-top: 1px solid var(--line); }
-  .inline-error { margin: 8px 0 0; color: #a44f5e; font-size: var(--type-caption); }
-  .inline-error.center { text-align: center; }
-  .load-more { display: block; min-width: 132px; height: 34px; margin: 20px auto 0; color: #59636a; border: 1px solid var(--line); border-radius: 17px; background: white; cursor: pointer; font-size: var(--type-body); font-weight: 700; }
   @keyframes spin { to { transform: rotate(360deg); } }
   @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
 </style>

@@ -1,6 +1,7 @@
 <script lang="ts">
   import AppShell from "$lib/components/AppShell.svelte";
   import Icon from "$lib/components/Icon.svelte";
+  import LoadMoreOnScroll from "$lib/components/LoadMoreOnScroll.svelte";
   import PixivImage from "$lib/components/PixivImage.svelte";
   import { currentAppLocale, m } from "$lib/i18n";
   import { classifyNotificationLink } from "$lib/notification-link";
@@ -17,6 +18,7 @@
   let nextCursor = $state<string | null>(null);
   let status = $state<"idle" | "loading" | "ready" | "error">("idle");
   let errorMessage = $state("");
+  let paginationError = $state("");
   let loadingMore = $state(false);
   let groupLoading = $state<string | null>(null);
   let groupCursors = $state<Record<string, string | null | undefined>>({});
@@ -45,6 +47,7 @@
     const sequence = ++requestSequence;
     status = "loading";
     errorMessage = "";
+    paginationError = "";
     notifications = [];
     nextCursor = null;
     groupCursors = {};
@@ -68,7 +71,7 @@
     const sequence = requestSequence;
     const cursor = nextCursor;
     loadingMore = true;
-    errorMessage = "";
+    paginationError = "";
     try {
       const page = await getNotifications(cursor);
       if (sequence !== requestSequence || expectedSession !== sessionKey) return;
@@ -76,7 +79,7 @@
       notifications = [...notifications, ...page.notifications.filter((item) => !known.has(item.id))];
       nextCursor = page.nextCursor ?? null;
     } catch (error) {
-      if (sequence === requestSequence && expectedSession === sessionKey) errorMessage = describeDataFailure(error);
+      if (sequence === requestSequence && expectedSession === sessionKey) paginationError = describeDataFailure(error);
     } finally {
       if (sequence === requestSequence && expectedSession === sessionKey) loadingMore = false;
     }
@@ -171,7 +174,7 @@
         {/each}
       </section>
       {#if errorMessage}<p class="inline-error" role="alert">{errorMessage}</p>{/if}
-      {#if nextCursor}<button class="load-more" type="button" disabled={loadingMore} onclick={loadMore}>{loadingMore ? m.common_loading() : m.notifications_load_more()}</button>{/if}
+      <LoadMoreOnScroll enabled={!!nextCursor} loading={loadingMore} error={paginationError} onload={loadMore} />
     {/if}
   </main>
 </AppShell>
@@ -180,7 +183,7 @@
   .notification-page { box-sizing: border-box; width: min(840px,100%); margin: 0 auto; padding: 28px 24px 100px; }
   header { display: flex; gap: 20px; align-items: end; justify-content: space-between; margin-bottom: 20px; }
   h1 { margin: 6px 0 0; font-size: var(--type-title); }
-  header button, .load-more, .state button { height: 36px; padding: 0 16px; border: 1px solid var(--line); border-radius: 18px; background: white; cursor: pointer; }
+  header button, .state button { height: 36px; padding: 0 16px; border: 1px solid var(--line); border-radius: 18px; background: white; cursor: pointer; }
   .notification-list { overflow: hidden; border: 1px solid var(--line); border-radius: 13px; background: white; }
   article { display: grid; grid-template-columns: 52px minmax(0,1fr); gap: 13px; padding: 16px; }
   article + article { border-top: 1px solid var(--line); } article.unread { background: #f5fbff; }
@@ -195,7 +198,6 @@
   .state.error { color: #ad5360; } .state button { margin-left: auto; }
   .spinner { width: 26px; height: 26px; border: 3px solid #dceefb; border-top-color: var(--pixiv-blue); border-radius: 50%; animation: spin .8s linear infinite; }
   .inline-error { color: #ad5360; font-size: var(--type-caption); text-align: center; }
-  .load-more { display: block; min-width: 140px; margin: 18px auto 0; }
   button:disabled { cursor: wait; opacity: .58; }
   @keyframes spin { to { transform: rotate(360deg); } }
   @media (max-width: 620px) { .notification-page { padding: 18px 12px 92px; } header { align-items: start; } article { grid-template-columns: 44px minmax(0,1fr); padding: 13px; } .media { width: 44px; height: 44px; } }

@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import AppShell from "$lib/components/AppShell.svelte";
   import Icon from "$lib/components/Icon.svelte";
+  import LoadMoreOnScroll from "$lib/components/LoadMoreOnScroll.svelte";
   import PixivImage from "$lib/components/PixivImage.svelte";
   import {
     HISTORY_BATCH_SIZE,
@@ -164,18 +165,6 @@
     if (historyWindow.hasMore) visibleCount = historyWindow.nextCount;
   }
 
-  function observeLoadMore(node: HTMLElement) {
-    if (typeof IntersectionObserver === "undefined") return {};
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) showNextBatch();
-      },
-      { rootMargin: "0px" },
-    );
-    observer.observe(node);
-    return { destroy: () => observer.disconnect() };
-  }
-
   function entryHref(entry: HistoryEntry): string {
     if (entry.kind === "artwork") return `/artworks/${entry.resourceId}`;
     if (entry.kind === "novel") return `/novels/${entry.resourceId}`;
@@ -255,8 +244,9 @@
             {/each}
           </div>
           {#if historyWindow.hasMore}
-            <div class="history-sentinel" use:observeLoadMore aria-hidden="true"></div>
-            <button class="history-more" type="button" onclick={showNextBatch}>{m.common_load_more()}</button>
+            {#key visibleCount}
+              <LoadMoreOnScroll enabled onload={showNextBatch} />
+            {/key}
           {/if}
         {:else}
           <div class="empty"><Icon name="history" size={34} /><h2>{historyState.entries.length ? m.history_no_matches() : m.history_empty()}</h2><p>{historyState.enabled ? m.history_empty_enabled() : m.history_empty_disabled()}</p></div>
@@ -301,8 +291,6 @@
   .history-list article > a > i { color: #afb4b7; font-size: var(--type-title); font-style: normal; }
   .history-list article > button { position: absolute; top: 50%; right: 14px; display: grid; width: 30px; height: 30px; place-items: center; color: #92989c; border: 0; border-radius: 50%; background: transparent; cursor: pointer; font-size: var(--type-section); transform: translateY(-50%); }
   .history-list article > button:hover { color: #be5263; background: #fff0f3; }
-  .history-sentinel { height: 1px; }
-  .history-more { display: block; min-width: 128px; min-height: 44px; margin: 14px auto; padding: 0 18px; color: var(--pixiv-blue); border: 1px solid #cde7f8; border-radius: 22px; background: white; cursor: pointer; font-size: var(--type-body); font-weight: 700; }
   .empty { display: grid; min-height: 260px; place-items: center; align-content: center; color: #abb1b5; text-align: center; }
   .empty h2 { margin: 13px 0 0; color: #62686c; font-size: var(--type-label); }
   .empty p { margin: 7px 0 0; font-size: var(--type-caption); }

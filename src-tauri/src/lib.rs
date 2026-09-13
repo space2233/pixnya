@@ -2912,6 +2912,47 @@ fn android_external_link_plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
 }
 
 #[cfg(target_os = "android")]
+struct AndroidVolumeKeysPlugin(tauri::plugin::PluginHandle<tauri::Wry>);
+
+#[cfg(target_os = "android")]
+#[derive(Serialize)]
+struct VolumeCapturePayload {
+    enabled: bool,
+}
+
+#[cfg(target_os = "android")]
+fn android_volume_keys_plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
+    tauri::plugin::Builder::new("volume_keys")
+        .setup(|app, api| {
+            let handle =
+                api.register_android_plugin("io.github.space2233.pixnya", "VolumeKeysPlugin")?;
+            app.manage(AndroidVolumeKeysPlugin(handle));
+            Ok(())
+        })
+        .build()
+}
+
+#[tauri::command]
+async fn set_volume_page_turn_capture(
+    app: tauri::AppHandle,
+    enabled: bool,
+) -> Result<(), ApiCommandError> {
+    #[cfg(target_os = "android")]
+    {
+        use tauri::Manager;
+        app.state::<AndroidVolumeKeysPlugin>()
+            .0
+            .clone()
+            .run_mobile_plugin_async::<()>("setCaptureEnabled", VolumeCapturePayload { enabled })
+            .await
+            .map_err(|_| ApiCommandError::RequestFailed)?;
+    }
+    #[cfg(not(target_os = "android"))]
+    let _ = (app, enabled);
+    Ok(())
+}
+
+#[cfg(target_os = "android")]
 async fn platform_open_pixiv_url(
     app: &tauri::AppHandle,
     url: String,
@@ -4485,6 +4526,8 @@ pub fn run() {
     let builder = builder.plugin(updates::android_update_installer_plugin());
     #[cfg(target_os = "android")]
     let builder = builder.plugin(android_external_link_plugin());
+    #[cfg(target_os = "android")]
+    let builder = builder.plugin(android_volume_keys_plugin());
     #[cfg(not(target_os = "android"))]
     let builder = builder.plugin(tauri_plugin_dialog::init());
     #[cfg(not(target_os = "android"))]
@@ -4536,6 +4579,7 @@ pub fn run() {
             updates::install_update,
             updates::cancel_update,
             mark_frontend_ready,
+            set_volume_page_turn_capture,
             evaluate_connection,
             probe_connection,
             run_connection_diagnostics,

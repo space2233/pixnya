@@ -6,6 +6,7 @@
   import ArtworkCard from "$lib/components/ArtworkCard.svelte";
   import ArtworkComments from "$lib/components/ArtworkComments.svelte";
   import Icon from "$lib/components/Icon.svelte";
+  import LoadMoreOnScroll from "$lib/components/LoadMoreOnScroll.svelte";
   import PixivImage from "$lib/components/PixivImage.svelte";
   import ReturnLink from "$lib/components/ReturnLink.svelte";
   import { currentAppLocale, m } from "$lib/i18n";
@@ -501,12 +502,7 @@
         {:else}
           <p class="empty">{m.artwork_related_empty()}</p>
         {/if}
-        {#if relatedError}<p class="related-error" role="alert">{relatedError}</p>{/if}
-        {#if nextCursor}
-          <button class="load-more" type="button" disabled={loadingMore} onclick={loadMoreRelated}>
-            {loadingMore ? m.common_loading() : m.artwork_related_more()}
-          </button>
-        {/if}
+        <LoadMoreOnScroll enabled={!!nextCursor} loading={loadingMore} error={relatedError} onload={loadMoreRelated} />
       </section>
     {/if}
   </main>
@@ -590,10 +586,6 @@
   .related-section header h2 { margin: 0; font-size: var(--type-section); }
   .related-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 22px 14px; margin-top: 16px; }
   .empty { padding: 36px; color: var(--muted); border: 1px dashed var(--line); border-radius: 9px; font-size: var(--type-small); text-align: center; }
-  .related-error { color: #a65865; font-size: var(--type-caption); text-align: center; }
-  .load-more { display: block; min-width: 148px; height: 38px; margin: 26px auto 0; color: #59636a; border: 1px solid var(--line); border-radius: 19px; background: white; cursor: pointer; font-size: var(--type-body); font-weight: 700; }
-  .load-more:disabled { cursor: wait; opacity: .65; }
-
   @keyframes spin { to { transform: rotate(360deg); } }
 
   @media (max-width: 900px) {

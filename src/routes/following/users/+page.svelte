@@ -2,6 +2,7 @@
   import AppShell from "$lib/components/AppShell.svelte";
   import FollowingTabs from "$lib/components/FollowingTabs.svelte";
   import Icon from "$lib/components/Icon.svelte";
+  import LoadMoreOnScroll from "$lib/components/LoadMoreOnScroll.svelte";
   import UserPreviewCard from "$lib/components/UserPreviewCard.svelte";
   import { m } from "$lib/i18n";
   import { recallNavigationView, rememberNavigationView } from "$lib/navigation-view-memory";
@@ -148,10 +149,7 @@
       <section class="user-grid" aria-live="polite">
         {#each users as preview (preview.user.id)}<UserPreviewCard {preview} />{/each}
       </section>
-      {#if paginationError}<p class="pagination-error" role="alert">{paginationError}</p>{/if}
-      {#if nextCursor}
-        <button class="load-more" type="button" disabled={loadingMore} onclick={loadMore}>{loadingMore ? m.common_loading() : m.following_load_more()}</button>
-      {/if}
+      <LoadMoreOnScroll enabled={!!nextCursor} loading={loadingMore} error={paginationError} onload={loadMore} />
     {:else if status === "ready"}
       <section class="empty-state"><Icon name="user" size={29} /><h2>{restrict === "private" ? m.following_empty_private() : m.following_empty_public()}</h2><p>{m.following_empty_hint()}</p></section>
     {/if}
@@ -170,13 +168,10 @@
   .state-card { display: grid; grid-template-columns: 42px minmax(0,1fr) auto; min-height: 112px; gap: 14px; align-items: center; padding: 21px; border: 1px solid var(--line); border-radius: 11px; background: white; }
   .state-card h2, .empty-state h2 { margin: 0; font-size: var(--type-body); }
   .state-card p, .empty-state p { margin: 5px 0 0; color: var(--muted); font-size: var(--type-caption); }
-  .state-card a, .state-card button, .load-more { padding: 9px 16px; color: white; border: 0; border-radius: 18px; background: var(--pixiv-blue); cursor: pointer; font-size: var(--type-body); font-weight: 700; text-decoration: none; }
+  .state-card a, .state-card button { padding: 9px 16px; color: white; border: 0; border-radius: 18px; background: var(--pixiv-blue); cursor: pointer; font-size: var(--type-body); font-weight: 700; text-decoration: none; }
   .state-card.error > span { display: grid; width: 34px; height: 34px; place-items: center; color: #a34e5d; border-radius: 50%; background: #fff0f3; }
   .spinner { width: 28px; height: 28px; border: 3px solid #dceefb; border-top-color: var(--pixiv-blue); border-radius: 50%; animation: spin .8s linear infinite; }
   .empty-state { display: grid; min-height: 230px; gap: 8px; place-items: center; align-content: center; color: var(--muted); border: 1px dashed var(--line); border-radius: 11px; text-align: center; }
-  .pagination-error { margin: 16px 0 0; color: #a34e5d; font-size: var(--type-caption); text-align: center; }
-  .load-more { display: block; margin: 22px auto 0; }
-  .load-more:disabled { cursor: wait; opacity: .65; }
   @keyframes spin { to { transform: rotate(360deg); } }
   @media (max-width: 900px) { .user-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (max-width: 620px) {

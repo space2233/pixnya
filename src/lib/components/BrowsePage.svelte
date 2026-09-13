@@ -4,6 +4,7 @@
   import ContentTabs from "$lib/components/ContentTabs.svelte";
   import FollowingTabs from "$lib/components/FollowingTabs.svelte";
   import Icon from "$lib/components/Icon.svelte";
+  import LoadMoreOnScroll from "$lib/components/LoadMoreOnScroll.svelte";
   import ThumbnailSkeleton from "$lib/components/ThumbnailSkeleton.svelte";
   import { m } from "$lib/i18n";
   import { buildBookmarkBatchUpdate, type BookmarkBatchAction } from "$lib/bookmark-batch";
@@ -599,13 +600,8 @@
           {/each}
         {/if}
       </div>
-      {#if showContent && nextCursor}
-        <div class="load-more">
-          {#if paginationError}<p role="alert">{paginationError}</p>{/if}
-          <button type="button" disabled={loadingMore} onclick={loadMoreContent}>
-            {loadingMore ? m.common_loading() : m.common_load_more()}
-          </button>
-        </div>
+      {#if showContent}
+        <LoadMoreOnScroll enabled={!!nextCursor} loading={loadingMore} error={paginationError} onload={loadMoreContent} />
       {/if}
     </section>
 
@@ -849,38 +845,6 @@
     font-size: var(--type-small);
     text-align: center;
   }
-
-  .load-more {
-    display: grid;
-    gap: 9px;
-    justify-items: center;
-    margin-top: 26px;
-  }
-
-  .load-more p {
-    margin: 0;
-    color: #a05a63;
-    font-size: var(--type-caption);
-  }
-
-  .load-more button {
-    min-width: 122px;
-    height: 36px;
-    color: #555f66;
-    border: 1px solid var(--line);
-    border-radius: 18px;
-    background: white;
-    cursor: pointer;
-    font-size: var(--type-body);
-    font-weight: 700;
-  }
-
-  .load-more button:hover:not(:disabled) {
-    color: var(--pixiv-blue);
-    border-color: #b8def7;
-  }
-
-  .load-more button:disabled { cursor: wait; opacity: 0.65; }
 
   .work-cover {
     position: relative;

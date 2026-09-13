@@ -903,6 +903,8 @@
   "settings_reduced_motion_description": "减少侧栏、抽屉和控件的过渡动画",
   "settings_r18": "默认显示 R18",
   "settings_r18_description": "仅解除本客户端遮罩；内容范围仍跟随 Pixiv 账号设置",
+  "settings_volume_page_turn": "音量键翻页",
+  "settings_volume_page_turn_description": "阅读小说时，音量下键下一页，音量上键上一页",
   "settings_storage": "内容与存储",
   "settings_storage_description": "媒体显示原则、离线下载与本机空间。",
   "settings_storage_critical": "存储空间不足，下载写入已受限",

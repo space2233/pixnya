@@ -31,20 +31,22 @@ test("invalid or stale visible counts safely return to the first batch", () => {
   assert.equal(progressive.progressiveHistoryWindow(entries.slice(0, 12), 96).visible.length, 12);
 });
 
-test("history page wires progressive windows to observer, button, resets, and snapshots", async () => {
+test("history page wires progressive windows to observer, resets, and snapshots", async () => {
   const page = await readFile(
     new URL("../src/routes/history/+page.svelte", import.meta.url),
     "utf8",
   );
   assert.match(page, /progressiveHistoryWindow/);
   assert.match(page, /visibleEntries/);
-  assert.match(page, /use:observeLoadMore/);
-  assert.match(page, /class="history-more"/);
+  assert.match(page, /LoadMoreOnScroll/);
+  assert.match(page, /\{#key visibleCount\}/);
+  assert.match(page, /onload=\{showNextBatch\}/);
   assert.match(page, /visibleCount = HISTORY_BATCH_SIZE/);
-  assert.match(page, /rootMargin:\s*"0px"/);
   assert.match(page, /rememberNavigationView/);
   assert.match(page, /recallNavigationView/);
   assert.match(page, /visibleCount,/);
+  assert.doesNotMatch(page, /class="history-more"/);
+  assert.doesNotMatch(page, /function observeLoadMore/);
   assert.doesNotMatch(page, /\{#each filteredEntries as entry/);
 });
 
