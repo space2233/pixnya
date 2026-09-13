@@ -136,6 +136,8 @@ test("R18 visibility is opt-in, persists locally, and controls every restricted-
 
   assert.match(settings, /m\.settings_r18\(\)/);
   assert.match(settings, /writeR18DefaultVisible/);
+  assert.match(settings, /isVolumePageTurnSupported/);
+  assert.match(settings, /\{#if volumePageTurnSupported\}/);
   assert.match(settings, /m\.settings_volume_page_turn\(\)/);
   assert.match(settings, /writeVolumePageTurnEnabled/);
   for (const surface of [artworkCard, artworkDetail, novelCard, novelDetail, userPreview]) {

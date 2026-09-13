@@ -37,9 +37,11 @@ test("the novel reader is an immersive paginated surface without search or speec
   assert.match(reader, /class="ghost-progress"/);
   assert.match(reader, /toggleChrome|chromeOpen/);
   assert.match(reader, /writeNovelReaderPreferences/);
+  assert.match(reader, /isVolumePageTurnSupported/);
   assert.match(reader, /setVolumePageTurnCapture/);
   assert.match(reader, /volumePageDirectionFromKey/);
   assert.match(reader, /VOLUME_PAGE_EVENT/);
+  assert.match(reader, /\{#if volumePageTurnSupported\}/);
   assert.match(reader, /m\.settings_volume_page_turn\(\)/);
   assert.match(reader, /<ReturnLink compact/);
   assert.doesNotMatch(reader, /columnWidth|column-count|column-fill/);

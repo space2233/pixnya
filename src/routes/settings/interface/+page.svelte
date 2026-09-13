@@ -13,17 +13,20 @@
     writeR18DefaultVisible,
     writeVolumePageTurnEnabled,
   } from "$lib/preferences";
+  import { isVolumePageTurnSupported } from "$lib/volume-page-turn";
 
   let language = $state<LanguagePreference>("system");
   let sidebar = $state(true);
   let reducedMotion = $state(false);
   let showR18 = $state(false);
   let volumePageTurn = $state(false);
+  let volumePageTurnSupported = $state(false);
   onMount(() => {
     language = readLanguagePreference();
     sidebar = readDesktopSidebarExpanded();
     reducedMotion = readReducedMotion();
     showR18 = readR18DefaultVisible();
+    volumePageTurnSupported = isVolumePageTurnSupported();
     volumePageTurn = readVolumePageTurnEnabled();
   });
 </script>
@@ -38,7 +41,9 @@
       <label><strong>{m.settings_sidebar()}</strong><input type="checkbox" role="switch" bind:checked={sidebar} onchange={() => writeDesktopSidebarExpanded(sidebar)} /></label>
       <label><strong>{m.settings_reduced_motion()}</strong><input type="checkbox" role="switch" bind:checked={reducedMotion} onchange={() => writeReducedMotion(reducedMotion)} /></label>
       <label><strong>{m.settings_r18()}</strong><input type="checkbox" role="switch" bind:checked={showR18} onchange={() => writeR18DefaultVisible(showR18)} /></label>
-      <label><strong>{m.settings_volume_page_turn()}</strong><input type="checkbox" role="switch" bind:checked={volumePageTurn} onchange={() => writeVolumePageTurnEnabled(volumePageTurn)} /></label>
+      {#if volumePageTurnSupported}
+        <label><strong>{m.settings_volume_page_turn()}</strong><input type="checkbox" role="switch" bind:checked={volumePageTurn} onchange={() => writeVolumePageTurnEnabled(volumePageTurn)} /></label>
+      {/if}
     </section>
   </div>
 </AppShell>

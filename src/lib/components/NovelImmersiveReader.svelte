@@ -37,6 +37,7 @@
   } from "$lib/preferences";
   import {
     VOLUME_PAGE_EVENT,
+    isVolumePageTurnSupported,
     setVolumePageTurnCapture,
     volumePageDirectionFromDetail,
     volumePageDirectionFromKey,
@@ -64,6 +65,7 @@
   let lineHeight = $state(stored.lineHeight);
   let theme = $state<NovelReaderTheme>(stored.theme);
   let volumePageTurn = $state(readVolumePageTurnEnabled());
+  const volumePageTurnSupported = isVolumePageTurnSupported();
   let chromeOpen = $state(false);
   let panel = $state<null | "toc" | "settings" | "more">(null);
   let pageIndex = $state(0);
@@ -153,6 +155,7 @@
         event.preventDefault();
         turnPage(1);
       }
+      if (!volumePageTurnSupported) return;
       const volumeDirection = volumePageDirectionFromKey(event);
       if (volumeDirection) {
         event.preventDefault();
@@ -165,19 +168,23 @@
     };
     const onPreferences = () => {
       volumePageTurn = readVolumePageTurnEnabled();
-      void setVolumePageTurnCapture(volumePageTurn);
+      if (volumePageTurnSupported) void setVolumePageTurnCapture(volumePageTurn);
     };
     window.addEventListener("keydown", onKey);
-    window.addEventListener(VOLUME_PAGE_EVENT, onVolumePage);
     window.addEventListener(PREFERENCES_CHANGED_EVENT, onPreferences);
-    void setVolumePageTurnCapture(volumePageTurn);
+    if (volumePageTurnSupported) {
+      window.addEventListener(VOLUME_PAGE_EVENT, onVolumePage);
+      void setVolumePageTurnCapture(volumePageTurn);
+    }
     return () => {
       layoutGeneration += 1;
       if (relayoutTimer !== null) clearTimeout(relayoutTimer);
       window.removeEventListener("keydown", onKey);
-      window.removeEventListener(VOLUME_PAGE_EVENT, onVolumePage);
       window.removeEventListener(PREFERENCES_CHANGED_EVENT, onPreferences);
-      void setVolumePageTurnCapture(false);
+      if (volumePageTurnSupported) {
+        window.removeEventListener(VOLUME_PAGE_EVENT, onVolumePage);
+        void setVolumePageTurnCapture(false);
+      }
     };
   });
 
@@ -522,10 +529,12 @@
         <button type="button" class:active={theme === "white"} onclick={() => { theme = "white"; persistPrefs(); }}>{m.novel_reader_theme_white()}</button>
         <button type="button" class:active={theme === "dark"} onclick={() => { theme = "dark"; persistPrefs(); }}>{m.novel_reader_theme_dark()}</button>
       </div>
-      <label class="toggle">
-        <span>{m.settings_volume_page_turn()}</span>
-        <input type="checkbox" role="switch" bind:checked={volumePageTurn} onchange={persistVolumePageTurn} />
-      </label>
+      {#if volumePageTurnSupported}
+        <label class="toggle">
+          <span>{m.settings_volume_page_turn()}</span>
+          <input type="checkbox" role="switch" bind:checked={volumePageTurn} onchange={persistVolumePageTurn} />
+        </label>
+      {/if}
     </section>
   {:else if panel === "more"}
     <section class="sheet" data-chrome>

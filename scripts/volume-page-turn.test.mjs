@@ -7,9 +7,8 @@ const root = new URL("../", import.meta.url);
 const source = (path) => readFile(new URL(path, root), "utf8");
 
 test("volume keys map down to the next page and up to the previous page", async () => {
-  const { volumePageDirectionFromKey, volumePageDirectionFromDetail } = await import(
-    "../src/lib/volume-page-turn.ts"
-  );
+  const { volumePageDirectionFromKey, volumePageDirectionFromDetail, isVolumePageTurnSupported } =
+    await import("../src/lib/volume-page-turn.ts");
   assert.equal(volumePageDirectionFromKey({ key: "AudioVolumeDown", code: "" }), "next");
   assert.equal(volumePageDirectionFromKey({ key: "AudioVolumeUp", code: "" }), "previous");
   assert.equal(volumePageDirectionFromKey({ key: "VolumeDown", code: "VolumeDown" }), "next");
@@ -17,6 +16,10 @@ test("volume keys map down to the next page and up to the previous page", async 
   assert.equal(volumePageDirectionFromDetail({ direction: "next" }), "next");
   assert.equal(volumePageDirectionFromDetail({ direction: "previous" }), "previous");
   assert.equal(volumePageDirectionFromDetail({ direction: "mute" }), null);
+
+  assert.equal(isVolumePageTurnSupported("Mozilla/5.0 (Windows NT 10.0; Win64; x64)"), false);
+  assert.equal(isVolumePageTurnSupported("Mozilla/5.0 (X11; Linux x86_64)"), false);
+  assert.equal(isVolumePageTurnSupported("Mozilla/5.0 (Linux; Android 14; Pixel 8)"), true);
 });
 
 test("Android captures volume keys only while the reader asks for them", async () => {
@@ -40,6 +43,12 @@ test("Android captures volume keys only while the reader asks for them", async (
   assert.match(rust, /async fn set_volume_page_turn_capture/);
   assert.match(rust, /set_volume_page_turn_capture,/);
   assert.match(helper, /invoke\("set_volume_page_turn_capture"/);
+  assert.match(helper, /function isVolumePageTurnSupported/);
+  assert.match(helper, /\/Android\/i\.test\(userAgent\)/);
+  assert.match(reader, /isVolumePageTurnSupported/);
+  assert.match(reader, /\{#if volumePageTurnSupported\}/);
   assert.match(reader, /setVolumePageTurnCapture\(false\)/);
+  assert.match(settings, /isVolumePageTurnSupported/);
+  assert.match(settings, /\{#if volumePageTurnSupported\}/);
   assert.match(settings, /writeVolumePageTurnEnabled/);
 });

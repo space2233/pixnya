@@ -19,6 +19,12 @@ export function volumePageDirectionFromDetail(value: unknown): VolumePageDirecti
   return null;
 }
 
+export function isVolumePageTurnSupported(
+  userAgent = typeof navigator === "undefined" ? "" : navigator.userAgent,
+): boolean {
+  return /Android/i.test(userAgent);
+}
+
 export async function setVolumePageTurnCapture(enabled: boolean): Promise<void> {
   try {
     await invoke("set_volume_page_turn_capture", { enabled });
