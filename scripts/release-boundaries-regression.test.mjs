@@ -6,6 +6,21 @@ import { validateStableReleaseNotes } from "./validate-release-notes.mjs";
 
 const root = process.cwd();
 const read = (relativePath) => readFile(path.join(root, relativePath), "utf8");
+const SETUP_ANDROID_PIN = /uses: android-actions\/setup-android@[0-9a-f]{40} # v3/g;
+const SETUP_ANDROID_WITHOUT_OBSOLETE_TOOLS =
+  /uses: android-actions\/setup-android@[0-9a-f]{40} # v3\n        with:\n          packages: platform-tools\n/g;
+
+const assertSetupAndroidSkipsObsoleteToolsPackage = (workflow, expectedCount) => {
+  const setups = workflow.match(SETUP_ANDROID_PIN) ?? [];
+  const configured = workflow.match(SETUP_ANDROID_WITHOUT_OBSOLETE_TOOLS) ?? [];
+  assert.equal(setups.length, expectedCount);
+  assert.equal(
+    configured.length,
+    expectedCount,
+    "setup-android must install platform-tools without the obsolete tools package",
+  );
+  assert.doesNotMatch(workflow, /packages:\s*['"]?tools(?:\s|$|['"])/);
+};
 const readGenerated = async (relativePath) => {
   try {
     return await read(relativePath);
@@ -146,6 +161,7 @@ test("formal releases are gated by main-branch full verification and signed arti
   );
   assert.match(workflow, /actions\/setup-java@[0-9a-f]{40} # v5/);
   assert.match(workflow, /android-actions\/setup-android@[0-9a-f]{40} # v3/);
+  assertSetupAndroidSkipsObsoleteToolsPackage(workflow, 2);
   assert.match(workflow, /node scripts\/generate-tauri-android-gradle-bridge\.mjs/);
   assert.match(
     androidBridgeGenerator,
@@ -425,6 +441,7 @@ test("stable publication revalidates the signed Draft instead of trusting the bu
   assert.match(workflow, /Missing embedded updater signature/);
   assert.match(workflow, /minisign -Vm candidate\/android-latest\.json/);
   assert.match(workflow, /sdkmanager "build-tools;36\.0\.0"/);
+  assertSetupAndroidSkipsObsoleteToolsPackage(workflow, 1);
   assert.match(workflow, /"\$APKSIGNER" verify --verbose --print-certs/);
   assert.match(workflow, /APK certificate does not match the signed Android update manifest/);
   assert.match(workflow, /for ABI in arm64-v8a armeabi-v7a/);
