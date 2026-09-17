@@ -7,7 +7,7 @@ Copyright (C) 2026 PixNya contributors
 
 This inventory records the reviewed license expressions for the exact dependency versions locked for PixNya 1.6.5. It is generated locally from `package-lock.json`, `Cargo.lock`, the Android Gradle lock and verification graph, installed npm/Cargo package evidence, and the tracked Maven license review. It is not legal advice and does not replace any upstream license or notice file shipped with a dependency.
 
-- Lock fingerprint: `sha256:a9de1f32cdad5f0aab213764ab62fed70fbe2d462788568b8a728db22247bff3`
+- Lock fingerprint: `sha256:269fb0d858a34fdca4217180a4f78ed2f216c37c78dc5bcb22477dc9cf8168aa`
 - npm runtime/optional packages: 1
 - npm build/development packages: 144
 - Rust target-dependent locked packages: 570
@@ -201,8 +201,8 @@ Cargo's lock graph includes target-specific dependencies for Windows, Linux, And
 | [atk-sys](https://crates.io/crates/atk-sys/0.18.2/download) | 0.18.2 | MIT | runtime/target-dependent |
 | [atomic-waker](https://crates.io/crates/atomic-waker/1.1.2/download) | 1.1.2 | Apache-2.0 OR MIT | runtime/target-dependent |
 | [autocfg](https://crates.io/crates/autocfg/1.5.1/download) | 1.5.1 | Apache-2.0 OR MIT | runtime/target-dependent |
-| [aws-lc-rs](https://crates.io/crates/aws-lc-rs/1.17.3/download) | 1.17.3 | ISC AND (Apache-2.0 OR ISC) | runtime/target-dependent |
-| [aws-lc-sys](https://crates.io/crates/aws-lc-sys/0.43.0/download) | 0.43.0 | ISC AND (Apache-2.0 OR ISC) AND Apache-2.0 AND MIT AND BSD-3-Clause AND (Apache-2.0 OR ISC OR MIT) AND (Apache-2.0 OR ISC OR MIT-0) | runtime/target-dependent |
+| [aws-lc-rs](https://crates.io/crates/aws-lc-rs/1.18.1/download) | 1.18.1 | ISC AND (Apache-2.0 OR ISC) | runtime/target-dependent |
+| [aws-lc-sys](https://crates.io/crates/aws-lc-sys/0.45.0/download) | 0.45.0 | ISC AND (Apache-2.0 OR ISC) AND Apache-2.0 AND MIT AND BSD-3-Clause AND (Apache-2.0 OR ISC OR MIT) AND (Apache-2.0 OR ISC OR MIT-0) | runtime/target-dependent |
 | [base64](https://crates.io/crates/base64/0.21.7/download) | 0.21.7 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [base64](https://crates.io/crates/base64/0.22.1/download) | 0.22.1 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [bit-set](https://crates.io/crates/bit-set/0.8.0/download) | 0.8.0 | Apache-2.0 OR MIT | runtime/target-dependent |
@@ -504,12 +504,12 @@ Cargo's lock graph includes target-specific dependencies for Windows, Linux, And
 | [rustc-hash](https://crates.io/crates/rustc-hash/2.1.3/download) | 2.1.3 | Apache-2.0 OR MIT | runtime/target-dependent |
 | [rusticata-macros](https://crates.io/crates/rusticata-macros/4.1.0/download) | 4.1.0 | MIT/Apache-2.0 | runtime/target-dependent |
 | [rustix](https://crates.io/crates/rustix/1.1.4/download) | 1.1.4 | Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT | runtime/target-dependent |
-| [rustls](https://crates.io/crates/rustls/0.23.43/download) | 0.23.43 | Apache-2.0 OR ISC OR MIT | runtime/target-dependent |
+| [rustls](https://crates.io/crates/rustls/0.23.45/download) | 0.23.45 | Apache-2.0 OR ISC OR MIT | runtime/target-dependent |
 | [rustls-native-certs](https://crates.io/crates/rustls-native-certs/0.8.4/download) | 0.8.4 | Apache-2.0 OR ISC OR MIT | runtime/target-dependent |
 | [rustls-pki-types](https://crates.io/crates/rustls-pki-types/1.15.1/download) | 1.15.1 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [rustls-platform-verifier](https://crates.io/crates/rustls-platform-verifier/0.7.0/download) | 0.7.0 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [rustls-platform-verifier-android](https://crates.io/crates/rustls-platform-verifier-android/0.1.1/download) | 0.1.1 | MIT OR Apache-2.0 | runtime/target-dependent |
-| [rustls-webpki](https://crates.io/crates/rustls-webpki/0.103.13/download) | 0.103.13 | ISC | runtime/target-dependent |
+| [rustls-webpki](https://crates.io/crates/rustls-webpki/0.103.15/download) | 0.103.15 | ISC | runtime/target-dependent |
 | [rustversion](https://crates.io/crates/rustversion/1.0.23/download) | 1.0.23 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [ryu](https://crates.io/crates/ryu/1.0.23/download) | 1.0.23 | Apache-2.0 OR BSL-1.0 | runtime/target-dependent |
 | [same-file](https://crates.io/crates/same-file/1.0.6/download) | 1.0.6 | Unlicense/MIT | runtime/target-dependent |
