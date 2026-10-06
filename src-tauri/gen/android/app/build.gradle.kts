@@ -4,6 +4,7 @@ import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("com.android.application")
@@ -71,11 +72,14 @@ android {
             )
         }
     }
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
     buildFeatures {
         buildConfig = true
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_1_8)
     }
 }
 
@@ -104,7 +108,7 @@ dependencies {
     // Tauri 2.11.5 currently requests Jackson 2.15.3. Pin a current patched
     // release at the application boundary so the vulnerable transitive
     // version is never packaged in the APK.
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.22.1")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.22.3")
     implementation("androidx.webkit:webkit:1.14.0")
     implementation("androidx.appcompat:appcompat:1.7.1")
     implementation("androidx.activity:activity-ktx:1.10.1")
@@ -269,7 +273,11 @@ tasks.register("resolveLockedDependencies") {
                     unlockedExternalGraphs.joinToString("\n")
             )
         }
-        if (!reviewedMetadataConfigurationObserved) {
+        if (
+            configurations.findByName(reviewedMetadataConfiguration)?.isCanBeResolved == true &&
+            reviewedMetadataConfiguration !in lockedConfigurationNames &&
+            !reviewedMetadataConfigurationObserved
+        ) {
             throw GradleException(
                 "The exact $reviewedMetadataConfiguration variant-ambiguity exception " +
                     "was not observed; review the dependency-lock boundary again."
@@ -302,12 +310,12 @@ tasks.register("resolveLockedDependencies") {
                 it is ModuleComponentIdentifier &&
                     it.group == "com.fasterxml.jackson.core" &&
                     it.module == "jackson-databind" &&
-                    it.version == "2.22.1"
+                    it.version == "2.22.3"
             }
             if (!includesReviewedJackson) {
                 throw GradleException(
                     "$configurationName does not contain " +
-                        "com.fasterxml.jackson.core:jackson-databind:2.22.1"
+                        "com.fasterxml.jackson.core:jackson-databind:2.22.3"
                 )
             }
         }

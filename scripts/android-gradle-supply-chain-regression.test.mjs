@@ -200,7 +200,7 @@ test("the offline inventory is deterministic and includes direct and transitive 
   const coordinates = JSON.parse(firstInventory).components.map(({ coordinate }) => coordinate);
   assert.ok(coordinates.includes("androidx.webkit:webkit:1.14.0"), "direct app dependency must be inventoried");
   assert.ok(
-    coordinates.includes("com.fasterxml.jackson.core:jackson-databind:2.22.1"),
+    coordinates.includes("com.fasterxml.jackson.core:jackson-databind:2.22.3"),
     "transitive Gradle dependency must be inventoried",
   );
 });

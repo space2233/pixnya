@@ -14,7 +14,7 @@ export const scannerVersion = "2.5.0";
 export const expectedToolchain = Object.freeze({
   tauri: "2.11.5",
   androidGradlePlugin: "8.11.0",
-  kotlinGradlePlugin: "1.9.25",
+  kotlinGradlePlugin: "2.4.20",
   gradle: "8.14.3",
   jdk: "17",
 });
@@ -135,9 +135,12 @@ function configurationMatches(scope, configurations) {
 }
 
 function verifyConfigurations(scopes, configurations, coordinate) {
-  if (configurations.includes("arm64ReleaseRuntimeClasspath")) {
+  const runtimeConfiguration = configurations.find((value) =>
+    value === "arm64ReleaseRuntimeClasspath" || value === "armReleaseRuntimeClasspath",
+  );
+  if (runtimeConfiguration) {
     throw new Error(
-      `${coordinate} is present in arm64ReleaseRuntimeClasspath; runtime findings can never use this baseline.`,
+      `${coordinate} is present in ${runtimeConfiguration}; runtime findings can never use this baseline.`,
     );
   }
   const matching = scopes.filter((scope) => configurationMatches(scope, configurations));
@@ -159,6 +162,38 @@ function fixedVersions(vulnerability) {
 
 function findingKey(advisory, mavenCoordinate, version) {
   return `${advisory}|${mavenCoordinate}|${version}`;
+}
+
+export function validateReportCoverage(report, lockfiles) {
+  if (!Array.isArray(report?.results)) throw new Error("OSV report contains no lockfile results.");
+  const seenLockfiles = new Set();
+  for (const result of report.results) {
+    const scopes = scopesForReportPath(result?.source?.path);
+    const source = scopes[0].lockfile;
+    if (seenLockfiles.has(source)) throw new Error(`OSV report repeats ${source}.`);
+    seenLockfiles.add(source);
+    const lockedEntries = lockfiles.get(scopes[0].id);
+    if (!(lockedEntries instanceof Map) || !Array.isArray(result.packages)) {
+      throw new Error(`OSV report is missing package evidence for ${source}.`);
+    }
+    const scannedCoordinates = new Set();
+    for (const resultPackage of result.packages) {
+      const pkg = resultPackage.package;
+      if (pkg?.ecosystem !== "Maven") throw new Error(`OSV report has an invalid package in ${source}.`);
+      if (resultPackage.vulnerabilities !== undefined && !Array.isArray(resultPackage.vulnerabilities)) {
+        throw new Error(`OSV report has invalid vulnerability evidence in ${source}.`);
+      }
+      const coordinate = `${pkg.name}:${pkg.version}`;
+      if (!lockedEntries.has(coordinate)) throw new Error(`${coordinate} is not locked in ${source}.`);
+      scannedCoordinates.add(coordinate);
+    }
+    if (scannedCoordinates.size !== lockedEntries.size) {
+      throw new Error(`OSV report does not cover every locked package in ${source}.`);
+    }
+  }
+  if (seenLockfiles.size !== new Set(scopeDefinitions.map((scope) => scope.lockfile)).size) {
+    throw new Error("OSV report must cover all three reviewed Android lockfiles.");
+  }
 }
 
 export function collectObservedFindings(report, lockfiles) {
@@ -231,7 +266,6 @@ export function collectObservedFindings(report, lockfiles) {
     }
   }
 
-  if (findings.size === 0) throw new Error("OSV report contains no findings to compare with the baseline.");
   return [...findings.values()].sort((left, right) =>
     findingKey(left.advisory, left.mavenCoordinate, left.version).localeCompare(
       findingKey(right.advisory, right.mavenCoordinate, right.version),
@@ -376,7 +410,7 @@ export function validateBaseline(baseline, observed, { asOf, actualToolchain = e
   }
 
   const entries = baseline.exceptions;
-  if (!Array.isArray(entries) || entries.length === 0) throw new Error("OSV baseline has no exceptions.");
+  if (!Array.isArray(entries)) throw new Error("OSV baseline exceptions must be an array.");
   if (entries.length !== observed.length) {
     const baselineKeys = new Set(
       entries.map((entry) => findingKey(entry?.advisory, entry?.mavenCoordinate, entry?.version)),
@@ -464,7 +498,9 @@ function main() {
   const reportPath = resolve(projectRoot, options.report);
   const baselinePath = resolve(projectRoot, options.baseline ?? defaultBaselinePath);
   const report = JSON.parse(readFileSync(reportPath, "utf8"));
-  const observed = collectObservedFindings(report, loadLockfiles(projectRoot));
+  const lockfiles = loadLockfiles(projectRoot);
+  validateReportCoverage(report, lockfiles);
+  const observed = collectObservedFindings(report, lockfiles);
   if (options.initialize) {
     const baseline = createBaseline(observed, {
       reviewedAt: options.reviewedAt,

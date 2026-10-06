@@ -1,0 +1,21 @@
+// Keep the checksum-verified Tauri Android sources in their original directory.
+// Only its legacy compiler configuration needs adapting for patched Kotlin.
+def tauriModule = project(':tauri-android')
+def originalBuild = new File(tauriModule.projectDir, 'build.gradle.kts')
+def source = originalBuild.getText('UTF-8').replace('\r\n', '\n')
+def legacyOptions = '    kotlinOptions {\n        jvmTarget = "1.8"\n    }\n'
+def firstMatch = source.indexOf(legacyOptions)
+if (firstMatch < 0 || firstMatch != source.lastIndexOf(legacyOptions)) {
+    throw new GradleException('The reviewed Tauri 2.11.5 Kotlin compiler DSL contract changed')
+}
+def compatibleSource = 'import org.jetbrains.kotlin.gradle.dsl.JvmTarget\n\n' +
+    source.replace(legacyOptions, '') +
+    '\nkotlin {\n    compilerOptions {\n        jvmTarget.set(JvmTarget.JVM_1_8)\n    }\n}\n'
+// A relative path inside the module also works when Cargo and the app use
+// different Windows drives. This is generated build output, not source.
+def compatibleBuild = new File(tauriModule.projectDir, 'build/pixnya-kotlin-compat.gradle.kts')
+compatibleBuild.parentFile.mkdirs()
+if (!compatibleBuild.isFile() || compatibleBuild.getText('UTF-8') != compatibleSource) {
+    compatibleBuild.setText(compatibleSource, 'UTF-8')
+}
+tauriModule.buildFileName = 'build/pixnya-kotlin-compat.gradle.kts'

@@ -12,8 +12,8 @@ test("Android runtime SBOM requires identical locked ARM64 and ARMv7 release gra
   const sbom = createAndroidRuntimeSpdx(inventory, "2026-08-09T00:00:00Z");
   const purls = sbom.packages.map((entry) => entry.externalRefs[0].referenceLocator);
 
-  assert.ok(purls.includes("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.22.1"));
-  assert.ok(purls.includes("pkg:maven/com.fasterxml.jackson.core/jackson-core@2.22.1"));
+  assert.ok(purls.includes("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.22.3"));
+  assert.ok(purls.includes("pkg:maven/com.fasterxml.jackson.core/jackson-core@2.22.3"));
   assert.ok(!purls.some((value) => value.includes("jackson-databind@2.15.3")));
   assert.ok(!purls.some((value) => value.includes("io.netty")));
   assert.equal(new Set(purls).size, purls.length);

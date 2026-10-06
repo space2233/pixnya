@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "gradleFingerprint": "sha256:df37f345b5082080403d7b8feb2cd5e123f44a9ca90d97a5abc1cd7de2d03595",
+  "gradleFingerprint": "sha256:ad655f3de46f94f670334b3910090e50f084c18ad6ed01d3141b69b68e7d1b61",
   "components": [
     {
       "coordinate": "androidx.activity:activity-ktx:1.10.1",
@@ -41,25 +41,6 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "androidx.annotation:annotation-experimental:1.1.0",
-      "declaredLicense": "The Apache Software License, Version 2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://developer.android.com/jetpack/androidx/releases/annotation#1.1.0",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "550a6601e1af47cf99501cc6cc15d1ebe9cef17b51e5dd58b6ab6c23568ef7a9",
-        "sourceCoordinate": "androidx.annotation:annotation-experimental:1.1.0",
-        "sourcePomSha256": "550a6601e1af47cf99501cc6cc15d1ebe9cef17b51e5dd58b6ab6c23568ef7a9",
-        "declaredLicenses": [
-          {
-            "name": "The Apache Software License, Version 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
       "coordinate": "androidx.annotation:annotation-experimental:1.4.1",
       "declaredLicense": "The Apache Software License, Version 2.0",
       "spdxLicense": "Apache-2.0",
@@ -88,25 +69,6 @@
         "componentPomSha256": "89b99c218d60019316b50aab79816707bc21696c896a030e1b1ae038961bcb8e",
         "sourceCoordinate": "androidx.annotation:annotation-jvm:1.9.1",
         "sourcePomSha256": "89b99c218d60019316b50aab79816707bc21696c896a030e1b1ae038961bcb8e",
-        "declaredLicenses": [
-          {
-            "name": "The Apache Software License, Version 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
-      "coordinate": "androidx.annotation:annotation:1.2.0",
-      "declaredLicense": "The Apache Software License, Version 2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://developer.android.com/jetpack/androidx/releases/annotation#1.2.0",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "62fb6dca2777efe08e7077d6b872d69110619df7fc21c99a6f54066499cc0383",
-        "sourceCoordinate": "androidx.annotation:annotation:1.2.0",
-        "sourcePomSha256": "62fb6dca2777efe08e7077d6b872d69110619df7fc21c99a6f54066499cc0383",
         "declaredLicenses": [
           {
             "name": "The Apache Software License, Version 2.0",
@@ -677,25 +639,6 @@
         "componentPomSha256": "1004f4df05118b13c2a909846badc66646ed277944706a604e4dd8284d53548b",
         "sourceCoordinate": "androidx.lifecycle:lifecycle-common:2.10.0",
         "sourcePomSha256": "1004f4df05118b13c2a909846badc66646ed277944706a604e4dd8284d53548b",
-        "declaredLicenses": [
-          {
-            "name": "The Apache Software License, Version 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
-      "coordinate": "androidx.lifecycle:lifecycle-common:2.3.1",
-      "declaredLicense": "The Apache Software License, Version 2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://developer.android.com/jetpack/androidx/releases/lifecycle#2.3.1",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "8cd23d889a14095c6ce16840d29b1a6388fa5e115144c1309d4d6d469c1bc351",
-        "sourceCoordinate": "androidx.lifecycle:lifecycle-common:2.3.1",
-        "sourcePomSha256": "8cd23d889a14095c6ce16840d29b1a6388fa5e115144c1309d4d6d469c1bc351",
         "declaredLicenses": [
           {
             "name": "The Apache Software License, Version 2.0",
@@ -2473,15 +2416,15 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "com.fasterxml.jackson:jackson-bom:2.22.1",
+      "coordinate": "com.fasterxml.jackson:jackson-bom:2.22.3",
       "declaredLicense": "Apache License, Version 2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "http://fasterxml.com/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "b366aa5fd26958e2308a4807e5d42b14706b001b3ccbf138e31b8698dc0ac0ec",
-        "sourceCoordinate": "com.fasterxml.jackson:jackson-bom:2.22.1",
-        "sourcePomSha256": "b366aa5fd26958e2308a4807e5d42b14706b001b3ccbf138e31b8698dc0ac0ec",
+        "componentPomSha256": "8f499c6a8c017bb987a1a73b91f705c22fe24ec2777e7055c7a2a913f14b5440",
+        "sourceCoordinate": "com.fasterxml.jackson:jackson-bom:2.22.3",
+        "sourcePomSha256": "8f499c6a8c017bb987a1a73b91f705c22fe24ec2777e7055c7a2a913f14b5440",
         "declaredLicenses": [
           {
             "name": "Apache License, Version 2.0",
@@ -2511,15 +2454,15 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "com.fasterxml.jackson.core:jackson-core:2.22.1",
+      "coordinate": "com.fasterxml.jackson.core:jackson-core:2.22.3",
       "declaredLicense": "The Apache Software License, Version 2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://github.com/FasterXML/jackson-core",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "34551c6c8d72a4a2215fd05fdcf2f4e693eff99e6e54632bd57cf2674478e293",
-        "sourceCoordinate": "com.fasterxml.jackson.core:jackson-core:2.22.1",
-        "sourcePomSha256": "34551c6c8d72a4a2215fd05fdcf2f4e693eff99e6e54632bd57cf2674478e293",
+        "componentPomSha256": "bc74c18b24f3ebbfd42741f2b29b37eca9b25e512e6fa7add77f6973cee50bf1",
+        "sourceCoordinate": "com.fasterxml.jackson.core:jackson-core:2.22.3",
+        "sourcePomSha256": "bc74c18b24f3ebbfd42741f2b29b37eca9b25e512e6fa7add77f6973cee50bf1",
         "declaredLicenses": [
           {
             "name": "The Apache Software License, Version 2.0",
@@ -2530,15 +2473,15 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "com.fasterxml.jackson.core:jackson-databind:2.22.1",
+      "coordinate": "com.fasterxml.jackson.core:jackson-databind:2.22.3",
       "declaredLicense": "The Apache Software License, Version 2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://github.com/FasterXML/jackson",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "0bc8f98c7bd7232bc90324fc63c2f56f7ae92dee2bf0dc303669f4e2de8c1f69",
-        "sourceCoordinate": "com.fasterxml.jackson.core:jackson-databind:2.22.1",
-        "sourcePomSha256": "0bc8f98c7bd7232bc90324fc63c2f56f7ae92dee2bf0dc303669f4e2de8c1f69",
+        "componentPomSha256": "27a5c6657b955d088daf586f2be9769224e33618ab4f44682a1b36ed98f7b904",
+        "sourceCoordinate": "com.fasterxml.jackson.core:jackson-databind:2.22.3",
+        "sourcePomSha256": "27a5c6657b955d088daf586f2be9769224e33618ab4f44682a1b36ed98f7b904",
         "declaredLicenses": [
           {
             "name": "The Apache Software License, Version 2.0",
@@ -3119,44 +3062,6 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "com.google.protobuf:protobuf-java-util:3.22.3",
-      "declaredLicense": "BSD-3-Clause",
-      "spdxLicense": "BSD-3-Clause",
-      "projectUrl": "https://developers.google.com/protocol-buffers/",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "b44701b06a064865ec9b5614a93e9e28fadd7d4dfc4b460f21c819ef53dbe2d6",
-        "sourceCoordinate": "com.google.protobuf:protobuf-parent:3.22.3",
-        "sourcePomSha256": "399133d7f6f57934dd76c4b18e86348f424532108daf4a01c8f820b8665f0929",
-        "declaredLicenses": [
-          {
-            "name": "BSD-3-Clause",
-            "url": "https://opensource.org/licenses/BSD-3-Clause"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
-      "coordinate": "com.google.protobuf:protobuf-java-util:3.24.4",
-      "declaredLicense": "BSD-3-Clause",
-      "spdxLicense": "BSD-3-Clause",
-      "projectUrl": "https://developers.google.com/protocol-buffers/",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "9f0cec276d4d9d5a43d6e29cc2b024e46804c9386a96fa527eefd7bf7488e7f0",
-        "sourceCoordinate": "com.google.protobuf:protobuf-parent:3.24.4",
-        "sourcePomSha256": "fb7ec0505876fdb9ec79510aced2d1eb04c3b8cfc690b589049757ca981cadb3",
-        "declaredLicenses": [
-          {
-            "name": "BSD-3-Clause",
-            "url": "https://opensource.org/licenses/BSD-3-Clause"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
       "coordinate": "com.google.protobuf:protobuf-java-util:3.25.5",
       "declaredLicense": "BSD-3-Clause",
       "spdxLicense": "BSD-3-Clause",
@@ -3166,25 +3071,6 @@
         "componentPomSha256": "a09d190eaa6a79616bc5f4b5404e94b0cab559803a98c8a090c4099962f41f92",
         "sourceCoordinate": "com.google.protobuf:protobuf-parent:3.25.5",
         "sourcePomSha256": "64cc0e3ad6e85f5aec8f9dcf9341d1379e9525364ff53e23e16d8d5824673ef7",
-        "declaredLicenses": [
-          {
-            "name": "BSD-3-Clause",
-            "url": "https://opensource.org/licenses/BSD-3-Clause"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
-      "coordinate": "com.google.protobuf:protobuf-java:3.24.4",
-      "declaredLicense": "BSD-3-Clause",
-      "spdxLicense": "BSD-3-Clause",
-      "projectUrl": "https://developers.google.com/protocol-buffers/",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "3941221ca657819ddebd95fe8b740f470af7abf30460b13ea1c9ab79f10fab91",
-        "sourceCoordinate": "com.google.protobuf:protobuf-parent:3.24.4",
-        "sourcePomSha256": "fb7ec0505876fdb9ec79510aced2d1eb04c3b8cfc690b589049757ca981cadb3",
         "declaredLicenses": [
           {
             "name": "BSD-3-Clause",
@@ -3214,15 +3100,15 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "com.google.protobuf:protobuf-kotlin:3.24.4",
+      "coordinate": "com.google.protobuf:protobuf-kotlin:3.25.5",
       "declaredLicense": "BSD-3-Clause",
       "spdxLicense": "BSD-3-Clause",
       "projectUrl": "https://developers.google.com/protocol-buffers/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "3bb1e6ef94a6a436bd2ff66af0dd603c23ed3a2943b2fb899f83d9f8792d72a9",
-        "sourceCoordinate": "com.google.protobuf:protobuf-parent:3.24.4",
-        "sourcePomSha256": "fb7ec0505876fdb9ec79510aced2d1eb04c3b8cfc690b589049757ca981cadb3",
+        "componentPomSha256": "aad46e09aca863e15736a9e3444300a6299a5f00ec63430c60421fdefe80c10b",
+        "sourceCoordinate": "com.google.protobuf:protobuf-parent:3.25.5",
+        "sourcePomSha256": "64cc0e3ad6e85f5aec8f9dcf9341d1379e9525364ff53e23e16d8d5824673ef7",
         "declaredLicenses": [
           {
             "name": "BSD-3-Clause",
@@ -3944,15 +3830,15 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "io.netty:netty-buffer:4.1.110.Final",
+      "coordinate": "io.netty:netty-buffer:4.1.137.Final",
       "declaredLicense": "Apache License, Version 2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://netty.io/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "710ac19cc01cd80df6be9a3faad3c222b4a1a32f4b55137be07b6099d5da3562",
-        "sourceCoordinate": "io.netty:netty-parent:4.1.110.Final",
-        "sourcePomSha256": "685adaf373666fc15427c810f8aff3a4fe194a97c7ed74b69d07c548f0d42f1c",
+        "componentPomSha256": "5ea302272928331a37743c30f166bfbbe6c1f27e268d2c8b3e73c1e06702abf3",
+        "sourceCoordinate": "io.netty:netty-parent:4.1.137.Final",
+        "sourcePomSha256": "27e3f74480fdc4bff6469ab9e9983f4a1e42fa1589a37e13b5ec290e2a913e6b",
         "declaredLicenses": [
           {
             "name": "Apache License, Version 2.0",
@@ -3963,15 +3849,15 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "io.netty:netty-buffer:4.1.93.Final",
+      "coordinate": "io.netty:netty-codec-http:4.1.137.Final",
       "declaredLicense": "Apache License, Version 2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://netty.io/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "83fbc54e2b73b86d55b208f618d1a2a156910ec146f7ece57565007b750add78",
-        "sourceCoordinate": "io.netty:netty-parent:4.1.93.Final",
-        "sourcePomSha256": "b109cb76f375fedb8a9ef75ac58063170deb7ea2ddd024f466fef6dc65cdfcee",
+        "componentPomSha256": "8b20d9e9a4b59ef8b58136e6a6d936299168960e46d66a00f2d60123f6307447",
+        "sourceCoordinate": "io.netty:netty-parent:4.1.137.Final",
+        "sourcePomSha256": "27e3f74480fdc4bff6469ab9e9983f4a1e42fa1589a37e13b5ec290e2a913e6b",
         "declaredLicenses": [
           {
             "name": "Apache License, Version 2.0",
@@ -3982,15 +3868,15 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "io.netty:netty-codec-http:4.1.110.Final",
+      "coordinate": "io.netty:netty-codec-http2:4.1.137.Final",
       "declaredLicense": "Apache License, Version 2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://netty.io/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "51ae990af14a321db6d3d6884b917b7d4363eb60dddc0f1493b18021a142e7ad",
-        "sourceCoordinate": "io.netty:netty-parent:4.1.110.Final",
-        "sourcePomSha256": "685adaf373666fc15427c810f8aff3a4fe194a97c7ed74b69d07c548f0d42f1c",
+        "componentPomSha256": "02d3f7e352077e3663bd188bf53a944a1434e410ea582e5731edac4f96a70d58",
+        "sourceCoordinate": "io.netty:netty-parent:4.1.137.Final",
+        "sourcePomSha256": "27e3f74480fdc4bff6469ab9e9983f4a1e42fa1589a37e13b5ec290e2a913e6b",
         "declaredLicenses": [
           {
             "name": "Apache License, Version 2.0",
@@ -4001,15 +3887,15 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "io.netty:netty-codec-http:4.1.93.Final",
+      "coordinate": "io.netty:netty-codec-socks:4.1.137.Final",
       "declaredLicense": "Apache License, Version 2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://netty.io/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "a3dafff071b6d284e8063d96843de2bb83cf3b889eae0cc9e0adb64a57a31b82",
-        "sourceCoordinate": "io.netty:netty-parent:4.1.93.Final",
-        "sourcePomSha256": "b109cb76f375fedb8a9ef75ac58063170deb7ea2ddd024f466fef6dc65cdfcee",
+        "componentPomSha256": "cdf7b6e497dce98fe6c3a0fee65e7db9697fbe5d6095e789caaa26c800e7f823",
+        "sourceCoordinate": "io.netty:netty-parent:4.1.137.Final",
+        "sourcePomSha256": "27e3f74480fdc4bff6469ab9e9983f4a1e42fa1589a37e13b5ec290e2a913e6b",
         "declaredLicenses": [
           {
             "name": "Apache License, Version 2.0",
@@ -4020,15 +3906,15 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "io.netty:netty-codec-http2:4.1.110.Final",
+      "coordinate": "io.netty:netty-codec:4.1.137.Final",
       "declaredLicense": "Apache License, Version 2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://netty.io/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "29d2f6c26c3cca9fe8393671707fe8ef9c3e31020a2dfe06b82c426499c25837",
-        "sourceCoordinate": "io.netty:netty-parent:4.1.110.Final",
-        "sourcePomSha256": "685adaf373666fc15427c810f8aff3a4fe194a97c7ed74b69d07c548f0d42f1c",
+        "componentPomSha256": "6d389cab868344dfe7299f5aa24f82fc0a2cac0e43fd207dd178b334c27601d8",
+        "sourceCoordinate": "io.netty:netty-parent:4.1.137.Final",
+        "sourcePomSha256": "27e3f74480fdc4bff6469ab9e9983f4a1e42fa1589a37e13b5ec290e2a913e6b",
         "declaredLicenses": [
           {
             "name": "Apache License, Version 2.0",
@@ -4039,15 +3925,15 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "io.netty:netty-codec-http2:4.1.93.Final",
+      "coordinate": "io.netty:netty-common:4.1.137.Final",
       "declaredLicense": "Apache License, Version 2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://netty.io/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "084433b42d541f7ac4b59287dd253285cfda3a3d65de72e7368bb7ec3d367271",
-        "sourceCoordinate": "io.netty:netty-parent:4.1.93.Final",
-        "sourcePomSha256": "b109cb76f375fedb8a9ef75ac58063170deb7ea2ddd024f466fef6dc65cdfcee",
+        "componentPomSha256": "143b18644fb2e533b661f97113d58e1810dc5aff8549f867f85643f267e964cc",
+        "sourceCoordinate": "io.netty:netty-parent:4.1.137.Final",
+        "sourcePomSha256": "27e3f74480fdc4bff6469ab9e9983f4a1e42fa1589a37e13b5ec290e2a913e6b",
         "declaredLicenses": [
           {
             "name": "Apache License, Version 2.0",
@@ -4058,15 +3944,15 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "io.netty:netty-codec-socks:4.1.110.Final",
+      "coordinate": "io.netty:netty-handler-proxy:4.1.137.Final",
       "declaredLicense": "Apache License, Version 2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://netty.io/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "ffe57b316191dd4f96bee66c5709c13cbdb4ecab085c010c8db0c6aa809abf6c",
-        "sourceCoordinate": "io.netty:netty-parent:4.1.110.Final",
-        "sourcePomSha256": "685adaf373666fc15427c810f8aff3a4fe194a97c7ed74b69d07c548f0d42f1c",
+        "componentPomSha256": "09c22131eae983bff6f67f2b926ae326faa330d1b29049dc792ce4ded49255aa",
+        "sourceCoordinate": "io.netty:netty-parent:4.1.137.Final",
+        "sourcePomSha256": "27e3f74480fdc4bff6469ab9e9983f4a1e42fa1589a37e13b5ec290e2a913e6b",
         "declaredLicenses": [
           {
             "name": "Apache License, Version 2.0",
@@ -4077,15 +3963,15 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "io.netty:netty-codec-socks:4.1.93.Final",
+      "coordinate": "io.netty:netty-handler:4.1.137.Final",
       "declaredLicense": "Apache License, Version 2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://netty.io/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "8cd816ed991a946041bab4cb24bd9c8e41ee0692512511f2d83cef538eb605d7",
-        "sourceCoordinate": "io.netty:netty-parent:4.1.93.Final",
-        "sourcePomSha256": "b109cb76f375fedb8a9ef75ac58063170deb7ea2ddd024f466fef6dc65cdfcee",
+        "componentPomSha256": "4af68c10b23bdc576ec83615b3004a5433c3dfffece5891886e06bdc84bcae48",
+        "sourceCoordinate": "io.netty:netty-parent:4.1.137.Final",
+        "sourcePomSha256": "27e3f74480fdc4bff6469ab9e9983f4a1e42fa1589a37e13b5ec290e2a913e6b",
         "declaredLicenses": [
           {
             "name": "Apache License, Version 2.0",
@@ -4096,15 +3982,15 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "io.netty:netty-codec:4.1.110.Final",
+      "coordinate": "io.netty:netty-resolver:4.1.137.Final",
       "declaredLicense": "Apache License, Version 2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://netty.io/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "a806bb536bb323665baff7cd1223f2b272a2d4717ab4f9b12361086daae5df3e",
-        "sourceCoordinate": "io.netty:netty-parent:4.1.110.Final",
-        "sourcePomSha256": "685adaf373666fc15427c810f8aff3a4fe194a97c7ed74b69d07c548f0d42f1c",
+        "componentPomSha256": "c53455466bbfcae8b8694020adffe9bcf3c80522c488a35a518e0a8971c1f2aa",
+        "sourceCoordinate": "io.netty:netty-parent:4.1.137.Final",
+        "sourcePomSha256": "27e3f74480fdc4bff6469ab9e9983f4a1e42fa1589a37e13b5ec290e2a913e6b",
         "declaredLicenses": [
           {
             "name": "Apache License, Version 2.0",
@@ -4115,15 +4001,15 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "io.netty:netty-codec:4.1.93.Final",
+      "coordinate": "io.netty:netty-transport-native-unix-common:4.1.137.Final",
       "declaredLicense": "Apache License, Version 2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://netty.io/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "19cded267a070dff1abc9d029b552fad262acc1aba5c6c67b2278fca113a26ab",
-        "sourceCoordinate": "io.netty:netty-parent:4.1.93.Final",
-        "sourcePomSha256": "b109cb76f375fedb8a9ef75ac58063170deb7ea2ddd024f466fef6dc65cdfcee",
+        "componentPomSha256": "7c0b866bf08c1a00c7b9dba7810344f8aaa24e548af34f2292681e0a4cbcabf9",
+        "sourceCoordinate": "io.netty:netty-parent:4.1.137.Final",
+        "sourcePomSha256": "27e3f74480fdc4bff6469ab9e9983f4a1e42fa1589a37e13b5ec290e2a913e6b",
         "declaredLicenses": [
           {
             "name": "Apache License, Version 2.0",
@@ -4134,224 +4020,15 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "io.netty:netty-common:4.1.110.Final",
+      "coordinate": "io.netty:netty-transport:4.1.137.Final",
       "declaredLicense": "Apache License, Version 2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://netty.io/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "7d417f5335304dae1ea08a06586038c83fe8ad84c1d35baa15ed11921cef7920",
-        "sourceCoordinate": "io.netty:netty-parent:4.1.110.Final",
-        "sourcePomSha256": "685adaf373666fc15427c810f8aff3a4fe194a97c7ed74b69d07c548f0d42f1c",
-        "declaredLicenses": [
-          {
-            "name": "Apache License, Version 2.0",
-            "url": "https://www.apache.org/licenses/LICENSE-2.0"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
-      "coordinate": "io.netty:netty-common:4.1.93.Final",
-      "declaredLicense": "Apache License, Version 2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://netty.io/",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "42d883b13eb38cabf549616462c5f331f5333bf0c8fc9215744f83c0180a4f6b",
-        "sourceCoordinate": "io.netty:netty-parent:4.1.93.Final",
-        "sourcePomSha256": "b109cb76f375fedb8a9ef75ac58063170deb7ea2ddd024f466fef6dc65cdfcee",
-        "declaredLicenses": [
-          {
-            "name": "Apache License, Version 2.0",
-            "url": "https://www.apache.org/licenses/LICENSE-2.0"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
-      "coordinate": "io.netty:netty-handler-proxy:4.1.110.Final",
-      "declaredLicense": "Apache License, Version 2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://netty.io/",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "c613cb4e7e06f42efa31db8d8b2a339ed8bf41f00c46d38d0909a4c06c656dcf",
-        "sourceCoordinate": "io.netty:netty-parent:4.1.110.Final",
-        "sourcePomSha256": "685adaf373666fc15427c810f8aff3a4fe194a97c7ed74b69d07c548f0d42f1c",
-        "declaredLicenses": [
-          {
-            "name": "Apache License, Version 2.0",
-            "url": "https://www.apache.org/licenses/LICENSE-2.0"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
-      "coordinate": "io.netty:netty-handler-proxy:4.1.93.Final",
-      "declaredLicense": "Apache License, Version 2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://netty.io/",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "6dc50da0e67f597812874f81eaa45404f7d076b8199ea9088932a85c1b610245",
-        "sourceCoordinate": "io.netty:netty-parent:4.1.93.Final",
-        "sourcePomSha256": "b109cb76f375fedb8a9ef75ac58063170deb7ea2ddd024f466fef6dc65cdfcee",
-        "declaredLicenses": [
-          {
-            "name": "Apache License, Version 2.0",
-            "url": "https://www.apache.org/licenses/LICENSE-2.0"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
-      "coordinate": "io.netty:netty-handler:4.1.110.Final",
-      "declaredLicense": "Apache License, Version 2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://netty.io/",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "4d43c13d14f5635a2f8b0d5094d7a31c509ee0f52c724eba0ef30cffe3ea1555",
-        "sourceCoordinate": "io.netty:netty-parent:4.1.110.Final",
-        "sourcePomSha256": "685adaf373666fc15427c810f8aff3a4fe194a97c7ed74b69d07c548f0d42f1c",
-        "declaredLicenses": [
-          {
-            "name": "Apache License, Version 2.0",
-            "url": "https://www.apache.org/licenses/LICENSE-2.0"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
-      "coordinate": "io.netty:netty-handler:4.1.93.Final",
-      "declaredLicense": "Apache License, Version 2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://netty.io/",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "84a1525cac0b4759efaef2997a47fe19b9b5642f9273fa0fd58a2e76c7a059fe",
-        "sourceCoordinate": "io.netty:netty-parent:4.1.93.Final",
-        "sourcePomSha256": "b109cb76f375fedb8a9ef75ac58063170deb7ea2ddd024f466fef6dc65cdfcee",
-        "declaredLicenses": [
-          {
-            "name": "Apache License, Version 2.0",
-            "url": "https://www.apache.org/licenses/LICENSE-2.0"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
-      "coordinate": "io.netty:netty-resolver:4.1.110.Final",
-      "declaredLicense": "Apache License, Version 2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://netty.io/",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "655f34192e8c7618b3c5a79e488e4daa35def41b0d16d45fa36523c3b4c9f641",
-        "sourceCoordinate": "io.netty:netty-parent:4.1.110.Final",
-        "sourcePomSha256": "685adaf373666fc15427c810f8aff3a4fe194a97c7ed74b69d07c548f0d42f1c",
-        "declaredLicenses": [
-          {
-            "name": "Apache License, Version 2.0",
-            "url": "https://www.apache.org/licenses/LICENSE-2.0"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
-      "coordinate": "io.netty:netty-resolver:4.1.93.Final",
-      "declaredLicense": "Apache License, Version 2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://netty.io/",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "5b350c3c91e9e55d29cbe68cfe4ef2116cc1f0328677ebf9f615bab7082c79f4",
-        "sourceCoordinate": "io.netty:netty-parent:4.1.93.Final",
-        "sourcePomSha256": "b109cb76f375fedb8a9ef75ac58063170deb7ea2ddd024f466fef6dc65cdfcee",
-        "declaredLicenses": [
-          {
-            "name": "Apache License, Version 2.0",
-            "url": "https://www.apache.org/licenses/LICENSE-2.0"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
-      "coordinate": "io.netty:netty-transport-native-unix-common:4.1.110.Final",
-      "declaredLicense": "Apache License, Version 2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://netty.io/",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "ea18ce04c9a97ac0c51f4e397b185229fd95997e90b11339adcf7c51946d53d8",
-        "sourceCoordinate": "io.netty:netty-parent:4.1.110.Final",
-        "sourcePomSha256": "685adaf373666fc15427c810f8aff3a4fe194a97c7ed74b69d07c548f0d42f1c",
-        "declaredLicenses": [
-          {
-            "name": "Apache License, Version 2.0",
-            "url": "https://www.apache.org/licenses/LICENSE-2.0"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
-      "coordinate": "io.netty:netty-transport-native-unix-common:4.1.93.Final",
-      "declaredLicense": "Apache License, Version 2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://netty.io/",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "15bc25b67ff0a49272b270ef2b8cffd620057ca16cb29dff7ad5661adca2ae12",
-        "sourceCoordinate": "io.netty:netty-parent:4.1.93.Final",
-        "sourcePomSha256": "b109cb76f375fedb8a9ef75ac58063170deb7ea2ddd024f466fef6dc65cdfcee",
-        "declaredLicenses": [
-          {
-            "name": "Apache License, Version 2.0",
-            "url": "https://www.apache.org/licenses/LICENSE-2.0"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
-      "coordinate": "io.netty:netty-transport:4.1.110.Final",
-      "declaredLicense": "Apache License, Version 2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://netty.io/",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "30f5da0e7646f1840d632f88615c8b9d8205499d68559b9c4547b3b04a0683cd",
-        "sourceCoordinate": "io.netty:netty-parent:4.1.110.Final",
-        "sourcePomSha256": "685adaf373666fc15427c810f8aff3a4fe194a97c7ed74b69d07c548f0d42f1c",
-        "declaredLicenses": [
-          {
-            "name": "Apache License, Version 2.0",
-            "url": "https://www.apache.org/licenses/LICENSE-2.0"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
-      "coordinate": "io.netty:netty-transport:4.1.93.Final",
-      "declaredLicense": "Apache License, Version 2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://netty.io/",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "0dd62a0eb3cb1ea001a4d0426e4f5c08df1c70d9265675bffa5c583613422d43",
-        "sourceCoordinate": "io.netty:netty-parent:4.1.93.Final",
-        "sourcePomSha256": "b109cb76f375fedb8a9ef75ac58063170deb7ea2ddd024f466fef6dc65cdfcee",
+        "componentPomSha256": "d78debcdc4e5de346f8ea6ccae493c6fc0a95608b902b0a20d0f5860d864cc1c",
+        "sourceCoordinate": "io.netty:netty-parent:4.1.137.Final",
+        "sourcePomSha256": "27e3f74480fdc4bff6469ab9e9983f4a1e42fa1589a37e13b5ec290e2a913e6b",
         "declaredLicenses": [
           {
             "name": "Apache License, Version 2.0",
@@ -4661,18 +4338,37 @@
       ]
     },
     {
-      "coordinate": "org.apache.commons:commons-compress:1.21",
-      "declaredLicense": "Apache License, Version 2.0",
+      "coordinate": "org.apache.commons:commons-compress:1.26.0",
+      "declaredLicense": "Apache-2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://commons.apache.org/proper/commons-compress/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "675bb023c9beedde3232949979b9742a5fea946280a55a1b462d4ca7801088cd",
-        "sourceCoordinate": "org.apache:apache:23",
-        "sourcePomSha256": "bc10624e0623f36577fac5639ca2936d3240ed152fb6d8d533ab4d270543491c",
+        "componentPomSha256": "c1c9681f88d9421730c4da6176492bbaa54052a2326df9e40bc34f4c405227af",
+        "sourceCoordinate": "org.apache:apache:31",
+        "sourcePomSha256": "555d0c9eaa69c042aff924927b9381e8f8174136d355eead445224452e6291cc",
         "declaredLicenses": [
           {
-            "name": "Apache License, Version 2.0",
+            "name": "Apache-2.0",
+            "url": "https://www.apache.org/licenses/LICENSE-2.0.txt"
+          }
+        ]
+      },
+      "licenseReferences": []
+    },
+    {
+      "coordinate": "org.apache.commons:commons-lang3:3.18.0",
+      "declaredLicense": "Apache-2.0",
+      "spdxLicense": "Apache-2.0",
+      "projectUrl": "https://commons.apache.org/proper/commons-lang/",
+      "licenseEvidence": {
+        "classification": "canonical-spdx-text",
+        "componentPomSha256": "aa254b373b6f6d46bc9dca86331b072a8ab86eb25ea9921fd439618392e98a16",
+        "sourceCoordinate": "org.apache:apache:35",
+        "sourcePomSha256": "ea297dcd114136e8b8e8b630230d52a76c2fc69f6c5db25d672b1857000728b8",
+        "declaredLicenses": [
+          {
+            "name": "Apache-2.0",
             "url": "https://www.apache.org/licenses/LICENSE-2.0.txt"
           }
         ]
@@ -4737,15 +4433,15 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.bitbucket.b_c:jose4j:0.9.5",
+      "coordinate": "org.bitbucket.b_c:jose4j:0.9.6",
       "declaredLicense": "The Apache Software License, Version 2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://bitbucket.org/b_c/jose4j/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "bad024180a1b469cbd94e5f2db12841bcac5443d9545607f673cfde677c1d872",
-        "sourceCoordinate": "org.bitbucket.b_c:jose4j:0.9.5",
-        "sourcePomSha256": "bad024180a1b469cbd94e5f2db12841bcac5443d9545607f673cfde677c1d872",
+        "componentPomSha256": "3fb7fa713e89d42784bdf4d192ece217400040bda7e933886a9f45ce8b9b557e",
+        "sourceCoordinate": "org.bitbucket.b_c:jose4j:0.9.6",
+        "sourcePomSha256": "3fb7fa713e89d42784bdf4d192ece217400040bda7e933886a9f45ce8b9b557e",
         "declaredLicenses": [
           {
             "name": "The Apache Software License, Version 2.0",
@@ -4756,15 +4452,15 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.bouncycastle:bcpkix-jdk18on:1.80.2",
+      "coordinate": "org.bouncycastle:bcpkix-jdk18on:1.85",
       "declaredLicense": "Bouncy Castle Licence",
       "spdxLicense": "LicenseRef-Bouncy-Castle",
       "projectUrl": "https://www.bouncycastle.org/download/bouncy-castle-java/",
       "licenseEvidence": {
         "classification": "reviewed-with-license-ref",
-        "componentPomSha256": "2b25ccf35996649783bc78c29f4778e140e33f7cef3965c3dcac0db541474340",
-        "sourceCoordinate": "org.bouncycastle:bcpkix-jdk18on:1.80.2",
-        "sourcePomSha256": "2b25ccf35996649783bc78c29f4778e140e33f7cef3965c3dcac0db541474340",
+        "componentPomSha256": "9b052b0cb85cb7d8bb0956afcc74f31c814f1c67e03498e1ca74f8fe8611d957",
+        "sourceCoordinate": "org.bouncycastle:bcpkix-jdk18on:1.85",
+        "sourcePomSha256": "9b052b0cb85cb7d8bb0956afcc74f31c814f1c67e03498e1ca74f8fe8611d957",
         "declaredLicenses": [
           {
             "name": "Bouncy Castle Licence",
@@ -4785,15 +4481,15 @@
       ]
     },
     {
-      "coordinate": "org.bouncycastle:bcprov-jdk18on:1.80.2",
+      "coordinate": "org.bouncycastle:bcprov-jdk18on:1.85",
       "declaredLicense": "Bouncy Castle Licence",
       "spdxLicense": "LicenseRef-Bouncy-Castle",
       "projectUrl": "https://www.bouncycastle.org/download/bouncy-castle-java/",
       "licenseEvidence": {
         "classification": "reviewed-with-license-ref",
-        "componentPomSha256": "12a505a717a3bc7647f7d8edea77732c9c6dcb53c4df62a3bb58b7a54228a28f",
-        "sourceCoordinate": "org.bouncycastle:bcprov-jdk18on:1.80.2",
-        "sourcePomSha256": "12a505a717a3bc7647f7d8edea77732c9c6dcb53c4df62a3bb58b7a54228a28f",
+        "componentPomSha256": "a48e978d6b24c183c4832f5c49d71c1f84156b99c6fa9a410aafb373a254be7c",
+        "sourceCoordinate": "org.bouncycastle:bcprov-jdk18on:1.85",
+        "sourcePomSha256": "a48e978d6b24c183c4832f5c49d71c1f84156b99c6fa9a410aafb373a254be7c",
         "declaredLicenses": [
           {
             "name": "Bouncy Castle Licence",
@@ -4814,15 +4510,15 @@
       ]
     },
     {
-      "coordinate": "org.bouncycastle:bcutil-jdk18on:1.80.2",
+      "coordinate": "org.bouncycastle:bcutil-jdk18on:1.85",
       "declaredLicense": "Bouncy Castle Licence",
       "spdxLicense": "LicenseRef-Bouncy-Castle",
       "projectUrl": "https://www.bouncycastle.org/download/bouncy-castle-java/",
       "licenseEvidence": {
         "classification": "reviewed-with-license-ref",
-        "componentPomSha256": "2688be1af499d525096114cc2f51c7a7a4ca23c3d27317b71e18c1c96bec03d1",
-        "sourceCoordinate": "org.bouncycastle:bcutil-jdk18on:1.80.2",
-        "sourcePomSha256": "2688be1af499d525096114cc2f51c7a7a4ca23c3d27317b71e18c1c96bec03d1",
+        "componentPomSha256": "9f1c79a12a7c03d78860e05750dcc44e855e20205c7af7cffbf29a69448d85ea",
+        "sourceCoordinate": "org.bouncycastle:bcutil-jdk18on:1.85",
+        "sourcePomSha256": "9f1c79a12a7c03d78860e05750dcc44e855e20205c7af7cffbf29a69448d85ea",
         "declaredLicenses": [
           {
             "name": "Bouncy Castle Licence",
@@ -5034,15 +4730,15 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jdom:jdom2:2.0.6",
+      "coordinate": "org.jdom:jdom2:2.0.6.1",
       "declaredLicense": "Similar to Apache License but with the acknowledgment clause removed",
       "spdxLicense": "LicenseRef-JDOM",
       "projectUrl": "http://www.jdom.org",
       "licenseEvidence": {
         "classification": "reviewed-with-license-ref",
-        "componentPomSha256": "47b23a79fe336b741b82434c6e049d68165256e405e75c10921fd72fa8a65d8d",
-        "sourceCoordinate": "org.jdom:jdom2:2.0.6",
-        "sourcePomSha256": "47b23a79fe336b741b82434c6e049d68165256e405e75c10921fd72fa8a65d8d",
+        "componentPomSha256": "55795e1018b8ae647b937967cf810a99b08582c2374e7873c128734c8c914bf3",
+        "sourceCoordinate": "org.jdom:jdom2:2.0.6.1",
+        "sourcePomSha256": "55795e1018b8ae647b937967cf810a99b08582c2374e7873c128734c8c914bf3",
         "declaredLicenses": [
           {
             "name": "Similar to Apache License but with the acknowledgment clause removed",
@@ -5120,18 +4816,18 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jetbrains.kotlin:kotlin-android-extensions:1.9.25",
-      "declaredLicense": "The Apache License, Version 2.0",
+      "coordinate": "org.jetbrains.kotlin:fus-statistics-gradle-plugin:2.4.20",
+      "declaredLicense": "Apache-2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://kotlinlang.org/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "c1246e57e6d0e2296b0eb82f017e2f157bb999dd6b33331cf98013fcd728156a",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-android-extensions:1.9.25",
-        "sourcePomSha256": "c1246e57e6d0e2296b0eb82f017e2f157bb999dd6b33331cf98013fcd728156a",
+        "componentPomSha256": "84d7f8e15aa804aca3acacee7906066e3f67d98c08fd027d121f102e872206d6",
+        "sourceCoordinate": "org.jetbrains.kotlin:fus-statistics-gradle-plugin:2.4.20",
+        "sourcePomSha256": "84d7f8e15aa804aca3acacee7906066e3f67d98c08fd027d121f102e872206d6",
         "declaredLicenses": [
           {
-            "name": "The Apache License, Version 2.0",
+            "name": "Apache-2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
           }
         ]
@@ -5177,25 +4873,6 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jetbrains.kotlin:kotlin-build-common:1.9.25",
-      "declaredLicense": "The Apache License, Version 2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://kotlinlang.org/",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "90e00b0fc8657ee0d0c9c32a907e44d248db33a51d172ff6e553acc1d8c1c435",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-build-common:1.9.25",
-        "sourcePomSha256": "90e00b0fc8657ee0d0c9c32a907e44d248db33a51d172ff6e553acc1d8c1c435",
-        "declaredLicenses": [
-          {
-            "name": "The Apache License, Version 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
       "coordinate": "org.jetbrains.kotlin:kotlin-build-common:2.0.21",
       "declaredLicense": "The Apache License, Version 2.0",
       "spdxLicense": "Apache-2.0",
@@ -5215,18 +4892,18 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jetbrains.kotlin:kotlin-build-tools-api:1.9.25",
-      "declaredLicense": "The Apache License, Version 2.0",
+      "coordinate": "org.jetbrains.kotlin:kotlin-build-statistics:2.4.20",
+      "declaredLicense": "Apache-2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://kotlinlang.org/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "b74a9e9dc0f11b68a6231c7ae87808aebe32de3af43f382bfb63ee0c0e2bfb05",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-build-tools-api:1.9.25",
-        "sourcePomSha256": "b74a9e9dc0f11b68a6231c7ae87808aebe32de3af43f382bfb63ee0c0e2bfb05",
+        "componentPomSha256": "184af9ac1aaf68d0c96875465e9d398926586d83119abbfe1be5979398b8916f",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-build-statistics:2.4.20",
+        "sourcePomSha256": "184af9ac1aaf68d0c96875465e9d398926586d83119abbfe1be5979398b8916f",
         "declaredLicenses": [
           {
-            "name": "The Apache License, Version 2.0",
+            "name": "Apache-2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
           }
         ]
@@ -5253,18 +4930,94 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jetbrains.kotlin:kotlin-build-tools-impl:1.9.25",
-      "declaredLicense": "The Apache License, Version 2.0",
+      "coordinate": "org.jetbrains.kotlin:kotlin-build-tools-api:2.4.0",
+      "declaredLicense": "Apache-2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://kotlinlang.org/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "6c83535cd5f66bfeab7839bba833970553afe4e9665ba3bff0e78a30d8961ce0",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-build-tools-impl:1.9.25",
-        "sourcePomSha256": "6c83535cd5f66bfeab7839bba833970553afe4e9665ba3bff0e78a30d8961ce0",
+        "componentPomSha256": "9686fa8f16867b2aba2e5c0e4cfc4a0aeecf59fe6de419f89f7bd838fdde8e74",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-build-tools-api:2.4.0",
+        "sourcePomSha256": "9686fa8f16867b2aba2e5c0e4cfc4a0aeecf59fe6de419f89f7bd838fdde8e74",
         "declaredLicenses": [
           {
-            "name": "The Apache License, Version 2.0",
+            "name": "Apache-2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+          }
+        ]
+      },
+      "licenseReferences": []
+    },
+    {
+      "coordinate": "org.jetbrains.kotlin:kotlin-build-tools-api:2.4.20",
+      "declaredLicense": "Apache-2.0",
+      "spdxLicense": "Apache-2.0",
+      "projectUrl": "https://kotlinlang.org/",
+      "licenseEvidence": {
+        "classification": "canonical-spdx-text",
+        "componentPomSha256": "e8cd9ffd7d0886ba1a1795cbf4a34a06681f184aa50f25686effeefb3c1f56f5",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-build-tools-api:2.4.20",
+        "sourcePomSha256": "e8cd9ffd7d0886ba1a1795cbf4a34a06681f184aa50f25686effeefb3c1f56f5",
+        "declaredLicenses": [
+          {
+            "name": "Apache-2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+          }
+        ]
+      },
+      "licenseReferences": []
+    },
+    {
+      "coordinate": "org.jetbrains.kotlin:kotlin-build-tools-compat:2.4.20",
+      "declaredLicense": "Apache-2.0",
+      "spdxLicense": "Apache-2.0",
+      "projectUrl": "https://kotlinlang.org/",
+      "licenseEvidence": {
+        "classification": "canonical-spdx-text",
+        "componentPomSha256": "f8e9f647a00bfbc237e3ddff3891b2d4e4a947611b949281658f836def304002",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-build-tools-compat:2.4.20",
+        "sourcePomSha256": "f8e9f647a00bfbc237e3ddff3891b2d4e4a947611b949281658f836def304002",
+        "declaredLicenses": [
+          {
+            "name": "Apache-2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+          }
+        ]
+      },
+      "licenseReferences": []
+    },
+    {
+      "coordinate": "org.jetbrains.kotlin:kotlin-build-tools-cri-impl:2.4.0",
+      "declaredLicense": "Apache-2.0",
+      "spdxLicense": "Apache-2.0",
+      "projectUrl": "https://kotlinlang.org/",
+      "licenseEvidence": {
+        "classification": "canonical-spdx-text",
+        "componentPomSha256": "856d59395489276e93edb4390c99397de83e20d27572c5238c56ed21e43433da",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-build-tools-cri-impl:2.4.0",
+        "sourcePomSha256": "856d59395489276e93edb4390c99397de83e20d27572c5238c56ed21e43433da",
+        "declaredLicenses": [
+          {
+            "name": "Apache-2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+          }
+        ]
+      },
+      "licenseReferences": []
+    },
+    {
+      "coordinate": "org.jetbrains.kotlin:kotlin-build-tools-cri-impl:2.4.20",
+      "declaredLicense": "Apache-2.0",
+      "spdxLicense": "Apache-2.0",
+      "projectUrl": "https://kotlinlang.org/",
+      "licenseEvidence": {
+        "classification": "canonical-spdx-text",
+        "componentPomSha256": "8af52efa886eed45c54d568b692e339b70ddc7c768bee9ab9c2d2f96ed8bb0e1",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-build-tools-cri-impl:2.4.20",
+        "sourcePomSha256": "8af52efa886eed45c54d568b692e339b70ddc7c768bee9ab9c2d2f96ed8bb0e1",
+        "declaredLicenses": [
+          {
+            "name": "Apache-2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
           }
         ]
@@ -5291,18 +5044,37 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jetbrains.kotlin:kotlin-compiler-embeddable:1.9.25",
-      "declaredLicense": "The Apache License, Version 2.0",
+      "coordinate": "org.jetbrains.kotlin:kotlin-build-tools-impl:2.4.0",
+      "declaredLicense": "Apache-2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://kotlinlang.org/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "27250f1eab90ade54ba6f3c104f732fbc2e5d3e6389c3e76baeac4a286c94fa5",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-compiler-embeddable:1.9.25",
-        "sourcePomSha256": "27250f1eab90ade54ba6f3c104f732fbc2e5d3e6389c3e76baeac4a286c94fa5",
+        "componentPomSha256": "485ca3d511aa384207db5706e0741dc79ace45d40e0489f9ef29731aafb14f7c",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-build-tools-impl:2.4.0",
+        "sourcePomSha256": "485ca3d511aa384207db5706e0741dc79ace45d40e0489f9ef29731aafb14f7c",
         "declaredLicenses": [
           {
-            "name": "The Apache License, Version 2.0",
+            "name": "Apache-2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+          }
+        ]
+      },
+      "licenseReferences": []
+    },
+    {
+      "coordinate": "org.jetbrains.kotlin:kotlin-build-tools-impl:2.4.20",
+      "declaredLicense": "Apache-2.0",
+      "spdxLicense": "Apache-2.0",
+      "projectUrl": "https://kotlinlang.org/",
+      "licenseEvidence": {
+        "classification": "canonical-spdx-text",
+        "componentPomSha256": "7a13ab2d818a5de92afa23004aa9baed99671bb48553b7098cf920fa785c3351",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-build-tools-impl:2.4.20",
+        "sourcePomSha256": "7a13ab2d818a5de92afa23004aa9baed99671bb48553b7098cf920fa785c3351",
+        "declaredLicenses": [
+          {
+            "name": "Apache-2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
           }
         ]
@@ -5329,18 +5101,37 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jetbrains.kotlin:kotlin-compiler-runner:1.9.25",
-      "declaredLicense": "The Apache License, Version 2.0",
+      "coordinate": "org.jetbrains.kotlin:kotlin-compiler-embeddable:2.4.0",
+      "declaredLicense": "Apache-2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://kotlinlang.org/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "66b03c34f72a3bfca656cd51abbf3297c127f9b245f47afa68b3d00e36522e55",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-compiler-runner:1.9.25",
-        "sourcePomSha256": "66b03c34f72a3bfca656cd51abbf3297c127f9b245f47afa68b3d00e36522e55",
+        "componentPomSha256": "f5d78540108e7bbc9162253ce52c42507ead2e530945213dd2a3b793b590c53c",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-compiler-embeddable:2.4.0",
+        "sourcePomSha256": "f5d78540108e7bbc9162253ce52c42507ead2e530945213dd2a3b793b590c53c",
         "declaredLicenses": [
           {
-            "name": "The Apache License, Version 2.0",
+            "name": "Apache-2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+          }
+        ]
+      },
+      "licenseReferences": []
+    },
+    {
+      "coordinate": "org.jetbrains.kotlin:kotlin-compiler-embeddable:2.4.20",
+      "declaredLicense": "Apache-2.0",
+      "spdxLicense": "Apache-2.0",
+      "projectUrl": "https://kotlinlang.org/",
+      "licenseEvidence": {
+        "classification": "canonical-spdx-text",
+        "componentPomSha256": "269d98cc4c68670c11e4aeb404e1c7c6f31b782321908d7268ba25cd236d59b2",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-compiler-embeddable:2.4.20",
+        "sourcePomSha256": "269d98cc4c68670c11e4aeb404e1c7c6f31b782321908d7268ba25cd236d59b2",
+        "declaredLicenses": [
+          {
+            "name": "Apache-2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
           }
         ]
@@ -5367,18 +5158,37 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jetbrains.kotlin:kotlin-daemon-client:1.9.25",
-      "declaredLicense": "The Apache License, Version 2.0",
+      "coordinate": "org.jetbrains.kotlin:kotlin-compiler-runner:2.4.0",
+      "declaredLicense": "Apache-2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://kotlinlang.org/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "50c60607c12551bac06b0d71c31975d2478366b5146872a6bffdefcba1d5da91",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-daemon-client:1.9.25",
-        "sourcePomSha256": "50c60607c12551bac06b0d71c31975d2478366b5146872a6bffdefcba1d5da91",
+        "componentPomSha256": "5e1ed156cb8d38b61e2ccc546dbd8b2bde778367eb298f8875bd820fbfd0b0f2",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-compiler-runner:2.4.0",
+        "sourcePomSha256": "5e1ed156cb8d38b61e2ccc546dbd8b2bde778367eb298f8875bd820fbfd0b0f2",
         "declaredLicenses": [
           {
-            "name": "The Apache License, Version 2.0",
+            "name": "Apache-2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+          }
+        ]
+      },
+      "licenseReferences": []
+    },
+    {
+      "coordinate": "org.jetbrains.kotlin:kotlin-compiler-runner:2.4.20",
+      "declaredLicense": "Apache-2.0",
+      "spdxLicense": "Apache-2.0",
+      "projectUrl": "https://kotlinlang.org/",
+      "licenseEvidence": {
+        "classification": "canonical-spdx-text",
+        "componentPomSha256": "4566946280971fe8d67990ee83480af480e846590f325a40951f62657e26a40a",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-compiler-runner:2.4.20",
+        "sourcePomSha256": "4566946280971fe8d67990ee83480af480e846590f325a40951f62657e26a40a",
+        "declaredLicenses": [
+          {
+            "name": "Apache-2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
           }
         ]
@@ -5405,18 +5215,37 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jetbrains.kotlin:kotlin-daemon-embeddable:1.9.25",
-      "declaredLicense": "The Apache License, Version 2.0",
+      "coordinate": "org.jetbrains.kotlin:kotlin-daemon-client:2.4.0",
+      "declaredLicense": "Apache-2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://kotlinlang.org/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "18aee36eb771150944c72513a45be1ee357d6c1ed2466c32193ef3a945c56afb",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-daemon-embeddable:1.9.25",
-        "sourcePomSha256": "18aee36eb771150944c72513a45be1ee357d6c1ed2466c32193ef3a945c56afb",
+        "componentPomSha256": "143793627382d905eda93e152a28c993f6323fc4b748370a45c7badc99914a13",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-daemon-client:2.4.0",
+        "sourcePomSha256": "143793627382d905eda93e152a28c993f6323fc4b748370a45c7badc99914a13",
         "declaredLicenses": [
           {
-            "name": "The Apache License, Version 2.0",
+            "name": "Apache-2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+          }
+        ]
+      },
+      "licenseReferences": []
+    },
+    {
+      "coordinate": "org.jetbrains.kotlin:kotlin-daemon-client:2.4.20",
+      "declaredLicense": "Apache-2.0",
+      "spdxLicense": "Apache-2.0",
+      "projectUrl": "https://kotlinlang.org/",
+      "licenseEvidence": {
+        "classification": "canonical-spdx-text",
+        "componentPomSha256": "37cff66ae34c924f0f738106eeb7234e7ace880f199de3362e993f4987025adc",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-daemon-client:2.4.20",
+        "sourcePomSha256": "37cff66ae34c924f0f738106eeb7234e7ace880f199de3362e993f4987025adc",
+        "declaredLicenses": [
+          {
+            "name": "Apache-2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
           }
         ]
@@ -5443,18 +5272,18 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jetbrains.kotlin:kotlin-gradle-plugin-annotations:1.9.25",
-      "declaredLicense": "The Apache License, Version 2.0",
+      "coordinate": "org.jetbrains.kotlin:kotlin-daemon-embeddable:2.4.0",
+      "declaredLicense": "Apache-2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://kotlinlang.org/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "bca88f434ccb4954aa5e2c4cd69671aa83e25e8b60150753612fdf96ce7ee78e",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-gradle-plugin-annotations:1.9.25",
-        "sourcePomSha256": "bca88f434ccb4954aa5e2c4cd69671aa83e25e8b60150753612fdf96ce7ee78e",
+        "componentPomSha256": "cb36e780fcb39ee09aab6e398f9bd5ea27f982bb6e19329742a20eb2ebdc2936",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-daemon-embeddable:2.4.0",
+        "sourcePomSha256": "cb36e780fcb39ee09aab6e398f9bd5ea27f982bb6e19329742a20eb2ebdc2936",
         "declaredLicenses": [
           {
-            "name": "The Apache License, Version 2.0",
+            "name": "Apache-2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
           }
         ]
@@ -5462,18 +5291,18 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jetbrains.kotlin:kotlin-gradle-plugin-api:1.9.25",
-      "declaredLicense": "The Apache License, Version 2.0",
+      "coordinate": "org.jetbrains.kotlin:kotlin-daemon-embeddable:2.4.20",
+      "declaredLicense": "Apache-2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://kotlinlang.org/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "8c470949f3629634136793ec68f5780ecc9a818ee99e8236cd7bee42582ca876",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-gradle-plugin-api:1.9.25",
-        "sourcePomSha256": "8c470949f3629634136793ec68f5780ecc9a818ee99e8236cd7bee42582ca876",
+        "componentPomSha256": "ca631ce7c7cc2a8ecb47d3462b429004c1cd3488437b3f739e35eafea2033bfb",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-daemon-embeddable:2.4.20",
+        "sourcePomSha256": "ca631ce7c7cc2a8ecb47d3462b429004c1cd3488437b3f739e35eafea2033bfb",
         "declaredLicenses": [
           {
-            "name": "The Apache License, Version 2.0",
+            "name": "Apache-2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
           }
         ]
@@ -5481,18 +5310,18 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jetbrains.kotlin:kotlin-gradle-plugin-idea-proto:1.9.25",
-      "declaredLicense": "The Apache License, Version 2.0",
+      "coordinate": "org.jetbrains.kotlin:kotlin-gradle-plugin-annotations:2.4.20",
+      "declaredLicense": "Apache-2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://kotlinlang.org/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "dde0b5c0a72937e6441fe8f52949fbcb93743e2934e556479157851bca3c3cf3",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-gradle-plugin-idea-proto:1.9.25",
-        "sourcePomSha256": "dde0b5c0a72937e6441fe8f52949fbcb93743e2934e556479157851bca3c3cf3",
+        "componentPomSha256": "d903e1b1b633cdd7c85e557a4426b0c7b8584065a46fe626826a4da3790f945d",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-gradle-plugin-annotations:2.4.20",
+        "sourcePomSha256": "d903e1b1b633cdd7c85e557a4426b0c7b8584065a46fe626826a4da3790f945d",
         "declaredLicenses": [
           {
-            "name": "The Apache License, Version 2.0",
+            "name": "Apache-2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
           }
         ]
@@ -5500,18 +5329,18 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jetbrains.kotlin:kotlin-gradle-plugin-idea:1.9.25",
-      "declaredLicense": "The Apache License, Version 2.0",
+      "coordinate": "org.jetbrains.kotlin:kotlin-gradle-plugin-api:2.4.20",
+      "declaredLicense": "Apache-2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://kotlinlang.org/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "b20de5be83d6391cdf8a0a2a7a4e947e54c73a0f4f706942e0bcf1625d4cda6e",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-gradle-plugin-idea:1.9.25",
-        "sourcePomSha256": "b20de5be83d6391cdf8a0a2a7a4e947e54c73a0f4f706942e0bcf1625d4cda6e",
+        "componentPomSha256": "272a39cbf13fb815fc050943788cbb83b938aea54d81a81d6af861b9dc13a26c",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-gradle-plugin-api:2.4.20",
+        "sourcePomSha256": "272a39cbf13fb815fc050943788cbb83b938aea54d81a81d6af861b9dc13a26c",
         "declaredLicenses": [
           {
-            "name": "The Apache License, Version 2.0",
+            "name": "Apache-2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
           }
         ]
@@ -5519,18 +5348,18 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jetbrains.kotlin:kotlin-gradle-plugin-model:1.9.25",
-      "declaredLicense": "The Apache License, Version 2.0",
+      "coordinate": "org.jetbrains.kotlin:kotlin-gradle-plugin-idea-proto:2.4.20",
+      "declaredLicense": "Apache-2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://kotlinlang.org/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "94cba19eb5c64468bc6c0b5239c7b070583bc95573fed50785387287f953d6bd",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-gradle-plugin-model:1.9.25",
-        "sourcePomSha256": "94cba19eb5c64468bc6c0b5239c7b070583bc95573fed50785387287f953d6bd",
+        "componentPomSha256": "d059dace6e76f36808ce94e8588a603324716d07767bc874206036794ba3bd05",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-gradle-plugin-idea-proto:2.4.20",
+        "sourcePomSha256": "d059dace6e76f36808ce94e8588a603324716d07767bc874206036794ba3bd05",
         "declaredLicenses": [
           {
-            "name": "The Apache License, Version 2.0",
+            "name": "Apache-2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
           }
         ]
@@ -5538,18 +5367,18 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.25",
-      "declaredLicense": "The Apache License, Version 2.0",
+      "coordinate": "org.jetbrains.kotlin:kotlin-gradle-plugin-idea:2.4.20",
+      "declaredLicense": "Apache-2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://kotlinlang.org/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "6fad2680bede032d259442ea13b806e4147962af41005dc81831e74507706779",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.25",
-        "sourcePomSha256": "6fad2680bede032d259442ea13b806e4147962af41005dc81831e74507706779",
+        "componentPomSha256": "9949508505acdc09ad2b67b247e3b58b5749f3a9ce87f99206a5e4c8f0a2f9c8",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-gradle-plugin-idea:2.4.20",
+        "sourcePomSha256": "9949508505acdc09ad2b67b247e3b58b5749f3a9ce87f99206a5e4c8f0a2f9c8",
         "declaredLicenses": [
           {
-            "name": "The Apache License, Version 2.0",
+            "name": "Apache-2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
           }
         ]
@@ -5557,18 +5386,18 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jetbrains.kotlin:kotlin-gradle-plugins-bom:1.9.25",
-      "declaredLicense": "The Apache License, Version 2.0",
+      "coordinate": "org.jetbrains.kotlin:kotlin-gradle-plugin:2.4.20",
+      "declaredLicense": "Apache-2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://kotlinlang.org/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "fea64e0a61a50b315e200a86d5a1063e08ba677c96ef915a4936b758385820d4",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-gradle-plugins-bom:1.9.25",
-        "sourcePomSha256": "fea64e0a61a50b315e200a86d5a1063e08ba677c96ef915a4936b758385820d4",
+        "componentPomSha256": "934dba7a977a17c008dac6c8670c8c86519a91cedb759b9a8f77040005e95dc5",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-gradle-plugin:2.4.20",
+        "sourcePomSha256": "934dba7a977a17c008dac6c8670c8c86519a91cedb759b9a8f77040005e95dc5",
         "declaredLicenses": [
           {
-            "name": "The Apache License, Version 2.0",
+            "name": "Apache-2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
           }
         ]
@@ -5576,18 +5405,18 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jetbrains.kotlin:kotlin-klib-commonizer-api:1.9.25",
-      "declaredLicense": "The Apache License, Version 2.0",
+      "coordinate": "org.jetbrains.kotlin:kotlin-gradle-plugins-bom:2.4.20",
+      "declaredLicense": "Apache-2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://kotlinlang.org/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "9e7596e9016c31ef5a7f089a02ceb2857553fabd176c141ab285d3ded1f10f93",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-klib-commonizer-api:1.9.25",
-        "sourcePomSha256": "9e7596e9016c31ef5a7f089a02ceb2857553fabd176c141ab285d3ded1f10f93",
+        "componentPomSha256": "70b071dc4074995076c97c749792ebcff69f10e636d1e2f2c68de0de023e0239",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-gradle-plugins-bom:2.4.20",
+        "sourcePomSha256": "70b071dc4074995076c97c749792ebcff69f10e636d1e2f2c68de0de023e0239",
         "declaredLicenses": [
           {
-            "name": "The Apache License, Version 2.0",
+            "name": "Apache-2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
           }
         ]
@@ -5595,18 +5424,18 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jetbrains.kotlin:kotlin-klib-commonizer-embeddable:1.9.25",
-      "declaredLicense": "The Apache License, Version 2.0",
+      "coordinate": "org.jetbrains.kotlin:kotlin-klib-commonizer-api:2.4.20",
+      "declaredLicense": "Apache-2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://kotlinlang.org/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "fd23e1e154f03de89fa4edd6599b1bcb39c51316c79388ab66325bcf87ba6eb8",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-klib-commonizer-embeddable:1.9.25",
-        "sourcePomSha256": "fd23e1e154f03de89fa4edd6599b1bcb39c51316c79388ab66325bcf87ba6eb8",
+        "componentPomSha256": "b1edb50183d4549ad0fb449498535ab4186d491d86ad315e0187bcb9f9c7496d",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-klib-commonizer-api:2.4.20",
+        "sourcePomSha256": "b1edb50183d4549ad0fb449498535ab4186d491d86ad315e0187bcb9f9c7496d",
         "declaredLicenses": [
           {
-            "name": "The Apache License, Version 2.0",
+            "name": "Apache-2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
           }
         ]
@@ -5633,18 +5462,18 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jetbrains.kotlin:kotlin-native-utils:1.9.25",
-      "declaredLicense": "The Apache License, Version 2.0",
+      "coordinate": "org.jetbrains.kotlin:kotlin-klib-commonizer-embeddable:2.4.20",
+      "declaredLicense": "Apache-2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://kotlinlang.org/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "5f7900340fc5a1336f501924955bd2682c13c059057394bf379e55959319de2b",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-native-utils:1.9.25",
-        "sourcePomSha256": "5f7900340fc5a1336f501924955bd2682c13c059057394bf379e55959319de2b",
+        "componentPomSha256": "27b1b87d463fecc7f27eb859366c9afd19fd7a4dc0d87fcf70b7cf3cd83cca79",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-klib-commonizer-embeddable:2.4.20",
+        "sourcePomSha256": "27b1b87d463fecc7f27eb859366c9afd19fd7a4dc0d87fcf70b7cf3cd83cca79",
         "declaredLicenses": [
           {
-            "name": "The Apache License, Version 2.0",
+            "name": "Apache-2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
           }
         ]
@@ -5652,18 +5481,18 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jetbrains.kotlin:kotlin-project-model:1.9.25",
-      "declaredLicense": "The Apache License, Version 2.0",
+      "coordinate": "org.jetbrains.kotlin:kotlin-native-utils:2.4.20",
+      "declaredLicense": "Apache-2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://kotlinlang.org/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "c2bc7f2c70e9e948c63de9db439edae88247cd9a73b29eaf1c6caedb11fd9bc3",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-project-model:1.9.25",
-        "sourcePomSha256": "c2bc7f2c70e9e948c63de9db439edae88247cd9a73b29eaf1c6caedb11fd9bc3",
+        "componentPomSha256": "453ba071c89165cbdfc877ca733a4f38c01fc2f4894e9a259d7651f1176cd80c",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-native-utils:2.4.20",
+        "sourcePomSha256": "453ba071c89165cbdfc877ca733a4f38c01fc2f4894e9a259d7651f1176cd80c",
         "declaredLicenses": [
           {
-            "name": "The Apache License, Version 2.0",
+            "name": "Apache-2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
           }
         ]
@@ -5766,25 +5595,6 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jetbrains.kotlin:kotlin-script-runtime:1.9.25",
-      "declaredLicense": "The Apache License, Version 2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://kotlinlang.org/",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "e42e0d3af588d5d01b84f6c99974009d5e62d4d8b9392fa56b2ec10f8535209b",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-script-runtime:1.9.25",
-        "sourcePomSha256": "e42e0d3af588d5d01b84f6c99974009d5e62d4d8b9392fa56b2ec10f8535209b",
-        "declaredLicenses": [
-          {
-            "name": "The Apache License, Version 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
       "coordinate": "org.jetbrains.kotlin:kotlin-script-runtime:2.0.21",
       "declaredLicense": "The Apache License, Version 2.0",
       "spdxLicense": "Apache-2.0",
@@ -5804,18 +5614,37 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jetbrains.kotlin:kotlin-scripting-common:1.9.25",
-      "declaredLicense": "The Apache License, Version 2.0",
+      "coordinate": "org.jetbrains.kotlin:kotlin-script-runtime:2.4.0",
+      "declaredLicense": "Apache-2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://kotlinlang.org/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "0db2e227c1f4816120da1884d82cca7594fd8de7fe74e6c744b177658261a18c",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-scripting-common:1.9.25",
-        "sourcePomSha256": "0db2e227c1f4816120da1884d82cca7594fd8de7fe74e6c744b177658261a18c",
+        "componentPomSha256": "ce705c50e7e0afb22298acff0a983cdb6ea0f7fe2d1b473cee42b38405bc357f",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-script-runtime:2.4.0",
+        "sourcePomSha256": "ce705c50e7e0afb22298acff0a983cdb6ea0f7fe2d1b473cee42b38405bc357f",
         "declaredLicenses": [
           {
-            "name": "The Apache License, Version 2.0",
+            "name": "Apache-2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+          }
+        ]
+      },
+      "licenseReferences": []
+    },
+    {
+      "coordinate": "org.jetbrains.kotlin:kotlin-script-runtime:2.4.20",
+      "declaredLicense": "Apache-2.0",
+      "spdxLicense": "Apache-2.0",
+      "projectUrl": "https://kotlinlang.org/",
+      "licenseEvidence": {
+        "classification": "canonical-spdx-text",
+        "componentPomSha256": "dd0e3846b61a6d641300958cc52e4693cd7b47bd1d626505f383b2f9d23ade0e",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-script-runtime:2.4.20",
+        "sourcePomSha256": "dd0e3846b61a6d641300958cc52e4693cd7b47bd1d626505f383b2f9d23ade0e",
+        "declaredLicenses": [
+          {
+            "name": "Apache-2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
           }
         ]
@@ -5832,25 +5661,6 @@
         "componentPomSha256": "84fe9ecea8e557effa8856c9021325ad63c21d9d13121eaaeb1199f6a6586575",
         "sourceCoordinate": "org.jetbrains.kotlin:kotlin-scripting-common:2.0.21",
         "sourcePomSha256": "84fe9ecea8e557effa8856c9021325ad63c21d9d13121eaaeb1199f6a6586575",
-        "declaredLicenses": [
-          {
-            "name": "The Apache License, Version 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
-      "coordinate": "org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:1.9.25",
-      "declaredLicense": "The Apache License, Version 2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://kotlinlang.org/",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "04fa95938fd7acca9353db8596fdc8c187206f17205fa7755c43b36cf6d9056f",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:1.9.25",
-        "sourcePomSha256": "04fa95938fd7acca9353db8596fdc8c187206f17205fa7755c43b36cf6d9056f",
         "declaredLicenses": [
           {
             "name": "The Apache License, Version 2.0",
@@ -5880,25 +5690,6 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jetbrains.kotlin:kotlin-scripting-compiler-impl-embeddable:1.9.25",
-      "declaredLicense": "The Apache License, Version 2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://kotlinlang.org/",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "181223b2fa1e2da8252ebc85d6a310d6c1c0bd2b6b705db6555a4645482a61aa",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-scripting-compiler-impl-embeddable:1.9.25",
-        "sourcePomSha256": "181223b2fa1e2da8252ebc85d6a310d6c1c0bd2b6b705db6555a4645482a61aa",
-        "declaredLicenses": [
-          {
-            "name": "The Apache License, Version 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
       "coordinate": "org.jetbrains.kotlin:kotlin-scripting-compiler-impl-embeddable:2.0.21",
       "declaredLicense": "The Apache License, Version 2.0",
       "spdxLicense": "Apache-2.0",
@@ -5918,25 +5709,6 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jetbrains.kotlin:kotlin-scripting-jvm:1.9.25",
-      "declaredLicense": "The Apache License, Version 2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://kotlinlang.org/",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "27afc803adbf44b4ed07e9fafeb21dc13980f37855812d6370b455f0c0f68734",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-scripting-jvm:1.9.25",
-        "sourcePomSha256": "27afc803adbf44b4ed07e9fafeb21dc13980f37855812d6370b455f0c0f68734",
-        "declaredLicenses": [
-          {
-            "name": "The Apache License, Version 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
       "coordinate": "org.jetbrains.kotlin:kotlin-scripting-jvm:2.0.21",
       "declaredLicense": "The Apache License, Version 2.0",
       "spdxLicense": "Apache-2.0",
@@ -5946,25 +5718,6 @@
         "componentPomSha256": "a290858befb4299734f51b53ed9a9415a294e79ba6fc213c04c427cdc8799c0d",
         "sourceCoordinate": "org.jetbrains.kotlin:kotlin-scripting-jvm:2.0.21",
         "sourcePomSha256": "a290858befb4299734f51b53ed9a9415a294e79ba6fc213c04c427cdc8799c0d",
-        "declaredLicenses": [
-          {
-            "name": "The Apache License, Version 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
-      "coordinate": "org.jetbrains.kotlin:kotlin-stdlib-common:1.7.10",
-      "declaredLicense": "The Apache License, Version 2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://kotlinlang.org/",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "1011c63b88ee94cdff5d596937307559bc55037b733cc00ce63cda3cfae0a8eb",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-stdlib-common:1.7.10",
-        "sourcePomSha256": "1011c63b88ee94cdff5d596937307559bc55037b733cc00ce63cda3cfae0a8eb",
         "declaredLicenses": [
           {
             "name": "The Apache License, Version 2.0",
@@ -6108,25 +5861,6 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jetbrains.kotlin:kotlin-stdlib:1.7.10",
-      "declaredLicense": "The Apache License, Version 2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://kotlinlang.org/",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "6cc0cf5a2bc02dee060ebb90c3535fc3ddbd7a3bab210ace3e142aaf81764d81",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-stdlib:1.7.10",
-        "sourcePomSha256": "6cc0cf5a2bc02dee060ebb90c3535fc3ddbd7a3bab210ace3e142aaf81764d81",
-        "declaredLicenses": [
-          {
-            "name": "The Apache License, Version 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
       "coordinate": "org.jetbrains.kotlin:kotlin-stdlib:1.8.21",
       "declaredLicense": "The Apache License, Version 2.0",
       "spdxLicense": "Apache-2.0",
@@ -6155,25 +5889,6 @@
         "componentPomSha256": "37752263f62cc3e3250856e288ee4a73d4102d726a77627034f94806c8c10aca",
         "sourceCoordinate": "org.jetbrains.kotlin:kotlin-stdlib:1.9.0",
         "sourcePomSha256": "37752263f62cc3e3250856e288ee4a73d4102d726a77627034f94806c8c10aca",
-        "declaredLicenses": [
-          {
-            "name": "The Apache License, Version 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
-      "coordinate": "org.jetbrains.kotlin:kotlin-stdlib:1.9.25",
-      "declaredLicense": "The Apache License, Version 2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://kotlinlang.org/",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "7dc3318a476d7b902d0d27af9b56f663e8cc4263a2d33ad050c7abb65a5b67a1",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-stdlib:1.9.25",
-        "sourcePomSha256": "7dc3318a476d7b902d0d27af9b56f663e8cc4263a2d33ad050c7abb65a5b67a1",
         "declaredLicenses": [
           {
             "name": "The Apache License, Version 2.0",
@@ -6222,18 +5937,18 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jetbrains.kotlin:kotlin-tooling-core:1.9.25",
-      "declaredLicense": "The Apache License, Version 2.0",
+      "coordinate": "org.jetbrains.kotlin:kotlin-stdlib:2.4.0",
+      "declaredLicense": "Apache-2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://kotlinlang.org/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "4281a5d2e15defdb7c32e66a21983f84363b85f43dc67e683be77bbab81c9dfd",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-tooling-core:1.9.25",
-        "sourcePomSha256": "4281a5d2e15defdb7c32e66a21983f84363b85f43dc67e683be77bbab81c9dfd",
+        "componentPomSha256": "8194ff79a9ee24a7fa3f74a6b179c04a1859de8b987a4f0983056e59451721de",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-stdlib:2.4.0",
+        "sourcePomSha256": "8194ff79a9ee24a7fa3f74a6b179c04a1859de8b987a4f0983056e59451721de",
         "declaredLicenses": [
           {
-            "name": "The Apache License, Version 2.0",
+            "name": "Apache-2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
           }
         ]
@@ -6241,18 +5956,18 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jetbrains.kotlin:kotlin-util-io:1.9.25",
-      "declaredLicense": "The Apache License, Version 2.0",
+      "coordinate": "org.jetbrains.kotlin:kotlin-stdlib:2.4.20",
+      "declaredLicense": "Apache-2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://kotlinlang.org/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "4080d02d1f4db57307f3e045bd2aa1293003b4411d61813c85fd95bc71dca5df",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-util-io:1.9.25",
-        "sourcePomSha256": "4080d02d1f4db57307f3e045bd2aa1293003b4411d61813c85fd95bc71dca5df",
+        "componentPomSha256": "bd69b382dba8e2b7ae3846375eb2f1389017eb908987277051ae4e3acec8c938",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-stdlib:2.4.20",
+        "sourcePomSha256": "bd69b382dba8e2b7ae3846375eb2f1389017eb908987277051ae4e3acec8c938",
         "declaredLicenses": [
           {
-            "name": "The Apache License, Version 2.0",
+            "name": "Apache-2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
           }
         ]
@@ -6260,18 +5975,75 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jetbrains.kotlin:kotlin-util-klib:1.9.25",
-      "declaredLicense": "The Apache License, Version 2.0",
+      "coordinate": "org.jetbrains.kotlin:kotlin-tooling-core:2.4.20",
+      "declaredLicense": "Apache-2.0",
       "spdxLicense": "Apache-2.0",
       "projectUrl": "https://kotlinlang.org/",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "daff455cc453dcde8b7d540237a0a2f114ea374d7df70c3f593dbe9caea22347",
-        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-util-klib:1.9.25",
-        "sourcePomSha256": "daff455cc453dcde8b7d540237a0a2f114ea374d7df70c3f593dbe9caea22347",
+        "componentPomSha256": "29dd79ed2bc1e64f6bfd5ccf0c1336c6b6c11ee2a69e0c585e3fad2f45b5325d",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-tooling-core:2.4.20",
+        "sourcePomSha256": "29dd79ed2bc1e64f6bfd5ccf0c1336c6b6c11ee2a69e0c585e3fad2f45b5325d",
         "declaredLicenses": [
           {
-            "name": "The Apache License, Version 2.0",
+            "name": "Apache-2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+          }
+        ]
+      },
+      "licenseReferences": []
+    },
+    {
+      "coordinate": "org.jetbrains.kotlin:kotlin-util-io:2.4.20",
+      "declaredLicense": "Apache-2.0",
+      "spdxLicense": "Apache-2.0",
+      "projectUrl": "https://kotlinlang.org/",
+      "licenseEvidence": {
+        "classification": "canonical-spdx-text",
+        "componentPomSha256": "840f888f360f4395c0967e17620b96d8b0cf5180efe2a214fdabd4d66677665b",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-util-io:2.4.20",
+        "sourcePomSha256": "840f888f360f4395c0967e17620b96d8b0cf5180efe2a214fdabd4d66677665b",
+        "declaredLicenses": [
+          {
+            "name": "Apache-2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+          }
+        ]
+      },
+      "licenseReferences": []
+    },
+    {
+      "coordinate": "org.jetbrains.kotlin:kotlin-util-klib-metadata:2.4.20",
+      "declaredLicense": "Apache-2.0",
+      "spdxLicense": "Apache-2.0",
+      "projectUrl": "https://kotlinlang.org/",
+      "licenseEvidence": {
+        "classification": "canonical-spdx-text",
+        "componentPomSha256": "90c5c8092955a601898c74f7dae3945fb0d041d5191d009bab41d530f8402f4f",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-util-klib-metadata:2.4.20",
+        "sourcePomSha256": "90c5c8092955a601898c74f7dae3945fb0d041d5191d009bab41d530f8402f4f",
+        "declaredLicenses": [
+          {
+            "name": "Apache-2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+          }
+        ]
+      },
+      "licenseReferences": []
+    },
+    {
+      "coordinate": "org.jetbrains.kotlin:kotlin-util-klib:2.4.20",
+      "declaredLicense": "Apache-2.0",
+      "spdxLicense": "Apache-2.0",
+      "projectUrl": "https://kotlinlang.org/",
+      "licenseEvidence": {
+        "classification": "canonical-spdx-text",
+        "componentPomSha256": "7fb051f47bbe01f318a1f434e2a7ed61a446fcc7a4d3ccb5a44c2b5105b0fd6b",
+        "sourceCoordinate": "org.jetbrains.kotlin:kotlin-util-klib:2.4.20",
+        "sourcePomSha256": "7fb051f47bbe01f318a1f434e2a7ed61a446fcc7a4d3ccb5a44c2b5105b0fd6b",
+        "declaredLicenses": [
+          {
+            "name": "Apache-2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
           }
         ]
@@ -6374,25 +6146,6 @@
       "licenseReferences": []
     },
     {
-      "coordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.5.0",
-      "declaredLicense": "The Apache Software License, Version 2.0",
-      "spdxLicense": "Apache-2.0",
-      "projectUrl": "https://github.com/Kotlin/kotlinx.coroutines",
-      "licenseEvidence": {
-        "classification": "canonical-spdx-text",
-        "componentPomSha256": "53622e03778df8440fc012201a35bb4bdfe40164efec612bbefcdeecb2ffc2ab",
-        "sourceCoordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.5.0",
-        "sourcePomSha256": "53622e03778df8440fc012201a35bb4bdfe40164efec612bbefcdeecb2ffc2ab",
-        "declaredLicenses": [
-          {
-            "name": "The Apache Software License, Version 2.0",
-            "url": "https://www.apache.org/licenses/LICENSE-2.0.txt"
-          }
-        ]
-      },
-      "licenseReferences": []
-    },
-    {
       "coordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.4",
       "declaredLicense": "The Apache Software License, Version 2.0",
       "spdxLicense": "Apache-2.0",
@@ -6421,6 +6174,25 @@
         "componentPomSha256": "753858753decbbb2397343e2b871f062f697812e9422e41c9ee46a66b93eee30",
         "sourceCoordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.7.3",
         "sourcePomSha256": "753858753decbbb2397343e2b871f062f697812e9422e41c9ee46a66b93eee30",
+        "declaredLicenses": [
+          {
+            "name": "The Apache Software License, Version 2.0",
+            "url": "https://www.apache.org/licenses/LICENSE-2.0.txt"
+          }
+        ]
+      },
+      "licenseReferences": []
+    },
+    {
+      "coordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.0",
+      "declaredLicense": "The Apache Software License, Version 2.0",
+      "spdxLicense": "Apache-2.0",
+      "projectUrl": "https://github.com/Kotlin/kotlinx.coroutines",
+      "licenseEvidence": {
+        "classification": "canonical-spdx-text",
+        "componentPomSha256": "a5633abd53467ceb91622d81f2e982080877145e0b76e1b75788715434885d0b",
+        "sourceCoordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.0",
+        "sourcePomSha256": "a5633abd53467ceb91622d81f2e982080877145e0b76e1b75788715434885d0b",
         "declaredLicenses": [
           {
             "name": "The Apache Software License, Version 2.0",

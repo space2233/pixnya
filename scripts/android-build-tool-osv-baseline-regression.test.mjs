@@ -9,6 +9,7 @@ import {
   expectedToolchain,
   scopeDefinitions,
   validateBaseline,
+  validateReportCoverage,
 } from "./check-android-build-tool-osv-baseline.mjs";
 
 const root = process.cwd();
@@ -66,25 +67,9 @@ function appReport() {
 
 test("tracked baseline records exact, short-lived, non-runtime findings", async () => {
   const baseline = JSON.parse(await read("docs/android-gradle-osv-risk-baseline.json"));
-  assert.equal(baseline.exceptions.length, 88);
+  assert.deepEqual(baseline.exceptions, []);
   assert.deepEqual(baseline.toolchain, expectedToolchain);
   assert.equal(baseline.policy.runtimeExceptionsAllowed, false);
-  const nettySniBypass = baseline.exceptions.filter((entry) => entry.advisory === "GHSA-c4c3-7fpv-j4q5");
-  const nettySniCpu = baseline.exceptions.filter((entry) => entry.advisory === "GHSA-fccg-mwvh-qqg4");
-  assert.equal(nettySniBypass.length, 2);
-  assert.equal(nettySniCpu.length, 2);
-  assert.ok(nettySniBypass.every((entry) => entry.severity === "CRITICAL"));
-  assert.ok(nettySniBypass.every((entry) => entry.expiresAt === "2026-09-26"));
-  assert.ok(nettySniCpu.every((entry) => entry.severity === "MODERATE"));
-  assert.ok(nettySniCpu.every((entry) => entry.expiresAt === "2026-10-12"));
-  const nettyCors = baseline.exceptions.filter(
-    (entry) => entry.advisory === "GHSA-8c42-7qj2-3j46",
-  );
-  assert.equal(nettyCors.length, 2);
-  assert.ok(nettyCors.every((entry) => entry.severity === "MODERATE"));
-  assert.ok(nettyCors.every((entry) => entry.fixedVersions.includes("4.1.137.Final")));
-  assert.ok(nettyCors.every((entry) => entry.fixedVersions.includes("4.2.17.Final")));
-  assert.ok(nettyCors.every((entry) => entry.expiresAt === "2026-10-02"));
   assert.deepEqual(
     scopeDefinitions.map((scope) => scope.id),
     [
@@ -95,25 +80,36 @@ test("tracked baseline records exact, short-lived, non-runtime findings", async 
   );
   assert.deepEqual(baseline.scopeDefinitions, scopeDefinitions);
 
-  for (const entry of baseline.exceptions) {
-    assert.match(entry.advisory, /^GHSA-/);
-    assert.match(entry.mavenCoordinate, /^[^:]+:[^:]+$/);
-    assert.ok(entry.version);
-    assert.ok(entry.scopes.length > 0);
-    assert.ok(entry.scopes.every((scope) => scopeDefinitions.some((item) => item.id === scope)));
-    assert.equal(entry.owner, "space2233");
-    assert.ok(entry.upstreamChain.length >= 3);
-    assert.match(entry.unreachableReason, /absent from arm64ReleaseRuntimeClasspath/);
-    assert.ok(entry.fixedVersions.length > 0);
-    assert.equal(entry.trackingIssue, "PIXNYA-SEC-ANDROID-BUILD-TOOLS-2026-08");
-    if (entry.advisory === "GHSA-c4c3-7fpv-j4q5" || entry.advisory === "GHSA-fccg-mwvh-qqg4") {
-      assert.equal(entry.reviewedAt, "2026-09-12");
-      continue;
-    }
-    assert.notEqual(entry.severity, "CRITICAL");
-    assert.equal(entry.reviewedAt, "2026-09-02");
-    assert.equal(entry.expiresAt, "2026-10-02");
-  }
+  assert.doesNotThrow(() => validateBaseline(baseline, [], { asOf: "2030-01-01" }));
+});
+
+test("a clean scan succeeds only with complete locked package evidence", () => {
+  const maps = new Map(scopeDefinitions.map((scope) => [
+    scope.id, new Map([["org.jdom:jdom2:2.0.6.1", ["classpath"]]]),
+  ]));
+  const report = { results: scopeDefinitions.map((scope) => ({
+    source: { path: scope.lockfile },
+    packages: [{ package: { ecosystem: "Maven", name: "org.jdom:jdom2", version: "2.0.6.1" } }],
+  })) };
+  assert.doesNotThrow(() => validateReportCoverage(report, maps));
+  const observed = collectObservedFindings(report, maps);
+  assert.deepEqual(observed, []);
+  assert.doesNotThrow(() => validateBaseline(reviewedBaseline([]), observed, { asOf: "2026-08-09" }));
+  assert.throws(() => validateReportCoverage({ results: [] }, maps), /all three/);
+  assert.throws(() => validateReportCoverage({ results: report.results.slice(1) }, maps), /all three/);
+  const omitted = structuredClone(report);
+  omitted.results[0].packages = [];
+  assert.throws(() => validateReportCoverage(omitted, maps), /every locked package/);
+  const duplicate = structuredClone(report);
+  duplicate.results.push(duplicate.results[0]);
+  assert.throws(() => validateReportCoverage(duplicate, maps), /repeats/);
+  const unknown = structuredClone(report);
+  unknown.results[0].packages[0].package.version = "missing";
+  assert.throws(() => validateReportCoverage(unknown, maps), /not locked/);
+  const malformed = structuredClone(report);
+  malformed.results[0].packages[0].vulnerabilities = {};
+  assert.throws(() => validateReportCoverage(malformed, maps), /invalid vulnerability evidence/);
+  assert.throws(() => validateBaseline(reviewedBaseline([]), [finding()], { asOf: "2026-08-09" }), /added:/);
 });
 
 test("the reviewed Android build graph pins the fixed Bouncy Castle family", async () => {
@@ -125,7 +121,7 @@ test("the reviewed Android build graph pins the fixed Bouncy Castle family", asy
     read("docs/android-gradle-osv-risk-baseline.json"),
   ]);
   for (const module of ["bcprov-jdk18on", "bcpkix-jdk18on", "bcutil-jdk18on"]) {
-    const coordinate = `org.bouncycastle:${module}:1.80.2`;
+    const coordinate = `org.bouncycastle:${module}:1.85`;
     assert.match(rootBuild, new RegExp(coordinate.replaceAll(".", "\\.")));
     assert.match(buildSrcBuild, new RegExp(coordinate.replaceAll(".", "\\.")));
     assert.match(rootLock, new RegExp(`^${coordinate.replaceAll(".", "\\.")}=`, "m"));
@@ -135,7 +131,7 @@ test("the reviewed Android build graph pins the fixed Bouncy Castle family", asy
   }
   assert.match(
     rootBuild,
-    /allprojects\s*\{[\s\S]*withModule\("com\.android\.tools:sdk-common"\)[\s\S]*strictly\("1\.80\.2"\)/,
+    /allprojects\s*\{[\s\S]*withModule\("com\.android\.tools:sdk-common"\)[\s\S]*strictly\("1\.85"\)/,
   );
   assert.doesNotMatch(baselineText, /GHSA-574f-3g2m-x479/);
 });
@@ -177,6 +173,10 @@ test("normal findings expire in 30 days and critical findings in at most 14 days
 });
 
 test("OSV findings in the ARM64 release runtime can never enter the baseline", () => {
+  assert.throws(
+    () => collectObservedFindings(appReport(), lockMaps(["armReleaseRuntimeClasspath"])),
+    /runtime findings can never use this baseline/,
+  );
   assert.throws(
     () => collectObservedFindings(appReport(), lockMaps(["arm64ReleaseRuntimeClasspath"])),
     /runtime findings can never use this baseline/,

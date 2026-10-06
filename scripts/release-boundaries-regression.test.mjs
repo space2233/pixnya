@@ -8,7 +8,7 @@ const root = process.cwd();
 const read = (relativePath) => readFile(path.join(root, relativePath), "utf8");
 const SETUP_ANDROID_PIN = /uses: android-actions\/setup-android@[0-9a-f]{40} # v3/g;
 const SETUP_ANDROID_WITHOUT_OBSOLETE_TOOLS =
-  /uses: android-actions\/setup-android@[0-9a-f]{40} # v3\n        with:\n          packages: platform-tools\n/g;
+  /uses: android-actions\/setup-android@[0-9a-f]{40} # v3\r?\n        with:\r?\n          packages: platform-tools\r?\n/g;
 
 const assertSetupAndroidSkipsObsoleteToolsPackage = (workflow, expectedCount) => {
   const setups = workflow.match(SETUP_ANDROID_PIN) ?? [];
@@ -200,7 +200,7 @@ test("formal releases are gated by main-branch full verification and signed arti
   assert.match(androidAppBuild, /Android ARM64 and ARMv7 release compile lock graphs differ/);
   assert.match(androidAppBuild, /Android ARM64 and ARMv7 release runtime lock graphs differ/);
   assert.match(androidAppBuild, /variant-ambiguous between debug and release/);
-  assert.match(androidAppBuild, /com\.fasterxml\.jackson\.core:jackson-databind:2\.22\.1/);
+  assert.match(androidAppBuild, /com\.fasterxml\.jackson\.core:jackson-databind:2\.22\.3/);
   assert.match(androidAppBuild, /project :tauri-android/);
   assert.match(workflow, /POM_EVIDENCE_HOME="\$RUNNER_TEMP\/pixnya-gradle-pom-evidence"/);
   assert.match(workflow, /hydrate-gradle-pom-evidence\.mjs/);
