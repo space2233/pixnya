@@ -26,6 +26,12 @@ const MAX_ARCHIVE_FILES: usize = 100_000;
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FrontendBackupState {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reading_shelf: Option<Vec<ReadingShelfEntry>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reader_preferences: Option<ReaderPreferences>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub volume_page_turn: Option<bool>,
     pub search_history: Vec<String>,
     /// Missing in legacy backups, `null` for unlimited, otherwise a reviewed finite limit.
     #[serde(
@@ -39,6 +45,28 @@ pub struct FrontendBackupState {
     pub sidebar_expanded: bool,
     pub reduced_motion: bool,
     pub r18_default_visible: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReadingShelfEntry {
+    pub id: String,
+    pub title: String,
+    pub author: String,
+    pub series_id: Option<String>,
+    pub series_title: Option<String>,
+    pub x_restrict: u8,
+    pub status: String,
+    pub updated_at: u64,
+    pub last_read_at: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReaderPreferences {
+    pub font_size: u8,
+    pub line_height_tenths: u8,
+    pub theme: String,
 }
 
 fn deserialize_search_history_limit<'de, D>(

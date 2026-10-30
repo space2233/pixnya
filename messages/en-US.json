@@ -1109,5 +1109,19 @@
   "bookmark_batch_success": "Updated {count} bookmarks.",
   "bookmark_batch_partial": "Updated {success}; {failed} failed.",
   "bookmark_select_work": "Select {title}",
-  "data_error_backup_conflict": "An offline backup file conflicts with an existing file. Nothing was overwritten."
+  "data_error_backup_conflict": "An offline backup file conflicts with an existing file. Nothing was overwritten.",
+  "reading_shelf_title": "My bookshelf",
+  "reading_continue": "Continue reading",
+  "reading_planned": "To read",
+  "reading_in_progress": "Reading",
+  "reading_finished": "Finished",
+  "reading_all": "All",
+  "reading_status": "Reading status",
+  "reading_recent_empty": "Your recent reads will appear here.",
+  "reading_shelf_empty": "No novels here yet. Add one from its detail page.",
+  "reading_progress": "{percent}% read",
+  "reading_remove": "Remove from shelf",
+  "reading_on_shelf": "On your bookshelf",
+  "reading_add_planned": "Read later",
+  "reading_save_failed": "Could not save your reading data. Check device storage."
 }

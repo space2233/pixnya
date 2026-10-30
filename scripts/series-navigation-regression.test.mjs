@@ -33,7 +33,7 @@ test("independent series pages and continuous navigation are wired", async () =>
     read("src/routes/series/novels/[id]/+page.svelte"),
     read("src/routes/artworks/[id]/+page.svelte"),
     read("src/routes/novels/[id]/+page.svelte"),
-    read("src/routes/novels/[id]/read/+page.svelte"),
+    read("src/lib/components/NovelReadingPage.svelte"),
     read("src/lib/components/NovelImmersiveReader.svelte"),
     read("src/lib/artwork-series-navigation.ts"),
   ]);
@@ -50,9 +50,9 @@ test("independent series pages and continuous navigation are wired", async () =>
   assert.match(novelDetail, /\/series\/novels\//);
   assert.match(novelDetail, /\/read/);
   assert.match(novelReader, /<NovelImmersiveReader/);
-  assert.match(immersiveReader, /content\.seriesNavigation\.previous/);
-  assert.match(immersiveReader, /content\.seriesNavigation\.next/);
-  assert.match(immersiveReader, /\/read/);
+  assert.match(novelReader, /content\.seriesNavigation\.previous/);
+  assert.match(novelReader, /content\.seriesNavigation\.next/);
+  assert.match(immersiveReader, /href=\{nextHref\}/);
   assert.match(novelDetail, /\/series\/novels\//);
   assert.match(resolver, /MAX_LOOKUP_PAGES/);
   assert.match(resolver, /entry\.nextCursor/);

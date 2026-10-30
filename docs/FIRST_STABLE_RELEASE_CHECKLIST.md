@@ -1,6 +1,6 @@
 # PixNya 首个正式版发布清单
 
-> 状态：首个稳定版与后续 `1.1.0`–`1.5.1` 已发布；当前维护范围是 `1.6.5`
+> 状态：首个稳定版与后续 `1.1.0`–`1.5.1` 已发布；当前开发范围是 `1.7.0`
 > 当前升级基线：公开稳定版 `1.5.1`
 > 正式支持：Windows x64/ARM64（NSIS）、Linux x64（AppImage）、Android ARM64/ARM32（split APK）
 
@@ -92,4 +92,8 @@
 
 ## 5. 当前结论
 
-`1.5.1` 已是公开 latest stable；固定候选 `302e117e234aff16658c1a6f82c707c1697cd40e`、五平台签名、10 个附件已由 Draft 工作流 `33730303676` 生成。该 Release 曾作为 Pre-release 公开，官方 Publish 工作流只接受 Draft，无法再复验切换；维护者随后直接将其标为 latest。本轮不做人机活体验收。`1.4.4` 维护工作已完成并打 tag，但从未作为面向用户的 GitHub Release 公开，内容已包含在 `1.5.0` 中；未公开的 `1.4.4` Draft Release 已删除；历史 tag 因仓库不可删除 ruleset 保持原 SHA。当前激活的下一版本是 `1.6.5`：在 `1.6.4` 之上纳入 Publish 工作流跳过过时 Android SDK `tools` 包的修复。`v1.6.0`–`v1.6.4` tag 不可移动；`v1.6.4` 指向 `17dbcf4e162abcc7e6380adeb9954eebd1cdfb91`，当前 `main` 已领先一提交，官方 Publish 无法从当前 `main` 复验该 Draft。从公开 `1.5.1` 到 `1.6.5` Draft 的 Windows x64 / Android ARM64 覆盖升级完整条尚未开始。`1.6.4` Draft 已由工作流 `34740686034` 签名且未 Publish。`1.6.3` Draft 已由工作流 `34738975651` 签名；维护者确认过 Android ARM64 上该版新功能可用。不增加新的缓存接口。
+`1.5.1` 已是公开 latest stable；固定候选 `302e117e234aff16658c1a6f82c707c1697cd40e`、五平台签名、10 个附件已由 Draft 工作流 `33730303676` 生成。该 Release 曾作为 Pre-release 公开，官方 Publish 工作流只接受 Draft，无法再复验切换；维护者随后直接将其标为 latest。本轮不做人机活体验收。`1.4.4` 维护工作已完成并打 tag，但从未作为面向用户的 GitHub Release 公开，内容已包含在 `1.5.0` 中；未公开的 `1.4.4` Draft Release 已删除；历史 tag 因仓库不可删除 ruleset 保持原 SHA。上一轮激活的版本是 `1.6.5`：在 `1.6.4` 之上纳入 Publish 工作流跳过过时 Android SDK `tools` 包的修复。`v1.6.0`–`v1.6.4` tag 不可移动；`v1.6.4` 指向 `17dbcf4e162abcc7e6380adeb9954eebd1cdfb91`，当前 `main` 已领先一提交，官方 Publish 无法从当前 `main` 复验该 Draft。从公开 `1.5.1` 到 `1.6.5` Draft 的 Windows x64 / Android ARM64 覆盖升级完整条尚未开始。`1.6.4` Draft 已由工作流 `34740686034` 签名且未 Publish。`1.6.3` Draft 已由工作流 `34738975651` 签名；维护者确认过 Android ARM64 上该版新功能可用。不增加新的缓存接口。
+
+## 1.7.0 当前状态（2026-10-30）
+
+阅读连续性、个人书架、阅读设置备份与新图标已进入本地源码。版本范围和验证记录见 [功能路线](FEATURE_ROADMAP.md) 与 [1.7.0 本地验收](releases/v1.7.0-acceptance.md)。历史版本验收记录不自动转记；本轮尚未创建签名安装包或发布 Release。

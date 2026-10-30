@@ -1109,5 +1109,19 @@
   "bookmark_batch_success": "已更新 {count} 项收藏。",
   "bookmark_batch_partial": "已更新 {success} 项，{failed} 项失败。",
   "bookmark_select_work": "选择 {title}",
-  "data_error_backup_conflict": "备份中的离线文件与现有文件冲突；未覆盖任何内容。"
+  "data_error_backup_conflict": "备份中的离线文件与现有文件冲突；未覆盖任何内容。",
+  "reading_shelf_title": "我的书架",
+  "reading_continue": "继续阅读",
+  "reading_planned": "待读",
+  "reading_in_progress": "在读",
+  "reading_finished": "已读",
+  "reading_all": "全部",
+  "reading_status": "阅读状态",
+  "reading_recent_empty": "开始阅读后，可以在这里接着读。",
+  "reading_shelf_empty": "这里还没有小说，可以在小说详情加入待读。",
+  "reading_progress": "已读 {percent}%",
+  "reading_remove": "移出书架",
+  "reading_on_shelf": "已加入书架",
+  "reading_add_planned": "加入待读",
+  "reading_save_failed": "阅读记录未能保存，请检查设备存储空间。"
 }

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ReadingShelfButton from "$lib/components/ReadingShelfButton.svelte";
   import { page } from "$app/state";
   import AppShell from "$lib/components/AppShell.svelte";
   import ArtworkComments from "$lib/components/ArtworkComments.svelte";
@@ -285,6 +286,7 @@
           </div>
 
           <div class="detail-actions">
+            <ReadingShelfButton novel={detail.novel} />
             <a class="read-button" href={`/novels/${detail.novel.id}/read`}>
               <Icon name="book" size={18} />{m.novel_start_reading()}
             </a>

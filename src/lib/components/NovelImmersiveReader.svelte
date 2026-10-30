@@ -51,6 +51,10 @@
     fallback,
     initialProgress = 0,
     onprogress,
+    onstart = () => {},
+    offline = false,
+    previousHref = null,
+    nextHref = null,
   }: {
     detail: NovelDetail;
     content: NovelContent;
@@ -58,6 +62,10 @@
     fallback: string;
     initialProgress?: number;
     onprogress: (value: number) => void;
+    onstart?: () => void;
+    offline?: boolean;
+    previousHref?: string | null;
+    nextHref?: string | null;
   } = $props();
 
   const stored = readNovelReaderPreferences();
@@ -86,8 +94,6 @@
   let probeStart: PageCursor | null = null;
   let probeEnd: PageCursor | null = null;
 
-  let previous = $derived(content.seriesNavigation.previous);
-  let next = $derived(content.seriesNavigation.next);
   let seriesId = $derived(content.seriesId ?? detail.novel.series?.id ?? null);
   let seriesTitle = $derived(content.seriesTitle ?? detail.novel.series?.title ?? m.novel_series_label());
   let chapters = $derived(blocks.flatMap((block, index) => block.kind === "chapter" ? [{ index, text: block.text }] : []));
@@ -136,6 +142,7 @@
   });
 
   onMount(() => {
+    onstart();
     const applyVolumePage = (direction: "next" | "previous") => {
       if (!volumePageTurn) return;
       turnPage(direction === "next" ? 1 : -1);
@@ -443,7 +450,8 @@
           {:else if item.kind === "page_break"}
             <hr />
           {:else if item.kind === "artwork_link"}
-            <a class="embed" href={`/artworks/${item.id}`}>{m.novel_reader_artwork_link({ id: item.id })}</a>
+            {#if offline}<div class="embed muted">{m.novel_reader_artwork_link({ id: item.id })}</div>
+            {:else}<a class="embed" href={`/artworks/${item.id}`}>{m.novel_reader_artwork_link({ id: item.id })}</a>{/if}
           {:else if item.kind === "uploaded_image"}
             <div class="embed muted">{m.novel_reader_uploaded_image({ id: item.id })}</div>
           {:else if item.kind === "external_link"}
@@ -472,8 +480,8 @@
 
     <footer class="chrome-bottom" data-chrome>
       <div class="chapter-row">
-        {#if previous?.viewable}
-          <a href={`/novels/${previous.id}/read`}>{m.novel_reader_previous_chapter()}</a>
+        {#if previousHref}
+          <a href={previousHref}>{m.novel_reader_previous_chapter()}</a>
         {:else}
           <button type="button" disabled>{m.novel_reader_previous_chapter()}</button>
         {/if}
@@ -485,8 +493,8 @@
           aria-label={pageLabel}
           oninput={(event) => goToPage(Number((event.currentTarget as HTMLInputElement).value), true)}
         />
-        {#if next?.viewable}
-          <a href={`/novels/${next.id}/read`}>{m.novel_reader_next_chapter()}</a>
+        {#if nextHref}
+          <a href={nextHref}>{m.novel_reader_next_chapter()}</a>
         {:else}
           <button type="button" disabled>{m.novel_reader_next_chapter()}</button>
         {/if}
@@ -538,8 +546,9 @@
     </section>
   {:else if panel === "more"}
     <section class="sheet" data-chrome>
-      <a href={fallback}>{m.novel_reader_open_detail()}</a>
-      {#if seriesId}
+      <a href={fallback}>{offline ? m.offline_back_library() : m.novel_reader_open_detail()}</a>
+      <a href="/novels/shelf">{m.reading_shelf_title()}</a>
+      {#if seriesId && !offline}
         <a href={`/series/novels/${seriesId}`}>{m.novel_reader_open_series()}: {seriesTitle}</a>
       {/if}
     </section>

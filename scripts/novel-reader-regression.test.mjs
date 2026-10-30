@@ -7,7 +7,7 @@ function source(path) {
 }
 
 test("the novel reader is an immersive paginated surface without search or speech", () => {
-  const page = source("../src/routes/novels/[id]/read/+page.svelte");
+  const page = source("../src/lib/components/NovelReadingPage.svelte");
   const reader = source("../src/lib/components/NovelImmersiveReader.svelte");
   const shell = source("../src/lib/components/AppShell.svelte");
   const css = source("../src/app.css");
@@ -15,7 +15,7 @@ test("the novel reader is an immersive paginated surface without search or speec
   assert.match(page, /<AppShell immersive/);
   assert.match(page, /<NovelImmersiveReader/);
   assert.match(page, /parseNovelText/);
-  assert.match(page, /pixiv-client:novel-progress:/);
+  assert.match(source("../src/lib/reading-shelf.ts"), /pixiv-client:novel-progress:/);
   assert.match(shell, /immersive = false/);
   assert.match(css, /\.app-frame\.immersive/);
   assert.match(page, /NOVEL_READER_LOAD_ATTEMPTS/);

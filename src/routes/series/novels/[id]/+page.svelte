@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SeriesContinue from "$lib/components/SeriesContinue.svelte";
   import { page } from "$app/state";
   import AppShell from "$lib/components/AppShell.svelte";
   import Icon from "$lib/components/Icon.svelte";
@@ -157,6 +158,7 @@
             {#if series.isOriginal}<span>{m.novel_original_badge()}</span>{/if}
             {#if series.watchlistAdded}<span>{m.series_watchlisted()}</span>{/if}
           </div>
+          <SeriesContinue seriesId={series.id} />
           {#if firstNovel}<a class="start" href={`/novels/${firstNovel.id}/read`}>{m.novel_series_start_reading()}</a>{/if}
         </div>
       </section>

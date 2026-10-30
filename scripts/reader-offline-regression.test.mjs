@@ -74,7 +74,7 @@ test("frontend uses typed readers and local-only offline routes", async () => {
   const manga = await source("src/lib/components/BrowsePage.svelte");
   const novels = await source("src/routes/novels/+page.svelte");
   const novelDetail = await source("src/routes/novels/[id]/+page.svelte");
-  const novelReader = await source("src/routes/novels/[id]/read/+page.svelte");
+  const novelReader = await source("src/lib/components/NovelReadingPage.svelte");
   const immersiveReader = await source("src/lib/components/NovelImmersiveReader.svelte");
   const artworkReader = await source("src/routes/artworks/[id]/+page.svelte");
   const ugoira = await source("src/lib/components/UgoiraPlayer.svelte");
@@ -115,7 +115,8 @@ test("frontend uses typed readers and local-only offline routes", async () => {
   assert.match(offlineArtwork, /<ArtworkImageViewer/);
   assert.match(artworkViewer, /<OfflineImage/);
   assert.match(artworkViewer, /fallbackUrl=\{image\.previewUrl \?\? image\.originalUrl\}/);
-  assert.match(offlineNovel, /readOfflineText/);
-  assert.match(offlineNovel, /parseNovelText/);
+  assert.match(offlineNovel, /<NovelReadingPage[^>]*offlineOnly/);
+  assert.match(novelReader, /readOfflineText/);
+  assert.match(novelReader, /parseNovelText/);
   assert.match(offlineUgoira, /<OfflineUgoiraPlayer/);
 });

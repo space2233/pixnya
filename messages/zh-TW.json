@@ -1109,5 +1109,19 @@
   "bookmark_batch_success": "已更新 {count} 項收藏。",
   "bookmark_batch_partial": "已更新 {success} 項，{failed} 項失敗。",
   "bookmark_select_work": "選擇 {title}",
-  "data_error_backup_conflict": "備份中的離線檔案與現有檔案衝突；未覆寫任何內容。"
+  "data_error_backup_conflict": "備份中的離線檔案與現有檔案衝突；未覆寫任何內容。",
+  "reading_shelf_title": "我的書架",
+  "reading_continue": "繼續閱讀",
+  "reading_planned": "待讀",
+  "reading_in_progress": "在讀",
+  "reading_finished": "已讀",
+  "reading_all": "全部",
+  "reading_status": "閱讀狀態",
+  "reading_recent_empty": "開始閱讀後，可以在這裡接著讀。",
+  "reading_shelf_empty": "這裡還沒有小說，可以在小說詳情加入待讀。",
+  "reading_progress": "已讀 {percent}%",
+  "reading_remove": "移出書架",
+  "reading_on_shelf": "已加入書架",
+  "reading_add_planned": "加入待讀",
+  "reading_save_failed": "閱讀記錄未能儲存，請檢查裝置儲存空間。"
 }

@@ -137,12 +137,12 @@ test("all detail screens delegate return behavior to the shared component", asyn
   const detailPages = [
     "src/routes/artworks/[id]/+page.svelte",
     "src/routes/novels/[id]/+page.svelte",
-    "src/routes/novels/[id]/read/+page.svelte",
+    "src/lib/components/NovelReadingPage.svelte",
     "src/routes/users/[id]/+page.svelte",
     "src/routes/series/artworks/[id]/+page.svelte",
     "src/routes/series/novels/[id]/+page.svelte",
     "src/routes/offline/artworks/[id]/+page.svelte",
-    "src/routes/offline/novels/[id]/+page.svelte",
+
     "src/routes/offline/ugoira/[id]/+page.svelte",
   ];
 

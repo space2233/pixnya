@@ -724,6 +724,9 @@ mod tests {
 
     fn frontend(search: &str) -> FrontendBackupState {
         FrontendBackupState {
+            reading_shelf: None,
+            reader_preferences: None,
+            volume_page_turn: None,
             search_history: vec![search.to_owned()],
             search_history_limit: Some(Some(8)),
             novel_reading_progress: Default::default(),

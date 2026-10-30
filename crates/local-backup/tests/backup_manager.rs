@@ -1,6 +1,6 @@
 use pixiv_client_local_backup::{
     BackupCreateRequest, BackupError, BackupManager, FrontendBackupState, OfflineBackupFile,
-    OfflineBackupSource, PortableBackupData,
+    OfflineBackupSource, PortableBackupData, ReaderPreferences, ReadingShelfEntry,
 };
 use std::collections::BTreeMap;
 use std::fs::File;
@@ -10,6 +10,9 @@ use zip::write::SimpleFileOptions;
 fn sample_data() -> PortableBackupData {
     PortableBackupData {
         frontend: FrontendBackupState {
+            reading_shelf: None,
+            reader_preferences: None,
+            volume_page_turn: None,
             search_history: vec!["猫".to_owned()],
             search_history_limit: Some(Some(8)),
             novel_reading_progress: BTreeMap::from([("42".to_owned(), 730_000)]),
@@ -85,6 +88,9 @@ fn distinguishes_legacy_missing_search_limit_from_explicit_unlimited() {
     }))
     .unwrap();
     assert_eq!(legacy.search_history_limit, None);
+    assert_eq!(legacy.reading_shelf, None);
+    assert_eq!(legacy.reader_preferences, None);
+    assert_eq!(legacy.volume_page_turn, None);
     assert!(serde_json::to_value(&legacy)
         .unwrap()
         .get("searchHistoryLimit")
@@ -104,6 +110,45 @@ fn distinguishes_legacy_missing_search_limit_from_explicit_unlimited() {
         .unwrap()
         .get("searchHistoryLimit")
         .is_some_and(serde_json::Value::is_null));
+}
+
+#[test]
+fn reading_settings_and_shelf_survive_archive_and_recovery_serialization() {
+    let directory = tempfile::tempdir().unwrap();
+    let path = directory.path().join("reading.pixnyabackup");
+    let manager = BackupManager::new("1.7.0");
+    let mut data = sample_data();
+    data.frontend.reader_preferences = Some(ReaderPreferences {
+        font_size: 24,
+        line_height_tenths: 22,
+        theme: "dark".to_owned(),
+    });
+    data.frontend.volume_page_turn = Some(true);
+    data.frontend.reading_shelf = Some(vec![ReadingShelfEntry {
+        id: "42".to_owned(),
+        title: "A novel".to_owned(),
+        author: "Author".to_owned(),
+        series_id: Some("7".to_owned()),
+        series_title: Some("Series".to_owned()),
+        x_restrict: 0,
+        status: "reading".to_owned(),
+        updated_at: 1_800_000_000_000,
+        last_read_at: 1_800_000_000_000,
+    }]);
+    manager
+        .create(
+            &path,
+            BackupCreateRequest {
+                data: data.clone(),
+                include_offline: false,
+                offline_files: vec![],
+            },
+        )
+        .unwrap();
+    assert_eq!(manager.restore(&path).unwrap().data, data);
+    let recovery: FrontendBackupState =
+        serde_json::from_slice(&serde_json::to_vec(&data.frontend).unwrap()).unwrap();
+    assert_eq!(recovery, data.frontend);
 }
 
 #[test]

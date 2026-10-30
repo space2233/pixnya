@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ReadingShelf from "$lib/components/ReadingShelf.svelte";
   import AppShell from "$lib/components/AppShell.svelte";
   import ContentTabs from "$lib/components/ContentTabs.svelte";
   import Icon from "$lib/components/Icon.svelte";
@@ -224,6 +225,7 @@
 <AppShell title={m.novels_title()}>
   <ContentTabs />
   <main class="novel-page">
+    <ReadingShelf compact />
     <header><div><h1 class="page-title">{m.novels_title()}</h1></div></header>
     <div class="novel-toolbar">
       <nav aria-label={m.novels_content_type()}>{#each sections as section}<button type="button" class:active={selectedSection === section} onclick={() => (selectedSection = section)}>{sectionLabels[section]()}</button>{/each}</nav>

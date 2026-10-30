@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ReadingShelf from "$lib/components/ReadingShelf.svelte";
   import AppShell from "$lib/components/AppShell.svelte";
   import ArtworkCard from "$lib/components/ArtworkCard.svelte";
   import ContentTabs from "$lib/components/ContentTabs.svelte";
@@ -451,6 +452,7 @@
   {#if definition.tabs}<ContentTabs />{/if}
 
   <div class="browse-page" class:with-tabs={definition.tabs}>
+    {#if section === "home"}<ReadingShelf compact />{/if}
     {#if section === "following"}<FollowingTabs />{/if}
     {#if (section === "home" || section === "discover") && topicTags.length > 0}
       <div class="topic-strip" aria-label={m.browse_recommended_tags()}>

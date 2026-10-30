@@ -22,8 +22,10 @@ test("novel metadata and reading live on separate routes", () => {
   assert.doesNotMatch(detail, /class="reader-controls"/);
   assert.doesNotMatch(detail, /class="novel-body"/);
   assert.doesNotMatch(detail, /<NovelImmersiveReader/);
-  assert.match(reader, /<NovelImmersiveReader/);
-  assert.match(reader, /immersive/);
+  assert.match(reader, /<NovelReadingPage/);
+  const sharedReader = read("src", "lib", "components", "NovelReadingPage.svelte");
+  assert.match(sharedReader, /<NovelImmersiveReader/);
+  assert.match(sharedReader, /immersive/);
   assert.match(immersive, /class="paged"/);
   assert.match(immersive, /class="tools"/);
 });

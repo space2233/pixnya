@@ -42,7 +42,7 @@
       const previousFrontend = collectFrontendBackupState();
       const result = await startLocalBackupRestore(strategy, previousFrontend);
       try {
-        restoreFrontendBackupState(result.frontend);
+        restoreFrontendBackupState(result.frontend, strategy);
         await commitLocalBackupRestore(result.transactionId);
       } catch (error) {
         await rollbackLocalBackupRestore(result.transactionId).catch(() => {
