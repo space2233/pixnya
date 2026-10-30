@@ -61,6 +61,21 @@ test("all user-visible package versions agree on the stable source version", asy
   );
 });
 
+test("the locked Tauri Rust crate and frontend API use the same major/minor release", async () => {
+  const [cargoLock, packageLock] = await Promise.all([
+    read("Cargo.lock"),
+    read("package-lock.json"),
+  ]);
+  const rustVersion = cargoLock.match(/\[\[package\]\]\r?\nname = "tauri"\r?\nversion = "([^"]+)"/)?.[1];
+  const apiVersion = JSON.parse(packageLock).packages["node_modules/@tauri-apps/api"]?.version;
+  assert.ok(rustVersion && apiVersion, "both locked Tauri versions must exist");
+  assert.equal(
+    apiVersion.split(".").slice(0, 2).join("."),
+    rustVersion.split(".").slice(0, 2).join("."),
+    "Tauri rejects desktop builds when the Rust crate and frontend API major/minor differ",
+  );
+});
+
 test("Android releases signed ARM64 and ARMv7 split APKs", async () => {
   const [packageJson, arm64, armv7, workflow, manifestGenerator] = await Promise.all([
     read("package.json"),

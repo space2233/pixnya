@@ -7,7 +7,7 @@ Copyright (C) 2026 PixNya contributors
 
 This inventory records the reviewed license expressions for the exact dependency versions locked for PixNya 1.7.0. It is generated locally from `package-lock.json`, `Cargo.lock`, the Android Gradle lock and verification graph, installed npm/Cargo package evidence, and the tracked Maven license review. It is not legal advice and does not replace any upstream license or notice file shipped with a dependency.
 
-- Lock fingerprint: `sha256:d872c056a68bb53902d47ed541fe30bf3899c92a1719515a1ee17949a10e9d16`
+- Lock fingerprint: `sha256:b88e50c00514e68a11fd9335da92769fe0dff5437b72c65c8bd13216534af26c`
 - npm runtime/optional packages: 1
 - npm build/development packages: 144
 - Rust target-dependent locked packages: 558
@@ -18,7 +18,7 @@ This inventory records the reviewed license expressions for the exact dependency
 
 | Package | Version | Declared license | Notes |
 |---|---:|---|---|
-| [@tauri-apps/api](https://registry.npmjs.org/@tauri-apps/api/-/api-2.11.1.tgz) | 2.11.1 | Apache-2.0 OR MIT | runtime/target-dependent |
+| [@tauri-apps/api](https://registry.npmjs.org/@tauri-apps/api/-/api-2.12.4.tgz) | 2.12.4 | Apache-2.0 OR MIT | runtime/target-dependent |
 
 ## npm build and development dependencies
 
@@ -97,18 +97,18 @@ This inventory records the reviewed license expressions for the exact dependency
 | [@sveltejs/load-config](https://registry.npmjs.org/@sveltejs/load-config/-/load-config-0.2.1.tgz) | 0.2.1 | MIT | build/development |
 | [@sveltejs/vite-plugin-svelte](https://registry.npmjs.org/@sveltejs/vite-plugin-svelte/-/vite-plugin-svelte-5.1.1.tgz) | 5.1.1 | MIT | build/development |
 | [@sveltejs/vite-plugin-svelte-inspector](https://registry.npmjs.org/@sveltejs/vite-plugin-svelte-inspector/-/vite-plugin-svelte-inspector-4.0.1.tgz) | 4.0.1 | MIT | build/development |
-| [@tauri-apps/cli](https://registry.npmjs.org/@tauri-apps/cli/-/cli-2.11.4.tgz) | 2.11.4 | Apache-2.0 OR MIT | build/development |
-| [@tauri-apps/cli-darwin-arm64](https://registry.npmjs.org/@tauri-apps/cli-darwin-arm64/-/cli-darwin-arm64-2.11.4.tgz) | 2.11.4 | Apache-2.0 OR MIT | optional, build/development |
-| [@tauri-apps/cli-darwin-x64](https://registry.npmjs.org/@tauri-apps/cli-darwin-x64/-/cli-darwin-x64-2.11.4.tgz) | 2.11.4 | Apache-2.0 OR MIT | optional, build/development |
-| [@tauri-apps/cli-linux-arm-gnueabihf](https://registry.npmjs.org/@tauri-apps/cli-linux-arm-gnueabihf/-/cli-linux-arm-gnueabihf-2.11.4.tgz) | 2.11.4 | Apache-2.0 OR MIT | optional, build/development |
-| [@tauri-apps/cli-linux-arm64-gnu](https://registry.npmjs.org/@tauri-apps/cli-linux-arm64-gnu/-/cli-linux-arm64-gnu-2.11.4.tgz) | 2.11.4 | Apache-2.0 OR MIT | optional, build/development |
-| [@tauri-apps/cli-linux-arm64-musl](https://registry.npmjs.org/@tauri-apps/cli-linux-arm64-musl/-/cli-linux-arm64-musl-2.11.4.tgz) | 2.11.4 | Apache-2.0 OR MIT | optional, build/development |
-| [@tauri-apps/cli-linux-riscv64-gnu](https://registry.npmjs.org/@tauri-apps/cli-linux-riscv64-gnu/-/cli-linux-riscv64-gnu-2.11.4.tgz) | 2.11.4 | Apache-2.0 OR MIT | optional, build/development |
-| [@tauri-apps/cli-linux-x64-gnu](https://registry.npmjs.org/@tauri-apps/cli-linux-x64-gnu/-/cli-linux-x64-gnu-2.11.4.tgz) | 2.11.4 | Apache-2.0 OR MIT | optional, build/development |
-| [@tauri-apps/cli-linux-x64-musl](https://registry.npmjs.org/@tauri-apps/cli-linux-x64-musl/-/cli-linux-x64-musl-2.11.4.tgz) | 2.11.4 | Apache-2.0 OR MIT | optional, build/development |
-| [@tauri-apps/cli-win32-arm64-msvc](https://registry.npmjs.org/@tauri-apps/cli-win32-arm64-msvc/-/cli-win32-arm64-msvc-2.11.4.tgz) | 2.11.4 | Apache-2.0 OR MIT | optional, build/development |
-| [@tauri-apps/cli-win32-ia32-msvc](https://registry.npmjs.org/@tauri-apps/cli-win32-ia32-msvc/-/cli-win32-ia32-msvc-2.11.4.tgz) | 2.11.4 | Apache-2.0 OR MIT | optional, build/development |
-| [@tauri-apps/cli-win32-x64-msvc](https://registry.npmjs.org/@tauri-apps/cli-win32-x64-msvc/-/cli-win32-x64-msvc-2.11.4.tgz) | 2.11.4 | Apache-2.0 OR MIT | optional, build/development |
+| [@tauri-apps/cli](https://registry.npmjs.org/@tauri-apps/cli/-/cli-2.12.4.tgz) | 2.12.4 | Apache-2.0 OR MIT | build/development |
+| [@tauri-apps/cli-darwin-arm64](https://registry.npmjs.org/@tauri-apps/cli-darwin-arm64/-/cli-darwin-arm64-2.12.4.tgz) | 2.12.4 | Apache-2.0 OR MIT | optional, build/development |
+| [@tauri-apps/cli-darwin-x64](https://registry.npmjs.org/@tauri-apps/cli-darwin-x64/-/cli-darwin-x64-2.12.4.tgz) | 2.12.4 | Apache-2.0 OR MIT | optional, build/development |
+| [@tauri-apps/cli-linux-arm-gnueabihf](https://registry.npmjs.org/@tauri-apps/cli-linux-arm-gnueabihf/-/cli-linux-arm-gnueabihf-2.12.4.tgz) | 2.12.4 | Apache-2.0 OR MIT | optional, build/development |
+| [@tauri-apps/cli-linux-arm64-gnu](https://registry.npmjs.org/@tauri-apps/cli-linux-arm64-gnu/-/cli-linux-arm64-gnu-2.12.4.tgz) | 2.12.4 | Apache-2.0 OR MIT | optional, build/development |
+| [@tauri-apps/cli-linux-arm64-musl](https://registry.npmjs.org/@tauri-apps/cli-linux-arm64-musl/-/cli-linux-arm64-musl-2.12.4.tgz) | 2.12.4 | Apache-2.0 OR MIT | optional, build/development |
+| [@tauri-apps/cli-linux-riscv64-gnu](https://registry.npmjs.org/@tauri-apps/cli-linux-riscv64-gnu/-/cli-linux-riscv64-gnu-2.12.4.tgz) | 2.12.4 | Apache-2.0 OR MIT | optional, build/development |
+| [@tauri-apps/cli-linux-x64-gnu](https://registry.npmjs.org/@tauri-apps/cli-linux-x64-gnu/-/cli-linux-x64-gnu-2.12.4.tgz) | 2.12.4 | Apache-2.0 OR MIT | optional, build/development |
+| [@tauri-apps/cli-linux-x64-musl](https://registry.npmjs.org/@tauri-apps/cli-linux-x64-musl/-/cli-linux-x64-musl-2.12.4.tgz) | 2.12.4 | Apache-2.0 OR MIT | optional, build/development |
+| [@tauri-apps/cli-win32-arm64-msvc](https://registry.npmjs.org/@tauri-apps/cli-win32-arm64-msvc/-/cli-win32-arm64-msvc-2.12.4.tgz) | 2.12.4 | Apache-2.0 OR MIT | optional, build/development |
+| [@tauri-apps/cli-win32-ia32-msvc](https://registry.npmjs.org/@tauri-apps/cli-win32-ia32-msvc/-/cli-win32-ia32-msvc-2.12.4.tgz) | 2.12.4 | Apache-2.0 OR MIT | optional, build/development |
+| [@tauri-apps/cli-win32-x64-msvc](https://registry.npmjs.org/@tauri-apps/cli-win32-x64-msvc/-/cli-win32-x64-msvc-2.12.4.tgz) | 2.12.4 | Apache-2.0 OR MIT | optional, build/development |
 | [@types/cookie](https://registry.npmjs.org/@types/cookie/-/cookie-0.6.0.tgz) | 0.6.0 | MIT | build/development |
 | [@types/estree](https://registry.npmjs.org/@types/estree/-/estree-1.0.9.tgz) | 1.0.9 | MIT | build/development |
 | [@types/trusted-types](https://registry.npmjs.org/@types/trusted-types/-/trusted-types-2.0.7.tgz) | 2.0.7 | MIT | build/development |
