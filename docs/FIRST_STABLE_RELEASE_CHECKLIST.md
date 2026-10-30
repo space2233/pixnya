@@ -2,6 +2,8 @@
 
 > 状态：首个稳定版与后续 `1.1.0`–`1.5.1` 已发布；当前开发范围是 `1.7.0`
 > 当前升级基线：公开稳定版 `1.5.1`
+
+`1.7.0` 于 2026-10-30 按维护者决定暂停 Draft；继续保留 Linux 凭据依赖的 3 项 RustSec 停止维护阻塞，等待上游迁移。依赖修补和验证边界见 [验收记录](releases/v1.7.0-acceptance.md)。
 > 正式支持：Windows x64/ARM64（NSIS）、Linux x64（AppImage）、Android ARM64/ARM32（split APK）
 
 候选生命周期：固定 `main` 提交先生成五个平台签名 Draft；完成自动验证和本轮声明的活体验收后，再由独立 Publish 工作流复验并切换为 latest stable。生产签名密钥保持不变。

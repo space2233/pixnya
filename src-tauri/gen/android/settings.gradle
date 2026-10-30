@@ -1,4 +1,3 @@
 include ':app'
 
 apply from: 'tauri.settings.gradle'
-apply from: 'gradle/tauri-kotlin-compat.gradle'

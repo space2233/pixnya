@@ -421,7 +421,7 @@ fn verify_apk_abi(path: &Path, expected_abi: &str) -> Result<(), AndroidUpdateEr
         let entry = archive
             .by_index(index)
             .map_err(|_| AndroidUpdateError::Verification)?;
-        let name = entry.name();
+        let name = entry.name().map_err(|_| AndroidUpdateError::Verification)?;
         if name.starts_with(&expected_prefix) && name.ends_with(".so") {
             found_expected = true;
         }

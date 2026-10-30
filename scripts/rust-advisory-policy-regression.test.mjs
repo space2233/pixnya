@@ -8,11 +8,6 @@ const reviewDatePattern = /review-by=(\d{4}-\d{2}-\d{2})/;
 const expectedTemporaryRustSecExceptions = new Set([
   "RUSTSEC-2024-0370",
   "RUSTSEC-2024-0429",
-  "RUSTSEC-2025-0075",
-  "RUSTSEC-2025-0080",
-  "RUSTSEC-2025-0081",
-  "RUSTSEC-2025-0098",
-  "RUSTSEC-2025-0100",
 ]);
 
 function parseTemporaryExceptions(policy) {

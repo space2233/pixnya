@@ -33,7 +33,7 @@ fn rewrite_member(path: &std::path::Path, target: &str, replacement: &[u8]) {
     let mut writer = zip::ZipWriter::new(File::create(&rewritten).unwrap());
     for index in 0..archive.len() {
         let mut member = archive.by_index(index).unwrap();
-        let name = member.name().to_owned();
+        let name = member.name().unwrap().into_owned();
         writer
             .start_file(&name, SimpleFileOptions::default())
             .unwrap();

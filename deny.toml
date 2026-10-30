@@ -1,20 +1,12 @@
 [advisories]
 # Keep new transitive unmaintained notices fail-closed. Only the exact upstream
 # blockers below are accepted, and the regression gate expires every exception.
-# Reviewed 2026-10-06: OSV still reports only these seven advisories; the locked
-# graph has no non-test callers of glib's affected VariantStrIter API.
+# The 2026-10-06 GTK review remains due on 2026-11-05. The Tauri 2.12 update
+# removed rust-unic; its five now-unused exceptions are removed below.
 unmaintained = "all"
 unsound = "all"
 unused-ignored-advisory = "deny"
 ignore = [
   { id = "RUSTSEC-2024-0370", reason = "gtk-rs 0.18 macro transitive dependency required by Tauri 2 Linux; upstream=https://github.com/tauri-apps/tauri/issues/10910; review-by=2026-11-05" },
   { id = "RUSTSEC-2024-0429", reason = "glib 0.18.5 VariantStrIter unsound API was not found in locked non-test callers; upstream=https://github.com/gtk-rs/gtk-rs-core/pull/1343; risk-review=no-locked-nontest-callers; review-by=2026-11-05" },
-
-  # tauri-utils 2.9.3 requires urlpattern ^0.3. Review the upstream urlpattern
-  # 0.6 migration when upgrading the currently locked Tauri graph.
-  { id = "RUSTSEC-2025-0075", reason = "tauri-utils 2.9.3 via urlpattern 0.3; upstream=https://github.com/tauri-apps/tauri/pull/15660; review-by=2026-11-05" },
-  { id = "RUSTSEC-2025-0080", reason = "tauri-utils 2.9.3 via urlpattern 0.3; upstream=https://github.com/tauri-apps/tauri/pull/15660; review-by=2026-11-05" },
-  { id = "RUSTSEC-2025-0081", reason = "tauri-utils 2.9.3 via urlpattern 0.3; upstream=https://github.com/tauri-apps/tauri/pull/15660; review-by=2026-11-05" },
-  { id = "RUSTSEC-2025-0098", reason = "tauri-utils 2.9.3 via urlpattern 0.3; upstream=https://github.com/tauri-apps/tauri/pull/15660; review-by=2026-11-05" },
-  { id = "RUSTSEC-2025-0100", reason = "tauri-utils 2.9.3 via urlpattern 0.3; upstream=https://github.com/tauri-apps/tauri/pull/15660; review-by=2026-11-05" },
 ]

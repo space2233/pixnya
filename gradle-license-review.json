@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "gradleFingerprint": "sha256:af359f4642a9a01df8b9889e502d85759afc8b980c3aa825a934abbc9ac65925",
+  "gradleFingerprint": "sha256:bff4883a2761e36931b22f624c195ed3a11489858e48c39d7a3494e92283ba60",
   "components": [
     {
       "coordinate": "androidx.activity:activity-ktx:1.10.1",
@@ -2492,6 +2492,25 @@
       "licenseReferences": []
     },
     {
+      "coordinate": "com.fasterxml.jackson.datatype:jackson-datatype-json-org:2.22.3",
+      "declaredLicense": "The Apache Software License, Version 2.0",
+      "spdxLicense": "Apache-2.0",
+      "projectUrl": "https://github.com/FasterXML/jackson-datatypes-misc",
+      "licenseEvidence": {
+        "classification": "canonical-spdx-text",
+        "componentPomSha256": "35ec2f5b08001ab6d765c6165ffc750b2af36a0bb7693567b7bbf405ab8edece",
+        "sourceCoordinate": "com.fasterxml.jackson.datatype:jackson-datatype-json-org:2.22.3",
+        "sourcePomSha256": "35ec2f5b08001ab6d765c6165ffc750b2af36a0bb7693567b7bbf405ab8edece",
+        "declaredLicenses": [
+          {
+            "name": "The Apache Software License, Version 2.0",
+            "url": "https://www.apache.org/licenses/LICENSE-2.0.txt"
+          }
+        ]
+      },
+      "licenseReferences": []
+    },
+    {
       "coordinate": "com.google.android:annotations:4.1.1.4",
       "declaredLicense": "Apache 2.0",
       "spdxLicense": "Apache-2.0",
@@ -4444,15 +4463,15 @@
       ]
     },
     {
-      "coordinate": "org.checkerframework:checker-qual:3.43.0",
+      "coordinate": "org.checkerframework:checker-qual:2.5.8",
       "declaredLicense": "The MIT License",
       "spdxLicense": "MIT",
-      "projectUrl": "https://checkerframework.org/",
+      "projectUrl": "https://checkerframework.org",
       "licenseEvidence": {
         "classification": "canonical-spdx-text",
-        "componentPomSha256": "9313bf53b3efd8aaca266eea8b96e307976b65c0b16510cc6f02319fbaebed43",
-        "sourceCoordinate": "org.checkerframework:checker-qual:3.43.0",
-        "sourcePomSha256": "9313bf53b3efd8aaca266eea8b96e307976b65c0b16510cc6f02319fbaebed43",
+        "componentPomSha256": "33ac6a0f1341ae96647c7d4465f4aa3d24fe97d2697bcee2ceae6fc8b5ef2c3c",
+        "sourceCoordinate": "org.checkerframework:checker-qual:2.5.8",
+        "sourcePomSha256": "33ac6a0f1341ae96647c7d4465f4aa3d24fe97d2697bcee2ceae6fc8b5ef2c3c",
         "declaredLicenses": [
           {
             "name": "The MIT License",

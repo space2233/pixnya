@@ -81,7 +81,7 @@ test("desktop updates use Tauri signatures and Android delegates verified APKs t
     read("src-tauri/gen/android/app/src/main/java/io/github/space2233/pixnya/UpdateInstallerPlugin.kt"),
   ]);
 
-  assert.match(cargo, /\[target\.'cfg\(not\(target_os = "android"\)\)'\.dependencies\][\s\S]*tauri-plugin-updater = "2"/);
+  assert.match(cargo, /\[target\.'cfg\(not\(target_os = "android"\)\)'\.dependencies\][\s\S]*tauri-plugin-updater = "2\.14\.1"/);
   assert.match(desktopAdapter, /tauri_plugin_updater::\{Update, UpdaterExt\}/);
   assert.match(backend, /PIXNYA_UPDATER_PUBKEY/);
   assert.match(backend, /PIXNYA_UPDATE_REPOSITORY/);

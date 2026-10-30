@@ -5,7 +5,7 @@
     "version": "2.5.0"
   },
   "toolchain": {
-    "tauri": "2.11.5",
+    "tauri": "2.12.5",
     "androidGradlePlugin": "8.11.0",
     "kotlinGradlePlugin": "2.4.20",
     "gradle": "8.14.3",

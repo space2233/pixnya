@@ -168,8 +168,8 @@ test("formal releases are gated by main-branch full verification and signed arti
     /\["metadata", "--locked", "--offline", "--filter-platform", "aarch64-linux-android"/,
   );
   assert.match(androidBridgeGenerator, /"--manifest-path", "src-tauri\/Cargo\.toml"/);
-  assert.match(androidBridgeGenerator, /tauriPackage\.version !== "2\.11\.5"/);
-  assert.match(androidBridgeGenerator, /tauriBuildPackage\.version !== "2\.6\.3"/);
+  assert.match(androidBridgeGenerator, /tauriPackage\.version !== "2\.12\.5"/);
+  assert.match(androidBridgeGenerator, /tauriBuildPackage\.version !== "2\.7\.4"/);
   assert.match(androidBridgeGenerator, /Android Tauri plugin/);
   assert.match(androidBridgeGenerator, /include ':tauri-android'/);
   assert.match(androidBridgeGenerator, /implementation\(project\(":tauri-android"\)\)/);

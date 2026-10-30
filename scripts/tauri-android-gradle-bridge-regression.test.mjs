@@ -4,8 +4,8 @@ import test from "node:test";
 import { planTauriAndroidGradleBridge } from "./generate-tauri-android-gradle-bridge.mjs";
 
 const appManifest = path.resolve("src-tauri", "Cargo.toml");
-const tauriManifest = path.resolve("fixtures", "tauri-2.11.5", "Cargo.toml");
-const tauriBuildManifest = path.resolve("fixtures", "tauri-build-2.6.3", "Cargo.toml");
+const tauriManifest = path.resolve("fixtures", "tauri-2.12.5", "Cargo.toml");
+const tauriBuildManifest = path.resolve("fixtures", "tauri-build-2.7.4", "Cargo.toml");
 
 const metadataFixture = () => ({
   packages: [
@@ -13,14 +13,14 @@ const metadataFixture = () => ({
     {
       id: "tauri",
       name: "tauri",
-      version: "2.11.5",
+      version: "2.12.5",
       links: "Tauri",
       manifest_path: tauriManifest,
     },
     {
       id: "tauri-build",
       name: "tauri-build",
-      version: "2.6.3",
+      version: "2.7.4",
       manifest_path: tauriBuildManifest,
     },
   ],
@@ -45,8 +45,9 @@ const metadataFixture = () => ({
 const fakeFiles = {
   isDirectory: () => true,
   isFile: () => true,
-  readText: () =>
-    'generate_gradle_files implementation(\\"androidx.lifecycle:lifecycle-process:2.10.0\\")',
+  readText: (file) => file.endsWith("build.gradle.kts")
+    ? 'compilerOptions { jvmTarget = JvmTarget.JVM_1_8 }'
+    : 'generate_gradle_files implementation(\\"androidx.lifecycle:lifecycle-process:2.10.0\\")',
 };
 
 test("plans the ignored Gradle bridge from the locked Android Tauri graph", () => {
@@ -104,4 +105,14 @@ test("fails closed when the pinned generator contract changes", () => {
       }),
     );
   }
+});
+
+test("requires the reviewed upstream Kotlin compilerOptions instead of the removed shim", () => {
+  assert.throws(() => planTauriAndroidGradleBridge(metadataFixture(), {
+    appManifest,
+    ...fakeFiles,
+    readText: (file) => file.endsWith("build.gradle.kts")
+      ? 'kotlinOptions { jvmTarget = "1.8" }'
+      : fakeFiles.readText(file),
+  }), /native Kotlin compilerOptions contract/);
 });

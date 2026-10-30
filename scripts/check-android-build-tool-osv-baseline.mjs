@@ -12,7 +12,7 @@ const defaultBaselinePath = join(
 export const baselineSchemaVersion = 1;
 export const scannerVersion = "2.5.0";
 export const expectedToolchain = Object.freeze({
-  tauri: "2.11.5",
+  tauri: "2.12.5",
   androidGradlePlugin: "8.11.0",
   kotlinGradlePlugin: "2.4.20",
   gradle: "8.14.3",

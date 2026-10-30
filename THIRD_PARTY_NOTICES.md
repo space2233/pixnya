@@ -7,11 +7,11 @@ Copyright (C) 2026 PixNya contributors
 
 This inventory records the reviewed license expressions for the exact dependency versions locked for PixNya 1.7.0. It is generated locally from `package-lock.json`, `Cargo.lock`, the Android Gradle lock and verification graph, installed npm/Cargo package evidence, and the tracked Maven license review. It is not legal advice and does not replace any upstream license or notice file shipped with a dependency.
 
-- Lock fingerprint: `sha256:2da1d9b2fcd2bb69818f30519f5552e1db0fc5a2f90525ef81e20cf09717ac73`
+- Lock fingerprint: `sha256:d872c056a68bb53902d47ed541fe30bf3899c92a1719515a1ee17949a10e9d16`
 - npm runtime/optional packages: 1
 - npm build/development packages: 144
-- Rust target-dependent locked packages: 570
-- Android Gradle/Maven locked components: 326
+- Rust target-dependent locked packages: 558
+- Android Gradle/Maven locked components: 327
 - SPDX SBOM command: `node scripts/generate-supply-chain-artifacts.mjs`
 
 ## npm runtime and optional dependencies
@@ -178,12 +178,11 @@ Cargo's lock graph includes target-specific dependencies for Windows, Linux, And
 | [adler2](https://crates.io/crates/adler2/2.0.1/download) | 2.0.1 | 0BSD OR MIT OR Apache-2.0 | runtime/target-dependent |
 | [aes](https://crates.io/crates/aes/0.8.4/download) | 0.8.4 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [aho-corasick](https://crates.io/crates/aho-corasick/1.1.4/download) | 1.1.4 | Unlicense OR MIT | runtime/target-dependent |
-| [alloc-no-stdlib](https://crates.io/crates/alloc-no-stdlib/2.0.4/download) | 2.0.4 | BSD-3-Clause | runtime/target-dependent |
-| [alloc-stdlib](https://crates.io/crates/alloc-stdlib/0.2.4/download) | 0.2.4 | BSD-3-Clause | runtime/target-dependent |
+| [alloc-no-stdlib](https://crates.io/crates/alloc-no-stdlib/3.0.0/download) | 3.0.0 | BSD-3-Clause | runtime/target-dependent |
+| [alloc-stdlib](https://crates.io/crates/alloc-stdlib/0.3.0/download) | 0.3.0 | BSD-3-Clause | runtime/target-dependent |
 | [android_system_properties](https://crates.io/crates/android_system_properties/0.1.5/download) | 0.1.5 | MIT/Apache-2.0 | runtime/target-dependent |
 | [anyhow](https://crates.io/crates/anyhow/1.0.104/download) | 1.0.104 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [apple-native-keyring-store](https://crates.io/crates/apple-native-keyring-store/1.0.1/download) | 1.0.1 | MIT OR Apache-2.0 | runtime/target-dependent |
-| [arbitrary](https://crates.io/crates/arbitrary/1.4.2/download) | 1.4.2 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [asn1-rs](https://crates.io/crates/asn1-rs/0.7.2/download) | 0.7.2 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [asn1-rs-derive](https://crates.io/crates/asn1-rs-derive/0.6.0/download) | 0.6.0 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [asn1-rs-impl](https://crates.io/crates/asn1-rs-impl/0.2.0/download) | 0.2.0 | MIT/Apache-2.0 | runtime/target-dependent |
@@ -205,6 +204,7 @@ Cargo's lock graph includes target-specific dependencies for Windows, Linux, And
 | [aws-lc-sys](https://crates.io/crates/aws-lc-sys/0.45.0/download) | 0.45.0 | ISC AND (Apache-2.0 OR ISC) AND Apache-2.0 AND MIT AND BSD-3-Clause AND (Apache-2.0 OR ISC OR MIT) AND (Apache-2.0 OR ISC OR MIT-0) | runtime/target-dependent |
 | [base64](https://crates.io/crates/base64/0.21.7/download) | 0.21.7 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [base64](https://crates.io/crates/base64/0.22.1/download) | 0.22.1 | MIT OR Apache-2.0 | runtime/target-dependent |
+| [base64](https://crates.io/crates/base64/0.23.1/download) | 0.23.1 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [bit-set](https://crates.io/crates/bit-set/0.8.0/download) | 0.8.0 | Apache-2.0 OR MIT | runtime/target-dependent |
 | [bit-vec](https://crates.io/crates/bit-vec/0.8.0/download) | 0.8.0 | Apache-2.0 OR MIT | runtime/target-dependent |
 | [bit-vec](https://crates.io/crates/bit-vec/0.9.1/download) | 0.9.1 | Apache-2.0 OR MIT | runtime/target-dependent |
@@ -214,8 +214,8 @@ Cargo's lock graph includes target-specific dependencies for Windows, Linux, And
 | [block-padding](https://crates.io/crates/block-padding/0.3.3/download) | 0.3.3 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [block2](https://crates.io/crates/block2/0.6.2/download) | 0.6.2 | MIT | runtime/target-dependent |
 | [blocking](https://crates.io/crates/blocking/1.6.2/download) | 1.6.2 | Apache-2.0 OR MIT | runtime/target-dependent |
-| [brotli](https://crates.io/crates/brotli/8.0.4/download) | 8.0.4 | BSD-3-Clause AND MIT | runtime/target-dependent |
-| [brotli-decompressor](https://crates.io/crates/brotli-decompressor/5.0.3/download) | 5.0.3 | BSD-3-Clause/MIT | runtime/target-dependent |
+| [brotli](https://crates.io/crates/brotli/9.1.1/download) | 9.1.1 | BSD-3-Clause AND MIT | runtime/target-dependent |
+| [brotli-decompressor](https://crates.io/crates/brotli-decompressor/6.2.0/download) | 6.2.0 | BSD-3-Clause/MIT | runtime/target-dependent |
 | [bs58](https://crates.io/crates/bs58/0.5.1/download) | 0.5.1 | MIT/Apache-2.0 | runtime/target-dependent |
 | [bumpalo](https://crates.io/crates/bumpalo/3.20.3/download) | 3.20.3 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [bytemuck](https://crates.io/crates/bytemuck/1.25.2/download) | 1.25.2 | Zlib OR Apache-2.0 OR MIT | runtime/target-dependent |
@@ -225,12 +225,12 @@ Cargo's lock graph includes target-specific dependencies for Windows, Linux, And
 | [cairo-sys-rs](https://crates.io/crates/cairo-sys-rs/0.18.2/download) | 0.18.2 | MIT | runtime/target-dependent |
 | [camino](https://crates.io/crates/camino/1.2.5/download) | 1.2.5 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [cargo_metadata](https://crates.io/crates/cargo_metadata/0.19.2/download) | 0.19.2 | MIT | runtime/target-dependent |
-| [cargo_toml](https://crates.io/crates/cargo_toml/0.22.3/download) | 0.22.3 | Apache-2.0 OR MIT | runtime/target-dependent |
+| [cargo_toml](https://crates.io/crates/cargo_toml/1.0.1/download) | 1.0.1 | Apache-2.0 OR MIT | runtime/target-dependent |
 | [cargo-platform](https://crates.io/crates/cargo-platform/0.1.9/download) | 0.1.9 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [cbc](https://crates.io/crates/cbc/0.1.2/download) | 0.1.2 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [cc](https://crates.io/crates/cc/1.4.0/download) | 1.4.0 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [cesu8](https://crates.io/crates/cesu8/1.1.0/download) | 1.1.0 | Apache-2.0/MIT | runtime/target-dependent |
-| [cfb](https://crates.io/crates/cfb/0.7.3/download) | 0.7.3 | MIT | runtime/target-dependent |
+| [cfb](https://crates.io/crates/cfb/0.14.0/download) | 0.14.0 | MIT | runtime/target-dependent |
 | [cfg_aliases](https://crates.io/crates/cfg_aliases/0.2.2/download) | 0.2.2 | MIT | runtime/target-dependent |
 | [cfg-expr](https://crates.io/crates/cfg-expr/0.15.8/download) | 0.15.8 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [cfg-if](https://crates.io/crates/cfg-if/1.0.4/download) | 1.0.4 | MIT OR Apache-2.0 | runtime/target-dependent |
@@ -252,10 +252,9 @@ Cargo's lock graph includes target-specific dependencies for Windows, Linux, And
 | [crossbeam-channel](https://crates.io/crates/crossbeam-channel/0.5.16/download) | 0.5.16 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [crossbeam-utils](https://crates.io/crates/crossbeam-utils/0.8.22/download) | 0.8.22 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [crypto-common](https://crates.io/crates/crypto-common/0.1.7/download) | 0.1.7 | MIT OR Apache-2.0 | runtime/target-dependent |
-| [cssparser](https://crates.io/crates/cssparser/0.36.0/download) | 0.36.0 | MPL-2.0 | runtime/target-dependent |
-| [cssparser-macros](https://crates.io/crates/cssparser-macros/0.6.1/download) | 0.6.1 | MPL-2.0 | runtime/target-dependent |
-| [ctor](https://crates.io/crates/ctor/0.8.0/download) | 0.8.0 | Apache-2.0 OR MIT | runtime/target-dependent |
-| [ctor-proc-macro](https://crates.io/crates/ctor-proc-macro/0.0.7/download) | 0.0.7 | Apache-2.0 OR MIT | runtime/target-dependent |
+| [cssparser](https://crates.io/crates/cssparser/0.37.0/download) | 0.37.0 | MPL-2.0 | runtime/target-dependent |
+| [cssparser-macros](https://crates.io/crates/cssparser-macros/0.7.1/download) | 0.7.1 | MPL-2.0 | runtime/target-dependent |
+| [ctor](https://crates.io/crates/ctor/1.0.13/download) | 1.0.13 | Apache-2.0 OR MIT | runtime/target-dependent |
 | [darling](https://crates.io/crates/darling/0.23.0/download) | 0.23.0 | MIT | runtime/target-dependent |
 | [darling_core](https://crates.io/crates/darling_core/0.23.0/download) | 0.23.0 | MIT | runtime/target-dependent |
 | [darling_macro](https://crates.io/crates/darling_macro/0.23.0/download) | 0.23.0 | MIT | runtime/target-dependent |
@@ -263,22 +262,19 @@ Cargo's lock graph includes target-specific dependencies for Windows, Linux, And
 | [dbus](https://crates.io/crates/dbus/0.9.12/download) | 0.9.12 | Apache-2.0/MIT | runtime/target-dependent |
 | [der-parser](https://crates.io/crates/der-parser/10.0.0/download) | 10.0.0 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [deranged](https://crates.io/crates/deranged/0.5.8/download) | 0.5.8 | MIT OR Apache-2.0 | runtime/target-dependent |
-| [derive_arbitrary](https://crates.io/crates/derive_arbitrary/1.4.2/download) | 1.4.2 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [derive_more](https://crates.io/crates/derive_more/2.1.1/download) | 2.1.1 | MIT | runtime/target-dependent |
 | [derive_more-impl](https://crates.io/crates/derive_more-impl/2.1.1/download) | 2.1.1 | MIT | runtime/target-dependent |
 | [digest](https://crates.io/crates/digest/0.10.7/download) | 0.10.7 | MIT OR Apache-2.0 | runtime/target-dependent |
-| [dirs](https://crates.io/crates/dirs/6.0.0/download) | 6.0.0 | MIT OR Apache-2.0 | runtime/target-dependent |
+| [dirs](https://crates.io/crates/dirs/7.0.0/download) | 7.0.0 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [dirs-sys](https://crates.io/crates/dirs-sys/0.5.0/download) | 0.5.0 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [dispatch2](https://crates.io/crates/dispatch2/0.3.1/download) | 0.3.1 | Zlib OR Apache-2.0 OR MIT | runtime/target-dependent |
 | [displaydoc](https://crates.io/crates/displaydoc/0.2.7/download) | 0.2.7 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [dlopen2](https://crates.io/crates/dlopen2/0.8.2/download) | 0.8.2 | MIT | runtime/target-dependent |
 | [dlopen2_derive](https://crates.io/crates/dlopen2_derive/0.4.3/download) | 0.4.3 | MIT | runtime/target-dependent |
-| [dom_query](https://crates.io/crates/dom_query/0.27.0/download) | 0.27.0 | MIT | runtime/target-dependent |
+| [dom_query](https://crates.io/crates/dom_query/0.28.0/download) | 0.28.0 | MIT | runtime/target-dependent |
 | [dpi](https://crates.io/crates/dpi/0.1.2/download) | 0.1.2 | Apache-2.0 AND MIT | runtime/target-dependent |
 | [dtoa](https://crates.io/crates/dtoa/1.0.11/download) | 1.0.11 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [dtoa-short](https://crates.io/crates/dtoa-short/0.3.5/download) | 0.3.5 | MPL-2.0 | runtime/target-dependent |
-| [dtor](https://crates.io/crates/dtor/0.3.0/download) | 0.3.0 | Apache-2.0 OR MIT | runtime/target-dependent |
-| [dtor-proc-macro](https://crates.io/crates/dtor-proc-macro/0.0.6/download) | 0.0.6 | Apache-2.0 OR MIT | runtime/target-dependent |
 | [dunce](https://crates.io/crates/dunce/1.0.5/download) | 1.0.5 | CC0-1.0 OR MIT-0 OR Apache-2.0 | runtime/target-dependent |
 | [dyn-clone](https://crates.io/crates/dyn-clone/1.0.20/download) | 1.0.20 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [embed_plist](https://crates.io/crates/embed_plist/1.2.2/download) | 1.2.2 | MIT OR Apache-2.0 | runtime/target-dependent |
@@ -346,7 +342,7 @@ Cargo's lock graph includes target-specific dependencies for Windows, Linux, And
 | [hex](https://crates.io/crates/hex/0.4.3/download) | 0.4.3 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [hkdf](https://crates.io/crates/hkdf/0.12.4/download) | 0.12.4 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [hmac](https://crates.io/crates/hmac/0.12.1/download) | 0.12.1 | MIT OR Apache-2.0 | runtime/target-dependent |
-| [html5ever](https://crates.io/crates/html5ever/0.38.0/download) | 0.38.0 | MIT OR Apache-2.0 | runtime/target-dependent |
+| [html5ever](https://crates.io/crates/html5ever/0.39.0/download) | 0.39.0 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [http](https://crates.io/crates/http/1.5.0/download) | 1.5.0 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [http-body](https://crates.io/crates/http-body/1.1.0/download) | 1.1.0 | MIT | runtime/target-dependent |
 | [http-body-util](https://crates.io/crates/http-body-util/0.1.4/download) | 0.1.4 | MIT | runtime/target-dependent |
@@ -356,7 +352,7 @@ Cargo's lock graph includes target-specific dependencies for Windows, Linux, And
 | [hyper-util](https://crates.io/crates/hyper-util/0.1.20/download) | 0.1.20 | MIT | runtime/target-dependent |
 | [iana-time-zone](https://crates.io/crates/iana-time-zone/0.1.65/download) | 0.1.65 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [iana-time-zone-haiku](https://crates.io/crates/iana-time-zone-haiku/0.1.2/download) | 0.1.2 | MIT OR Apache-2.0 | runtime/target-dependent |
-| [ico](https://crates.io/crates/ico/0.5.0/download) | 0.5.0 | MIT | runtime/target-dependent |
+| [ico](https://crates.io/crates/ico/0.6.0/download) | 0.6.0 | MIT | runtime/target-dependent |
 | [icu_collections](https://crates.io/crates/icu_collections/2.2.0/download) | 2.2.0 | Unicode-3.0 | runtime/target-dependent |
 | [icu_locale_core](https://crates.io/crates/icu_locale_core/2.2.0/download) | 2.2.0 | Unicode-3.0 | runtime/target-dependent |
 | [icu_normalizer](https://crates.io/crates/icu_normalizer/2.2.0/download) | 2.2.0 | Unicode-3.0 | runtime/target-dependent |
@@ -369,7 +365,7 @@ Cargo's lock graph includes target-specific dependencies for Windows, Linux, And
 | [idna_adapter](https://crates.io/crates/idna_adapter/1.2.2/download) | 1.2.2 | Apache-2.0 OR MIT | runtime/target-dependent |
 | [indexmap](https://crates.io/crates/indexmap/1.9.3/download) | 1.9.3 | Apache-2.0 OR MIT | runtime/target-dependent |
 | [indexmap](https://crates.io/crates/indexmap/2.14.0/download) | 2.14.0 | Apache-2.0 OR MIT | runtime/target-dependent |
-| [infer](https://crates.io/crates/infer/0.19.0/download) | 0.19.0 | MIT | runtime/target-dependent |
+| [infer](https://crates.io/crates/infer/0.22.0/download) | 0.22.0 | MIT | runtime/target-dependent |
 | [inout](https://crates.io/crates/inout/0.1.4/download) | 0.1.4 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [ipnet](https://crates.io/crates/ipnet/2.12.1/download) | 2.12.1 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [itoa](https://crates.io/crates/itoa/1.0.18/download) | 1.0.18 | MIT OR Apache-2.0 | runtime/target-dependent |
@@ -383,9 +379,9 @@ Cargo's lock graph includes target-specific dependencies for Windows, Linux, And
 | [jni-sys-macros](https://crates.io/crates/jni-sys-macros/0.4.1/download) | 0.4.1 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [jobserver](https://crates.io/crates/jobserver/0.1.35/download) | 0.1.35 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [js-sys](https://crates.io/crates/js-sys/0.3.103/download) | 0.3.103 | MIT OR Apache-2.0 | runtime/target-dependent |
-| [json-patch](https://crates.io/crates/json-patch/3.0.1/download) | 3.0.1 | MIT/Apache-2.0 | runtime/target-dependent |
-| [jsonptr](https://crates.io/crates/jsonptr/0.6.3/download) | 0.6.3 | MIT OR Apache-2.0 | runtime/target-dependent |
-| [keyboard-types](https://crates.io/crates/keyboard-types/0.7.0/download) | 0.7.0 | MIT OR Apache-2.0 | runtime/target-dependent |
+| [json-patch](https://crates.io/crates/json-patch/4.2.0/download) | 4.2.0 | MIT/Apache-2.0 | runtime/target-dependent |
+| [jsonptr](https://crates.io/crates/jsonptr/0.7.1/download) | 0.7.1 | MIT OR Apache-2.0 | runtime/target-dependent |
+| [keyboard-types](https://crates.io/crates/keyboard-types/0.8.3/download) | 0.8.3 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [keyring](https://crates.io/crates/keyring/4.1.6/download) | 4.1.6 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [keyring-core](https://crates.io/crates/keyring-core/1.0.0/download) | 1.0.0 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [lazy_static](https://crates.io/crates/lazy_static/1.5.0/download) | 1.5.0 | MIT OR Apache-2.0 | runtime/target-dependent |
@@ -401,19 +397,22 @@ Cargo's lock graph includes target-specific dependencies for Windows, Linux, And
 | [lock_api](https://crates.io/crates/lock_api/0.4.14/download) | 0.4.14 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [log](https://crates.io/crates/log/0.4.33/download) | 0.4.33 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [lru-slab](https://crates.io/crates/lru-slab/0.1.2/download) | 0.1.2 | MIT OR Apache-2.0 OR Zlib | runtime/target-dependent |
-| [markup5ever](https://crates.io/crates/markup5ever/0.38.0/download) | 0.38.0 | MIT OR Apache-2.0 | runtime/target-dependent |
+| [markup5ever](https://crates.io/crates/markup5ever/0.39.0/download) | 0.39.0 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [md5](https://crates.io/crates/md5/0.8.1/download) | 0.8.1 | Apache-2.0 OR MIT | runtime/target-dependent |
 | [memchr](https://crates.io/crates/memchr/2.8.3/download) | 2.8.3 | Unlicense OR MIT | runtime/target-dependent |
 | [memoffset](https://crates.io/crates/memoffset/0.9.1/download) | 0.9.1 | MIT | runtime/target-dependent |
 | [mime](https://crates.io/crates/mime/0.3.17/download) | 0.3.17 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [minimal-lexical](https://crates.io/crates/minimal-lexical/0.2.1/download) | 0.2.1 | MIT/Apache-2.0 | runtime/target-dependent |
 | [minisign-verify](https://crates.io/crates/minisign-verify/0.2.5/download) | 0.2.5 | MIT | runtime/target-dependent |
+| [minisign-verify](https://crates.io/crates/minisign-verify/0.3.0/download) | 0.3.0 | MIT | runtime/target-dependent |
 | [miniz_oxide](https://crates.io/crates/miniz_oxide/0.8.9/download) | 0.8.9 | MIT OR Zlib OR Apache-2.0 | runtime/target-dependent |
 | [mio](https://crates.io/crates/mio/1.2.2/download) | 1.2.2 | MIT | runtime/target-dependent |
-| [muda](https://crates.io/crates/muda/0.19.3/download) | 0.19.3 | Apache-2.0 OR MIT | runtime/target-dependent |
+| [muda](https://crates.io/crates/muda/0.20.0/download) | 0.20.0 | Apache-2.0 OR MIT | runtime/target-dependent |
 | [ndk](https://crates.io/crates/ndk/0.9.0/download) | 0.9.0 | MIT OR Apache-2.0 | runtime/target-dependent |
+| [ndk-context](https://crates.io/crates/ndk-context/0.1.1/download) | 0.1.1 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [ndk-sys](https://crates.io/crates/ndk-sys/0.6.0%2B11769913/download) | 0.6.0+11769913 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [new_debug_unreachable](https://crates.io/crates/new_debug_unreachable/1.0.6/download) | 1.0.6 | MIT | runtime/target-dependent |
+| [nix](https://crates.io/crates/nix/0.31.3/download) | 0.31.3 | MIT | runtime/target-dependent |
 | [nom](https://crates.io/crates/nom/7.1.3/download) | 7.1.3 | MIT | runtime/target-dependent |
 | [num](https://crates.io/crates/num/0.4.3/download) | 0.4.3 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [num_enum](https://crates.io/crates/num_enum/0.7.6/download) | 0.7.6 | BSD-3-Clause OR MIT OR Apache-2.0 | runtime/target-dependent |
@@ -464,7 +463,6 @@ Cargo's lock graph includes target-specific dependencies for Windows, Linux, And
 | [piper](https://crates.io/crates/piper/0.2.5/download) | 0.2.5 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [pkg-config](https://crates.io/crates/pkg-config/0.3.33/download) | 0.3.33 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [plist](https://crates.io/crates/plist/1.10.0/download) | 1.10.0 | MIT | runtime/target-dependent |
-| [png](https://crates.io/crates/png/0.17.16/download) | 0.17.16 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [png](https://crates.io/crates/png/0.18.1/download) | 0.18.1 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [polling](https://crates.io/crates/polling/3.11.0/download) | 3.11.0 | Apache-2.0 OR MIT | runtime/target-dependent |
 | [potential_utf](https://crates.io/crates/potential_utf/0.1.5/download) | 0.1.5 | Unicode-3.0 | runtime/target-dependent |
@@ -504,12 +502,12 @@ Cargo's lock graph includes target-specific dependencies for Windows, Linux, And
 | [rustc-hash](https://crates.io/crates/rustc-hash/2.1.3/download) | 2.1.3 | Apache-2.0 OR MIT | runtime/target-dependent |
 | [rusticata-macros](https://crates.io/crates/rusticata-macros/4.1.0/download) | 4.1.0 | MIT/Apache-2.0 | runtime/target-dependent |
 | [rustix](https://crates.io/crates/rustix/1.1.4/download) | 1.1.4 | Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT | runtime/target-dependent |
-| [rustls](https://crates.io/crates/rustls/0.23.45/download) | 0.23.45 | Apache-2.0 OR ISC OR MIT | runtime/target-dependent |
+| [rustls](https://crates.io/crates/rustls/0.23.46/download) | 0.23.46 | Apache-2.0 OR ISC OR MIT | runtime/target-dependent |
 | [rustls-native-certs](https://crates.io/crates/rustls-native-certs/0.8.4/download) | 0.8.4 | Apache-2.0 OR ISC OR MIT | runtime/target-dependent |
 | [rustls-pki-types](https://crates.io/crates/rustls-pki-types/1.15.1/download) | 1.15.1 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [rustls-platform-verifier](https://crates.io/crates/rustls-platform-verifier/0.7.0/download) | 0.7.0 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [rustls-platform-verifier-android](https://crates.io/crates/rustls-platform-verifier-android/0.1.1/download) | 0.1.1 | MIT OR Apache-2.0 | runtime/target-dependent |
-| [rustls-webpki](https://crates.io/crates/rustls-webpki/0.103.15/download) | 0.103.15 | ISC | runtime/target-dependent |
+| [rustls-webpki](https://crates.io/crates/rustls-webpki/0.103.16/download) | 0.103.16 | ISC | runtime/target-dependent |
 | [rustversion](https://crates.io/crates/rustversion/1.0.23/download) | 1.0.23 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [ryu](https://crates.io/crates/ryu/1.0.23/download) | 1.0.23 | Apache-2.0 OR BSL-1.0 | runtime/target-dependent |
 | [same-file](https://crates.io/crates/same-file/1.0.6/download) | 1.0.6 | Unlicense/MIT | runtime/target-dependent |
@@ -522,7 +520,7 @@ Cargo's lock graph includes target-specific dependencies for Windows, Linux, And
 | [secret-service](https://crates.io/crates/secret-service/5.1.0/download) | 5.1.0 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [security-framework](https://crates.io/crates/security-framework/3.7.0/download) | 3.7.0 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [security-framework-sys](https://crates.io/crates/security-framework-sys/2.17.0/download) | 2.17.0 | MIT OR Apache-2.0 | runtime/target-dependent |
-| [selectors](https://crates.io/crates/selectors/0.36.1/download) | 0.36.1 | MPL-2.0 | runtime/target-dependent |
+| [selectors](https://crates.io/crates/selectors/0.38.0/download) | 0.38.0 | MPL-2.0 | runtime/target-dependent |
 | [semver](https://crates.io/crates/semver/1.0.28/download) | 1.0.28 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [serde](https://crates.io/crates/serde/1.0.229/download) | 1.0.229 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [serde_core](https://crates.io/crates/serde_core/1.0.229/download) | 1.0.229 | MIT OR Apache-2.0 | runtime/target-dependent |
@@ -554,11 +552,12 @@ Cargo's lock graph includes target-specific dependencies for Windows, Linux, And
 | [soup3-sys](https://crates.io/crates/soup3-sys/0.5.0/download) | 0.5.0 | MIT | runtime/target-dependent |
 | [sqlite-wasm-rs](https://crates.io/crates/sqlite-wasm-rs/0.5.5/download) | 0.5.5 | MIT | runtime/target-dependent |
 | [stable_deref_trait](https://crates.io/crates/stable_deref_trait/1.2.1/download) | 1.2.1 | MIT OR Apache-2.0 | runtime/target-dependent |
+| [static_vcruntime](https://crates.io/crates/static_vcruntime/3.0.0/download) | 3.0.0 | MIT OR Apache-2.0 OR Zlib | runtime/target-dependent |
 | [string_cache](https://crates.io/crates/string_cache/0.9.0/download) | 0.9.0 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [string_cache_codegen](https://crates.io/crates/string_cache_codegen/0.6.1/download) | 0.6.1 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [strsim](https://crates.io/crates/strsim/0.11.1/download) | 0.11.1 | MIT | runtime/target-dependent |
 | [subtle](https://crates.io/crates/subtle/2.6.1/download) | 2.6.1 | BSD-3-Clause | runtime/target-dependent |
-| [swift-rs](https://crates.io/crates/swift-rs/1.0.7/download) | 1.0.7 | MIT OR Apache-2.0 | runtime/target-dependent |
+| [swift-rs](https://crates.io/crates/swift-rs/1.0.9/download) | 1.0.9 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [syn](https://crates.io/crates/syn/1.0.109/download) | 1.0.109 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [syn](https://crates.io/crates/syn/2.0.119/download) | 2.0.119 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [syn](https://crates.io/crates/syn/3.0.3/download) | 3.0.3 | MIT OR Apache-2.0 | runtime/target-dependent |
@@ -567,21 +566,21 @@ Cargo's lock graph includes target-specific dependencies for Windows, Linux, And
 | [system-configuration](https://crates.io/crates/system-configuration/0.7.0/download) | 0.7.0 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [system-configuration-sys](https://crates.io/crates/system-configuration-sys/0.6.0/download) | 0.6.0 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [system-deps](https://crates.io/crates/system-deps/6.2.2/download) | 6.2.2 | MIT OR Apache-2.0 | runtime/target-dependent |
-| [tao](https://crates.io/crates/tao/0.35.3/download) | 0.35.3 | Apache-2.0 | runtime/target-dependent |
+| [tao](https://crates.io/crates/tao/0.37.2/download) | 0.37.2 | Apache-2.0 | runtime/target-dependent |
 | [tao-macros](https://crates.io/crates/tao-macros/0.1.4/download) | 0.1.4 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [tar](https://crates.io/crates/tar/0.4.46/download) | 0.4.46 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [target-lexicon](https://crates.io/crates/target-lexicon/0.12.16/download) | 0.12.16 | Apache-2.0 WITH LLVM-exception | runtime/target-dependent |
-| [tauri](https://crates.io/crates/tauri/2.11.5/download) | 2.11.5 | Apache-2.0 OR MIT | runtime/target-dependent |
-| [tauri-build](https://crates.io/crates/tauri-build/2.6.3/download) | 2.6.3 | Apache-2.0 OR MIT | runtime/target-dependent |
-| [tauri-codegen](https://crates.io/crates/tauri-codegen/2.6.3/download) | 2.6.3 | Apache-2.0 OR MIT | runtime/target-dependent |
-| [tauri-macros](https://crates.io/crates/tauri-macros/2.6.3/download) | 2.6.3 | Apache-2.0 OR MIT | runtime/target-dependent |
-| [tauri-plugin](https://crates.io/crates/tauri-plugin/2.6.3/download) | 2.6.3 | Apache-2.0 OR MIT | runtime/target-dependent |
+| [tauri](https://crates.io/crates/tauri/2.12.5/download) | 2.12.5 | Apache-2.0 OR MIT | runtime/target-dependent |
+| [tauri-build](https://crates.io/crates/tauri-build/2.7.4/download) | 2.7.4 | Apache-2.0 OR MIT | runtime/target-dependent |
+| [tauri-codegen](https://crates.io/crates/tauri-codegen/2.7.4/download) | 2.7.4 | Apache-2.0 OR MIT | runtime/target-dependent |
+| [tauri-macros](https://crates.io/crates/tauri-macros/2.7.4/download) | 2.7.4 | Apache-2.0 OR MIT | runtime/target-dependent |
+| [tauri-plugin](https://crates.io/crates/tauri-plugin/2.7.2/download) | 2.7.2 | Apache-2.0 OR MIT | runtime/target-dependent |
 | [tauri-plugin-dialog](https://crates.io/crates/tauri-plugin-dialog/2.7.2/download) | 2.7.2 | Apache-2.0 OR MIT | runtime/target-dependent |
 | [tauri-plugin-fs](https://crates.io/crates/tauri-plugin-fs/2.5.1/download) | 2.5.1 | Apache-2.0 OR MIT | runtime/target-dependent |
-| [tauri-plugin-updater](https://crates.io/crates/tauri-plugin-updater/2.10.1/download) | 2.10.1 | Apache-2.0 OR MIT | runtime/target-dependent |
-| [tauri-runtime](https://crates.io/crates/tauri-runtime/2.11.3/download) | 2.11.3 | Apache-2.0 OR MIT | runtime/target-dependent |
-| [tauri-runtime-wry](https://crates.io/crates/tauri-runtime-wry/2.11.4/download) | 2.11.4 | Apache-2.0 OR MIT | runtime/target-dependent |
-| [tauri-utils](https://crates.io/crates/tauri-utils/2.9.3/download) | 2.9.3 | Apache-2.0 OR MIT | runtime/target-dependent |
+| [tauri-plugin-updater](https://crates.io/crates/tauri-plugin-updater/2.14.1/download) | 2.14.1 | Apache-2.0 OR MIT | runtime/target-dependent |
+| [tauri-runtime](https://crates.io/crates/tauri-runtime/2.12.2/download) | 2.12.2 | Apache-2.0 OR MIT | runtime/target-dependent |
+| [tauri-runtime-wry](https://crates.io/crates/tauri-runtime-wry/2.12.3/download) | 2.12.3 | Apache-2.0 OR MIT | runtime/target-dependent |
+| [tauri-utils](https://crates.io/crates/tauri-utils/2.10.2/download) | 2.10.2 | Apache-2.0 OR MIT | runtime/target-dependent |
 | [tauri-winres](https://crates.io/crates/tauri-winres/0.3.6/download) | 0.3.6 | MIT | runtime/target-dependent |
 | [tempfile](https://crates.io/crates/tempfile/3.27.0/download) | 3.27.0 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [tendril](https://crates.io/crates/tendril/0.5.1/download) | 0.5.1 | MIT OR Apache-2.0 | runtime/target-dependent |
@@ -595,14 +594,12 @@ Cargo's lock graph includes target-specific dependencies for Windows, Linux, And
 | [tinystr](https://crates.io/crates/tinystr/0.8.3/download) | 0.8.3 | Unicode-3.0 | runtime/target-dependent |
 | [tinyvec](https://crates.io/crates/tinyvec/1.12.0/download) | 1.12.0 | Zlib OR Apache-2.0 OR MIT | runtime/target-dependent |
 | [tinyvec_macros](https://crates.io/crates/tinyvec_macros/0.1.1/download) | 0.1.1 | MIT OR Apache-2.0 OR Zlib | runtime/target-dependent |
-| [tokio](https://crates.io/crates/tokio/1.53.1/download) | 1.53.1 | MIT | runtime/target-dependent |
+| [tokio](https://crates.io/crates/tokio/1.54.1/download) | 1.54.1 | MIT | runtime/target-dependent |
 | [tokio-rustls](https://crates.io/crates/tokio-rustls/0.26.4/download) | 0.26.4 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [tokio-util](https://crates.io/crates/tokio-util/0.7.19/download) | 0.7.19 | MIT | runtime/target-dependent |
 | [toml](https://crates.io/crates/toml/0.8.2/download) | 0.8.2 | MIT OR Apache-2.0 | runtime/target-dependent |
-| [toml](https://crates.io/crates/toml/0.9.12%2Bspec-1.1.0/download) | 0.9.12+spec-1.1.0 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [toml](https://crates.io/crates/toml/1.1.4%2Bspec-1.1.0/download) | 1.1.4+spec-1.1.0 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [toml_datetime](https://crates.io/crates/toml_datetime/0.6.3/download) | 0.6.3 | MIT OR Apache-2.0 | runtime/target-dependent |
-| [toml_datetime](https://crates.io/crates/toml_datetime/0.7.5%2Bspec-1.1.0/download) | 0.7.5+spec-1.1.0 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [toml_datetime](https://crates.io/crates/toml_datetime/1.1.1%2Bspec-1.1.0/download) | 1.1.1+spec-1.1.0 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [toml_edit](https://crates.io/crates/toml_edit/0.19.15/download) | 0.19.15 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [toml_edit](https://crates.io/crates/toml_edit/0.20.2/download) | 0.20.2 | MIT OR Apache-2.0 | runtime/target-dependent |
@@ -616,22 +613,18 @@ Cargo's lock graph includes target-specific dependencies for Windows, Linux, And
 | [tracing](https://crates.io/crates/tracing/0.1.44/download) | 0.1.44 | MIT | runtime/target-dependent |
 | [tracing-attributes](https://crates.io/crates/tracing-attributes/0.1.31/download) | 0.1.31 | MIT | runtime/target-dependent |
 | [tracing-core](https://crates.io/crates/tracing-core/0.1.36/download) | 0.1.36 | MIT | runtime/target-dependent |
-| [tray-icon](https://crates.io/crates/tray-icon/0.24.2/download) | 0.24.2 | MIT OR Apache-2.0 | runtime/target-dependent |
+| [tray-icon](https://crates.io/crates/tray-icon/0.25.1/download) | 0.25.1 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [try-lock](https://crates.io/crates/try-lock/0.2.5/download) | 0.2.5 | MIT | runtime/target-dependent |
+| [typed-path](https://crates.io/crates/typed-path/0.13.0/download) | 0.13.0 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [typeid](https://crates.io/crates/typeid/1.0.3/download) | 1.0.3 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [typenum](https://crates.io/crates/typenum/1.20.1/download) | 1.20.1 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [uds_windows](https://crates.io/crates/uds_windows/1.2.1/download) | 1.2.1 | MIT | runtime/target-dependent |
-| [unic-char-property](https://crates.io/crates/unic-char-property/0.9.0/download) | 0.9.0 | MIT/Apache-2.0 | runtime/target-dependent |
-| [unic-char-range](https://crates.io/crates/unic-char-range/0.9.0/download) | 0.9.0 | MIT/Apache-2.0 | runtime/target-dependent |
-| [unic-common](https://crates.io/crates/unic-common/0.9.0/download) | 0.9.0 | MIT/Apache-2.0 | runtime/target-dependent |
-| [unic-ucd-ident](https://crates.io/crates/unic-ucd-ident/0.9.0/download) | 0.9.0 | MIT/Apache-2.0 | runtime/target-dependent |
-| [unic-ucd-version](https://crates.io/crates/unic-ucd-version/0.9.0/download) | 0.9.0 | MIT/Apache-2.0 | runtime/target-dependent |
 | [unicode-ident](https://crates.io/crates/unicode-ident/1.0.24/download) | 1.0.24 | (MIT OR Apache-2.0) AND Unicode-3.0 | runtime/target-dependent |
 | [unicode-segmentation](https://crates.io/crates/unicode-segmentation/1.13.3/download) | 1.13.3 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [untrusted](https://crates.io/crates/untrusted/0.7.1/download) | 0.7.1 | ISC | runtime/target-dependent |
 | [untrusted](https://crates.io/crates/untrusted/0.9.0/download) | 0.9.0 | ISC | runtime/target-dependent |
 | [url](https://crates.io/crates/url/2.5.8/download) | 2.5.8 | MIT OR Apache-2.0 | runtime/target-dependent |
-| [urlpattern](https://crates.io/crates/urlpattern/0.3.0/download) | 0.3.0 | MIT | runtime/target-dependent |
+| [urlpattern](https://crates.io/crates/urlpattern/0.6.0/download) | 0.6.0 | MIT | runtime/target-dependent |
 | [utf8_iter](https://crates.io/crates/utf8_iter/1.0.4/download) | 1.0.4 | Apache-2.0 OR MIT | runtime/target-dependent |
 | [uuid](https://crates.io/crates/uuid/1.24.0/download) | 1.24.0 | Apache-2.0 OR MIT | runtime/target-dependent |
 | [vcpkg](https://crates.io/crates/vcpkg/0.2.15/download) | 0.2.15 | MIT/Apache-2.0 | runtime/target-dependent |
@@ -654,17 +647,17 @@ Cargo's lock graph includes target-specific dependencies for Windows, Linux, And
 | [web-time](https://crates.io/crates/web-time/1.1.0/download) | 1.1.0 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [webkit2gtk](https://crates.io/crates/webkit2gtk/2.0.2/download) | 2.0.2 | MIT | runtime/target-dependent |
 | [webkit2gtk-sys](https://crates.io/crates/webkit2gtk-sys/2.0.2/download) | 2.0.2 | MIT | runtime/target-dependent |
-| [webpki-root-certs](https://crates.io/crates/webpki-root-certs/1.0.9/download) | 1.0.9 | CDLA-Permissive-2.0 | runtime/target-dependent |
-| [webpki-roots](https://crates.io/crates/webpki-roots/1.0.9/download) | 1.0.9 | CDLA-Permissive-2.0 | runtime/target-dependent |
-| [webview2-com](https://crates.io/crates/webview2-com/0.38.2/download) | 0.38.2 | MIT | runtime/target-dependent |
+| [webpki-root-certs](https://crates.io/crates/webpki-root-certs/1.0.11/download) | 1.0.11 | CDLA-Permissive-2.0 | runtime/target-dependent |
+| [webpki-roots](https://crates.io/crates/webpki-roots/1.0.11/download) | 1.0.11 | CDLA-Permissive-2.0 | runtime/target-dependent |
+| [webview2-com](https://crates.io/crates/webview2-com/0.39.1/download) | 0.39.1 | MIT | runtime/target-dependent |
 | [webview2-com-macros](https://crates.io/crates/webview2-com-macros/0.8.1/download) | 0.8.1 | MIT | runtime/target-dependent |
-| [webview2-com-sys](https://crates.io/crates/webview2-com-sys/0.38.2/download) | 0.38.2 | MIT | runtime/target-dependent |
+| [webview2-com-sys](https://crates.io/crates/webview2-com-sys/0.39.1/download) | 0.39.1 | MIT | runtime/target-dependent |
 | [winapi](https://crates.io/crates/winapi/0.3.9/download) | 0.3.9 | MIT/Apache-2.0 | runtime/target-dependent |
 | [winapi-i686-pc-windows-gnu](https://crates.io/crates/winapi-i686-pc-windows-gnu/0.4.0/download) | 0.4.0 | MIT/Apache-2.0 | runtime/target-dependent |
 | [winapi-util](https://crates.io/crates/winapi-util/0.1.11/download) | 0.1.11 | Unlicense OR MIT | runtime/target-dependent |
 | [winapi-x86_64-pc-windows-gnu](https://crates.io/crates/winapi-x86_64-pc-windows-gnu/0.4.0/download) | 0.4.0 | MIT/Apache-2.0 | runtime/target-dependent |
-| [window-vibrancy](https://crates.io/crates/window-vibrancy/0.6.0/download) | 0.6.0 | Apache-2.0 OR MIT | runtime/target-dependent |
-| [windows](https://crates.io/crates/windows/0.61.3/download) | 0.61.3 | MIT OR Apache-2.0 | runtime/target-dependent |
+| [window-vibrancy](https://crates.io/crates/window-vibrancy/0.8.1/download) | 0.8.1 | Apache-2.0 OR MIT | runtime/target-dependent |
+| [windows](https://crates.io/crates/windows/0.62.2/download) | 0.62.2 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [windows_aarch64_gnullvm](https://crates.io/crates/windows_aarch64_gnullvm/0.42.2/download) | 0.42.2 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [windows_aarch64_gnullvm](https://crates.io/crates/windows_aarch64_gnullvm/0.52.6/download) | 0.52.6 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [windows_aarch64_gnullvm](https://crates.io/crates/windows_aarch64_gnullvm/0.53.1/download) | 0.53.1 | MIT OR Apache-2.0 | runtime/target-dependent |
@@ -688,20 +681,16 @@ Cargo's lock graph includes target-specific dependencies for Windows, Linux, And
 | [windows_x86_64_msvc](https://crates.io/crates/windows_x86_64_msvc/0.42.2/download) | 0.42.2 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [windows_x86_64_msvc](https://crates.io/crates/windows_x86_64_msvc/0.52.6/download) | 0.52.6 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [windows_x86_64_msvc](https://crates.io/crates/windows_x86_64_msvc/0.53.1/download) | 0.53.1 | MIT OR Apache-2.0 | runtime/target-dependent |
-| [windows-collections](https://crates.io/crates/windows-collections/0.2.0/download) | 0.2.0 | MIT OR Apache-2.0 | runtime/target-dependent |
-| [windows-core](https://crates.io/crates/windows-core/0.61.2/download) | 0.61.2 | MIT OR Apache-2.0 | runtime/target-dependent |
+| [windows-collections](https://crates.io/crates/windows-collections/0.3.2/download) | 0.3.2 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [windows-core](https://crates.io/crates/windows-core/0.62.2/download) | 0.62.2 | MIT OR Apache-2.0 | runtime/target-dependent |
-| [windows-future](https://crates.io/crates/windows-future/0.2.1/download) | 0.2.1 | MIT OR Apache-2.0 | runtime/target-dependent |
+| [windows-future](https://crates.io/crates/windows-future/0.3.2/download) | 0.3.2 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [windows-implement](https://crates.io/crates/windows-implement/0.60.2/download) | 0.60.2 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [windows-interface](https://crates.io/crates/windows-interface/0.59.3/download) | 0.59.3 | MIT OR Apache-2.0 | runtime/target-dependent |
-| [windows-link](https://crates.io/crates/windows-link/0.1.3/download) | 0.1.3 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [windows-link](https://crates.io/crates/windows-link/0.2.1/download) | 0.2.1 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [windows-native-keyring-store](https://crates.io/crates/windows-native-keyring-store/1.1.0/download) | 1.1.0 | MIT OR Apache-2.0 | runtime/target-dependent |
-| [windows-numerics](https://crates.io/crates/windows-numerics/0.2.0/download) | 0.2.0 | MIT OR Apache-2.0 | runtime/target-dependent |
+| [windows-numerics](https://crates.io/crates/windows-numerics/0.3.1/download) | 0.3.1 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [windows-registry](https://crates.io/crates/windows-registry/0.6.1/download) | 0.6.1 | MIT OR Apache-2.0 | runtime/target-dependent |
-| [windows-result](https://crates.io/crates/windows-result/0.3.4/download) | 0.3.4 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [windows-result](https://crates.io/crates/windows-result/0.4.1/download) | 0.4.1 | MIT OR Apache-2.0 | runtime/target-dependent |
-| [windows-strings](https://crates.io/crates/windows-strings/0.4.2/download) | 0.4.2 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [windows-strings](https://crates.io/crates/windows-strings/0.5.1/download) | 0.5.1 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [windows-sys](https://crates.io/crates/windows-sys/0.45.0/download) | 0.45.0 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [windows-sys](https://crates.io/crates/windows-sys/0.52.0/download) | 0.52.0 | MIT OR Apache-2.0 | runtime/target-dependent |
@@ -711,15 +700,14 @@ Cargo's lock graph includes target-specific dependencies for Windows, Linux, And
 | [windows-targets](https://crates.io/crates/windows-targets/0.42.2/download) | 0.42.2 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [windows-targets](https://crates.io/crates/windows-targets/0.52.6/download) | 0.52.6 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [windows-targets](https://crates.io/crates/windows-targets/0.53.5/download) | 0.53.5 | MIT OR Apache-2.0 | runtime/target-dependent |
-| [windows-threading](https://crates.io/crates/windows-threading/0.1.0/download) | 0.1.0 | MIT OR Apache-2.0 | runtime/target-dependent |
+| [windows-threading](https://crates.io/crates/windows-threading/0.2.1/download) | 0.2.1 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [windows-version](https://crates.io/crates/windows-version/0.1.7/download) | 0.1.7 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [winnow](https://crates.io/crates/winnow/0.5.40/download) | 0.5.40 | MIT | runtime/target-dependent |
-| [winnow](https://crates.io/crates/winnow/0.7.15/download) | 0.7.15 | MIT | runtime/target-dependent |
 | [winnow](https://crates.io/crates/winnow/1.0.4/download) | 1.0.4 | MIT | runtime/target-dependent |
 | [winreg](https://crates.io/crates/winreg/0.55.0/download) | 0.55.0 | MIT | runtime/target-dependent |
 | [wit-bindgen](https://crates.io/crates/wit-bindgen/0.57.1/download) | 0.57.1 | Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT | runtime/target-dependent |
 | [writeable](https://crates.io/crates/writeable/0.6.3/download) | 0.6.3 | Unicode-3.0 | runtime/target-dependent |
-| [wry](https://crates.io/crates/wry/0.55.1/download) | 0.55.1 | Apache-2.0 OR MIT | runtime/target-dependent |
+| [wry](https://crates.io/crates/wry/0.57.1/download) | 0.57.1 | Apache-2.0 OR MIT | runtime/target-dependent |
 | [x11](https://crates.io/crates/x11/2.21.0/download) | 2.21.0 | MIT | runtime/target-dependent |
 | [x11-dl](https://crates.io/crates/x11-dl/2.21.0/download) | 2.21.0 | MIT | runtime/target-dependent |
 | [x509-parser](https://crates.io/crates/x509-parser/0.18.1/download) | 0.18.1 | MIT OR Apache-2.0 | runtime/target-dependent |
@@ -738,7 +726,7 @@ Cargo's lock graph includes target-specific dependencies for Windows, Linux, And
 | [zerotrie](https://crates.io/crates/zerotrie/0.2.4/download) | 0.2.4 | Unicode-3.0 | runtime/target-dependent |
 | [zerovec](https://crates.io/crates/zerovec/0.11.6/download) | 0.11.6 | Unicode-3.0 | runtime/target-dependent |
 | [zerovec-derive](https://crates.io/crates/zerovec-derive/0.11.3/download) | 0.11.3 | Unicode-3.0 | runtime/target-dependent |
-| [zip](https://crates.io/crates/zip/4.6.1/download) | 4.6.1 | MIT | runtime/target-dependent |
+| [zip](https://crates.io/crates/zip/9.1.3/download) | 9.1.3 | MIT | runtime/target-dependent |
 | [zlib-rs](https://crates.io/crates/zlib-rs/0.6.6/download) | 0.6.6 | Zlib | runtime/target-dependent |
 | [zmij](https://crates.io/crates/zmij/1.0.23/download) | 1.0.23 | MIT | runtime/target-dependent |
 | [zopfli](https://crates.io/crates/zopfli/0.8.3/download) | 0.8.3 | Apache-2.0 | runtime/target-dependent |
@@ -883,6 +871,7 @@ These components come from the strictly locked Android app, buildscript and buil
 | com.fasterxml.jackson.core:jackson-annotations | 2.22 | The Apache Software License, Version 2.0 | runtime/target-dependent |
 | com.fasterxml.jackson.core:jackson-core | 2.22.3 | The Apache Software License, Version 2.0 | runtime/target-dependent |
 | com.fasterxml.jackson.core:jackson-databind | 2.22.3 | The Apache Software License, Version 2.0 | runtime/target-dependent |
+| com.fasterxml.jackson.datatype:jackson-datatype-json-org | 2.22.3 | The Apache Software License, Version 2.0 | runtime/target-dependent |
 | com.google.android:annotations | 4.1.1.4 | Apache 2.0 | runtime/target-dependent |
 | com.google.android.material:material | 1.12.0 | The Apache Software License, Version 2.0 | runtime/target-dependent |
 | com.google.api.grpc:proto-google-common-protos | 2.17.0 | Apache-2.0 | runtime/target-dependent |
@@ -977,7 +966,7 @@ These components come from the strictly locked Android app, buildscript and buil
 | org.bouncycastle:bcpkix-jdk18on | 1.85 | Bouncy Castle Licence | build/development |
 | org.bouncycastle:bcprov-jdk18on | 1.85 | Bouncy Castle Licence | build/development |
 | org.bouncycastle:bcutil-jdk18on | 1.85 | Bouncy Castle Licence | build/development |
-| org.checkerframework:checker-qual | 3.43.0 | The MIT License | build/development |
+| org.checkerframework:checker-qual | 2.5.8 | The MIT License | build/development |
 | org.codehaus.mojo:animal-sniffer-annotations | 1.23 | MIT license | runtime/target-dependent |
 | org.codehaus.mojo:animal-sniffer-annotations | 1.24 | MIT license | runtime/target-dependent |
 | org.glassfish.jaxb:jaxb-runtime | 2.3.2 | Eclipse Distribution License - v 1.0 | build/development |

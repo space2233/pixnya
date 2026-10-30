@@ -468,7 +468,10 @@ fn verify_archive_streaming(source: &Path) -> Result<BackupManifest, BackupError
         let mut member = archive
             .by_index(index)
             .map_err(|_| BackupError::InvalidArchive)?;
-        let name = member.name().to_owned();
+        let name = member
+            .name()
+            .map_err(|_| BackupError::InvalidArchive)?
+            .into_owned();
         if name == MANIFEST_PATH {
             if !seen.insert(name) {
                 return Err(BackupError::InvalidArchive);
@@ -574,7 +577,10 @@ fn restore_archive_streaming(
         let mut member = archive
             .by_index(index)
             .map_err(|_| BackupError::InvalidArchive)?;
-        let name = member.name().to_owned();
+        let name = member
+            .name()
+            .map_err(|_| BackupError::InvalidArchive)?
+            .into_owned();
         if name == MANIFEST_PATH {
             if !seen.insert(name) {
                 return Err(BackupError::InvalidArchive);
@@ -820,7 +826,10 @@ fn read_verified_archive(path: &Path) -> Result<VerifiedArchive, BackupError> {
         if member.is_dir() || member.enclosed_name().is_none() {
             return Err(BackupError::InvalidArchive);
         }
-        let name = member.name().to_owned();
+        let name = member
+            .name()
+            .map_err(|_| BackupError::InvalidArchive)?
+            .into_owned();
         validate_archive_member_name(&name)?;
         if raw_members.contains_key(&name) {
             return Err(BackupError::InvalidArchive);
