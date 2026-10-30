@@ -117,7 +117,7 @@
 
 2026-10-30：功能实现和依赖修补已提交验证；维护者决定暂不创建 Draft Release。Linux 凭据库的 `zvariant`、`zbus_names`、`zvariant_derive` 三项停止维护公告保持阻断，等待上游迁移；不添加例外或更换凭据后端。详见 [1.7.0 验证记录](releases/v1.7.0-acceptance.md)。
 
-- 沿用新猫耳少女图标；桌面、Android 和 favicon 使用同一原图。
+- 猫耳少女图标已应用；桌面、Android 五档密度与自适应入口、favicon 使用 `src-tauri/icons/pixnya-mascot-source.png` 同一原图，运行 `npm run icons:generate` 可重新生成。路径、尺寸与校验依据见 [图标验收记录](releases/v1.7.0-acceptance.md#原创猫耳少女图标已应用2026-10-30)。
 - 在线与离线小说共用沉浸分页、字号、行距、主题、目录和 Android 音量键翻页。
 - 在线阅读入口优先读取完整本地小说；离线入口只读本地数据，前后章节仅链接已下载内容。
 - 沿用旧小说进度键，在线、离线入口互通；重新打开已有小说时将元数据加入本地书架。

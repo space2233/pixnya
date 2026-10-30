@@ -21,6 +21,7 @@
     "preview": "vite preview",
     "check:avatar": "node scripts/check-mobile-avatar.mjs",
     "check:branding": "node --test scripts/branding-regression.test.mjs",
+    "icons:generate": "node scripts/generate-icons.mjs",
     "check:tablet-safe-area": "node --test scripts/tablet-safe-area-regression.test.mjs",
     "check:comments": "node --test scripts/comment-experience-regression.test.mjs",
     "check:mobile-profile": "node scripts/check-mobile-profile-layout.mjs",
