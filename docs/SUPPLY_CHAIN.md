@@ -85,6 +85,8 @@ AGP、Kotlin Gradle plugin、UTP、buildscript 和 buildSrc 等构建工具仍�
 
 每次候选 Release 都会重新扫描三套 Gradle 锁，并把未经裁剪的 `pixnya-<version>-android-build-tools-osv.json` 作为附件归档；独立的每周工作流也运行同一基线检查并保留原始报告。到期条目只能通过升级/移除依赖或经过新的人工风险审查后显式更新，不能自动续期。
 
+2026-10-30 发布复验发现新收录的 `GHSA-xxph-c9ww-hj94`，已按 [Guava 33.7.2 官方修补说明](https://github.com/google/guava/releases/tag/v33.7.2) 将 buildscript、buildSrc 和 UTP 构建图统一到 `33.7.2-jre`。同步更新其必要的 failureaccess、Error Prone、J2ObjC 和 JSpecify 依赖；15 个新增 artifact 的 SHA-256 已与 Maven Central 原文件独立比对，既有校验值保持不变。326 个锁定 Maven 组件对应 359 个组件及父 POM 已通过校验，新增许可证声明均为 Apache-2.0。三套锁图 OSV 扫描零告警，两个 ARM APK runtime 仍为共同的 79 包、零告警；不增加漏洞例外。
+
 ## Rust 停止维护公告边界
 
 Release 的 `cargo-deny` 门以 `unmaintained = "all"` 和 `unsound = "all"` 检查完整传递图，继续阻断全部 RustSec 漏洞、新增的未定义行为公告、新增的停止维护公告和未审阅例外。`deny.toml` 只临时接受当前 Tauri 2.11.5 上游依赖图中仍会被扫描到的 7 条公告：1 条是 Linux gtk-rs 宏停止维护公告，5 条是 `tauri-utils 2.9.3 -> urlpattern 0.3 -> rust-unic 0.9` 停止维护公告，另 1 条是 `glib 0.18.5` 的 `VariantStrIter` 未定义行为公告。2026-09 起 gtk-rs GTK3 绑定仓库取消归档，RustSec 撤回了 `RUSTSEC-2024-0411`–`0420` 停止维护公告；`unused-ignored-advisory = "deny"` 要求从忽略名单删除这些已不再命中的条目。

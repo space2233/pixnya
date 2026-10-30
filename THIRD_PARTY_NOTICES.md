@@ -7,11 +7,11 @@ Copyright (C) 2026 PixNya contributors
 
 This inventory records the reviewed license expressions for the exact dependency versions locked for PixNya 1.7.0. It is generated locally from `package-lock.json`, `Cargo.lock`, the Android Gradle lock and verification graph, installed npm/Cargo package evidence, and the tracked Maven license review. It is not legal advice and does not replace any upstream license or notice file shipped with a dependency.
 
-- Lock fingerprint: `sha256:69cb934b0316985ed6ac188d159d6eb9063db4a74a532f58cdead11c31263e1b`
+- Lock fingerprint: `sha256:2da1d9b2fcd2bb69818f30519f5552e1db0fc5a2f90525ef81e20cf09717ac73`
 - npm runtime/optional packages: 1
 - npm build/development packages: 144
 - Rust target-dependent locked packages: 570
-- Android Gradle/Maven locked components: 331
+- Android Gradle/Maven locked components: 326
 - SPDX SBOM command: `node scripts/generate-supply-chain-artifacts.mjs`
 
 ## npm runtime and optional dependencies
@@ -900,18 +900,13 @@ These components come from the strictly locked Android app, buildscript and buil
 | com.google.dagger:dagger | 2.28.3 | Apache 2.0 | build/development |
 | com.google.dagger:dagger | 2.48 | Apache 2.0 | runtime/target-dependent |
 | com.google.errorprone:error_prone_annotations | 2.15.0 | Apache 2.0 | runtime/target-dependent |
-| com.google.errorprone:error_prone_annotations | 2.23.0 | Apache 2.0 | runtime/target-dependent |
-| com.google.errorprone:error_prone_annotations | 2.28.0 | Apache 2.0 | runtime/target-dependent |
-| com.google.errorprone:error_prone_annotations | 2.30.0 | Apache 2.0 | runtime/target-dependent |
+| com.google.errorprone:error_prone_annotations | 2.50.0 | Apache 2.0 | runtime/target-dependent |
 | com.google.flatbuffers:flatbuffers-java | 1.12.0 | Apache License V2.0 | build/development |
-| com.google.guava:failureaccess | 1.0.1 | The Apache Software License, Version 2.0 | runtime/target-dependent |
-| com.google.guava:failureaccess | 1.0.2 | The Apache Software License, Version 2.0 | runtime/target-dependent |
-| com.google.guava:guava | 32.0.1-jre | Apache License, Version 2.0 | runtime/target-dependent |
-| com.google.guava:guava | 33.3.1-jre | Apache License, Version 2.0 | runtime/target-dependent |
+| com.google.guava:failureaccess | 1.0.3 | Apache License, Version 2.0 | runtime/target-dependent |
+| com.google.guava:guava | 33.7.2-jre | Apache License, Version 2.0 | runtime/target-dependent |
 | com.google.guava:listenablefuture | 1.0 | The Apache Software License, Version 2.0 | runtime/target-dependent |
 | com.google.guava:listenablefuture | 9999.0-empty-to-avoid-conflict-with-guava | The Apache Software License, Version 2.0 | runtime/target-dependent |
-| com.google.j2objc:j2objc-annotations | 2.8 | Apache License, Version 2.0 | runtime/target-dependent |
-| com.google.j2objc:j2objc-annotations | 3.0.0 | Apache License, Version 2.0 | runtime/target-dependent |
+| com.google.j2objc:j2objc-annotations | 3.1 | Apache License, Version 2.0 | runtime/target-dependent |
 | com.google.jimfs:jimfs | 1.1 | The Apache Software License, Version 2.0 | build/development |
 | com.google.protobuf:protobuf-java | 3.25.5 | BSD-3-Clause | runtime/target-dependent |
 | com.google.protobuf:protobuf-java-util | 3.25.5 | BSD-3-Clause | runtime/target-dependent |
@@ -982,8 +977,7 @@ These components come from the strictly locked Android app, buildscript and buil
 | org.bouncycastle:bcpkix-jdk18on | 1.85 | Bouncy Castle Licence | build/development |
 | org.bouncycastle:bcprov-jdk18on | 1.85 | Bouncy Castle Licence | build/development |
 | org.bouncycastle:bcutil-jdk18on | 1.85 | Bouncy Castle Licence | build/development |
-| org.checkerframework:checker-qual | 3.33.0 | The MIT License | runtime/target-dependent |
-| org.checkerframework:checker-qual | 3.43.0 | The MIT License | runtime/target-dependent |
+| org.checkerframework:checker-qual | 3.43.0 | The MIT License | build/development |
 | org.codehaus.mojo:animal-sniffer-annotations | 1.23 | MIT license | runtime/target-dependent |
 | org.codehaus.mojo:animal-sniffer-annotations | 1.24 | MIT license | runtime/target-dependent |
 | org.glassfish.jaxb:jaxb-runtime | 2.3.2 | Eclipse Distribution License - v 1.0 | build/development |
@@ -1075,6 +1069,7 @@ These components come from the strictly locked Android app, buildscript and buil
 | org.jetbrains.kotlinx:kotlinx-serialization-core | 1.7.3 | The Apache Software License, Version 2.0 | runtime/target-dependent |
 | org.jetbrains.kotlinx:kotlinx-serialization-core-jvm | 1.7.3 | The Apache Software License, Version 2.0 | runtime/target-dependent |
 | org.jspecify:jspecify | 1.0.0 | The Apache License, Version 2.0 | runtime/target-dependent |
+| org.jspecify:jspecify | 1.0.1 | The Apache License, Version 2.0 | runtime/target-dependent |
 | org.jvnet.staxex:stax-ex | 1.8.1 | Eclipse Distribution License - v 1.0 | build/development |
 | org.ow2.asm:asm | 9.7.1 | BSD-3-Clause | build/development |
 | org.ow2.asm:asm-analysis | 9.7.1 | BSD-3-Clause | build/development |

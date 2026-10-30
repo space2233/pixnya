@@ -31,6 +31,7 @@ dependencies {
 configurations.configureEach {
     resolutionStrategy.eachDependency {
         val patchedVersion = when (requested.group) {
+            "com.google.guava" -> if (requested.name == "guava") "33.7.2-jre" else null
             "org.bouncycastle" -> "1.85"
             "io.netty" -> "4.1.137.Final"
             "com.google.protobuf" -> "3.25.5"
