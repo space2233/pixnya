@@ -7,7 +7,7 @@ Copyright (C) 2026 PixNya contributors
 
 This inventory records the reviewed license expressions for the exact dependency versions locked for PixNya 1.7.0. It is generated locally from `package-lock.json`, `Cargo.lock`, the Android Gradle lock and verification graph, installed npm/Cargo package evidence, and the tracked Maven license review. It is not legal advice and does not replace any upstream license or notice file shipped with a dependency.
 
-- Lock fingerprint: `sha256:abb2347510af293b629e5fa7c41bbd270ae1ff330b8a5a04ed850624b572af36`
+- Lock fingerprint: `sha256:69cb934b0316985ed6ac188d159d6eb9063db4a74a532f58cdead11c31263e1b`
 - npm runtime/optional packages: 1
 - npm build/development packages: 144
 - Rust target-dependent locked packages: 570
@@ -125,7 +125,7 @@ This inventory records the reviewed license expressions for the exact dependency
 | [debug](https://registry.npmjs.org/debug/-/debug-4.4.3.tgz) | 4.4.3 | MIT | build/development |
 | [dedent](https://registry.npmjs.org/dedent/-/dedent-1.5.1.tgz) | 1.5.1 | MIT | build/development |
 | [deepmerge](https://registry.npmjs.org/deepmerge/-/deepmerge-4.3.1.tgz) | 4.3.1 | MIT | build/development |
-| [devalue](https://registry.npmjs.org/devalue/-/devalue-5.9.0.tgz) | 5.9.0 | MIT | build/development |
+| [devalue](https://registry.npmjs.org/devalue/-/devalue-5.9.4.tgz) | 5.9.4 | MIT | build/development |
 | [esbuild](https://registry.npmjs.org/esbuild/-/esbuild-0.25.12.tgz) | 0.25.12 | MIT | build/development |
 | [esm-env](https://registry.npmjs.org/esm-env/-/esm-env-1.2.2.tgz) | 1.2.2 | MIT | build/development |
 | [esprima](https://registry.npmjs.org/esprima/-/esprima-4.0.1.tgz) | 4.0.1 | BSD-2-Clause | build/development |
@@ -153,7 +153,7 @@ This inventory records the reviewed license expressions for the exact dependency
 | [sade](https://registry.npmjs.org/sade/-/sade-1.8.1.tgz) | 1.8.1 | MIT | build/development |
 | [set-cookie-parser](https://registry.npmjs.org/set-cookie-parser/-/set-cookie-parser-3.1.2.tgz) | 3.1.2 | MIT | build/development |
 | [sirv](https://registry.npmjs.org/sirv/-/sirv-3.0.2.tgz) | 3.0.2 | MIT | build/development |
-| [source-map-js](https://registry.npmjs.org/source-map-js/-/source-map-js-1.2.1.tgz) | 1.2.1 | BSD-3-Clause | build/development |
+| [source-map-js](https://registry.npmjs.org/source-map-js/-/source-map-js-1.2.2.tgz) | 1.2.2 | BSD-3-Clause | build/development |
 | [spdx-license-list](https://registry.npmjs.org/spdx-license-list/-/spdx-license-list-6.12.0.tgz) | 6.12.0 | CC0-1.0 | build/development |
 | [sqlite-wasm-kysely](https://registry.npmjs.org/sqlite-wasm-kysely/-/sqlite-wasm-kysely-0.3.0.tgz) | 0.3.0 | MIT | build/development |
 | [svelte](https://registry.npmjs.org/svelte/-/svelte-5.56.8.tgz) | 5.56.8 | MIT | build/development |
@@ -164,7 +164,7 @@ This inventory records the reviewed license expressions for the exact dependency
 | [unplugin](https://registry.npmjs.org/unplugin/-/unplugin-2.3.11.tgz) | 2.3.11 | MIT | build/development |
 | [urlpattern-polyfill](https://registry.npmjs.org/urlpattern-polyfill/-/urlpattern-polyfill-10.1.0.tgz) | 10.1.0 | MIT | build/development |
 | [uuid](https://registry.npmjs.org/uuid/-/uuid-14.0.1.tgz) | 14.0.1 | MIT | build/development |
-| [vite](https://registry.npmjs.org/vite/-/vite-6.4.3.tgz) | 6.4.3 | MIT | build/development |
+| [vite](https://registry.npmjs.org/vite/-/vite-6.4.5.tgz) | 6.4.5 | MIT | build/development |
 | [vitefu](https://registry.npmjs.org/vitefu/-/vitefu-1.1.3.tgz) | 1.1.3 | MIT | build/development |
 | [webpack-virtual-modules](https://registry.npmjs.org/webpack-virtual-modules/-/webpack-virtual-modules-0.6.2.tgz) | 0.6.2 | MIT | build/development |
 | [zimmerframe](https://registry.npmjs.org/zimmerframe/-/zimmerframe-1.1.4.tgz) | 1.1.4 | MIT | build/development |
