@@ -108,6 +108,60 @@ test("merging keeps the newer local reading session even when it is a re-read at
   assert.equal(shelf.readNovelProgress("42"), 0.2);
 });
 
+test("successive backup merges preserve reading timestamps separately from status edits", () => {
+  values.clear();
+  shelf.addNovelToShelf(novel, "reading");
+  shelf.saveNovelProgress("42", 0.2);
+  const original = collectFrontendBackupState();
+  original.readingShelf[0].updatedAt = 200;
+  original.readingShelf[0].lastReadAt = 200;
+  restoreFrontendBackupState(original);
+
+  const statusEdit = structuredClone(original);
+  Object.assign(statusEdit.readingShelf[0], { status: "finished", updatedAt: 300, lastReadAt: 100 });
+  statusEdit.novelReadingProgress["42"] = 900000;
+  restoreFrontendBackupState(statusEdit, "merge");
+  assert.equal(shelf.readNovelProgress("42"), 0.2);
+  assert.equal(shelf.readReadingShelf()[0].status, "finished");
+  assert.equal(shelf.readReadingShelf()[0].updatedAt, 300);
+  assert.equal(shelf.readReadingShelf()[0].lastReadAt, 200);
+
+  const olderRead = structuredClone(original);
+  Object.assign(olderRead.readingShelf[0], { updatedAt: 150, lastReadAt: 150 });
+  olderRead.novelReadingProgress["42"] = 800000;
+  restoreFrontendBackupState(olderRead, "merge");
+  assert.equal(shelf.readNovelProgress("42"), 0.2);
+  assert.equal(shelf.readReadingShelf()[0].lastReadAt, 200);
+  assert.equal(shelf.readReadingShelf()[0].status, "finished");
+});
+
+test("shelf merge keeps newer reading clocks from either side without mutating inputs", () => {
+  const entry = { id: "42", title: "Novel", author: "Author", seriesId: null, seriesTitle: null,
+    xRestrict: 0, status: "reading", updatedAt: 200, lastReadAt: 200 };
+  const edited = { ...entry, title: "Updated title", status: "finished", updatedAt: 300, lastReadAt: 100 };
+  const expected = { ...edited, lastReadAt: 200 };
+  assert.deepEqual(shelf.mergeReadingShelves([entry], [edited]), [expected]);
+  assert.deepEqual(shelf.mergeReadingShelves([edited], [entry]), [expected]);
+  assert.equal(edited.lastReadAt, 100);
+  assert.equal(entry.status, "reading");
+});
+
+test("backup collection bounds valid progress entries while skipping corrupt local records", () => {
+  values.clear();
+  values.set("pixiv-client:novel-progress:../bad", "0.4");
+  values.set("pixiv-client:novel-progress:0", "0.4");
+  values.set("pixiv-client:novel-progress:99999", "NaN");
+  for (let id = 1; id <= 10002; id += 1) values.set(`pixiv-client:novel-progress:${id}`, "0.12345678");
+  const progress = collectFrontendBackupState().novelReadingProgress;
+  assert.equal(Object.keys(progress).length, 10000);
+  assert.equal(progress["1"], 123457);
+  assert.equal(progress["10000"], 123457);
+  assert.equal(progress["10001"], undefined);
+  assert.equal(progress["99999"], undefined);
+  assert.equal(progress["0"], undefined);
+  values.clear();
+});
+
 test("invalid settings are rejected before writes; failed restore rolls all reading data back", () => {
   values.clear();
   shelf.addNovelToShelf(novel, "reading");

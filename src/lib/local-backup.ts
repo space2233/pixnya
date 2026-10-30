@@ -46,6 +46,7 @@ export interface FrontendBackupState {
 
 export function collectFrontendBackupState(): FrontendBackupState {
   const novelReadingProgress: Record<string, number> = {};
+  let progressCount = 0;
   if (typeof localStorage !== "undefined") {
     for (let index = 0; index < localStorage.length; index += 1) {
       const key = localStorage.key(index);
@@ -55,7 +56,8 @@ export function collectFrontendBackupState(): FrontendBackupState {
       const progress = Number(localStorage.getItem(key));
       if (!Number.isFinite(progress)) continue;
       novelReadingProgress[novelId] = Math.round(Math.min(1, Math.max(0, progress)) * 1_000_000);
-      if (Object.keys(novelReadingProgress).length >= MAX_PROGRESS_ITEMS) break;
+      progressCount += 1;
+      if (progressCount >= MAX_PROGRESS_ITEMS) break;
     }
   }
   const reader = readNovelReaderPreferences();

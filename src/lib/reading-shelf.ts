@@ -47,7 +47,14 @@ export function mergeReadingShelves(current: ReadingShelfEntry[], incoming: Read
   const entries = new Map<string, ReadingShelfEntry>();
   for (const entry of [...current, ...incoming]) {
     const previous = entries.get(entry.id);
-    if (!previous || entry.updatedAt >= previous.updatedAt) entries.set(entry.id, entry);
+    if (!previous) {
+      entries.set(entry.id, entry);
+      continue;
+    }
+    // Status/metadata edits and reading sessions have independent clocks.
+    // Keep the reading clock paired with the progress selected during restore.
+    const latest = entry.updatedAt >= previous.updatedAt ? entry : previous;
+    entries.set(entry.id, { ...latest, lastReadAt: Math.max(entry.lastReadAt, previous.lastReadAt) });
   }
   return [...entries.values()].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, MAX_SHELF_ENTRIES);
 }
