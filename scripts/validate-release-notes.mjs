@@ -35,8 +35,6 @@ export function validateStableReleaseNotes({ notes, version, commitSha }) {
 
   for (const platform of [
     "Windows x64",
-    "Windows ARM64",
-    "Linux x64",
     "Android ARM64",
     "Android ARM32",
   ]) {

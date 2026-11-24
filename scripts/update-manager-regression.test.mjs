@@ -153,8 +153,8 @@ test("release builds fail closed unless updater and Android signing are configur
   assert.match(androidManifestGenerator, /createHash\("sha256"\)/);
   assert.match(androidManifestGenerator, /from "\.\/release-url-policy\.mjs"/);
   assert.match(desktopManifestGenerator, /"windows-x86_64"/);
-  assert.match(desktopManifestGenerator, /"windows-aarch64"/);
-  assert.match(desktopManifestGenerator, /"linux-x86_64"/);
+  assert.doesNotMatch(desktopManifestGenerator, /"windows-aarch64"/);
+  assert.doesNotMatch(desktopManifestGenerator, /"linux-x86_64"/);
   assert.match(desktopManifestGenerator, /Base64-encoded Tauri updater signature/);
   assert.match(desktopManifestGenerator, /from "\.\/release-url-policy\.mjs"/);
   assert.match(releaseUrlPolicy, /argumentsMap\.get\("repository"\)/);

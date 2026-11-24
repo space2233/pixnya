@@ -12,7 +12,7 @@ test("download queue owns a migrated bundled-SQLite state machine", async () => 
     read("crates/download-queue/Cargo.toml"),
     read("crates/download-queue/src/lib.rs"),
   ]);
-  assert.match(workspace, /rusqlite = \{ version = "0\.40\.1", features = \["bundled"\] \}/);
+  assert.match(workspace, /rusqlite = \{ version = "0\.41\.1", features = \["bundled"\] \}/);
   assert.match(manifest, /rusqlite\.workspace = true/);
   assert.match(queue, /CREATE TABLE IF NOT EXISTS schema_migrations/);
   assert.match(queue, /CREATE TABLE IF NOT EXISTS download_tasks/);

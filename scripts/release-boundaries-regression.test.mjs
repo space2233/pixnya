@@ -294,13 +294,12 @@ test("formal releases are gated by main-branch full verification and signed arti
   assert.doesNotMatch(workflow, /google\/osv-scanner-action/);
   assert.equal(
     workflow.match(/needs: \[preflight, rust-advisories\]/g)?.length,
-    4,
+    2,
     "all platform builds must wait for the in-preflight Android runtime scan and Rust advisory gate",
   );
   assert.match(workflow, /check-android-apk\.ps1/);
   assert.match(workflow, /package: name='io\.github\.space2233\.pixnya'/);
   assert.match(workflow, /minisign -Vm "\$WINDOWS_X64_ARCHIVE"/);
-  assert.match(workflow, /minisign -Vm "\$WINDOWS_ARM64_ARCHIVE"/);
   assert.match(workflow, /minisign -Vm dist\/android-latest\.json/);
   assert.match(workflow, /MANIFEST_NOTES_FILE="\$RUNNER_TEMP\/update-manifest-notes\.md"/);
   assert.match(workflow, /See https:\/\/github\.com\/%s\/releases\/tag\/v%s/);
@@ -323,10 +322,9 @@ test("formal releases are gated by main-branch full verification and signed arti
   assert.match(workflow, /stable releases require the official repository to be anonymously readable/);
   assert.match(workflow, /metadata\.visibility !== "public"/);
   assert.match(workflow, /exactly one %s/);
-  assert.match(workflow, /Expected exactly 10 public release files/);
+  assert.match(workflow, /Expected exactly 8 public release files/);
   assert.match(workflow, /pixnya-\$\{PIXNYA_RELEASE_VERSION\}-verification\.tar\.gz/);
   assert.match(workflow, /WINDOWS_X64_ARCHIVE="dist\/PixNya_\$\{PIXNYA_RELEASE_VERSION\}_x64-setup\.exe"/);
-  assert.match(workflow, /WINDOWS_ARM64_ARCHIVE="dist\/PixNya_\$\{PIXNYA_RELEASE_VERSION\}_arm64-setup\.exe"/);
   assert.doesNotMatch(workflow, /nsis\.zip/);
   assert.doesNotMatch(workflow, /AppImage\.tar\.gz/);
   assert.match(workflow, /prerelease: \$\{\{ startsWith\(inputs\.version, '0\.'\) \}\}/);
@@ -341,7 +339,7 @@ test("formal releases are gated by main-branch full verification and signed arti
   assert.match(workflow, /repository: \$\{\{ github\.repository \}\}/);
   assert.match(workflow, /--repository "\$PIXNYA_UPDATE_REPOSITORY"/);
 
-  const assetsVerified = workflow.indexOf("Expected exactly 10 public release files");
+  const assetsVerified = workflow.indexOf("Expected exactly 8 public release files");
   const tagReserved = workflow.indexOf("Atomically bind the release tag to the source commit");
   const releaseCreated = workflow.indexOf("Create or resume a draft Release for manual verification");
   const bindingVerified = workflow.indexOf("Verify the draft Release remains bound to the source commit");
@@ -380,12 +378,12 @@ test("stable release notes stay concise and bilingual", async () => {
 ${requiredSections[0]}
 
 - 新增通知、评论管理和动图导出。
-- 支持 Windows x64、Windows ARM64、Linux x64、Android ARM64 和 Android ARM32（Android 10+）。
+- 支持 Windows x64、Android ARM64 和 Android ARM32（Android 10+）。
 
 ${requiredSections[1]}
 
 - Added notifications, comment management, and animation export.
-- Supports Windows x64, Windows ARM64, Linux x64, Android ARM64, and Android ARM32 (Android 10+).`;
+- Supports Windows x64, Android ARM64, and Android ARM32 (Android 10+).`;
 
   assert.doesNotThrow(() => validateStableReleaseNotes({ notes: completeNotes, version, commitSha }));
   const pendingNotes = `${completeNotes}\nPENDING`;
@@ -395,12 +393,12 @@ ${requiredSections[1]}
     completeNotes.replace("## 中文", "## Chinese"),
     completeNotes.replace(
       /## 中文[\s\S]*?## English/,
-      "## 中文\n\n- Added features.\n- Supports Windows x64, Windows ARM64, Linux x64, Android ARM64, and Android ARM32.\n\n## English",
+      "## 中文\n\n- Added features.\n- Supports Windows x64, Android ARM64, and Android ARM32.\n\n## English",
     ),
     completeNotes.replace("## English", "## 英文"),
     completeNotes.replace(/## English[\s\S]*$/, "## English\n\n- 新增功能。"),
     completeNotes.replaceAll("Android ARM64", "Android"),
-    completeNotes.replaceAll("Windows ARM64", "Windows"),
+    completeNotes.replaceAll("Windows x64", "Windows"),
     completeNotes.replaceAll("Android ARM32", "Android"),
     completeNotes.replace("notifications", "{{features}}"),
   ];
@@ -448,12 +446,8 @@ test("stable publication revalidates the signed Draft instead of trusting the bu
   assert.match(workflow, /9a599b48ba6eb7b1e80f12f36b94ceca7c00b7a5173c95c3efc88d9822957e73/);
   assert.doesNotMatch(workflow, /apt-get install[^\n]*minisign/);
   assert.match(workflow, /WINDOWS_X64_ARCHIVE="candidate\/PixNya_\$\{PIXNYA_RELEASE_VERSION\}_x64-setup\.exe"/);
-  assert.match(workflow, /WINDOWS_ARM64_ARCHIVE="candidate\/PixNya_\$\{PIXNYA_RELEASE_VERSION\}_arm64-setup\.exe"/);
-  assert.match(workflow, /-name '\*\.AppImage'/);
   assert.match(workflow, /minisign -Vm "\$WINDOWS_X64_ARCHIVE"/);
-  assert.match(workflow, /minisign -Vm "\$WINDOWS_ARM64_ARCHIVE"/);
-  assert.match(workflow, /minisign -Vm "\$LINUX_ARCHIVE"/);
-  assert.match(workflow, /Missing embedded updater signature/);
+  assert.match(workflow, /Invalid embedded Windows x64 updater signature/);
   assert.match(workflow, /minisign -Vm candidate\/android-latest\.json/);
   assert.match(workflow, /sdkmanager "build-tools;36\.0\.0"/);
   assertSetupAndroidSkipsObsoleteToolsPackage(workflow, 1);

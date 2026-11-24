@@ -89,13 +89,15 @@ AGP、Kotlin Gradle plugin、UTP、buildscript 和 buildSrc 等构建工具仍�
 
 ## Rust 停止维护公告边界
 
-Release 的 `cargo-deny` 门以 `unmaintained = "all"` 和 `unsound = "all"` 检查完整传递图，继续阻断全部 RustSec 漏洞、新增的未定义行为公告、新增的停止维护公告和未审阅例外。`deny.toml` 当前只保留 2 条既有例外：Linux gtk-rs 宏停止维护公告 `RUSTSEC-2024-0370`，以及 `glib 0.18.5` 的 `VariantStrIter` 未定义行为公告 `RUSTSEC-2024-0429`，复核期限仍为 `2026-11-05`。Tauri 升级引入 `tauri-utils 2.10.2 -> urlpattern 0.6`，已移除 `rust-unic` 及其 5 条旧例外。2026-09 起 GTK3 停止维护公告 `RUSTSEC-2024-0411`–`0420` 已撤回；`unused-ignored-advisory = "deny"` 继续要求删除不再命中的忽略条目。
+2026-10-06 的 Release 审阅以 `unmaintained = "all"` 和 `unsound = "all"` 检查完整传递图，继续阻断全部 RustSec 漏洞、新增的未定义行为公告、新增的停止维护公告和未审阅例外。当时的 `deny.toml` 只保留 2 条既有例外：Linux gtk-rs 宏停止维护公告 `RUSTSEC-2024-0370`，以及 `glib 0.18.5` 的 `VariantStrIter` 未定义行为公告 `RUSTSEC-2024-0429`，复核期限仍为 `2026-11-05`。Tauri 升级引入 `tauri-utils 2.10.2 -> urlpattern 0.6`，已移除 `rust-unic` 及其 5 条旧例外。2026-09 起 GTK3 停止维护公告 `RUSTSEC-2024-0411`–`0420` 已撤回；`unused-ignored-advisory = "deny"` 继续要求删除不再命中的忽略条目。
 
 `RUSTSEC-2024-0429` 的官方修复要求 `glib >=0.20`，与 Tauri 2 的 GTK3 0.18 图不兼容。对当前锁定依赖进行人工调用点复核后，PixNya 与已检查的 Tauri 消费路径没有使用 `VariantStrIter`/`array_iter_str`；因此私人候选版把它作为短期风险例外，而不是关闭 `unsound` 检查。上游修复记录为 [gtk-rs-core#1343](https://github.com/gtk-rs/gtk-rs-core/pull/1343)。
 
 2026-10-30 已修补 `rustls 0.23.46`、`rustls-webpki 0.103.16`、两个 webpki roots 包 `1.0.11`、`tokio 1.54.1` 和 `zip 9.1.3`。官方 updater `2.14.1` 使用 ZIP 9，带动 Tauri 升级；备份与 APK 检查同步适配 ZIP 文件名解码接口。`cargo-deny` 仍失败于 Linux 凭据链上的 3 项停止维护公告：`zvariant 5.13.1`（`RUSTSEC-2026-0370`）、`zbus_names 4.3.4`（`RUSTSEC-2026-0371`）、`zvariant_derive 5.13.1`（`RUSTSEC-2026-0372`）。维护者明确选择保留阻塞、等待上游迁移；不新增例外、不切换凭据后端，暂不打 Draft Release。上游背景见 [zbus 合并与迁移议题](https://github.com/z-galaxy/zbus/issues/2043)。
 
-剩余 GTK 迁移继续参考 [Tauri GTK4 议题](https://github.com/tauri-apps/tauri/issues/11942)。两个既有 GTK/glib 例外沿用 2026-10-06 的调用点审阅与原到期日，本次没有重新延长。全部未维护、未定义行为及无效忽略检查继续生效；公告变化或到期未复核仍会失败。每周 Android 审计继续使用空例外基线。
+当时的 GTK 迁移参考 [Tauri GTK4 议题](https://github.com/tauri-apps/tauri/issues/11942)。两个既有 GTK/glib 例外沿用 2026-10-06 的调用点审阅与原到期日，本次没有重新延长。全部未维护、未定义行为及无效忽略检查继续生效；公告变化或到期未复核仍会失败。每周 Android 审计继续使用空例外基线。
+
+2026-11-24 起，正式发布目标为 Windows x64、Android ARM64 与 Android ARM32。`cargo deny` 按这三个 Rust 目标检查全部特性，公告例外列表为空。Linux 凭据依赖和 GTK 随 Linux 发布计划搁置，完整的锁文件仍用于生成 SBOM。
 
 ## 正式发布要求
 

@@ -7,9 +7,9 @@ Copyright (C) 2026 PixNya contributors
 
 This inventory records the reviewed license expressions for the exact dependency versions locked for PixNya 1.7.0. It is generated locally from `package-lock.json`, `Cargo.lock`, the Android Gradle lock and verification graph, installed npm/Cargo package evidence, and the tracked Maven license review. It is not legal advice and does not replace any upstream license or notice file shipped with a dependency.
 
-- Lock fingerprint: `sha256:b88e50c00514e68a11fd9335da92769fe0dff5437b72c65c8bd13216534af26c`
+- Lock fingerprint: `sha256:f487484470513a6b56f6f5b362ee0a36a9370771c471dc73ae00422d412e9c55`
 - npm runtime/optional packages: 1
-- npm build/development packages: 144
+- npm build/development packages: 123
 - Rust target-dependent locked packages: 558
 - Android Gradle/Maven locked components: 327
 - SPDX SBOM command: `node scripts/generate-supply-chain-artifacts.mjs`
@@ -24,32 +24,9 @@ This inventory records the reviewed license expressions for the exact dependency
 
 | Package | Version | Declared license | Notes |
 |---|---:|---|---|
-| [@esbuild/aix-ppc64](https://registry.npmjs.org/@esbuild/aix-ppc64/-/aix-ppc64-0.25.12.tgz) | 0.25.12 | MIT | optional, build/development |
-| [@esbuild/android-arm](https://registry.npmjs.org/@esbuild/android-arm/-/android-arm-0.25.12.tgz) | 0.25.12 | MIT | optional, build/development |
-| [@esbuild/android-arm64](https://registry.npmjs.org/@esbuild/android-arm64/-/android-arm64-0.25.12.tgz) | 0.25.12 | MIT | optional, build/development |
-| [@esbuild/android-x64](https://registry.npmjs.org/@esbuild/android-x64/-/android-x64-0.25.12.tgz) | 0.25.12 | MIT | optional, build/development |
-| [@esbuild/darwin-arm64](https://registry.npmjs.org/@esbuild/darwin-arm64/-/darwin-arm64-0.25.12.tgz) | 0.25.12 | MIT | optional, build/development |
-| [@esbuild/darwin-x64](https://registry.npmjs.org/@esbuild/darwin-x64/-/darwin-x64-0.25.12.tgz) | 0.25.12 | MIT | optional, build/development |
-| [@esbuild/freebsd-arm64](https://registry.npmjs.org/@esbuild/freebsd-arm64/-/freebsd-arm64-0.25.12.tgz) | 0.25.12 | MIT | optional, build/development |
-| [@esbuild/freebsd-x64](https://registry.npmjs.org/@esbuild/freebsd-x64/-/freebsd-x64-0.25.12.tgz) | 0.25.12 | MIT | optional, build/development |
-| [@esbuild/linux-arm](https://registry.npmjs.org/@esbuild/linux-arm/-/linux-arm-0.25.12.tgz) | 0.25.12 | MIT | optional, build/development |
-| [@esbuild/linux-arm64](https://registry.npmjs.org/@esbuild/linux-arm64/-/linux-arm64-0.25.12.tgz) | 0.25.12 | MIT | optional, build/development |
-| [@esbuild/linux-ia32](https://registry.npmjs.org/@esbuild/linux-ia32/-/linux-ia32-0.25.12.tgz) | 0.25.12 | MIT | optional, build/development |
-| [@esbuild/linux-loong64](https://registry.npmjs.org/@esbuild/linux-loong64/-/linux-loong64-0.25.12.tgz) | 0.25.12 | MIT | optional, build/development |
-| [@esbuild/linux-mips64el](https://registry.npmjs.org/@esbuild/linux-mips64el/-/linux-mips64el-0.25.12.tgz) | 0.25.12 | MIT | optional, build/development |
-| [@esbuild/linux-ppc64](https://registry.npmjs.org/@esbuild/linux-ppc64/-/linux-ppc64-0.25.12.tgz) | 0.25.12 | MIT | optional, build/development |
-| [@esbuild/linux-riscv64](https://registry.npmjs.org/@esbuild/linux-riscv64/-/linux-riscv64-0.25.12.tgz) | 0.25.12 | MIT | optional, build/development |
-| [@esbuild/linux-s390x](https://registry.npmjs.org/@esbuild/linux-s390x/-/linux-s390x-0.25.12.tgz) | 0.25.12 | MIT | optional, build/development |
-| [@esbuild/linux-x64](https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.25.12.tgz) | 0.25.12 | MIT | optional, build/development |
-| [@esbuild/netbsd-arm64](https://registry.npmjs.org/@esbuild/netbsd-arm64/-/netbsd-arm64-0.25.12.tgz) | 0.25.12 | MIT | optional, build/development |
-| [@esbuild/netbsd-x64](https://registry.npmjs.org/@esbuild/netbsd-x64/-/netbsd-x64-0.25.12.tgz) | 0.25.12 | MIT | optional, build/development |
-| [@esbuild/openbsd-arm64](https://registry.npmjs.org/@esbuild/openbsd-arm64/-/openbsd-arm64-0.25.12.tgz) | 0.25.12 | MIT | optional, build/development |
-| [@esbuild/openbsd-x64](https://registry.npmjs.org/@esbuild/openbsd-x64/-/openbsd-x64-0.25.12.tgz) | 0.25.12 | MIT | optional, build/development |
-| [@esbuild/openharmony-arm64](https://registry.npmjs.org/@esbuild/openharmony-arm64/-/openharmony-arm64-0.25.12.tgz) | 0.25.12 | MIT | optional, build/development |
-| [@esbuild/sunos-x64](https://registry.npmjs.org/@esbuild/sunos-x64/-/sunos-x64-0.25.12.tgz) | 0.25.12 | MIT | optional, build/development |
-| [@esbuild/win32-arm64](https://registry.npmjs.org/@esbuild/win32-arm64/-/win32-arm64-0.25.12.tgz) | 0.25.12 | MIT | optional, build/development |
-| [@esbuild/win32-ia32](https://registry.npmjs.org/@esbuild/win32-ia32/-/win32-ia32-0.25.12.tgz) | 0.25.12 | MIT | optional, build/development |
-| [@esbuild/win32-x64](https://registry.npmjs.org/@esbuild/win32-x64/-/win32-x64-0.25.12.tgz) | 0.25.12 | MIT | optional, build/development |
+| [@emnapi/core](https://registry.npmjs.org/@emnapi/core/-/core-2.0.0-beta.2.tgz) | 2.0.0-beta.2 | MIT | optional, build/development |
+| [@emnapi/runtime](https://registry.npmjs.org/@emnapi/runtime/-/runtime-2.0.0-beta.2.tgz) | 2.0.0-beta.2 | MIT | optional, build/development |
+| [@emnapi/wasi-threads](https://registry.npmjs.org/@emnapi/wasi-threads/-/wasi-threads-2.2.0.tgz) | 2.2.0 | MIT | optional, build/development |
 | [@inlang/paraglide-js](https://registry.npmjs.org/@inlang/paraglide-js/-/paraglide-js-2.23.2.tgz) | 2.23.2 | MIT | build/development |
 | [@inlang/plugin-message-format](https://registry.npmjs.org/@inlang/plugin-message-format/-/plugin-message-format-4.4.1.tgz) | 4.4.1 | MIT | build/development |
 | [@inlang/recommend-sherlock](https://registry.npmjs.org/@inlang/recommend-sherlock/-/recommend-sherlock-0.2.1.tgz) | 0.2.1 | MIT | build/development |
@@ -57,46 +34,38 @@ This inventory records the reviewed license expressions for the exact dependency
 | [@jridgewell/gen-mapping](https://registry.npmjs.org/@jridgewell/gen-mapping/-/gen-mapping-0.3.13.tgz) | 0.3.13 | MIT | build/development |
 | [@jridgewell/remapping](https://registry.npmjs.org/@jridgewell/remapping/-/remapping-2.3.5.tgz) | 2.3.5 | MIT | build/development |
 | [@jridgewell/resolve-uri](https://registry.npmjs.org/@jridgewell/resolve-uri/-/resolve-uri-3.1.2.tgz) | 3.1.2 | MIT | build/development |
-| [@jridgewell/sourcemap-codec](https://registry.npmjs.org/@jridgewell/sourcemap-codec/-/sourcemap-codec-1.5.5.tgz) | 1.5.5 | MIT | build/development |
+| [@jridgewell/sourcemap-codec](https://registry.npmjs.org/@jridgewell/sourcemap-codec/-/sourcemap-codec-1.6.0.tgz) | 1.6.0 | MIT | build/development |
 | [@jridgewell/trace-mapping](https://registry.npmjs.org/@jridgewell/trace-mapping/-/trace-mapping-0.3.31.tgz) | 0.3.31 | MIT | build/development |
 | [@lix-js/sdk](https://registry.npmjs.org/@lix-js/sdk/-/sdk-0.4.10.tgz) | 0.4.10 | Apache-2.0 | build/development |
 | [@lix-js/server-protocol-schema](https://registry.npmjs.org/@lix-js/server-protocol-schema/-/server-protocol-schema-0.1.1.tgz) | 0.1.1 | Apache-2.0 | build/development |
-| [@napi-rs/lzma-linux-x64-gnu](https://registry.npmjs.org/@napi-rs/lzma-linux-x64-gnu/-/lzma-linux-x64-gnu-1.5.1.tgz) | 1.5.1 | MIT | optional, build/development |
+| [@napi-rs/wasm-runtime](https://registry.npmjs.org/@napi-rs/wasm-runtime/-/wasm-runtime-1.2.6.tgz) | 1.2.6 | MIT | optional, build/development |
+| [@oxc-project/types](https://registry.npmjs.org/@oxc-project/types/-/types-0.156.0.tgz) | 0.156.0 | MIT | build/development |
 | [@polka/url](https://registry.npmjs.org/@polka/url/-/url-1.0.0-next.29.tgz) | 1.0.0-next.29 | MIT | build/development |
-| [@rollup/rollup-android-arm-eabi](https://registry.npmjs.org/@rollup/rollup-android-arm-eabi/-/rollup-android-arm-eabi-4.62.4.tgz) | 4.62.4 | MIT | optional, build/development |
-| [@rollup/rollup-android-arm64](https://registry.npmjs.org/@rollup/rollup-android-arm64/-/rollup-android-arm64-4.62.4.tgz) | 4.62.4 | MIT | optional, build/development |
-| [@rollup/rollup-darwin-arm64](https://registry.npmjs.org/@rollup/rollup-darwin-arm64/-/rollup-darwin-arm64-4.62.4.tgz) | 4.62.4 | MIT | optional, build/development |
-| [@rollup/rollup-darwin-x64](https://registry.npmjs.org/@rollup/rollup-darwin-x64/-/rollup-darwin-x64-4.62.4.tgz) | 4.62.4 | MIT | optional, build/development |
-| [@rollup/rollup-freebsd-arm64](https://registry.npmjs.org/@rollup/rollup-freebsd-arm64/-/rollup-freebsd-arm64-4.62.4.tgz) | 4.62.4 | MIT | optional, build/development |
-| [@rollup/rollup-freebsd-x64](https://registry.npmjs.org/@rollup/rollup-freebsd-x64/-/rollup-freebsd-x64-4.62.4.tgz) | 4.62.4 | MIT | optional, build/development |
-| [@rollup/rollup-linux-arm-gnueabihf](https://registry.npmjs.org/@rollup/rollup-linux-arm-gnueabihf/-/rollup-linux-arm-gnueabihf-4.62.4.tgz) | 4.62.4 | MIT | optional, build/development |
-| [@rollup/rollup-linux-arm-musleabihf](https://registry.npmjs.org/@rollup/rollup-linux-arm-musleabihf/-/rollup-linux-arm-musleabihf-4.62.4.tgz) | 4.62.4 | MIT | optional, build/development |
-| [@rollup/rollup-linux-arm64-gnu](https://registry.npmjs.org/@rollup/rollup-linux-arm64-gnu/-/rollup-linux-arm64-gnu-4.62.4.tgz) | 4.62.4 | MIT | optional, build/development |
-| [@rollup/rollup-linux-arm64-musl](https://registry.npmjs.org/@rollup/rollup-linux-arm64-musl/-/rollup-linux-arm64-musl-4.62.4.tgz) | 4.62.4 | MIT | optional, build/development |
-| [@rollup/rollup-linux-loong64-gnu](https://registry.npmjs.org/@rollup/rollup-linux-loong64-gnu/-/rollup-linux-loong64-gnu-4.62.4.tgz) | 4.62.4 | MIT | optional, build/development |
-| [@rollup/rollup-linux-loong64-musl](https://registry.npmjs.org/@rollup/rollup-linux-loong64-musl/-/rollup-linux-loong64-musl-4.62.4.tgz) | 4.62.4 | MIT | optional, build/development |
-| [@rollup/rollup-linux-ppc64-gnu](https://registry.npmjs.org/@rollup/rollup-linux-ppc64-gnu/-/rollup-linux-ppc64-gnu-4.62.4.tgz) | 4.62.4 | MIT | optional, build/development |
-| [@rollup/rollup-linux-ppc64-musl](https://registry.npmjs.org/@rollup/rollup-linux-ppc64-musl/-/rollup-linux-ppc64-musl-4.62.4.tgz) | 4.62.4 | MIT | optional, build/development |
-| [@rollup/rollup-linux-riscv64-gnu](https://registry.npmjs.org/@rollup/rollup-linux-riscv64-gnu/-/rollup-linux-riscv64-gnu-4.62.4.tgz) | 4.62.4 | MIT | optional, build/development |
-| [@rollup/rollup-linux-riscv64-musl](https://registry.npmjs.org/@rollup/rollup-linux-riscv64-musl/-/rollup-linux-riscv64-musl-4.62.4.tgz) | 4.62.4 | MIT | optional, build/development |
-| [@rollup/rollup-linux-s390x-gnu](https://registry.npmjs.org/@rollup/rollup-linux-s390x-gnu/-/rollup-linux-s390x-gnu-4.62.4.tgz) | 4.62.4 | MIT | optional, build/development |
-| [@rollup/rollup-linux-x64-gnu](https://registry.npmjs.org/@rollup/rollup-linux-x64-gnu/-/rollup-linux-x64-gnu-4.62.4.tgz) | 4.62.4 | MIT | optional, build/development |
-| [@rollup/rollup-linux-x64-musl](https://registry.npmjs.org/@rollup/rollup-linux-x64-musl/-/rollup-linux-x64-musl-4.62.4.tgz) | 4.62.4 | MIT | optional, build/development |
-| [@rollup/rollup-openbsd-x64](https://registry.npmjs.org/@rollup/rollup-openbsd-x64/-/rollup-openbsd-x64-4.62.4.tgz) | 4.62.4 | MIT | optional, build/development |
-| [@rollup/rollup-openharmony-arm64](https://registry.npmjs.org/@rollup/rollup-openharmony-arm64/-/rollup-openharmony-arm64-4.62.4.tgz) | 4.62.4 | MIT | optional, build/development |
-| [@rollup/rollup-win32-arm64-msvc](https://registry.npmjs.org/@rollup/rollup-win32-arm64-msvc/-/rollup-win32-arm64-msvc-4.62.4.tgz) | 4.62.4 | MIT | optional, build/development |
-| [@rollup/rollup-win32-ia32-msvc](https://registry.npmjs.org/@rollup/rollup-win32-ia32-msvc/-/rollup-win32-ia32-msvc-4.62.4.tgz) | 4.62.4 | MIT | optional, build/development |
-| [@rollup/rollup-win32-x64-gnu](https://registry.npmjs.org/@rollup/rollup-win32-x64-gnu/-/rollup-win32-x64-gnu-4.62.4.tgz) | 4.62.4 | MIT | optional, build/development |
-| [@rollup/rollup-win32-x64-msvc](https://registry.npmjs.org/@rollup/rollup-win32-x64-msvc/-/rollup-win32-x64-msvc-4.62.4.tgz) | 4.62.4 | MIT | optional, build/development |
+| [@rolldown/binding-android-arm-eabi](https://registry.npmjs.org/@rolldown/binding-android-arm-eabi/-/binding-android-arm-eabi-1.2.19.tgz) | 1.2.19 | MIT | optional, build/development |
+| [@rolldown/binding-android-arm64](https://registry.npmjs.org/@rolldown/binding-android-arm64/-/binding-android-arm64-1.2.19.tgz) | 1.2.19 | MIT | optional, build/development |
+| [@rolldown/binding-darwin-arm64](https://registry.npmjs.org/@rolldown/binding-darwin-arm64/-/binding-darwin-arm64-1.2.19.tgz) | 1.2.19 | MIT | optional, build/development |
+| [@rolldown/binding-darwin-x64](https://registry.npmjs.org/@rolldown/binding-darwin-x64/-/binding-darwin-x64-1.2.19.tgz) | 1.2.19 | MIT | optional, build/development |
+| [@rolldown/binding-freebsd-x64](https://registry.npmjs.org/@rolldown/binding-freebsd-x64/-/binding-freebsd-x64-1.2.19.tgz) | 1.2.19 | MIT | optional, build/development |
+| [@rolldown/binding-linux-arm-gnueabihf](https://registry.npmjs.org/@rolldown/binding-linux-arm-gnueabihf/-/binding-linux-arm-gnueabihf-1.2.19.tgz) | 1.2.19 | MIT | optional, build/development |
+| [@rolldown/binding-linux-arm64-gnu](https://registry.npmjs.org/@rolldown/binding-linux-arm64-gnu/-/binding-linux-arm64-gnu-1.2.19.tgz) | 1.2.19 | MIT | optional, build/development |
+| [@rolldown/binding-linux-arm64-musl](https://registry.npmjs.org/@rolldown/binding-linux-arm64-musl/-/binding-linux-arm64-musl-1.2.19.tgz) | 1.2.19 | MIT | optional, build/development |
+| [@rolldown/binding-linux-ppc64-gnu](https://registry.npmjs.org/@rolldown/binding-linux-ppc64-gnu/-/binding-linux-ppc64-gnu-1.2.19.tgz) | 1.2.19 | MIT | optional, build/development |
+| [@rolldown/binding-linux-s390x-gnu](https://registry.npmjs.org/@rolldown/binding-linux-s390x-gnu/-/binding-linux-s390x-gnu-1.2.19.tgz) | 1.2.19 | MIT | optional, build/development |
+| [@rolldown/binding-linux-x64-gnu](https://registry.npmjs.org/@rolldown/binding-linux-x64-gnu/-/binding-linux-x64-gnu-1.2.19.tgz) | 1.2.19 | MIT | optional, build/development |
+| [@rolldown/binding-linux-x64-musl](https://registry.npmjs.org/@rolldown/binding-linux-x64-musl/-/binding-linux-x64-musl-1.2.19.tgz) | 1.2.19 | MIT | optional, build/development |
+| [@rolldown/binding-openharmony-arm64](https://registry.npmjs.org/@rolldown/binding-openharmony-arm64/-/binding-openharmony-arm64-1.2.19.tgz) | 1.2.19 | MIT | optional, build/development |
+| [@rolldown/binding-wasm32-wasi](https://registry.npmjs.org/@rolldown/binding-wasm32-wasi/-/binding-wasm32-wasi-1.2.19.tgz) | 1.2.19 | MIT | optional, build/development |
+| [@rolldown/binding-win32-arm64-msvc](https://registry.npmjs.org/@rolldown/binding-win32-arm64-msvc/-/binding-win32-arm64-msvc-1.2.19.tgz) | 1.2.19 | MIT | optional, build/development |
+| [@rolldown/binding-win32-x64-msvc](https://registry.npmjs.org/@rolldown/binding-win32-x64-msvc/-/binding-win32-x64-msvc-1.2.19.tgz) | 1.2.19 | MIT | optional, build/development |
+| [@rolldown/pluginutils](https://registry.npmjs.org/@rolldown/pluginutils/-/pluginutils-1.1.1.tgz) | 1.1.1 | MIT | build/development |
 | [@sinclair/typebox](https://registry.npmjs.org/@sinclair/typebox/-/typebox-0.31.30.tgz) | 0.31.30 | MIT | build/development |
 | [@sqlite.org/sqlite-wasm](https://registry.npmjs.org/@sqlite.org/sqlite-wasm/-/sqlite-wasm-3.48.0-build4.tgz) | 3.48.0-build4 | Apache-2.0 | build/development |
 | [@standard-schema/spec](https://registry.npmjs.org/@standard-schema/spec/-/spec-1.1.0.tgz) | 1.1.0 | MIT | build/development |
-| [@sveltejs/acorn-typescript](https://registry.npmjs.org/@sveltejs/acorn-typescript/-/acorn-typescript-1.0.11.tgz) | 1.0.11 | MIT | build/development |
-| [@sveltejs/adapter-static](https://registry.npmjs.org/@sveltejs/adapter-static/-/adapter-static-3.0.10.tgz) | 3.0.10 | MIT | build/development |
-| [@sveltejs/kit](https://registry.npmjs.org/@sveltejs/kit/-/kit-2.70.2.tgz) | 2.70.2 | MIT | build/development |
-| [@sveltejs/load-config](https://registry.npmjs.org/@sveltejs/load-config/-/load-config-0.2.1.tgz) | 0.2.1 | MIT | build/development |
-| [@sveltejs/vite-plugin-svelte](https://registry.npmjs.org/@sveltejs/vite-plugin-svelte/-/vite-plugin-svelte-5.1.1.tgz) | 5.1.1 | MIT | build/development |
-| [@sveltejs/vite-plugin-svelte-inspector](https://registry.npmjs.org/@sveltejs/vite-plugin-svelte-inspector/-/vite-plugin-svelte-inspector-4.0.1.tgz) | 4.0.1 | MIT | build/development |
+| [@sveltejs/acorn-typescript](https://registry.npmjs.org/@sveltejs/acorn-typescript/-/acorn-typescript-1.0.13.tgz) | 1.0.13 | MIT | build/development |
+| [@sveltejs/adapter-static](https://registry.npmjs.org/@sveltejs/adapter-static/-/adapter-static-4.0.1.tgz) | 4.0.1 | MIT | build/development |
+| [@sveltejs/kit](https://registry.npmjs.org/@sveltejs/kit/-/kit-3.4.0.tgz) | 3.4.0 | MIT | build/development |
+| [@sveltejs/load-config](https://registry.npmjs.org/@sveltejs/load-config/-/load-config-0.2.3.tgz) | 0.2.3 | MIT | build/development |
+| [@sveltejs/vite-plugin-svelte](https://registry.npmjs.org/@sveltejs/vite-plugin-svelte/-/vite-plugin-svelte-7.3.2.tgz) | 7.3.2 | MIT | build/development |
 | [@tauri-apps/cli](https://registry.npmjs.org/@tauri-apps/cli/-/cli-2.12.4.tgz) | 2.12.4 | Apache-2.0 OR MIT | build/development |
 | [@tauri-apps/cli-darwin-arm64](https://registry.npmjs.org/@tauri-apps/cli-darwin-arm64/-/cli-darwin-arm64-2.12.4.tgz) | 2.12.4 | Apache-2.0 OR MIT | optional, build/development |
 | [@tauri-apps/cli-darwin-x64](https://registry.npmjs.org/@tauri-apps/cli-darwin-x64/-/cli-darwin-x64-2.12.4.tgz) | 2.12.4 | Apache-2.0 OR MIT | optional, build/development |
@@ -109,9 +78,8 @@ This inventory records the reviewed license expressions for the exact dependency
 | [@tauri-apps/cli-win32-arm64-msvc](https://registry.npmjs.org/@tauri-apps/cli-win32-arm64-msvc/-/cli-win32-arm64-msvc-2.12.4.tgz) | 2.12.4 | Apache-2.0 OR MIT | optional, build/development |
 | [@tauri-apps/cli-win32-ia32-msvc](https://registry.npmjs.org/@tauri-apps/cli-win32-ia32-msvc/-/cli-win32-ia32-msvc-2.12.4.tgz) | 2.12.4 | Apache-2.0 OR MIT | optional, build/development |
 | [@tauri-apps/cli-win32-x64-msvc](https://registry.npmjs.org/@tauri-apps/cli-win32-x64-msvc/-/cli-win32-x64-msvc-2.12.4.tgz) | 2.12.4 | Apache-2.0 OR MIT | optional, build/development |
-| [@types/cookie](https://registry.npmjs.org/@types/cookie/-/cookie-0.6.0.tgz) | 0.6.0 | MIT | build/development |
+| [@tybys/wasm-util](https://registry.npmjs.org/@tybys/wasm-util/-/wasm-util-0.10.5.tgz) | 0.10.5 | MIT | optional, build/development |
 | [@types/estree](https://registry.npmjs.org/@types/estree/-/estree-1.0.9.tgz) | 1.0.9 | MIT | build/development |
-| [@types/trusted-types](https://registry.npmjs.org/@types/trusted-types/-/trusted-types-2.0.7.tgz) | 2.0.7 | MIT | build/development |
 | [acorn](https://registry.npmjs.org/acorn/-/acorn-8.18.0.tgz) | 8.18.0 | MIT | build/development |
 | [aria-query](https://registry.npmjs.org/aria-query/-/aria-query-5.3.1.tgz) | 5.3.1 | Apache-2.0 | build/development |
 | [array-timsort](https://registry.npmjs.org/array-timsort/-/array-timsort-1.0.3.tgz) | 1.0.3 | MIT | build/development |
@@ -121,15 +89,14 @@ This inventory records the reviewed license expressions for the exact dependency
 | [commander](https://registry.npmjs.org/commander/-/commander-11.1.0.tgz) | 11.1.0 | MIT | build/development |
 | [comment-json](https://registry.npmjs.org/comment-json/-/comment-json-4.6.2.tgz) | 4.6.2 | MIT | build/development |
 | [consola](https://registry.npmjs.org/consola/-/consola-3.4.0.tgz) | 3.4.0 | MIT | build/development |
-| [cookie](https://registry.npmjs.org/cookie/-/cookie-0.6.0.tgz) | 0.6.0 | MIT | build/development |
-| [debug](https://registry.npmjs.org/debug/-/debug-4.4.3.tgz) | 4.4.3 | MIT | build/development |
+| [cookie](https://registry.npmjs.org/cookie/-/cookie-2.0.2.tgz) | 2.0.2 | MIT | build/development |
 | [dedent](https://registry.npmjs.org/dedent/-/dedent-1.5.1.tgz) | 1.5.1 | MIT | build/development |
 | [deepmerge](https://registry.npmjs.org/deepmerge/-/deepmerge-4.3.1.tgz) | 4.3.1 | MIT | build/development |
+| [detect-libc](https://registry.npmjs.org/detect-libc/-/detect-libc-2.1.2.tgz) | 2.1.2 | Apache-2.0 | build/development |
 | [devalue](https://registry.npmjs.org/devalue/-/devalue-5.9.4.tgz) | 5.9.4 | MIT | build/development |
-| [esbuild](https://registry.npmjs.org/esbuild/-/esbuild-0.25.12.tgz) | 0.25.12 | MIT | build/development |
 | [esm-env](https://registry.npmjs.org/esm-env/-/esm-env-1.2.2.tgz) | 1.2.2 | MIT | build/development |
 | [esprima](https://registry.npmjs.org/esprima/-/esprima-4.0.1.tgz) | 4.0.1 | BSD-2-Clause | build/development |
-| [esrap](https://registry.npmjs.org/esrap/-/esrap-2.3.0.tgz) | 2.3.0 | MIT | build/development |
+| [esrap](https://registry.npmjs.org/esrap/-/esrap-2.4.2.tgz) | 2.4.2 | MIT | build/development |
 | [fdir](https://registry.npmjs.org/fdir/-/fdir-6.5.0.tgz) | 6.5.0 | MIT | build/development |
 | [flat](https://registry.npmjs.org/flat/-/flat-6.0.1.tgz) | 6.0.1 | BSD-3-Clause | build/development |
 | [fsevents](https://registry.npmjs.org/fsevents/-/fsevents-2.3.3.tgz) | 2.3.3 | MIT | optional, build/development |
@@ -137,34 +104,46 @@ This inventory records the reviewed license expressions for the exact dependency
 | [is-reference](https://registry.npmjs.org/is-reference/-/is-reference-3.0.3.tgz) | 3.0.3 | MIT | build/development |
 | [js-sha256](https://registry.npmjs.org/js-sha256/-/js-sha256-0.11.1.tgz) | 0.11.1 | MIT | build/development |
 | [json5](https://registry.npmjs.org/json5/-/json5-2.2.3.tgz) | 2.2.3 | MIT | build/development |
-| [kleur](https://registry.npmjs.org/kleur/-/kleur-4.1.5.tgz) | 4.1.5 | MIT | build/development |
 | [kysely](https://registry.npmjs.org/kysely/-/kysely-0.28.17.tgz) | 0.28.17 | MIT | build/development |
+| [lightningcss](https://registry.npmjs.org/lightningcss/-/lightningcss-1.33.0.tgz) | 1.33.0 | MPL-2.0 | build/development |
+| [lightningcss-android-arm64](https://registry.npmjs.org/lightningcss-android-arm64/-/lightningcss-android-arm64-1.33.0.tgz) | 1.33.0 | MPL-2.0 | optional, build/development |
+| [lightningcss-darwin-arm64](https://registry.npmjs.org/lightningcss-darwin-arm64/-/lightningcss-darwin-arm64-1.33.0.tgz) | 1.33.0 | MPL-2.0 | optional, build/development |
+| [lightningcss-darwin-x64](https://registry.npmjs.org/lightningcss-darwin-x64/-/lightningcss-darwin-x64-1.33.0.tgz) | 1.33.0 | MPL-2.0 | optional, build/development |
+| [lightningcss-freebsd-x64](https://registry.npmjs.org/lightningcss-freebsd-x64/-/lightningcss-freebsd-x64-1.33.0.tgz) | 1.33.0 | MPL-2.0 | optional, build/development |
+| [lightningcss-linux-arm-gnueabihf](https://registry.npmjs.org/lightningcss-linux-arm-gnueabihf/-/lightningcss-linux-arm-gnueabihf-1.33.0.tgz) | 1.33.0 | MPL-2.0 | optional, build/development |
+| [lightningcss-linux-arm64-gnu](https://registry.npmjs.org/lightningcss-linux-arm64-gnu/-/lightningcss-linux-arm64-gnu-1.33.0.tgz) | 1.33.0 | MPL-2.0 | optional, build/development |
+| [lightningcss-linux-arm64-musl](https://registry.npmjs.org/lightningcss-linux-arm64-musl/-/lightningcss-linux-arm64-musl-1.33.0.tgz) | 1.33.0 | MPL-2.0 | optional, build/development |
+| [lightningcss-linux-x64-gnu](https://registry.npmjs.org/lightningcss-linux-x64-gnu/-/lightningcss-linux-x64-gnu-1.33.0.tgz) | 1.33.0 | MPL-2.0 | optional, build/development |
+| [lightningcss-linux-x64-musl](https://registry.npmjs.org/lightningcss-linux-x64-musl/-/lightningcss-linux-x64-musl-1.33.0.tgz) | 1.33.0 | MPL-2.0 | optional, build/development |
+| [lightningcss-win32-arm64-msvc](https://registry.npmjs.org/lightningcss-win32-arm64-msvc/-/lightningcss-win32-arm64-msvc-1.33.0.tgz) | 1.33.0 | MPL-2.0 | optional, build/development |
+| [lightningcss-win32-x64-msvc](https://registry.npmjs.org/lightningcss-win32-x64-msvc/-/lightningcss-win32-x64-msvc-1.33.0.tgz) | 1.33.0 | MPL-2.0 | optional, build/development |
 | [locate-character](https://registry.npmjs.org/locate-character/-/locate-character-3.0.0.tgz) | 3.0.0 | MIT | build/development |
 | [magic-string](https://registry.npmjs.org/magic-string/-/magic-string-0.30.21.tgz) | 0.30.21 | MIT | build/development |
+| [magic-string](https://registry.npmjs.org/magic-string/-/magic-string-1.4.5.tgz) | 1.4.5 | MIT | build/development |
 | [mri](https://registry.npmjs.org/mri/-/mri-1.2.0.tgz) | 1.2.0 | MIT | build/development |
 | [mrmime](https://registry.npmjs.org/mrmime/-/mrmime-2.0.1.tgz) | 2.0.1 | MIT | build/development |
-| [ms](https://registry.npmjs.org/ms/-/ms-2.1.3.tgz) | 2.1.3 | MIT | build/development |
-| [nanoid](https://registry.npmjs.org/nanoid/-/nanoid-3.3.18.tgz) | 3.3.18 | MIT | build/development |
+| [nanoid](https://registry.npmjs.org/nanoid/-/nanoid-3.3.20.tgz) | 3.3.20 | MIT | build/development |
+| [obug](https://registry.npmjs.org/obug/-/obug-3.0.0.tgz) | 3.0.0 | MIT | build/development |
 | [picocolors](https://registry.npmjs.org/picocolors/-/picocolors-1.1.1.tgz) | 1.1.1 | ISC | build/development |
-| [picomatch](https://registry.npmjs.org/picomatch/-/picomatch-4.0.5.tgz) | 4.0.5 | MIT | build/development |
-| [postcss](https://registry.npmjs.org/postcss/-/postcss-8.5.25.tgz) | 8.5.25 | MIT | build/development |
+| [picomatch](https://registry.npmjs.org/picomatch/-/picomatch-4.0.7.tgz) | 4.0.7 | MIT | build/development |
+| [postcss](https://registry.npmjs.org/postcss/-/postcss-8.5.33.tgz) | 8.5.33 | MIT | build/development |
 | [readdirp](https://registry.npmjs.org/readdirp/-/readdirp-4.1.2.tgz) | 4.1.2 | MIT | build/development |
-| [rollup](https://registry.npmjs.org/rollup/-/rollup-4.62.4.tgz) | 4.62.4 | MIT | build/development |
+| [rolldown](https://registry.npmjs.org/rolldown/-/rolldown-1.2.19.tgz) | 1.2.19 | MIT | build/development |
 | [sade](https://registry.npmjs.org/sade/-/sade-1.8.1.tgz) | 1.8.1 | MIT | build/development |
-| [set-cookie-parser](https://registry.npmjs.org/set-cookie-parser/-/set-cookie-parser-3.1.2.tgz) | 3.1.2 | MIT | build/development |
 | [sirv](https://registry.npmjs.org/sirv/-/sirv-3.0.2.tgz) | 3.0.2 | MIT | build/development |
 | [source-map-js](https://registry.npmjs.org/source-map-js/-/source-map-js-1.2.2.tgz) | 1.2.2 | BSD-3-Clause | build/development |
 | [spdx-license-list](https://registry.npmjs.org/spdx-license-list/-/spdx-license-list-6.12.0.tgz) | 6.12.0 | CC0-1.0 | build/development |
 | [sqlite-wasm-kysely](https://registry.npmjs.org/sqlite-wasm-kysely/-/sqlite-wasm-kysely-0.3.0.tgz) | 0.3.0 | MIT | build/development |
-| [svelte](https://registry.npmjs.org/svelte/-/svelte-5.56.8.tgz) | 5.56.8 | MIT | build/development |
-| [svelte-check](https://registry.npmjs.org/svelte-check/-/svelte-check-4.7.4.tgz) | 4.7.4 | MIT | build/development |
+| [svelte](https://registry.npmjs.org/svelte/-/svelte-5.59.1.tgz) | 5.59.1 | MIT | build/development |
+| [svelte-check](https://registry.npmjs.org/svelte-check/-/svelte-check-4.7.8.tgz) | 4.7.8 | MIT | build/development |
 | [tinyglobby](https://registry.npmjs.org/tinyglobby/-/tinyglobby-0.2.17.tgz) | 0.2.17 | MIT | build/development |
 | [totalist](https://registry.npmjs.org/totalist/-/totalist-3.0.1.tgz) | 3.0.1 | MIT | build/development |
-| [typescript](https://registry.npmjs.org/typescript/-/typescript-5.6.3.tgz) | 5.6.3 | Apache-2.0 | build/development |
+| [tslib](https://registry.npmjs.org/tslib/-/tslib-2.9.1.tgz) | 2.9.1 | 0BSD | optional, build/development |
+| [typescript](https://registry.npmjs.org/typescript/-/typescript-6.0.3.tgz) | 6.0.3 | Apache-2.0 | build/development |
 | [unplugin](https://registry.npmjs.org/unplugin/-/unplugin-2.3.11.tgz) | 2.3.11 | MIT | build/development |
 | [urlpattern-polyfill](https://registry.npmjs.org/urlpattern-polyfill/-/urlpattern-polyfill-10.1.0.tgz) | 10.1.0 | MIT | build/development |
 | [uuid](https://registry.npmjs.org/uuid/-/uuid-14.0.1.tgz) | 14.0.1 | MIT | build/development |
-| [vite](https://registry.npmjs.org/vite/-/vite-6.4.5.tgz) | 6.4.5 | MIT | build/development |
+| [vite](https://registry.npmjs.org/vite/-/vite-8.3.8.tgz) | 8.3.8 | MIT | build/development |
 | [vitefu](https://registry.npmjs.org/vitefu/-/vitefu-1.1.3.tgz) | 1.1.3 | MIT | build/development |
 | [webpack-virtual-modules](https://registry.npmjs.org/webpack-virtual-modules/-/webpack-virtual-modules-0.6.2.tgz) | 0.6.2 | MIT | build/development |
 | [zimmerframe](https://registry.npmjs.org/zimmerframe/-/zimmerframe-1.1.4.tgz) | 1.1.4 | MIT | build/development |
@@ -240,7 +219,7 @@ Cargo's lock graph includes target-specific dependencies for Windows, Linux, And
 | [cmake](https://crates.io/crates/cmake/0.1.58/download) | 0.1.58 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [combine](https://crates.io/crates/combine/4.6.7/download) | 4.6.7 | MIT | runtime/target-dependent |
 | [concurrent-queue](https://crates.io/crates/concurrent-queue/2.5.0/download) | 2.5.0 | Apache-2.0 OR MIT | runtime/target-dependent |
-| [cookie](https://crates.io/crates/cookie/0.18.1/download) | 0.18.1 | MIT OR Apache-2.0 | runtime/target-dependent |
+| [cookie](https://crates.io/crates/cookie/0.18.3/download) | 0.18.3 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [core-foundation](https://crates.io/crates/core-foundation/0.10.1/download) | 0.10.1 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [core-foundation](https://crates.io/crates/core-foundation/0.9.4/download) | 0.9.4 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [core-foundation-sys](https://crates.io/crates/core-foundation-sys/0.8.7/download) | 0.8.7 | MIT OR Apache-2.0 | runtime/target-dependent |
@@ -300,7 +279,7 @@ Cargo's lock graph includes target-specific dependencies for Windows, Linux, And
 | [foreign-types](https://crates.io/crates/foreign-types/0.5.0/download) | 0.5.0 | MIT/Apache-2.0 | runtime/target-dependent |
 | [foreign-types-macros](https://crates.io/crates/foreign-types-macros/0.2.4/download) | 0.2.4 | MIT/Apache-2.0 | runtime/target-dependent |
 | [foreign-types-shared](https://crates.io/crates/foreign-types-shared/0.3.1/download) | 0.3.1 | MIT/Apache-2.0 | runtime/target-dependent |
-| [form_urlencoded](https://crates.io/crates/form_urlencoded/1.2.2/download) | 1.2.2 | MIT OR Apache-2.0 | runtime/target-dependent |
+| [form_urlencoded](https://crates.io/crates/form_urlencoded/1.2.3/download) | 1.2.3 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [fs_extra](https://crates.io/crates/fs_extra/1.3.0/download) | 1.3.0 | MIT | runtime/target-dependent |
 | [futures-channel](https://crates.io/crates/futures-channel/0.3.33/download) | 0.3.33 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [futures-core](https://crates.io/crates/futures-core/0.3.33/download) | 0.3.33 | MIT OR Apache-2.0 | runtime/target-dependent |
@@ -391,7 +370,7 @@ Cargo's lock graph includes target-specific dependencies for Windows, Linux, And
 | [libdbus-sys](https://crates.io/crates/libdbus-sys/0.2.7/download) | 0.2.7 | Apache-2.0/MIT | runtime/target-dependent |
 | [libloading](https://crates.io/crates/libloading/0.7.4/download) | 0.7.4 | ISC | runtime/target-dependent |
 | [libredox](https://crates.io/crates/libredox/0.1.18/download) | 0.1.18 | MIT | runtime/target-dependent |
-| [libsqlite3-sys](https://crates.io/crates/libsqlite3-sys/0.38.1/download) | 0.38.1 | MIT | runtime/target-dependent |
+| [libsqlite3-sys](https://crates.io/crates/libsqlite3-sys/0.39.1/download) | 0.39.1 | MIT | runtime/target-dependent |
 | [linux-raw-sys](https://crates.io/crates/linux-raw-sys/0.12.1/download) | 0.12.1 | Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT | runtime/target-dependent |
 | [litemap](https://crates.io/crates/litemap/0.8.2/download) | 0.8.2 | Unicode-3.0 | runtime/target-dependent |
 | [lock_api](https://crates.io/crates/lock_api/0.4.14/download) | 0.4.14 | MIT OR Apache-2.0 | runtime/target-dependent |
@@ -497,11 +476,11 @@ Cargo's lock graph includes target-specific dependencies for Windows, Linux, And
 | [rfd](https://crates.io/crates/rfd/0.16.0/download) | 0.16.0 | MIT | runtime/target-dependent |
 | [ring](https://crates.io/crates/ring/0.17.14/download) | 0.17.14 | Apache-2.0 AND ISC | runtime/target-dependent |
 | [rsqlite-vfs](https://crates.io/crates/rsqlite-vfs/0.1.1/download) | 0.1.1 | MIT | runtime/target-dependent |
-| [rusqlite](https://crates.io/crates/rusqlite/0.40.1/download) | 0.40.1 | MIT | runtime/target-dependent |
+| [rusqlite](https://crates.io/crates/rusqlite/0.41.1/download) | 0.41.1 | MIT | runtime/target-dependent |
 | [rustc_version](https://crates.io/crates/rustc_version/0.4.1/download) | 0.4.1 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [rustc-hash](https://crates.io/crates/rustc-hash/2.1.3/download) | 2.1.3 | Apache-2.0 OR MIT | runtime/target-dependent |
 | [rusticata-macros](https://crates.io/crates/rusticata-macros/4.1.0/download) | 4.1.0 | MIT/Apache-2.0 | runtime/target-dependent |
-| [rustix](https://crates.io/crates/rustix/1.1.4/download) | 1.1.4 | Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT | runtime/target-dependent |
+| [rustix](https://crates.io/crates/rustix/1.1.6/download) | 1.1.6 | Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT | runtime/target-dependent |
 | [rustls](https://crates.io/crates/rustls/0.23.46/download) | 0.23.46 | Apache-2.0 OR ISC OR MIT | runtime/target-dependent |
 | [rustls-native-certs](https://crates.io/crates/rustls-native-certs/0.8.4/download) | 0.8.4 | Apache-2.0 OR ISC OR MIT | runtime/target-dependent |
 | [rustls-pki-types](https://crates.io/crates/rustls-pki-types/1.15.1/download) | 1.15.1 | MIT OR Apache-2.0 | runtime/target-dependent |
@@ -623,7 +602,7 @@ Cargo's lock graph includes target-specific dependencies for Windows, Linux, And
 | [unicode-segmentation](https://crates.io/crates/unicode-segmentation/1.13.3/download) | 1.13.3 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [untrusted](https://crates.io/crates/untrusted/0.7.1/download) | 0.7.1 | ISC | runtime/target-dependent |
 | [untrusted](https://crates.io/crates/untrusted/0.9.0/download) | 0.9.0 | ISC | runtime/target-dependent |
-| [url](https://crates.io/crates/url/2.5.8/download) | 2.5.8 | MIT OR Apache-2.0 | runtime/target-dependent |
+| [url](https://crates.io/crates/url/2.5.9/download) | 2.5.9 | MIT OR Apache-2.0 | runtime/target-dependent |
 | [urlpattern](https://crates.io/crates/urlpattern/0.6.0/download) | 0.6.0 | MIT | runtime/target-dependent |
 | [utf8_iter](https://crates.io/crates/utf8_iter/1.0.4/download) | 1.0.4 | Apache-2.0 OR MIT | runtime/target-dependent |
 | [uuid](https://crates.io/crates/uuid/1.24.0/download) | 1.24.0 | Apache-2.0 OR MIT | runtime/target-dependent |

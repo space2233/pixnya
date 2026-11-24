@@ -74,16 +74,12 @@ test("release config rejects raw, double-Base64, and incomplete updater public k
 });
 
 test("desktop release jobs generate and consume the temporary config without changing Android", () => {
-  const windowsJob = workflow.match(/\n  windows:[\s\S]*?\n  linux:/)?.[0];
-  const linuxJob = workflow.match(/\n  linux:[\s\S]*?\n  android:/)?.[0];
+  const windowsJob = workflow.match(/\n  windows:[\s\S]*?\n  android:/)?.[0];
   const androidJob = workflow.match(/\n  android:[\s\S]*?\n  draft-release:/)?.[0];
 
   assert.ok(windowsJob, "Windows release job is missing");
-  assert.ok(linuxJob, "Linux release job is missing");
   assert.ok(androidJob, "Android release job is missing");
-  for (const job of [windowsJob, linuxJob]) {
-    assert.match(job, /node scripts\/prepare-tauri-release-config\.mjs --output/);
-    assert.match(job, /npm run tauri -- build --config ["']?\$[^\s"']+/);
-  }
+  assert.match(windowsJob, /node scripts\/prepare-tauri-release-config\.mjs --output/);
+  assert.match(windowsJob, /npm run tauri -- build --config ["']?\$[^\s"']+/);
   assert.doesNotMatch(androidJob, /prepare-tauri-release-config|android build[^\n]*--config/);
 });

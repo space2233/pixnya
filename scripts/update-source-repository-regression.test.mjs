@@ -50,8 +50,6 @@ test("manifest generators default to pixnya and accept an explicit public releas
   try {
     const { version } = JSON.parse(await readFile(path.join(root, "package.json"), "utf8"));
     const windowsArchive = path.join(temporaryRoot, `PixNya_${version}_x64-setup.exe`);
-    const windowsArm64Archive = path.join(temporaryRoot, `PixNya_${version}_arm64-setup.exe`);
-    const linuxArchive = path.join(temporaryRoot, `PixNya_${version}_amd64.AppImage`);
     const androidApk = path.join(temporaryRoot, `pixnya-${version}-android-arm64-v8a.apk`);
     const signature = path.join(temporaryRoot, "updater.sig");
     const encodedSignature = Buffer.from(
@@ -60,8 +58,6 @@ test("manifest generators default to pixnya and accept an explicit public releas
     ).toString("base64");
     await Promise.all([
       writeFile(windowsArchive, "windows-archive"),
-      writeFile(windowsArm64Archive, "windows-arm64-archive"),
-      writeFile(linuxArchive, "linux-archive"),
       writeFile(androidApk, "android-apk"),
       writeFile(signature, encodedSignature),
     ]);
@@ -70,19 +66,14 @@ test("manifest generators default to pixnya and accept an explicit public releas
     await runGenerator(desktopGenerator, [
       "--windows-archive", windowsArchive,
       "--windows-signature", signature,
-      "--windows-arm64-archive", windowsArm64Archive,
-      "--windows-arm64-signature", signature,
-      "--linux-archive", linuxArchive,
-      "--linux-signature", signature,
       "--base-url", `https://github.com/space2233/pixnya/releases/download/v${version}/`,
       "--output", defaultOutput,
     ]);
     const defaultManifest = JSON.parse(await readFile(defaultOutput, "utf8"));
     assert.match(defaultManifest.platforms["windows-x86_64"].url, /space2233\/pixnya\/releases/);
-    assert.match(defaultManifest.platforms["windows-aarch64"].url, /PixNya_.*_arm64-setup\.exe$/);
     assert.deepEqual(
       Object.keys(defaultManifest.platforms).sort(),
-      ["linux-x86_64", "windows-aarch64", "windows-x86_64"],
+      ["windows-x86_64"],
     );
 
     const repository = "space2233/pixnya-releases";
@@ -92,27 +83,19 @@ test("manifest generators default to pixnya and accept an explicit public releas
       "--repository", repository,
       "--windows-archive", windowsArchive,
       "--windows-signature", signature,
-      "--windows-arm64-archive", windowsArm64Archive,
-      "--windows-arm64-signature", signature,
-      "--linux-archive", linuxArchive,
-      "--linux-signature", signature,
       "--base-url", releaseBase,
       "--output", desktopOutput,
     ]);
     const desktopManifest = JSON.parse(await readFile(desktopOutput, "utf8"));
-    assert.ok(desktopManifest.platforms["linux-x86_64"].url.startsWith(releaseBase));
-    assert.ok(desktopManifest.platforms["windows-aarch64"].url.startsWith(releaseBase));
+    assert.ok(desktopManifest.platforms["windows-x86_64"].url.startsWith(releaseBase));
 
     await assert.rejects(
       runGenerator(desktopGenerator, [
-        "--windows-archive", windowsArchive,
         "--windows-signature", signature,
-        "--linux-archive", linuxArchive,
-        "--linux-signature", signature,
         "--base-url", `https://github.com/space2233/pixnya/releases/download/v${version}/`,
-        "--output", path.join(temporaryRoot, "missing-windows-arm64.json"),
+        "--output", path.join(temporaryRoot, "missing-windows.json"),
       ]),
-      (error) => error?.stderr?.includes("Missing required --windows-arm64-archive argument"),
+      (error) => error?.stderr?.includes("Missing required --windows-archive argument"),
     );
 
     const androidOutput = path.join(temporaryRoot, "alternate-android-latest.json");

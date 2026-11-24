@@ -10,7 +10,7 @@ export interface SearchRouteState {
   target: SearchMatchTarget;
 }
 
-export function readSearchRouteState(params: URLSearchParams): SearchRouteState {
+export function readSearchRouteState(params: Pick<URLSearchParams, "get">): SearchRouteState {
   const candidateType = params.get("type");
   const type = SEARCH_TYPES.includes(candidateType as SearchType)
     ? candidateType as SearchType

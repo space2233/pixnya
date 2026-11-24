@@ -108,8 +108,8 @@ jobs:
               throw new Error("The Draft Release has no stable ID");
             }
             const assets = release.assets ?? [];
-            if (assets.length !== 10) {
-              throw new Error(`Expected exactly 10 Draft assets, found ${assets.length}`);
+            if (assets.length !== 8) {
+              throw new Error(`Expected exactly 8 Draft assets, found ${assets.length}`);
             }
             const names = new Set();
             const plan = assets.map((asset) => {
@@ -142,8 +142,6 @@ jobs:
             pixnya-${PIXNYA_RELEASE_VERSION}-source.tar.gz
             pixnya-${PIXNYA_RELEASE_VERSION}-third-party-licenses.tar.gz
             pixnya-${PIXNYA_RELEASE_VERSION}.spdx.json
-            PixNya_${PIXNYA_RELEASE_VERSION}_amd64.AppImage.sig
-            PixNya_${PIXNYA_RELEASE_VERSION}_arm64-setup.exe.sig
             PixNya_${PIXNYA_RELEASE_VERSION}_x64-setup.exe.sig
             THIRD_PARTY_NOTICES.md
           )
@@ -203,33 +201,18 @@ jobs:
           printf '%s' "$PIXNYA_ANDROID_UPDATE_PUBKEY" | base64 --decode > "$ANDROID_PUBLIC_KEY"
 
           WINDOWS_X64_ARCHIVE="candidate/PixNya_${PIXNYA_RELEASE_VERSION}_x64-setup.exe"
-          WINDOWS_ARM64_ARCHIVE="candidate/PixNya_${PIXNYA_RELEASE_VERSION}_arm64-setup.exe"
-          LINUX_ARCHIVE="$(find candidate -maxdepth 1 -type f -name '*.AppImage' -print -quit)"
-          test -f "$WINDOWS_X64_ARCHIVE" && test -f "$WINDOWS_ARM64_ARCHIVE" && test -n "$LINUX_ARCHIVE"
-          WINDOWS_X64_SIGNATURE_FILE="$RUNNER_TEMP/windows-x64-updater.minisig" \
-            WINDOWS_ARM64_SIGNATURE_FILE="$RUNNER_TEMP/windows-arm64-updater.minisig" \
-            LINUX_SIGNATURE_FILE="$RUNNER_TEMP/linux-updater.minisig" node -e '
-              const fs = require("node:fs");
-              const manifest = JSON.parse(fs.readFileSync("candidate/latest.json", "utf8"));
-              for (const [target, output] of [
-                ["windows-x86_64", process.env.WINDOWS_X64_SIGNATURE_FILE],
-                ["windows-aarch64", process.env.WINDOWS_ARM64_SIGNATURE_FILE],
-                ["linux-x86_64", process.env.LINUX_SIGNATURE_FILE],
-              ]) {
-                const encoded = manifest.platforms?.[target]?.signature;
-                if (typeof encoded !== "string" || encoded === "") {
-                  throw new Error(`Missing embedded updater signature: ${target}`);
-                }
-                const signature = Buffer.from(encoded, "base64");
-                if (signature.toString("base64") !== encoded || !signature.toString("utf8").startsWith("untrusted comment:")) {
-                  throw new Error(`Invalid embedded updater signature: ${target}`);
-                }
-                fs.writeFileSync(output, signature);
-              }
-            '
+          test -f "$WINDOWS_X64_ARCHIVE"
+          WINDOWS_X64_SIGNATURE_FILE="$RUNNER_TEMP/windows-x64-updater.minisig" node -e '
+            const fs = require("node:fs");
+            const manifest = JSON.parse(fs.readFileSync("candidate/latest.json", "utf8"));
+            const encoded = manifest.platforms["windows-x86_64"].signature;
+            const signature = Buffer.from(encoded, "base64");
+            if (signature.toString("base64") !== encoded || !signature.toString("utf8").startsWith("untrusted comment:")) {
+              throw new Error("Invalid embedded Windows x64 updater signature");
+            }
+            fs.writeFileSync(process.env.WINDOWS_X64_SIGNATURE_FILE, signature);
+          '
           minisign -Vm "$WINDOWS_X64_ARCHIVE" -x "$RUNNER_TEMP/windows-x64-updater.minisig" -p "$DESKTOP_PUBLIC_KEY"
-          minisign -Vm "$WINDOWS_ARM64_ARCHIVE" -x "$RUNNER_TEMP/windows-arm64-updater.minisig" -p "$DESKTOP_PUBLIC_KEY"
-          minisign -Vm "$LINUX_ARCHIVE" -x "$RUNNER_TEMP/linux-updater.minisig" -p "$DESKTOP_PUBLIC_KEY"
           minisign -Vm candidate/android-latest.json -x candidate/android-latest.json.minisig -p "$ANDROID_PUBLIC_KEY"
 
           APKSIGNER="$ANDROID_HOME/build-tools/36.0.0/apksigner"
@@ -297,6 +280,4 @@ jobs:
             "$RUNNER_TEMP/desktop-updater.pub" \
             "$RUNNER_TEMP/android-update-manifest.pub" \
             "$RUNNER_TEMP/candidate-provenance.txt" \
-            "$RUNNER_TEMP/windows-x64-updater.minisig" \
-            "$RUNNER_TEMP/windows-arm64-updater.minisig" \
-            "$RUNNER_TEMP/linux-updater.minisig"
+            "$RUNNER_TEMP/windows-x64-updater.minisig"

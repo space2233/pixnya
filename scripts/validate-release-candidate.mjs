@@ -21,8 +21,6 @@ export const releaseAssetPatterns = (version) => {
   const escapedVersion = escapeRegExp(version);
   return [
     ["Windows x64 NSIS updater installer", new RegExp(`^PixNya_${escapedVersion}_x64-setup\\.exe$`)],
-    ["Windows ARM64 NSIS updater installer", new RegExp(`^PixNya_${escapedVersion}_arm64-setup\\.exe$`)],
-    ["Linux x64 AppImage updater", new RegExp(`^PixNya_${escapedVersion}_amd64\\.AppImage$`)],
     ["Android ARM64 APK", new RegExp(`^pixnya-${escapedVersion}-android-arm64-v8a\\.apk$`)],
     ["Android ARM32 APK", new RegExp(`^pixnya-${escapedVersion}-android-armeabi-v7a\\.apk$`)],
     ["verification bundle", new RegExp(`^pixnya-${escapedVersion}-verification\\.tar\\.gz$`)],
@@ -93,8 +91,6 @@ const verifyUpdateManifests = (assetsDir, assetNames, version, repository) => {
   validateEmbeddedNotes(desktopManifest.notes, "desktop");
   const desktopTargets = [
     ["windows-x86_64", `PixNya_${version}_x64-setup.exe`],
-    ["windows-aarch64", `PixNya_${version}_arm64-setup.exe`],
-    ["linux-x86_64", `PixNya_${version}_amd64.AppImage`],
   ];
   requireValue(
     JSON.stringify(Object.keys(desktopManifest.platforms ?? {}).sort()) ===

@@ -13,8 +13,6 @@ const repository = "space2233/pixnya";
 
 const assetNames = [
   `PixNya_${version}_x64-setup.exe`,
-  `PixNya_${version}_arm64-setup.exe`,
-  `PixNya_${version}_amd64.AppImage`,
   `pixnya-${version}-android-arm64-v8a.apk`,
   `pixnya-${version}-android-armeabi-v7a.apk`,
   `pixnya-${version}-verification.tar.gz`,
@@ -29,12 +27,12 @@ const completeNotes = `# PixNya ${version}
 ## 中文
 
 - 新增通知、评论管理和动图导出。
-- 支持 Windows x64、Windows ARM64、Linux x64、Android ARM64 和 Android ARM32（Android 10+）。
+- 支持 Windows x64、Android ARM64 和 Android ARM32（Android 10+）。
 
 ## English
 
 - Added notifications, comment management, and animation export.
-- Supports Windows x64, Windows ARM64, Linux x64, Android ARM64, and Android ARM32 (Android 10+).`;
+- Supports Windows x64, Android ARM64, and Android ARM32 (Android 10+).`;
 
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 
@@ -45,13 +43,9 @@ async function createCandidate() {
     contents.set(name, `fixture:${name}`);
   }
   const windowsArchive = `PixNya_${version}_x64-setup.exe`;
-  const windowsArm64Archive = `PixNya_${version}_arm64-setup.exe`;
-  const linuxArchive = `PixNya_${version}_amd64.AppImage`;
   const androidApk = `pixnya-${version}-android-arm64-v8a.apk`;
   const androidArmv7Apk = `pixnya-${version}-android-armeabi-v7a.apk`;
   const windowsSignature = Buffer.from("windows minisign fixture").toString("base64");
-  const windowsArm64Signature = Buffer.from("windows arm64 minisign fixture").toString("base64");
-  const linuxSignature = Buffer.from("linux minisign fixture").toString("base64");
   contents.set("latest.json", `${JSON.stringify({
     version,
     notes: completeNotes,
@@ -60,14 +54,6 @@ async function createCandidate() {
       "windows-x86_64": {
         signature: windowsSignature,
         url: `https://github.com/${repository}/releases/download/v${version}/${encodeURIComponent(windowsArchive)}`,
-      },
-      "windows-aarch64": {
-        signature: windowsArm64Signature,
-        url: `https://github.com/${repository}/releases/download/v${version}/${encodeURIComponent(windowsArm64Archive)}`,
-      },
-      "linux-x86_64": {
-        signature: linuxSignature,
-        url: `https://github.com/${repository}/releases/download/v${version}/${encodeURIComponent(linuxArchive)}`,
       },
     },
   }, null, 2)}\n`);
@@ -243,9 +229,8 @@ test("a desktop manifest cannot swap Windows architecture assets", async (contex
   context.after(() => rm(candidate.assetsDir, { recursive: true, force: true }));
   const manifestPath = path.join(candidate.assetsDir, "latest.json");
   const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
-  const x64Url = manifest.platforms["windows-x86_64"].url;
-  manifest.platforms["windows-x86_64"].url = manifest.platforms["windows-aarch64"].url;
-  manifest.platforms["windows-aarch64"].url = x64Url;
+  manifest.platforms["windows-x86_64"].url =
+    `https://github.com/${repository}/releases/download/v${version}/PixNya_${version}_arm64-setup.exe`;
   await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
   await refreshCandidateIntegrity(candidate);
 
@@ -262,8 +247,8 @@ test("a desktop manifest must contain the exact released platform set", async (c
   const original = JSON.parse(await readFile(manifestPath, "utf8"));
 
   for (const mutate of [
-    (manifest) => { delete manifest.platforms["windows-aarch64"]; },
-    (manifest) => { manifest.platforms["darwin-aarch64"] = manifest.platforms["windows-aarch64"]; },
+    (manifest) => { delete manifest.platforms["windows-x86_64"]; },
+    (manifest) => { manifest.platforms["windows-aarch64"] = manifest.platforms["windows-x86_64"]; },
   ]) {
     const manifest = structuredClone(original);
     mutate(manifest);

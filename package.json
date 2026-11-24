@@ -1,7 +1,7 @@
 {
   "name": "pixnya",
   "version": "1.7.0",
-  "description": "PixNya, an unofficial local-first Pixiv client for Windows, Linux and Android",
+  "description": "PixNya, an unofficial local-first Pixiv client for Windows and Android",
   "private": true,
   "type": "module",
   "scripts": {
@@ -76,14 +76,14 @@
   "devDependencies": {
     "@inlang/paraglide-js": "^2.23.2",
     "@inlang/plugin-message-format": "^4.4.1",
-    "@sveltejs/adapter-static": "^3.0.6",
-    "@sveltejs/kit": "^2.9.0",
-    "@sveltejs/vite-plugin-svelte": "^5.0.0",
+    "@sveltejs/adapter-static": "^4.0.1",
+    "@sveltejs/kit": "^3.4.0",
+    "@sveltejs/vite-plugin-svelte": "^7.3.2",
     "@tauri-apps/cli": "^2",
     "spdx-license-list": "6.12.0",
-    "svelte": "^5.0.0",
-    "svelte-check": "^4.0.0",
-    "typescript": "~5.6.2",
-    "vite": "^6.0.3"
+    "svelte": "^5.57.1",
+    "svelte-check": "^4.7.8",
+    "typescript": "^6.0.0",
+    "vite": "^8.0.12"
   }
 }

@@ -9,16 +9,16 @@ const completeNotes = `# PixNya ${version}
 
 ## \u4e2d\u6587
 
-- \u652f\u6301 Windows x64\u3001Windows ARM64\u3001Linux x64\u3001Android ARM64 \u548c Android ARM32\u3002
+- \u652f\u6301 Windows x64\u3001Android ARM64 \u548c Android ARM32\u3002
 
 ## English
 
-- Supports Windows x64, Windows ARM64, Linux x64, Android ARM64, and Android ARM32.`;
+- Supports Windows x64, Android ARM64, and Android ARM32.`;
 
 test("stable notes name every formally released architecture", () => {
   assert.doesNotThrow(() => validateStableReleaseNotes({ notes: completeNotes, version, commitSha }));
 
-  for (const platform of ["Windows x64", "Windows ARM64", "Linux x64", "Android ARM64", "Android ARM32"]) {
+  for (const platform of ["Windows x64", "Android ARM64", "Android ARM32"]) {
     assert.throws(
       () => validateStableReleaseNotes({
         notes: completeNotes.replaceAll(platform, "unsupported architecture"),

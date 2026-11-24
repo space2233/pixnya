@@ -1,12 +1,8 @@
 # PixNya 首个正式版发布清单
 
-> 状态：首个稳定版与后续 `1.1.0`–`1.5.1` 已发布；当前开发范围是 `1.7.0`
-> 当前升级基线：公开稳定版 `1.5.1`
+当前候选版本为 `1.7.0`，升级基线为公开的 `1.6.5`。发布目标为 Windows x64（NSIS）、Android ARM64 和 Android ARM32（独立 APK）。Linux 与 Windows ARM64 的历史安装包保留在原 Release。
 
-`1.7.0` 于 2026-10-30 按维护者决定暂停 Draft；继续保留 Linux 凭据依赖的 3 项 RustSec 停止维护阻塞，等待上游迁移。依赖修补和验证边界见 [验收记录](releases/v1.7.0-acceptance.md)。
-> 正式支持：Windows x64/ARM64（NSIS）、Linux x64（AppImage）、Android ARM64/ARM32（split APK）
-
-候选生命周期：固定 `main` 提交先生成五个平台签名 Draft；完成自动验证和本轮声明的活体验收后，再由独立 Publish 工作流复验并切换为 latest stable。生产签名密钥保持不变。
+工作流从固定的 `main` 提交构建签名安装包。独立 Publish 工作流复验附件、签名与源码提交后，才切换为最新稳定版。详见[本地验收记录](releases/v1.7.0-acceptance.md)。
 
 ## 1. 正式版边界
 
@@ -23,7 +19,7 @@
 - [x] Windows、Linux 与 Android 构建均要求完整的生产构建参数和签名 Secret，缺少任意一项立即失败。
 - [x] Android Release 只允许经过验证的 ARM64 与 ARM32 分包 APK，并用 `apksigner` 反查实际 APK 证书与受保护 keystore 一致。
 - [x] Draft Release 创建前，用公开密钥重新验证 Windows/Linux updater 签名和 Android 清单签名。
-- [x] Draft Release 只公开五个平台安装包、三个更新文件、`SHA256SUMS.txt` 和一个审计资料包；`BUILD-PROVENANCE.txt`、SBOM、许可证与独立签名统一收进 `pixnya-<version>-verification.tar.gz`。
+- [x] Draft Release 只公开三个安装包、三个更新文件、`SHA256SUMS.txt` 和一个审计资料包；`BUILD-PROVENANCE.txt`、SBOM、许可证与独立签名统一收进 `pixnya-<version>-verification.tar.gz`。
 - [x] Draft Release 的 SPDX 2.3 SBOM 与逐依赖许可证归档覆盖 npm、Cargo 和最终 Android Gradle/Maven 锁图；清理无效配置后重新解析的 343 组件 Gradle 图及其 378 份组件/父 POM 证据已重建并离线复核。
 - [x] 所有平台和附件验证成功后，Release job 才通过 Git refs API 原子创建 tag 并回读确认其指向已验证 artifact 的源码 SHA；若上传中断，只允许复用同一源码 SHA 且尚无 Release/仍为 Draft 的幂等续传，已发布或不同源码 SHA 一律失败，上传后再次核对 tag 与 10 个公开附件。
 

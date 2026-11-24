@@ -209,17 +209,15 @@
 
   function changeSearchType(type: SearchType) {
     void goto(searchRouteHref({ ...currentRoute, type }), {
-      replaceState: true,
-      keepFocus: true,
-      noScroll: true,
+      replace: true,
+      reset: false,
     });
   }
 
   function changeSearchTarget(target: SearchMatchTarget) {
     void goto(searchRouteHref({ ...currentRoute, target }), {
-      replaceState: true,
-      keepFocus: true,
-      noScroll: true,
+      replace: true,
+      reset: false,
     });
   }
 

@@ -58,14 +58,13 @@ test("history defers its cold load until SvelteKit has restored a navigation sna
       "utf8",
     ),
   ]);
-  const navigationCommit = client.indexOf("await commit_promise");
-  const afterNavigate = client.indexOf("after_navigate_callbacks.forEach", navigationCommit);
-  const restoreSnapshot = client.indexOf(
-    "restore_snapshot(current_navigation_index)",
-    afterNavigate,
-  );
-  assert.ok(navigationCommit >= 0 && afterNavigate > navigationCommit);
-  assert.ok(restoreSnapshot > afterNavigate);
+  const finishCall = client.indexOf("const finished = await finish_navigation(");
+  const restoreSnapshot = client.indexOf("restore_snapshot(current_navigation_index)", finishCall);
+  const finishDefinition = client.indexOf("async function finish_navigation(");
+  const committed = client.indexOf("await updated", finishDefinition);
+  const afterNavigate = client.indexOf("after_navigate_callbacks.forEach", committed);
+  assert.ok(finishCall >= 0 && restoreSnapshot > finishCall);
+  assert.ok(finishDefinition >= 0 && committed > finishDefinition && afterNavigate > committed);
   assert.match(
     page,
     /onMount\(\(\) => \{[\s\S]*requestAnimationFrame\([\s\S]*if \(!viewRestored\) void loadHistory\(\)/,

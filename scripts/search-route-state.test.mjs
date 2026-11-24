@@ -76,7 +76,7 @@ test("search page binds URL state to controls, requests, pagination, and snapsho
   }
   assert.match(page, /activeTarget:\s*SearchMatchTarget/);
   assert.match(page, /activeTarget:\s*currentRoute\.target/);
-  assert.match(page, /goto\(searchRouteHref\([\s\S]*replaceState:\s*true/);
+  assert.match(page, /goto\(searchRouteHref\([\s\S]*replace:\s*true,[\s\S]*reset:\s*false/);
   assert.match(page, /searchNovels\([\s\S]*target/);
   assert.match(page, /searchIllustrations\([\s\S]*target/);
   assert.match(page, /search_target_title_and_caption/);
