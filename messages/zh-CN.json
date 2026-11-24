@@ -1123,5 +1123,13 @@
   "reading_remove": "移出书架",
   "reading_on_shelf": "已加入书架",
   "reading_add_planned": "加入待读",
-  "reading_save_failed": "阅读记录未能保存，请检查设备存储空间。"
+  "reading_save_failed": "阅读记录未能保存，请检查设备存储空间。",
+  "shelf_search": "搜索书名、作者或系列",
+  "shelf_no_matches": "没有找到匹配的书。",
+  "series_chapter_saved": "已离线保存",
+  "series_save_selected": "离线保存选中的章节（{count}）",
+  "series_queued_count": "已将 {count} 章加入下载队列。",
+  "viewer_resume_page": "从第 {page} 页继续",
+  "backup_shelf_changes": "书架将新增 {added} 本，移出 {removed} 本。",
+  "backup_progress_kept": "有 {count} 条不同的阅读进度将采用本机记录。"
 }

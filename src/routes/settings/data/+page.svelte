@@ -11,12 +11,15 @@
     selectLocalBackup,
     startLocalBackupRestore,
   } from "$lib/pixiv-api";
-  import { collectFrontendBackupState, restoreFrontendBackupState } from "$lib/local-backup";
+  import { collectFrontendBackupState, previewReadingRestore, restoreFrontendBackupState, type ReadingBackup } from "$lib/local-backup";
   import type { BackupRestoreStrategy, BackupSelectionResult } from "$lib/types";
 
+  let localReading = $state<ReadingBackup | null>(null);
   let includeOffline = $state(false);
   let selected = $state<BackupSelectionResult | null>(null);
   let strategy = $state<BackupRestoreStrategy>("merge");
+  let changes = $derived(localReading && selected?.preview
+    ? previewReadingRestore(localReading, selected.preview.reading, strategy) : null);
   let busy = $state(false);
   let confirmRestore = $state(false);
   let status = $state("");
@@ -32,8 +35,16 @@
   async function chooseBackup() {
     await perform(async () => {
       const result = await selectLocalBackup();
-      if (!result.cancelled) selected = result;
+      if (!result.cancelled) {
+        selected = result;
+        localReading = collectFrontendBackupState();
+      }
     }, false);
+  }
+
+  function openConfirmation() {
+    localReading = collectFrontendBackupState();
+    confirmRestore = true;
   }
 
   async function restoreBackup() {
@@ -92,15 +103,25 @@
       {#if selected?.preview}
         <div class="summary"><span>PixNya {selected.preview.applicationVersion}</span><span>{bytes(selected.preview.totalBytes)}</span><span>{selected.preview.offlineIncluded ? m.backup_offline_count({ count: selected.preview.offlineFileCount }) : m.backup_without_offline()}</span></div>
         <label class="row"><strong>{m.backup_restore_mode()}</strong><select bind:value={strategy} disabled={busy}><option value="merge">{m.backup_restore_merge()}</option><option value="replace">{m.backup_restore_replace()}</option></select></label>
-        <button class="action danger" type="button" disabled={busy} onclick={() => (confirmRestore = true)}>{m.backup_restore_action()}</button>
+        {@render readingChanges()}
+        <button class="action danger" type="button" disabled={busy} onclick={openConfirmation}>{m.backup_restore_action()}</button>
       {/if}
     </section>
     {#if status}<p class:failed role="status">{status}</p>{/if}
   </main>
 </AppShell>
 
+{#snippet readingChanges()}
+  {#if changes}
+    <p class="summary" aria-live="polite">
+      {m.backup_shelf_changes({ added: changes.added, removed: changes.removed })}
+      {#if strategy === "merge"}{m.backup_progress_kept({ count: changes.keptProgress })}{/if}
+    </p>
+  {/if}
+{/snippet}
+
 {#if confirmRestore}
-  <div class="dialog-layer"><button class="scrim" aria-label={m.common_cancel()} onclick={() => (confirmRestore = false)}></button><div role="alertdialog" aria-modal="true"><h2>{m.backup_confirm_title()}</h2><p>{strategy === "replace" ? m.backup_confirm_replace() : m.backup_confirm_merge()}</p><footer><button onclick={() => (confirmRestore = false)}>{m.common_cancel()}</button><button class="primary" disabled={busy} onclick={restoreBackup}>{m.backup_restore_action()}</button></footer></div></div>
+  <div class="dialog-layer"><button class="scrim" aria-label={m.common_cancel()} onclick={() => (confirmRestore = false)}></button><div role="alertdialog" aria-modal="true"><h2>{m.backup_confirm_title()}</h2><p>{strategy === "replace" ? m.backup_confirm_replace() : m.backup_confirm_merge()}</p>{@render readingChanges()}<footer><button onclick={() => (confirmRestore = false)}>{m.common_cancel()}</button><button class="primary" disabled={busy} onclick={restoreBackup}>{m.backup_restore_action()}</button></footer></div></div>
 {/if}
 
 <style>

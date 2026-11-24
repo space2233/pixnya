@@ -102,6 +102,17 @@ export function removeFromReadingShelf(id: string): void {
   writeReadingShelf(readReadingShelf().filter((entry) => entry.id !== id));
 }
 
+export function searchReadingShelf(entries: ReadingShelfEntry[], status: ReadingStatus | "all", query: string, showRestricted: boolean): ReadingShelfEntry[] {
+  const normalize = (text: string) => text.normalize("NFKC").toLowerCase();
+  const needle = normalize(query.trim());
+  return entries.filter((entry) => {
+    if (status !== "all" && entry.status !== status) return false;
+    if (!needle) return true;
+    if (entry.xRestrict && !showRestricted) return false;
+    return [entry.title, entry.author, entry.seriesTitle ?? ""].some((field) => normalize(field).includes(needle));
+  });
+}
+
 export function recentReading(entries: ReadingShelfEntry[], limit = 5): ReadingShelfEntry[] {
   return entries.filter((entry) => entry.status === "reading" && entry.lastReadAt > 0)
     .sort((a, b) => b.lastReadAt - a.lastReadAt).slice(0, limit);

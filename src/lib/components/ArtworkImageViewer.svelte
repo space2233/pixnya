@@ -1,7 +1,7 @@
 <script lang="ts">
   import { tick } from "svelte";
   import {
-    adjacentViewerPage,
+    adjacentViewerPage, readArtworkPage, rememberArtworkPage,
     panViewer,
     pinchViewer,
     RESET_VIEWER_TRANSFORM,
@@ -28,13 +28,25 @@
 
   let {
     pages,
+    artworkId,
     title,
     concealed = false,
   }: {
+    artworkId: string;
     pages: ArtworkViewerPage[];
     title: string;
     concealed?: boolean;
   } = $props();
+
+  let savedPage = $state<number | null>(null);
+  let resumeIndex = $derived(pages.findIndex((page) => page.pageIndex === savedPage));
+  $effect(() => { savedPage = readArtworkPage(artworkId); });
+
+  function rememberPage(index: number) {
+    if (pages.length < 2) return;
+    savedPage = pages[index].pageIndex;
+    rememberArtworkPage(artworkId, savedPage);
+  }
 
   let open = $state(false);
   let currentIndex = $state(0);
@@ -87,6 +99,7 @@
   function openViewer(index: number) {
     if (concealed || !pages[index]) return;
     currentIndex = index;
+    rememberPage(index);
     transform = { ...RESET_VIEWER_TRANSFORM };
     window.history.pushState({ ...window.history.state, pixivImageViewer: true }, "", window.location.href);
     ownsHistoryEntry = true;
@@ -105,6 +118,7 @@
     const next = adjacentViewerPage(currentIndex, pages.length, delta);
     if (next === currentIndex) return;
     currentIndex = next;
+    rememberPage(next);
     transform = { ...RESET_VIEWER_TRANSFORM };
   }
 
@@ -209,6 +223,9 @@
   }
 </script>
 
+{#if !concealed && pages.length > 1 && resumeIndex > 0}
+  <button class="resume" onclick={() => openViewer(resumeIndex)}>{m.viewer_resume_page({ page: resumeIndex + 1 })}</button>
+{/if}
 <div class="artwork-gallery-preview" class:concealed aria-hidden={concealed}>
   {#each pages as image, index (image.pageIndex)}
     <figure>
@@ -296,6 +313,7 @@
 {/if}
 
 <style>
+  .resume { margin-bottom: 12px; padding: 9px 15px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); color: var(--pixiv-blue); cursor: pointer; }
   .artwork-gallery-preview { display: grid; gap: 16px; }
   figure { min-width: 0; margin: 0; }
   figure > button {

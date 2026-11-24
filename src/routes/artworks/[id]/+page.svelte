@@ -386,7 +386,7 @@
           {#if detail.illustration.kind === "ugoira"}
             <UgoiraPlayer illustrationId={detail.illustration.id} previewUrl={detail.pages[0]?.displayUrl ?? detail.illustration.thumbnailUrl} title={detail.illustration.title || m.common_untitled()} />
           {:else if detail.pages.length > 0}
-            <ArtworkImageViewer
+            <ArtworkImageViewer artworkId={detail.illustration.id}
               pages={viewerPages}
               title={detail.illustration.title || m.common_untitled()}
               concealed={restricted && !$r18DefaultVisible && !revealRestricted}

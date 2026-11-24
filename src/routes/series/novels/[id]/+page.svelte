@@ -4,7 +4,7 @@
   import AppShell from "$lib/components/AppShell.svelte";
   import Icon from "$lib/components/Icon.svelte";
   import LoadMoreOnScroll from "$lib/components/LoadMoreOnScroll.svelte";
-  import NovelCard from "$lib/components/NovelCard.svelte";
+  import SeriesChapterDownloads from "$lib/components/SeriesChapterDownloads.svelte";
   import PixivImage from "$lib/components/PixivImage.svelte";
   import ReturnLink from "$lib/components/ReturnLink.svelte";
   import { currentAppLocale, m } from "$lib/i18n";
@@ -166,7 +166,7 @@
       <section class="contents">
         <header><div><h2>{m.series_contents()}</h2></div><strong>{novels.length} / {series.contentCount}</strong></header>
         {#if novels.length}
-          <div class="novel-grid">{#each novels as novel (novel.id)}<NovelCard {novel} />{/each}</div>
+          {#key requestedKey}<SeriesChapterDownloads {novels} />{/key}
         {:else}<p class="empty">{m.novel_series_empty()}</p>{/if}
         <LoadMoreOnScroll enabled={!!nextCursor} loading={loadingMore} error={loadMoreError} onload={loadMore} />
       </section>
@@ -196,10 +196,8 @@
   .contents { margin-top: 34px; }
   .contents header { display: flex; align-items: end; justify-content: space-between; gap: 16px; }
   .contents h2 { margin: 0; font-size: var(--type-section); } .contents header strong { color: var(--muted); font-size: var(--type-caption); }
-  .novel-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; margin-top: 16px; }
   .empty { padding: 36px; color: var(--muted); border: 1px dashed var(--line); border-radius: 10px; font-size: var(--type-small); text-align: center; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  @media (max-width: 820px) { .novel-grid { grid-template-columns: 1fr; } }
   @media (max-width: 620px) { .series-page { padding: 16px 12px 88px; } .series-hero { grid-template-columns: 84px minmax(0,1fr); gap: 16px; padding: 16px; } .series-copy h1 { margin-top: 6px; font-size: var(--type-section); } .start { justify-content: center; } .state-card { grid-template-columns: 38px minmax(0,1fr); } .state-card a, .state-card button { grid-column: 1 / -1; text-align: center; } }
   @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
 </style>

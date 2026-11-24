@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { loadNovelForReading, readingChapterHref } from "../src/lib/novel-reading-source.ts";
 import * as shelf from "../src/lib/reading-shelf.ts";
-import { collectFrontendBackupState, restoreFrontendBackupState } from "../src/lib/local-backup.ts";
+import { collectFrontendBackupState, previewReadingRestore, restoreFrontendBackupState } from "../src/lib/local-backup.ts";
 import { readNovelReaderPreferences, writeNovelReaderPreferences, writeVolumePageTurnEnabled, readVolumePageTurnEnabled } from "../src/lib/preferences.ts";
 
 const values = new Map();
@@ -172,4 +172,28 @@ test("invalid settings are rejected before writes; failed restore rolls all read
   failKey = "pixiv-client.reader-prefs.v1";
   assert.throws(() => restoreFrontendBackupState(backup), /disk_full/);
   assert.deepEqual([...values.entries()].sort(), before);
+});
+
+test("shelf search combines status and normalized metadata without revealing concealed matches", () => {
+  const entry = { id: "1", title: "ＡＢＣ", author: "画师", seriesTitle: "冬日", status: "reading", xRestrict: 0 };
+  const entries = [entry, { ...entry, id: "2", xRestrict: 1 }, { ...entry, id: "3", status: "planned" }];
+  for (const query of ["abc", " 画师 ", "冬日"]) {
+    assert.deepEqual(shelf.searchReadingShelf(entries, "reading", query, false).map((e) => e.id), ["1"]);
+  }
+  assert.equal(shelf.searchReadingShelf(entries, "all", "abc", true).length, 3);
+  assert.equal(shelf.searchReadingShelf(entries, "all", "", false).length, 3);
+});
+
+test("restore preview counts the resulting capped shelf, conflicting progress and legacy replacements", () => {
+  const entries = Array.from({ length: shelf.MAX_SHELF_ENTRIES }, (_, i) => ({
+    id: String(i + 1), title: "Book", author: "", seriesId: null, seriesTitle: null, xRestrict: 0,
+    status: "reading", updatedAt: i, lastReadAt: 20,
+  }));
+  const current = { readingShelf: entries, novelReadingProgress: { 2: 10 } };
+  const incoming = { readingShelf: [{ ...entries[1], lastReadAt: 5 }, { ...entries[1], id: "501", updatedAt: 999 }],
+    novelReadingProgress: { 2: 15 } };
+  assert.deepEqual(previewReadingRestore(current, incoming, "merge"), { added: 1, removed: 1, keptProgress: 1 });
+  assert.deepEqual(previewReadingRestore(current, incoming, "replace"), { added: 1, removed: 499, keptProgress: 0 });
+  assert.equal(previewReadingRestore(current, {novelReadingProgress: {}}, "replace").removed, 0);
+  assert.equal(previewReadingRestore(current, {readingShelf: [], novelReadingProgress: {}}, "replace").removed, 500);
 });

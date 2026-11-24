@@ -68,9 +68,14 @@ fn creates_inspects_and_restores_a_portable_backup() {
     assert_eq!(created.offline_file_count, 0);
 
     let preview = manager.inspect(&path).unwrap();
-    assert_eq!(preview.application_version, "1.4.0");
-    assert_eq!(preview.component_count, 4);
-    assert!(!preview.contains_credentials);
+    assert_eq!(preview.summary.application_version, "1.4.0");
+    assert_eq!(preview.summary.component_count, 4);
+    assert!(!preview.summary.contains_credentials);
+    assert_eq!(preview.reading.reading_shelf, data.frontend.reading_shelf);
+    assert_eq!(
+        preview.reading.novel_reading_progress,
+        data.frontend.novel_reading_progress
+    );
 
     let restored = manager.restore(&path).unwrap();
     assert_eq!(restored.data, data);
@@ -145,6 +150,12 @@ fn reading_settings_and_shelf_survive_archive_and_recovery_serialization() {
             },
         )
         .unwrap();
+    let preview = manager.inspect(&path).unwrap();
+    assert_eq!(preview.reading.reading_shelf, data.frontend.reading_shelf);
+    assert_eq!(
+        preview.reading.novel_reading_progress,
+        data.frontend.novel_reading_progress
+    );
     assert_eq!(manager.restore(&path).unwrap().data, data);
     let recovery: FrontendBackupState =
         serde_json::from_slice(&serde_json::to_vec(&data.frontend).unwrap()).unwrap();

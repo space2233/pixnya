@@ -1123,5 +1123,13 @@
   "reading_remove": "Remove from shelf",
   "reading_on_shelf": "On your bookshelf",
   "reading_add_planned": "Read later",
-  "reading_save_failed": "Could not save your reading data. Check device storage."
+  "reading_save_failed": "Could not save your reading data. Check device storage.",
+  "shelf_search": "Search by title, author, or series",
+  "shelf_no_matches": "No matching books.",
+  "series_chapter_saved": "Saved offline",
+  "series_save_selected": "Save selected chapters offline ({count})",
+  "series_queued_count": "Chapters added to the download queue: {count}.",
+  "viewer_resume_page": "Continue from page {page}",
+  "backup_shelf_changes": "Books to add: {added}. Books to remove: {removed}.",
+  "backup_progress_kept": "Conflicting reading positions that will keep the local value: {count}."
 }

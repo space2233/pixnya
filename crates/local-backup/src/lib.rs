@@ -124,7 +124,20 @@ pub struct BackupSummary {
     pub contains_credentials: bool,
 }
 
-pub type BackupPreview = BackupSummary;
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct BackupPreview {
+    #[serde(flatten)]
+    pub summary: BackupSummary,
+    pub reading: BackupReadingPreview,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BackupReadingPreview {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reading_shelf: Option<Vec<ReadingShelfEntry>>,
+    pub novel_reading_progress: BTreeMap<String, u32>,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -362,7 +375,7 @@ impl BackupManager {
     }
 
     pub fn inspect(&self, source: &Path) -> Result<BackupPreview, BackupError> {
-        Ok(summary_from_manifest(&verify_archive_streaming(source)?))
+        verify_archive_streaming(source)
     }
 
     pub fn restore(&self, source: &Path) -> Result<BackupRestoreResult, BackupError> {
@@ -415,7 +428,7 @@ impl BackupManager {
     }
 }
 
-fn verify_archive_streaming(source: &Path) -> Result<BackupManifest, BackupError> {
+fn verify_archive_streaming(source: &Path) -> Result<BackupPreview, BackupError> {
     let file = File::open(source).map_err(|_| BackupError::Io)?;
     let mut archive = zip::ZipArchive::new(file).map_err(|_| BackupError::InvalidArchive)?;
     if archive.is_empty() || archive.len() > MAX_ARCHIVE_FILES {
@@ -463,6 +476,7 @@ fn verify_archive_streaming(source: &Path) -> Result<BackupManifest, BackupError
         manifest_size,
     )?;
     let mut seen = BTreeSet::new();
+    let mut frontend = Vec::new();
     let mut total_uncompressed_bytes = manifest_size;
     for index in 0..archive.len() {
         let mut member = archive
@@ -500,12 +514,12 @@ fn verify_archive_streaming(source: &Path) -> Result<BackupManifest, BackupError
         let remaining = MAX_ARCHIVE_UNCOMPRESSED_BYTES
             .checked_sub(total_uncompressed_bytes)
             .ok_or(BackupError::CapacityExceeded)?;
-        let copied = copy_with_digest(
-            &mut member,
-            &mut std::io::sink(),
-            &mut digest,
-            remaining.min(declared.size_bytes),
-        )?;
+        let limit = remaining.min(declared.size_bytes);
+        let copied = if name == FRONTEND_PATH {
+            copy_with_digest(&mut member, &mut frontend, &mut digest, limit)?
+        } else {
+            copy_with_digest(&mut member, &mut std::io::sink(), &mut digest, limit)?
+        };
         total_uncompressed_bytes = total_uncompressed_bytes
             .checked_add(copied)
             .ok_or(BackupError::CapacityExceeded)?;
@@ -516,7 +530,10 @@ fn verify_archive_streaming(source: &Path) -> Result<BackupManifest, BackupError
     if declarations.keys().any(|name| !seen.contains(name)) {
         return Err(BackupError::IntegrityMismatch);
     }
-    Ok(manifest)
+    Ok(BackupPreview {
+        summary: summary_from_manifest(&manifest),
+        reading: serde_json::from_slice(&frontend).map_err(|_| BackupError::InvalidArchive)?,
+    })
 }
 
 fn restore_archive_streaming(

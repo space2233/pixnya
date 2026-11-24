@@ -801,7 +801,7 @@ export interface BackupSummary {
 export interface BackupSelectionResult {
   cancelled: boolean;
   label?: string | null;
-  preview?: BackupSummary | null;
+  preview?: (BackupSummary & { reading: import("$lib/local-backup").ReadingBackup }) | null;
 }
 
 export interface BackupExportResult {

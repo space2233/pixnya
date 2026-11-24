@@ -1123,5 +1123,13 @@
   "reading_remove": "移出書架",
   "reading_on_shelf": "已加入書架",
   "reading_add_planned": "加入待讀",
-  "reading_save_failed": "閱讀記錄未能儲存，請檢查裝置儲存空間。"
+  "reading_save_failed": "閱讀記錄未能儲存，請檢查裝置儲存空間。",
+  "shelf_search": "搜尋書名、作者或系列",
+  "shelf_no_matches": "沒有找到符合條件的書。",
+  "series_chapter_saved": "已離線儲存",
+  "series_save_selected": "離線儲存選取的章節（{count}）",
+  "series_queued_count": "已將 {count} 章加入下載佇列。",
+  "viewer_resume_page": "從第 {page} 頁繼續",
+  "backup_shelf_changes": "書架將新增 {added} 本，移出 {removed} 本。",
+  "backup_progress_kept": "有 {count} 筆不同的閱讀進度將採用本機紀錄。"
 }

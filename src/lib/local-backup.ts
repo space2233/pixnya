@@ -149,17 +149,45 @@ function validateFrontendBackupState(state: FrontendBackupState): void {
   }
 }
 
-export function mergeReadingBackup(current: FrontendBackupState, incoming: FrontendBackupState): FrontendBackupState {
+export type ReadingBackup = Pick<FrontendBackupState, "readingShelf" | "novelReadingProgress">;
+
+function planReadingRestore(current: ReadingBackup, incoming: ReadingBackup, strategy: "merge" | "replace") {
+  if (strategy === "replace") {
+    return {
+      readingShelf: incoming.readingShelf ?? current.readingShelf ?? [],
+      novelReadingProgress: incoming.novelReadingProgress,
+      keptProgress: 0,
+    };
+  }
   const progress = { ...current.novelReadingProgress };
   const currentEntries = new Map((current.readingShelf ?? []).map((entry) => [entry.id, entry]));
   const incomingEntries = new Map((incoming.readingShelf ?? []).map((entry) => [entry.id, entry]));
+  let keptProgress = 0;
   for (const [id, value] of Object.entries(incoming.novelReadingProgress)) {
     const local = currentEntries.get(id);
     const imported = incomingEntries.get(id);
-    progress[id] = local && imported
-      ? (local.lastReadAt > imported.lastReadAt ? progress[id] ?? value : value)
-      : Math.max(progress[id] ?? 0, value);
+    const previous = progress[id];
+    const keepLocal = previous !== undefined && (local && imported
+      ? local.lastReadAt > imported.lastReadAt : previous > value);
+    if (keepLocal && previous !== value) keptProgress++;
+    progress[id] = keepLocal ? previous : value;
   }
-  return { ...incoming, novelReadingProgress: progress,
-    readingShelf: mergeReadingShelves(current.readingShelf ?? [], incoming.readingShelf ?? []) };
+  return { readingShelf: mergeReadingShelves(current.readingShelf ?? [], incoming.readingShelf ?? []),
+    novelReadingProgress: progress, keptProgress };
+}
+
+export function previewReadingRestore(current: ReadingBackup, incoming: ReadingBackup, strategy: "merge" | "replace") {
+  const plan = planReadingRestore(current, incoming, strategy);
+  const before = new Set((current.readingShelf ?? []).map((entry) => entry.id));
+  const after = new Set(plan.readingShelf.map((entry) => entry.id));
+  return {
+    added: [...after].filter((id) => !before.has(id)).length,
+    removed: [...before].filter((id) => !after.has(id)).length,
+    keptProgress: plan.keptProgress,
+  };
+}
+
+export function mergeReadingBackup(current: FrontendBackupState, incoming: FrontendBackupState): FrontendBackupState {
+  const { readingShelf, novelReadingProgress } = planReadingRestore(current, incoming, "merge");
+  return { ...incoming, readingShelf, novelReadingProgress };
 }

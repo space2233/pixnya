@@ -224,7 +224,7 @@ pub(crate) async fn start_local_backup_restore(
         .map_err(|_| ApiCommandError::StateUnavailable)?
         .clone()
         .ok_or(ApiCommandError::BackupUnavailable)?;
-    if selected.preview.offline_included {
+    if selected.preview.summary.offline_included {
         let storage = crate::storage_manager(&app)?;
         let existing_bytes = if strategy == BackupRestoreStrategy::Merge {
             storage.status()?.offline_bytes
@@ -234,6 +234,7 @@ pub(crate) async fn start_local_backup_restore(
         storage.ensure_offline_write(
             selected
                 .preview
+                .summary
                 .total_bytes
                 .checked_add(existing_bytes)
                 .ok_or(ApiCommandError::BackupCapacityExceeded)?,
@@ -368,6 +369,12 @@ fn restore_backend(
     remove_path_if_present(&rollback)?;
     let manager = BackupManager::new(env!("CARGO_PKG_VERSION"));
     let data = manager.restore_to_directory(&selected.path, &staging)?;
+    if data.frontend.reading_shelf != selected.preview.reading.reading_shelf
+        || data.frontend.novel_reading_progress != selected.preview.reading.novel_reading_progress
+    {
+        remove_path_if_present(&staging)?;
+        return Err(ApiCommandError::BackupInvalid);
+    }
     let catalog: CatalogSnapshot =
         serde_json::from_value(data.catalog).map_err(|_| ApiCommandError::BackupInvalid)?;
     let history: HistorySnapshot =
@@ -383,7 +390,7 @@ fn restore_backend(
         catalog: catalog_store.portable_snapshot()?,
         history: history_store.snapshot()?,
         downloads: download_store.portable_snapshot()?,
-        offline_included: selected.preview.offline_included,
+        offline_included: selected.preview.summary.offline_included,
         offline_had_root: app_data.join("offline-library").is_dir(),
     };
     write_marker(app_data, &marker)?;
@@ -411,7 +418,7 @@ fn restore_backend(
     Ok(BackupRestoreStartResult {
         transaction_id: marker.transaction_id,
         frontend: data.frontend,
-        summary: selected.preview.clone(),
+        summary: selected.preview.summary.clone(),
     })
 }
 

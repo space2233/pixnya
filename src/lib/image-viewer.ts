@@ -102,3 +102,20 @@ export function adjacentViewerPage(current: number, count: number, delta: -1 | 1
   if (count <= 0) return 0;
   return Math.min(count - 1, Math.max(0, current + delta));
 }
+
+// Store the source page number, shared by the online and offline galleries.
+export function readArtworkPage(id: string): number | null {
+  if (!/^[1-9]\d{0,19}$/.test(id)) return null;
+  try {
+    const raw = localStorage.getItem(`pixiv-client:artwork-page:${id}`);
+    if (raw === null) return null;
+    const page = Number(raw);
+    return Number.isSafeInteger(page) && page >= 0 ? page : null;
+  } catch { return null; }
+}
+
+export function rememberArtworkPage(id: string, page: number): void {
+  if (!/^[1-9]\d{0,19}$/.test(id) || !Number.isSafeInteger(page) || page < 0) return;
+  try { localStorage.setItem(`pixiv-client:artwork-page:${id}`, String(page)); }
+  catch { /* Viewing still works when local storage is unavailable. */ }
+}

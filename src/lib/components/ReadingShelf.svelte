@@ -2,13 +2,14 @@
   import { onMount } from "svelte";
   import { m } from "$lib/i18n";
   import { PREFERENCES_CHANGED_EVENT, r18DefaultVisible } from "$lib/preferences";
-  import { readReadingShelf, recentReading, readNovelProgress, removeFromReadingShelf,
+  import { readReadingShelf, searchReadingShelf, recentReading, readNovelProgress, removeFromReadingShelf,
     setReadingStatus, READING_SHELF_CHANGED_EVENT, type ReadingShelfEntry, type ReadingStatus } from "$lib/reading-shelf";
   let { compact = false }: { compact?: boolean } = $props();
   let entries = $state<ReadingShelfEntry[]>([]);
   let filter = $state<ReadingStatus | "all">("all");
+  let query = $state("");
   let error = $state("");
-  let visible = $derived(compact ? recentReading(entries) : entries.filter((entry) => filter === "all" || entry.status === filter));
+  let visible = $derived(compact ? recentReading(entries) : searchReadingShelf(entries, filter, query, $r18DefaultVisible));
   const statuses: ReadingStatus[] = ["planned", "reading", "finished"];
   const labels = { planned: m.reading_planned, reading: m.reading_in_progress, finished: m.reading_finished };
   onMount(() => {
@@ -31,13 +32,14 @@
 <section class="shelf" class:compact>
   <header><h2>{compact ? m.reading_continue() : m.reading_shelf_title()}</h2>{#if compact}<a href="/novels/shelf">{m.reading_shelf_title()} ›</a>{/if}</header>
   {#if !compact}
+    <input type="search" bind:value={query} placeholder={m.shelf_search()} aria-label={m.shelf_search()} />
     <nav aria-label={m.reading_shelf_title()}>
       <button class:active={filter === "all"} onclick={() => { filter = "all"; }}>{m.reading_all()}</button>
       {#each statuses as status}<button class:active={filter === status} onclick={() => { filter = status; }}>{labels[status]()}</button>{/each}
     </nav>
   {/if}
   {#if error}<p role="alert">{error}</p>{/if}
-  {#if visible.length === 0}<p class="empty">{compact ? m.reading_recent_empty() : m.reading_shelf_empty()}</p>{/if}
+  {#if visible.length === 0}<p class="empty">{compact ? m.reading_recent_empty() : query.trim() ? m.shelf_no_matches() : m.reading_shelf_empty()}</p>{/if}
   <div class="entries">
     {#each visible as entry (entry.id)}
       <article>
@@ -64,6 +66,7 @@
   header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   h2 { margin: 12px 0; font-size: var(--type-section); }
   header a { color: var(--pixiv-blue); font-size: var(--type-small); text-decoration: none; }
+  input[type="search"] { width: 100%; max-width: 28rem; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--text); }
   nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 18px; }
   button, select { padding: 9px 13px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); color: var(--text); font-size: var(--type-body); }
   button.active { background: var(--pixiv-blue); color: white; border-color: var(--pixiv-blue); }
